@@ -1,4 +1,4 @@
-const CACHE = 'linux-master-v10';
+const CACHE = 'linux-master-v11';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png'];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
