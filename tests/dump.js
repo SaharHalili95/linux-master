@@ -7,7 +7,7 @@ const { chromium } = require('@playwright/test');
   await page.goto(process.env.BASE_URL || 'http://localhost:8765/');
   await page.evaluate(() => localStorage.setItem('lang', 'he'));
   await page.reload();
-  const data = await page.evaluate(() => ({ pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios }));
+  const data = await page.evaluate(() => ({ pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios, banditScenarios }));
   require('fs').writeFileSync('data.json', JSON.stringify(data, null, 1));
   await browser.close();
 })();

@@ -1,10 +1,10 @@
 const { test, expect } = require('@playwright/test');
 const { execFileSync } = require('child_process');
 
-const LEVELS = ['intro', 'functions', 'pipe', 'pipeFunction', 'pro', 'pipeTwoFlag', 'workflow'];
+const LEVELS = ['intro', 'functions', 'pipe', 'pipeFunction', 'pro', 'pipeTwoFlag', 'workflow', 'bandit'];
 const SCENARIO_POOLS = {
   pipe: 'pipeScenarios', pipeFunction: 'pipeFlagScenarios', pro: 'professionalScenarios',
-  pipeTwoFlag: 'pipeTwoFlagScenarios', workflow: 'workflowScenarios',
+  pipeTwoFlag: 'pipeTwoFlagScenarios', workflow: 'workflowScenarios', bandit: 'banditScenarios',
 };
 
 async function fresh(page) {
@@ -19,7 +19,7 @@ async function fresh(page) {
 }
 
 const dump = page => page.evaluate(() => ({
-  commands, guideUses, pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios,
+  commands, guideUses, pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios, banditScenarios,
   commandQs: commands.map(c => commandQuestion(c, commands)),
   meaningQs: commands.map(c => commandMeaningQuestion(c, commands)),
   introPool: levelQuiz.intro.ids().length,
@@ -52,7 +52,7 @@ test.describe('content @content', () => {
       guide: [CONTENT.en.guide.length, guideUses.length],
       commands: commands.every(c => CONTENT.en.commands[c.name]),
       prompts: Object.keys(CONTENT.en.prompts).length,
-      scenarios: Object.entries(CONTENT.en.scenarios).map(([k, v]) => [k, v.length, { pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios }[k].length]),
+      scenarios: Object.entries(CONTENT.en.scenarios).map(([k, v]) => [k, v.length, { pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios, banditScenarios }[k].length]),
       ui: Object.keys(I18N.he).filter(k => !(k in I18N.en)),
     }));
     await page.close();
@@ -65,7 +65,7 @@ test.describe('content @content', () => {
   test('pool sizes match README (46 commands, 450 uses, 15 per scenario level)', () => {
     expect(data.commands).toHaveLength(46);
     expect(data.guideUses).toHaveLength(450);
-    for (const name of Object.values(SCENARIO_POOLS)) expect(data[name], name).toHaveLength(15);
+    for (const [level, name] of Object.entries(SCENARIO_POOLS)) expect(data[name], name).toHaveLength(level === 'bandit' ? 30 : 15);
   });
 
   test('commands: unique names and no empty fields', () => {
@@ -212,7 +212,7 @@ test.describe('app', () => {
     page.on('requestfailed', r => failed.push(r.url()));
     page.on('response', r => { if (r.status() >= 400) failed.push(`${r.status()} ${r.url()}`); });
     const errors = await fresh(page);
-    await expect(page.locator('.level-card')).toHaveCount(7);
+    await expect(page.locator('.level-card')).toHaveCount(8);
     await expect(page.locator('#commandCount')).toHaveText('46');
     expect({ errors, failed }).toEqual({ errors: [], failed: [] });
   });
@@ -339,8 +339,8 @@ test.describe('app', () => {
     await fresh(page);
     await page.click('button:has-text("פתיחת ההדרכות")');
     const tabs = page.locator('.tutorial-tab');
-    await expect(tabs).toHaveCount(7);
-    for (let i = 0; i < 7; i++) {
+    await expect(tabs).toHaveCount(8);
+    for (let i = 0; i < 8; i++) {
       await tabs.nth(i).click();
       const total = await page.evaluate(() => currentTutorialLessons.length);
       while (await page.locator('#tutorialLoadMore').isVisible()) await page.locator('#tutorialLoadMore button').click();
@@ -390,7 +390,7 @@ test.describe('app', () => {
     const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(await overflow(), 'home').toBeLessThanOrEqual(0);
     await page.click('button:has-text("פתיחת ההדרכות")');
-    for (let i = 0; i < 7; i++) { await page.locator('.tutorial-tab').nth(i).click(); for (const d of await page.locator('.tutorial-lesson').all()) await d.evaluate(e => e.open = true); expect(await overflow(), `tutorial ${i}`).toBeLessThanOrEqual(0); }
+    for (let i = 0; i < 8; i++) { await page.locator('.tutorial-tab').nth(i).click(); for (const d of await page.locator('.tutorial-lesson').all()) await d.evaluate(e => e.open = true); expect(await overflow(), `tutorial ${i}`).toBeLessThanOrEqual(0); }
     for (const level of LEVELS) {
       await page.evaluate(l => { goHome(); selectLevel(l); startQuiz(); }, level);
       for (let i = 0; i < 20 && await page.evaluate(() => !document.getElementById('result').classList.contains('active')); i++) {
@@ -433,7 +433,7 @@ test.describe('app', () => {
     await page.waitForTimeout(1000);
     await context.setOffline(true);
     await page.reload();
-    await expect(page.locator('.level-card')).toHaveCount(7);
+    await expect(page.locator('.level-card')).toHaveCount(8);
     const fontOk = await page.evaluate(async () => { await document.fonts.ready; return document.fonts.check('16px Assistant'); });
     expect(fontOk, 'Assistant font available offline').toBe(true);
     await page.click('button:has-text("מתחילים")');

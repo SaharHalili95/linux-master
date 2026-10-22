@@ -31,6 +31,8 @@ test('installed app shows a new deploy on the next open, and still works offline
   await expect(page.locator('.version')).toHaveText(`v${V}`);
   expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
 
+  // python http.server compares Last-Modified in whole seconds
+  await page.waitForTimeout(1100);
   bump('index.html', `>v${V}<`, `>v${V + 1}<`);
   await page.reload();
   await expect(page.locator('.version')).toHaveText(`v${V + 1}`);
@@ -46,6 +48,6 @@ test('installed app shows a new deploy on the next open, and still works offline
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('.version')).toHaveText(`v${V + 2}`);
-  await expect(page.locator('.level-card')).toHaveCount(7);
+  await expect(page.locator('.level-card')).toHaveCount(8);
   await context.setOffline(false);
 });

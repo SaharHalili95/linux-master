@@ -1,7 +1,7 @@
 import json, shlex, sys
 
 d = json.load(open(sys.argv[1]))
-levels = ['pipeScenarios', 'pipeFlagScenarios', 'professionalScenarios', 'pipeTwoFlagScenarios', 'workflowScenarios']
+levels = ['pipeScenarios', 'pipeFlagScenarios', 'professionalScenarios', 'pipeTwoFlagScenarios', 'workflowScenarios', 'banditScenarios']
 
 fixture = r'''
 mkdir -p /fx && cd /fx
@@ -39,6 +39,23 @@ tar -cf backup.tar config
 echo key > KEY; echo f > FILE
 printf 'Dana\nNoa\nben\n' > names1.txt; printf 'Noa\nzoe\nDana\nAvi\n' > names2.txt
 tar -czf backup.tar.gz config logs
+mkdir -p /fx/bandit && cd /fx/bandit
+mkdir -p inhere && echo hidden > inhere/.secret && echo text > inhere/-file01
+printf 'x%.0s' $(seq 1 1033) > inhere/sized; chmod -x inhere/sized
+echo 'echo ok' > script.sh
+printf 'old\nsame\n' > old.txt; printf 'new\nsame\n' > new.txt
+echo secret > pass.txt; echo key > key.private; chmod 644 key.private
+echo dash > ./-; echo spaced > ./"--spaces in this filename--"
+echo zipped | gzip > data
+echo 'Gur cnffjbeq vf Uryyb Jbeyq' > data.txt
+getent group bandit6 >/dev/null || groupadd bandit6; id bandit7 >/dev/null 2>&1 || useradd -M bandit7
+mkdir -p /srv && printf 'x%.0s' $(seq 1 33) > /srv/found && chown bandit7:bandit6 /srv/found
+mkdir -p /etc/cron.d && echo '* * * * * root /usr/bin/true' > /etc/cron.d/demo
+git config --global user.email t@t && git config --global user.name t && git config --global init.defaultBranch main
+git init -q --bare /srv/remote.git && git init -q . && git add -A && git commit -qm first && git branch dev && git tag v1
+git remote add origin /srv/remote.git && git push -q -u origin main
+echo '*.txt' > .gitignore && echo k > key.txt
+cd /fx
 '''
 
 lines = ['set +e', fixture, 'cd /', ': > /results.tsv']
@@ -47,10 +64,10 @@ for lvl in levels:
         for kind, cmd in [('A', s['answer'])] + [(f'W{j}', w) for j, w in enumerate(s['wrong'])]:
             tag = f'{lvl}\t{i}\t{kind}'
             lines.append(
-                f'rm -rf /w && cp -a /fx /w && cd /w && '
-                f'timeout 5 bash -c {shlex.quote(cmd)} > /tmp/out 2> /tmp/err < /dev/null; code=$?; '
+                f'rm -rf /w && cp -a /fx /w && cd /w{"/bandit" if lvl == "banditScenarios" else ""} && '
+                f'timeout 15 bash -c {shlex.quote(cmd)} > /tmp/out 2> /tmp/err < /dev/null; code=$?; '
                 f'for f in errors.txt logs-list.txt failures.txt procs.txt; do [ -f $f ] && {{ echo "== $f"; (tar -tzf $f 2>/dev/null || cat $f) | sort; }} >> /tmp/out; done; '
-                f'{{ echo "== tree"; find . -newer /fx/KEY 2>/dev/null | sort; ls backup restore 2>/dev/null; }} >> /tmp/out; '
+                f'{{ echo "== tree"; find . -newer /fx/KEY 2>/dev/null | sort; ls backup restore 2>/dev/null; stat -c "%n %a" key.private script.sh 2>/dev/null; md5sum data.bin data.gz data 2>/dev/null; }} >> /tmp/out; '
                 f'printf "%s\\t%s\\t%s\\t%s\\n" {shlex.quote(tag)} $code "$(md5sum < /tmp/out | cut -c1-8)" "$(head -c 160 /tmp/err | tr "\\n\\t" "  ")" >> /results.tsv; cd /'
             )
 print('\n'.join(lines))

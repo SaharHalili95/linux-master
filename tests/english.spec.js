@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const LEVELS = ['intro', 'functions', 'pipe', 'pipeFunction', 'pro', 'pipeTwoFlag', 'workflow'];
+const LEVELS = ['intro', 'functions', 'pipe', 'pipeFunction', 'pro', 'pipeTwoFlag', 'workflow', 'bandit'];
 const visibleHebrew = page => page.evaluate(() => [...document.querySelectorAll('body *')]
   .filter(e => e.children.length === 0 && e.offsetParent !== null && e.id !== 'langBtn' && /[֐-׿]/.test(e.textContent))
   .map(e => e.textContent.slice(0, 50)));
@@ -33,7 +33,7 @@ test('english: content is fully translated', async ({ page }) => {
   const bad = await page.evaluate(() => {
     const heb = x => /[֐-׿]/.test(x);
     const all = [...commands.map(c => c.meaning), ...guideUses.map(u => u.meaning),
-      ...[pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios].flat().flatMap(s => [s.prompt, s.explanation])];
+      ...[pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios, banditScenarios].flat().flatMap(s => [s.prompt, s.explanation])];
     return all.filter(heb);
   });
   expect(bad).toEqual([]);
@@ -43,7 +43,7 @@ test('english: no visible Hebrew on home and tutorials', async ({ page }) => {
   const errors = await english(page);
   expect(await visibleHebrew(page)).toEqual([]);
   await page.click('button:has-text("Open tutorials")');
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 8; i++) {
     await page.locator('.tutorial-tab').nth(i).click();
     expect(await visibleHebrew(page), `tutorial ${i}`).toEqual([]);
   }
