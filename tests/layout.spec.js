@@ -4,6 +4,8 @@ const { test, expect } = require('@playwright/test');
 // checks that nothing makes the page scroll sideways. Runs on the narrowest phones.
 for (const lang of ['he', 'en']) {
   test(`every question fits the screen (${lang})`, async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', e => errors.push(String(e)));
     await page.goto('./');
     await page.evaluate(l => { localStorage.clear(); localStorage.setItem('lang', l); }, lang);
     await page.reload();
@@ -26,5 +28,6 @@ for (const lang of ['he', 'en']) {
       return bad;
     });
     expect(overflow).toEqual([]);
+    expect(errors).toEqual([]);
   });
 }

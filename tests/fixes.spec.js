@@ -93,7 +93,7 @@ test.describe('typing check', () => {
       const same = (a, b) => canonicalCommand(a) === canonicalCommand(b);
       return {
         accepted: [['ls | head -n5', 'ls | head -n 5'], ['cut -d: -f2 x', 'cut -d : -f 2 x'], ['cut -f 2 -d : x', 'cut -d : -f 2 x'], ['sort -k2 f', 'sort -k 2 f'], ['nc -lp 4444 &', 'nc -l -p 4444 &']].map(([a, b]) => same(a, b)),
-        rejected: [['tar -f -c -z b.tgz c', 'tar -c -z -f b.tgz c'], ['find . -name *.log', 'find . -name "*.log"'], ['awk "{print $1}" f', "awk '{print $1}' f"], ['cp b a', 'cp a b'], ['nc -l -p 4444', 'nc -l -p 4444 &']].map(([a, b]) => same(a, b)),
+        rejected: [['cat --spaces in this filename--', 'cat "--spaces in this filename--"'], ['tar -f -c -z b.tgz c', 'tar -c -z -f b.tgz c'], ['find . -name *.log', 'find . -name "*.log"'], ['awk "{print $1}" f', "awk '{print $1}' f"], ['cp b a', 'cp a b'], ['nc -l -p 4444', 'nc -l -p 4444 &']].map(([a, b]) => same(a, b)),
       };
     });
     expect(r.accepted.every(Boolean)).toBe(true);
