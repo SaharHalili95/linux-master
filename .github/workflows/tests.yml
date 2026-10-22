@@ -57,10 +57,7 @@ jobs:
           done
           exit 1
       - name: Run every stage 3-8 answer on Ubuntu
-        run: |
-          python3 -m http.server 8765 --directory .. &
-          sleep 1
-          npm run sandbox
+        run: npm run sandbox
 
   quality:
     runs-on: ubuntu-24.04

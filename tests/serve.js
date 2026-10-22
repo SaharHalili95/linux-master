@@ -6,7 +6,7 @@ const zlib = require('zlib');
 
 const root = path.resolve(__dirname, '..');
 const port = Number(process.argv[2] || 8790);
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
+const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 
 http.createServer((req, res) => {
   const name = decodeURIComponent(new URL(req.url, 'http://x').pathname);

@@ -13,12 +13,12 @@ const url = `http://localhost:${PORT}/`;
 
 test.beforeAll(async () => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lm-update-'));
-  for (const f of fs.readdirSync(SRC)) if (fs.statSync(path.join(SRC, f)).isFile()) fs.copyFileSync(path.join(SRC, f), path.join(dir, f));
+  for (const f of ['index.html', 'styles.css', 'app.js', 'sw.js', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'data']) fs.cpSync(path.join(SRC, f), path.join(dir, f), { recursive: true });
   // Like GitHub Pages: content-based ETags, so a change is seen however fast it happens.
-  const types = { '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
+  const types = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
   server = http.createServer((req, res) => {
     const name = decodeURIComponent(new URL(req.url, url).pathname).replace(/^\/$/, '/index.html');
-    const file = path.join(dir, path.basename(name));
+    const file = path.join(dir, path.normalize(name).replace(/^(\.\.[/\\])+/, ''));
     if (!fs.existsSync(file)) { res.writeHead(404); res.end(); return; }
     const body = fs.readFileSync(file), etag = '"' + crypto.createHash('sha1').update(body).digest('hex') + '"';
     if (req.headers['if-none-match'] === etag) { res.writeHead(304, { ETag: etag }); res.end(); return; }

@@ -4,7 +4,7 @@ const { chromium } = require('@playwright/test');
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  await page.goto(process.env.BASE_URL || 'http://localhost:8765/');
+  await page.goto(process.env.BASE_URL || 'http://localhost:8766/');
   await page.evaluate(() => localStorage.setItem('lang', 'he'));
   await page.reload();
   const data = await page.evaluate(() => ({ pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios, banditScenarios }));

@@ -42,7 +42,11 @@ test.describe('content @content', () => {
     const fs = require('fs'), path = require('path');
     const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
     const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
-    expect(html.match(/class="version"[^>]*>v(\d+)</)[1]).toBe(sw.match(/linux-master-v(\d+)/)[1]);
+    const version = html.match(/class="version"[^>]*>v(\d+)</)[1];
+    expect(sw.match(/linux-master-v(\d+)/)[1]).toBe(version);
+    const assetVersions = [...html.matchAll(/(?:src|href)="[^"]+\?v=(\d+)"/g), ...sw.matchAll(/\?v=(\d+)'/g)].map(m => m[1]);
+    expect(assetVersions.length).toBeGreaterThanOrEqual(8);
+    expect(new Set(assetVersions)).toEqual(new Set([version]));
   });
 
   test('every translation lines up with the Hebrew content', async ({ browser }) => {
