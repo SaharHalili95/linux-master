@@ -36,7 +36,7 @@
 <body>
   <div class="shell">
     <header class="topbar">
-      <div class="brand"><div class="brand-mark">$_</div><div class="brand-name" dir="ltr">Linux <span>Master</span></div><div class="version" dir="ltr">v9</div></div>
+      <div class="brand"><div class="brand-mark">$_</div><div class="brand-name" dir="ltr">Linux <span>Master</span></div><div class="version" dir="ltr">v10</div></div>
       <div class="top-meta"><span class="status-dot"></span><span>מעבדת הפקודות שלך</span></div>
     </header>
     <main>
@@ -209,7 +209,7 @@
     let selectedLevel = localStorage.getItem('learningLevel') || 'intro';
     if ('serviceWorker' in navigator && window.isSecureContext) {
       if (navigator.serviceWorker.controller) navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
-      navigator.serviceWorker.register('./sw.js');
+      navigator.serviceWorker.register('./sw.js').then(registration => document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') registration.update(); }));
     }
     renderStats();
     

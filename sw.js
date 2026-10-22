@@ -1,4 +1,4 @@
-const CACHE = 'linux-master-v9';
+const CACHE = 'linux-master-v10';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png'];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
@@ -14,6 +14,14 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  if (event.request.mode === 'navigate') {
+    event.respondWith(fetch(event.request.url, { cache: 'no-cache' }).then(response => {
+      const copy = response.clone();
+      caches.open(CACHE).then(cache => cache.put('./index.html', copy));
+      return response;
+    }).catch(() => caches.match('./index.html')));
+    return;
+  }
   event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
     if (FONT_HOSTS.includes(new URL(event.request.url).hostname)) {
       const copy = response.clone();
