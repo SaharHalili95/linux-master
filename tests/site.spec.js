@@ -22,7 +22,7 @@ const dump = page => page.evaluate(() => ({
   commands, guideUses, pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios,
   commandQs: commands.map(c => commandQuestion(c, commands)),
   meaningQs: commands.map(c => commandMeaningQuestion(c, commands)),
-  introPool: levelQuiz.intro.pool.length,
+  introPool: levelQuiz.intro.ids().length,
   guideQs: guideUses.map(u => ({ u, syntax: u.kind === 'key' ? `${u.command}: ${u.usage}` : guideSyntax(u), q: guideUseQuestion(u, guideUses) })),
   similar: similarCommands,
 }));
@@ -234,32 +234,34 @@ test.describe('app', () => {
     test(`full round via real clicks: ${level}`, async ({ page }) => {
       const errors = await fresh(page);
       await page.evaluate(l => selectLevel(l), level);
-      const total = await page.evaluate(l => levelQuiz[l].pool.length, level);
-      const n = Math.min(20, total);
       await page.click('button:has-text("מתחילים")');
       await expect(page.locator('#quiz')).toHaveClass(/active/);
-      let expectedScore = 0;
-      for (let i = 0; i < n; i++) {
-        await expect(page.locator('#quizCounter')).toHaveText(`${String(i + 1).padStart(2, '0')} / ${n}`);
+      let expectedScore = 0, answered = 0, i = 0;
+      while (!(await page.locator('#result').evaluate(e => e.classList.contains('active')))) {
+        const total = await page.evaluate(() => quizQuestions.length);
+        await expect(page.locator('#quizCounter')).toHaveText(`${String(i + 1).padStart(2, '0')} / ${total}`);
         const answers = page.locator('.answer');
         await expect(answers).toHaveCount(4);
         const keys = await answers.evaluateAll(bs => bs.map(b => b.dataset.answer));
         expect(new Set(keys).size).toBe(4);
-        const correctKey = await page.evaluate(() => quizQuestions[quizIndex].answer);
+        const correctKey = await page.evaluate(() => quizQuestions[quizIndex].q.answer);
         expect(keys.filter(k => k === correctKey)).toHaveLength(1);
         const pickCorrect = i % 2 === 0;
         const idx = pickCorrect ? keys.indexOf(correctKey) : keys.findIndex(k => k !== correctKey);
         await answers.nth(idx).click();
-        if (pickCorrect) expectedScore++;
+        answered++; if (pickCorrect) expectedScore++;
         await expect(answers.nth(idx)).toHaveClass(pickCorrect ? /correct/ : /wrong/);
         if (!pickCorrect) await expect(page.locator('.answer.correct')).toHaveCount(1);
         await expect(page.locator('#quizScore')).toHaveText(String(expectedScore));
         await expect(page.locator('#feedback')).toHaveClass(/show/);
+        await page.evaluate(() => nextQuestion());
+        i++;
+        expect(i).toBeLessThan(60);
       }
-      await expect(page.locator('#result')).toHaveClass(/active/);
-      await expect(page.locator('#resultScore')).toHaveText(`${expectedScore} מתוך ${n} נכונות`);
+      await expect(page.locator('#resultScore')).toHaveText(`${expectedScore} מתוך ${answered} נכונות`);
       const s = await page.evaluate(() => JSON.parse(localStorage.getItem('quizStats')));
-      expect(s).toEqual({ correct: expectedScore, answered: n });
+      expect(s).toMatchObject({ correct: expectedScore, answered });
+      expect(s.byLevel[level]).toEqual({ a: answered, c: expectedScore });
       expect(errors).toEqual([]);
     });
   }
@@ -267,7 +269,7 @@ test.describe('app', () => {
   test('double click on answers counts only once', async ({ page }) => {
     await fresh(page);
     await page.click('button:has-text("מתחילים")');
-    const correctKey = await page.evaluate(() => quizQuestions[0].answer);
+    const correctKey = await page.evaluate(() => quizQuestions[0].q.answer);
     await page.locator(`.answer[data-answer="${correctKey}"]`).dblclick();
     await page.locator('.answer').first().click({ force: true }).catch(() => {});
     const s = await page.evaluate(() => [JSON.parse(localStorage.getItem('quizStats')).answered, progress.intro.pos]);
@@ -279,14 +281,14 @@ test.describe('app', () => {
     await page.click('button:has-text("מתחילים")');
     const seen = [];
     for (let i = 0; i < 3; i++) {
-      seen.push(await page.evaluate(() => quizQuestions[quizIndex].answer));
-      await page.locator('.answer').first().click();
+      seen.push(await page.evaluate(() => quizQuestions[quizIndex].q.answer));
+      await page.evaluate(() => { const e = quizQuestions[quizIndex]; [...document.querySelectorAll('.answer')].find(b => b.dataset.answer === e.q.answer).click(); });
       await page.waitForFunction(k => quizIndex === k, i + 1);
     }
     await page.reload();
     await expect(page.locator('#quizModeMeta')).toContainText('3/92');
     await page.click('button:has-text("מתחילים")');
-    const next = await page.evaluate(() => quizQuestions.map(q => q.answer));
+    const next = await page.evaluate(() => quizQuestions.map(e => e.q.answer));
     expect(next).toHaveLength(20);
     expect(next.filter(a => seen.includes(a))).toEqual([]);
   });
@@ -297,10 +299,10 @@ test.describe('app', () => {
     const sizes = [];
     for (let r = 0; r < 5; r++) {
       await page.evaluate(() => startQuiz());
-      const batch = await page.evaluate(() => quizQuestions.map(q => q.prompt));
+      const batch = await page.evaluate(() => quizQuestions.map(e => e.id));
       sizes.push(batch.length);
       seen.push(...batch);
-      await page.evaluate(() => { for (let i = 0; i < quizQuestions.length; i++) { document.querySelector('.answer').click(); nextQuestion(); } });
+      await page.evaluate(() => { for (let i = 0; i < quizQuestions.length; i++) { const e = quizQuestions[quizIndex]; [...document.querySelectorAll('.answer')].find(b => b.dataset.answer === e.q.answer).click(); nextQuestion(); } });
     }
     expect(sizes).toEqual([20, 20, 20, 20, 12]);
     expect(new Set(seen).size).toBe(92);
@@ -328,7 +330,7 @@ test.describe('app', () => {
 
   test('accuracy stat matches answers', async ({ page }) => {
     await fresh(page);
-    await page.evaluate(() => { startQuiz(); for (let i = 0; i < 4; i++) { const q = quizQuestions[quizIndex]; const b = [...document.querySelectorAll('.answer')].find(x => (x.dataset.answer === q.answer) === (i < 3)); b.click(); nextQuestion(); } goHome(); });
+    await page.evaluate(() => { startQuiz(); for (let i = 0; i < 4; i++) { const q = quizQuestions[quizIndex].q; const b = [...document.querySelectorAll('.answer')].find(x => (x.dataset.answer === q.answer) === (i < 3)); b.click(); nextQuestion(); } goHome(); });
     await expect(page.locator('#learnedCount')).toHaveText('3');
     await expect(page.locator('#bestScore')).toHaveText('75%');
   });

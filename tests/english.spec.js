@@ -55,8 +55,8 @@ for (const level of LEVELS) {
     const errors = await english(page);
     await page.evaluate(l => selectLevel(l), level);
     await page.click('button:has-text("Start practicing")');
-    const n = await page.evaluate(() => quizQuestions.length);
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; !(await page.locator('#result').evaluate(e => e.classList.contains('active'))); i++) {
+      expect(i).toBeLessThan(60);
       await page.waitForFunction(k => quizIndex === k && !quizLocked, i);
       expect(await visibleHebrew(page), `question ${i}`).toEqual([]);
       await page.locator('.answer').first().click();
