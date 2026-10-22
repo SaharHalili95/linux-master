@@ -1,0 +1,27 @@
+{
+  "id": "./",
+  "name": "Linux Master",
+  "short_name": "Linux Master",
+  "description": "מדריך אינטראקטיבי לפקודות לינוקס, שימושים ותרגול",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101613",
+  "theme_color": "#111916",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
