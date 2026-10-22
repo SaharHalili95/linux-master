@@ -32,10 +32,18 @@
 
 ## בדיקות
 
-בתיקייה `tests` יש כ־100 בדיקות Playwright (Chrome ו־iPhone WebKit) לתוכן, לזרימת המשחק, לשתי השפות, לעבודה בלי רשת ולעדכון גרסה, ובנוסף בדיקה שמריצה כל תשובה בשלבים 3-7 על Ubuntu בתוך Docker. הכל רץ אוטומטית ב־GitHub Actions בכל push.
+כל push מריץ ב־GitHub Actions שלוש עבודות, והאתר מתפרסם רק אם כולן עברו:
+
+- **browser:** כ־300 בדיקות Playwright על ארבעה מכשירים (Chrome, ‏iPhone 13, ‏Android, ‏iPhone SE): תוכן, זרימת משחק, חזרה על טעויות, מצב הקלדה (כולל מאות וריאציות שנוצרות אוטומטית), שתי השפות, עבודה בלי רשת ועדכון גרסה, נגישות WCAG 2.1 AA עם axe בכל מסך ובשתי השפות, ותקציב גודל.
+- **ubuntu-answers:** מריץ כל תשובה בשלבים 3-8, נכונה ושגויה, על Ubuntu אמיתי בתוך Docker.
+- **quality:** ‏ESLint, אימות HTML, ו־Lighthouse עם ספים (ביצועים 90, נגישות, שיטות עבודה ו־SEO 100).
+
+בנוסף, פעם בשבוע נבדק שכל הקישורים לשלבי Bandit עדיין חיים.
 
 ```bash
 cd tests && npm install && npx playwright install chromium webkit
 npx playwright test
 npm run sandbox
+npm run quality
+npx lhci autorun
 ```

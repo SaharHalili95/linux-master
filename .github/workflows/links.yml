@@ -1,0 +1,26 @@
+name: Links
+
+# The Bandit map links to every official level page; check weekly that none broke.
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bandit-pages:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check every Bandit level page
+        run: |
+          levels=$(node -e "const s=require('fs').readFileSync('index.html','utf8');console.log(JSON.parse(s.match(/const BANDIT_MAP = (\[.*?\]);\n/)[1]).map(r=>r[0]).join(' '))")
+          failed=0
+          for n in $levels; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --retry 2 "https://overthewire.org/wargames/bandit/bandit$n.html")
+            [ "$code" = "200" ] || { echo "bandit$n.html -> $code"; failed=1; }
+          done
+          exit $failed

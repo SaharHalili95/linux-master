@@ -22,7 +22,19 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('tests/package-lock.json') }}
+      - name: Install browsers (retried, each attempt capped)
+        timeout-minutes: 15
+        run: |
+          for attempt in 1 2 3; do
+            timeout 300 npx playwright install --with-deps chromium webkit && exit 0
+            echo "install attempt $attempt failed, retrying"
+          done
+          exit 1
       - run: npx playwright test
 
   ubuntu-answers:
@@ -37,9 +49,34 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - name: Run every stage 3-7 answer on Ubuntu
+      - name: Install Chromium (retried, each attempt capped)
+        timeout-minutes: 10
+        run: |
+          for attempt in 1 2 3; do
+            timeout 240 npx playwright install --with-deps chromium && exit 0
+          done
+          exit 1
+      - name: Run every stage 3-8 answer on Ubuntu
         run: |
           python3 -m http.server 8765 --directory .. &
           sleep 1
           npm run sandbox
+
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: ESLint
+        run: npm run lint
+      - name: HTML validation
+        run: npm run validate
+      - name: Lighthouse (performance, accessibility, best practices, SEO)
+        run: npx lhci autorun

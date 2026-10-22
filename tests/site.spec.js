@@ -208,10 +208,13 @@ test.describe('content @content', () => {
 
 test.describe('app', () => {
   test('loads with no console errors and no failed requests', async ({ page }) => {
+    const errors = await fresh(page);
+    await page.waitForLoadState('networkidle');
     const failed = [];
     page.on('requestfailed', r => failed.push(r.url()));
     page.on('response', r => { if (r.status() >= 400) failed.push(`${r.status()} ${r.url()}`); });
-    const errors = await fresh(page);
+    await page.reload();
+    await page.waitForLoadState('networkidle');
     await expect(page.locator('.level-card')).toHaveCount(8);
     await expect(page.locator('#commandCount')).toHaveText('46');
     expect({ errors, failed }).toEqual({ errors: [], failed: [] });
@@ -236,7 +239,7 @@ test.describe('app', () => {
       await page.evaluate(l => selectLevel(l), level);
       await page.click('button:has-text("מתחילים")');
       await expect(page.locator('#quiz')).toHaveClass(/active/);
-      let expectedScore = 0, answered = 0, i = 0;
+      let expectedScore = 0, answered = 0, i = 0, firstAnswered = 0, firstCorrect = 0;
       while (!(await page.locator('#result').evaluate(e => e.classList.contains('active')))) {
         const total = await page.evaluate(() => quizQuestions.length);
         await expect(page.locator('#quizCounter')).toHaveText(`${String(i + 1).padStart(2, '0')} / ${total}`);
@@ -248,8 +251,10 @@ test.describe('app', () => {
         expect(keys.filter(k => k === correctKey)).toHaveLength(1);
         const pickCorrect = i % 2 === 0;
         const idx = pickCorrect ? keys.indexOf(correctKey) : keys.findIndex(k => k !== correctKey);
+        const isRetry = await page.evaluate(() => !!quizQuestions[quizIndex].retry);
         await answers.nth(idx).click();
         answered++; if (pickCorrect) expectedScore++;
+        if (!isRetry) { firstAnswered++; if (pickCorrect) firstCorrect++; }
         await expect(answers.nth(idx)).toHaveClass(pickCorrect ? /correct/ : /wrong/);
         if (!pickCorrect) await expect(page.locator('.answer.correct')).toHaveCount(1);
         await expect(page.locator('#quizScore')).toHaveText(String(expectedScore));
@@ -260,8 +265,8 @@ test.describe('app', () => {
       }
       await expect(page.locator('#resultScore')).toHaveText(`${expectedScore} מתוך ${answered} נכונות`);
       const s = await page.evaluate(() => JSON.parse(localStorage.getItem('quizStats')));
-      expect(s).toMatchObject({ correct: expectedScore, answered });
-      expect(s.byLevel[level]).toEqual({ a: answered, c: expectedScore });
+      expect(s).toMatchObject({ correct: firstCorrect, answered: firstAnswered });
+      expect(s.byLevel[level]).toEqual({ a: firstAnswered, c: firstCorrect });
       expect(errors).toEqual([]);
     });
   }

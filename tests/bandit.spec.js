@@ -15,9 +15,9 @@ test('the Bandit map lists all 34 levels with official links, and remembers pass
   await expect(page.locator('.bandit-row')).toHaveCount(34);
   await expect(page.locator('.bandit-row').first().locator('a')).toHaveAttribute('href', 'https://overthewire.org/wargames/bandit/bandit0.html');
   await expect(page.locator('.bandit-row').nth(13).locator('strong')).toHaveText('משלב 12 לשלב 13');
-  await expect(page.locator('#banditProgress')).toHaveText('עברת 0 מתוך 34 שלבים');
+  await expect(page.locator('#banditProgress')).toHaveText('עברתם 0 מתוך 34 שלבים');
   await page.locator('.bandit-row').nth(3).locator('input').check();
-  await expect(page.locator('#banditProgress')).toHaveText('עברת 1 מתוך 34 שלבים');
+  await expect(page.locator('#banditProgress')).toHaveText('עברתם 1 מתוך 34 שלבים');
   await page.reload();
   await page.evaluate(() => openBandit());
   await expect(page.locator('.bandit-row').nth(3)).toHaveClass(/done/);
