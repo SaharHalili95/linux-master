@@ -96,8 +96,8 @@
       ['sed','שינוי זרם טקסט: החלפה ומחיקה','s/OLD/NEW/','החלפת הטקסט OLD ב־NEW בשורה','sed \'s/OLD/NEW/\' FILE'],
       ['xxd','הצגה והמרה של קובץ בהקסדצימלי','-l N','הגבלת הפלט ל־N בתים','xxd -l 32 FILE'],
       ['base64','קידוד ופענוח של נתונים בינאריים כטקסט','-d','פענוח נתוני Base64','base64 -d FILE'],
-      ['gzip','דחיסה ופתיחה של קבצים בפורמט ‎.gz','-d','פתיחת קובץ דחוס','gzip -d FILE.gz'],
-      ['bzip2','דחיסה ופתיחה של קבצים בפורמט ‎.bz2','-d','פתיחת קובץ דחוס','bzip2 -d FILE.bz2'],
+      ['gzip','דחיסה ופתיחה של קבצים בפורמט \u2066.gz\u2069','-d','פתיחת קובץ דחוס','gzip -d FILE.gz'],
+      ['bzip2','דחיסה ופתיחה של קבצים בפורמט \u2066.bz2\u2069','-d','פתיחת קובץ דחוס','bzip2 -d FILE.bz2'],
       ['tar','יצירה, הצגה וחילוץ של ארכיונים','-x','חילוץ קבצים מארכיון','tar -xf FILE.tar'],
       ['chmod','שינוי הרשאות גישה לקובץ','u+x','הוספת הרשאת הרצה לבעלים','chmod u+x FILE'],
       ['stat','הצגת מטא־נתונים, הרשאות וזמנים של קובץ','-c FORMAT','בחירת תבנית להצגת פרטי הקובץ','stat FILE'],
@@ -128,6 +128,8 @@
     ].map(([name, meaning, flag, flagMeaning, example]) => ({name, meaning, flag, flagMeaning, example}));
 
     const introNames = commands.map(item=>item.name);
+    const abbreviations = {ssh:'Secure SHell',ls:'LiSt',cd:'Change Directory',pwd:'Print Working Directory',cat:'conCATenate',grep:'Global Regular Expression Print',uniq:'UNIQue',tr:'TRanslate',awk:'Aho, Weinberger, Kernighan',sed:'Stream EDitor',gzip:'GNU ZIP',tar:'Tape ARchive',chmod:'CHange MODe',stat:'STATus',du:'Disk Usage',man:'MANual',whoami:'WHO AM I',id:'IDentity',ps:'Process Status',nc:'NetCat',openssl:'OPEN Secure Sockets Layer','ssh-keygen':'SSH KEY GENerator',scp:'Secure CoPy',bash:'Bourne Again SHell',cmp:'CoMPare',diff:'DIFFerence',wc:'Word Count',printf:'PRINT Formatted',env:'ENVironment',ln:'LiNk',cp:'CoPy',ltrace:'Library TRACE',strace:'System call TRACE'};
+    const fullName = name => abbreviations[name] ? `\u2066${name} (${abbreviations[name]})\u2069` : name;
     const pipeScenarios = [
       {prompt:'רוצים לראות רק את הקבצים בתיקייה ששמם מכיל את המילה log.',answer:'ls | grep log',wrong:['grep log | ls','ls | sort log','find | grep ls log'],explanation:'ls מוציא את רשימת הקבצים, והצינור מעביר אותה ל־grep שמשאיר רק שורות עם log.'},
       {prompt:'רוצים לראות את המשתמשים המחוברים כרגע, ממוינים לפי שם.',answer:'who | sort',wrong:['sort | who','who | grep sort','whoami | sort'],explanation:'who מציג את המשתמשים המחוברים, והצינור שולח את הרשימה אל sort שממיין אותה.'},
@@ -226,7 +228,7 @@
       const info=levelDetails[selectedLevel];$('levelNote').innerHTML=info.note;$('quizModeMeta').textContent=levelProgressText(selectedLevel);
     }
     const tutorialCurriculum = [
-      {key:'intro',label:'שלב 01',title:'פקודות בסיסיות',description:'מה כל פקודה עושה ומתי משתמשים בה.',lessons:introNames.map(name=>{const item=commands.find(entry=>entry.name===name);return {title:item.name,explanation:item.meaning,example:item.example};})},
+      {key:'intro',label:'שלב 01',title:'פקודות בסיסיות',description:'מה כל פקודה עושה ומתי משתמשים בה.',lessons:introNames.map(name=>{const item=commands.find(entry=>entry.name===name);return {title:fullName(item.name),explanation:item.meaning,example:item.example};})},
       {key:'functions',label:'שלב 02',title:'פקודה + שימושים',description:'לומדים אפשרויות, תחביר ודוגמאות שימוש מתוך המדריך.',lessons:guideUses.map(item=>({title:`${item.command} ${item.usage}`,explanation:item.meaning,example:item.usage.startsWith(item.command+' ')||item.usage===item.command?item.usage:`${item.command} ${item.usage}`}))},
       {key:'pipe',label:'שלב 03',title:'פקודות יחד',description:'הסימן | מעביר את הפלט של פקודה אחת אל הפקודה הבאה.',lessons:pipeScenarios.map(item=>({title:item.prompt,explanation:item.explanation,example:item.answer}))},
       {key:'pipeFunction',label:'שלב 04',title:'צינור + דגל אחד',description:'משלבים צינור עם דגל שמדייק את החיפוש או את הפלט.',lessons:pipeFlagScenarios.map(item=>({title:item.prompt,explanation:item.explanation,example:item.answer}))},
@@ -266,12 +268,12 @@
     function commandQuestion(item,pool){
       const prompts={ls:'איזו פקודה מציגה את הקבצים שבתיקייה?',cd:'איזו פקודה מעבירה אותנו לתיקייה אחרת?',pwd:'איזו פקודה מציגה איפה אנחנו נמצאים?',cat:'איזו פקודה מציגה את תוכן הקובץ?',file:'איזו פקודה מזהה את סוג הקובץ?',ssh:'באיזו פקודה מתחברים לשרת מרוחק?',whoami:'איזו פקודה מציגה את שם המשתמש הפעיל?',head:'איזו פקודה מציגה את תחילת הקובץ?',tail:'איזו פקודה מציגה את סוף הקובץ?',wc:'איזו פקודה סופרת שורות, מילים או תווים?'};
       const options=shuffle([item,...shuffle(pool.filter(option=>option.name!==item.name)).slice(0,3)]).map(option=>({key:option.name,label:option.name}));
-      return {tag:'שלב 01 / פקודות',prompt:prompts[item.name]||`איזו פקודה מתאימה לתיאור: ${item.meaning.replace(/\.$/,'')}?`,code:'',answer:item.name,optionMode:'command',options,explanation:`${item.name}: ${item.meaning} דוגמה: ${item.example}`};
+      return {tag:'שלב 01 / פקודות',prompt:prompts[item.name]||`איזו פקודה מתאימה לתיאור: ${item.meaning.replace(/\.$/,'')}?`,code:'',answer:item.name,optionMode:'command',options,explanation:`${fullName(item.name)}: ${item.meaning} דוגמה: ${item.example}`};
     }
     function commandMeaningQuestion(item,pool){
       const meanings=[...new Set(pool.filter(entry=>entry.meaning!==item.meaning).map(entry=>entry.meaning))];
       const options=shuffle([item.meaning,...shuffle(meanings).slice(0,3)]).map(meaning=>({key:meaning,label:meaning}));
-      return {tag:'שלב 01 / פקודות',prompt:`מה עושה הפקודה ${item.name}?`,code:item.name,answer:item.meaning,optionMode:'text',options,explanation:`${item.name}: ${item.meaning} דוגמה: ${item.example}`};
+      return {tag:'שלב 01 / פקודות',prompt:`מה עושה הפקודה ${fullName(item.name)}?`,code:item.name,answer:item.meaning,optionMode:'text',options,explanation:`${fullName(item.name)}: ${item.meaning} דוגמה: ${item.example}`};
     }
     function guideUseQuestion(item,pool){
       const meanings=[...new Set(pool.filter(entry=>entry!==item&&entry.meaning!==item.meaning).map(entry=>entry.meaning))];
