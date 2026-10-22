@@ -1,0 +1,11 @@
+{
+  "name": "linux-master-tests",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "sandbox": "node dump.js && python3 sandbox/make_run.py data.json > sandbox/run.sh && docker run --rm -v \"$PWD/sandbox\":/s ubuntu:24.04 bash -c 'apt-get update -qq >/dev/null && apt-get install -y -qq binutils procps file >/dev/null; bash /s/run.sh >/dev/null 2>&1; cp /results.tsv /s/results.tsv' && python3 sandbox/check_results.py data.json sandbox/results.tsv"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

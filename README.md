@@ -17,3 +17,13 @@
 3. להפעיל **פתיחה כיישום רשת** ולבחור **הוספה**.
 
 המשחק שומר את הניקוד וההתקדמות במכשיר (localStorage), בלי שרת ובלי חשבון. טעינה ראשונה דורשת חיבור לאינטרנט; לאחריה קובצי המשחק נשמרים לשימוש ללא רשת.
+
+## בדיקות
+
+בתיקייה `tests` יש כ־100 בדיקות Playwright (Chrome ו־iPhone WebKit) לתוכן, לזרימת המשחק, לשתי השפות, לעבודה בלי רשת ולעדכון גרסה, ובנוסף בדיקה שמריצה כל תשובה בשלבים 3-7 על Ubuntu בתוך Docker. הכל רץ אוטומטית ב־GitHub Actions בכל push.
+
+```bash
+cd tests && npm install && npx playwright install chromium webkit
+npx playwright test
+npm run sandbox
+```
