@@ -16,12 +16,12 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap"></noscript>
   <title>Linux Master</title>
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=21">
 </head>
 <body>
   <div class="shell">
     <header class="topbar">
-      <div class="brand"><div class="brand-mark">$_</div><div class="brand-name" dir="ltr">Linux <span>Master</span></div><div class="version" dir="ltr">v20</div></div>
+      <div class="brand"><div class="brand-mark">$_</div><div class="brand-name" dir="ltr">Linux <span>Master</span></div><div class="version" dir="ltr">v21</div></div>
       <div class="top-meta"><span class="status-dot"></span><span data-i18n="labTagline">מעבדת הפקודות שלכם</span><button class="lang-btn" id="langBtn" type="button" onclick="switchLanguage()">EN</button></div>
     </header>
     <main>
@@ -45,7 +45,7 @@
         </div>
         <p class="level-note" id="levelNote"><strong>מתחילים מהבסיס.</strong> בכל תשובה תקבלו גם הסבר ודוגמה, אין צורך לנחש ידע קודם.</p>
         <div class="toggles"><div class="segmented" id="modeToggle" role="group" aria-label="סוג תשובה" data-i18n-aria="modeLabel"><button type="button" data-value="choice" data-i18n="modeChoice" onclick="setAnswerMode('choice')">בחירה</button><button type="button" data-value="type" data-i18n="modeType" onclick="setAnswerMode('type')">הקלדה</button></div><div class="segmented" id="scopeToggle" role="group" aria-label="היקף שלב 02" data-i18n-aria="scopeLabel"><button type="button" data-value="core" onclick="setGuideScope('core')">ליבה</button><button type="button" data-value="all" onclick="setGuideScope('all')">הכל</button></div></div><p class="type-note" id="typeNote" hidden></p><div class="start-row"><button type="button" class="primary-btn" onclick="startQuiz()" data-i18n="startPractice">מתחילים לתרגל ←</button><span id="quizModeMeta"></span></div><section class="stats-panel"><h2 data-i18n="statsTitle">הסטטיסטיקה שלכם</h2><div id="levelStats" class="level-stats"></div><h3 data-i18n="weakTitle">פקודות לחזק</h3><div id="weakCommands" class="weak-commands"></div><h3 data-i18n="backupTitle">גיבוי ההתקדמות</h3><p class="panel-note" data-i18n="backupNote"></p><div class="panel-actions"><button type="button" class="secondary-btn" onclick="downloadBackup()" data-i18n="backupDownload">הורדת קובץ גיבוי</button><button type="button" class="secondary-btn" onclick="copyBackup()" data-i18n="backupCopy">העתקת קוד גיבוי</button><button type="button" class="secondary-btn" onclick="startRestore()" data-i18n="backupRestore">שחזור מקובץ או מקוד</button><input type="file" id="restoreFile" accept="application/json,.json,.txt" hidden onchange="restoreFromFile(this)"></div><h3 data-i18n="reminderTitle">תזכורת יומית</h3><p class="panel-note" data-i18n="reminderNote"></p><div class="panel-actions"><label class="time-label"><span data-i18n="reminderTime">שעה</span> <input type="time" id="reminderTime" value="20:00"></label><button type="button" class="secondary-btn" onclick="addReminder()" data-i18n="reminderAdd">הוספה ליומן</button></div></section>
-        <div class="section-head"><div><h2 data-i18n="banditTitle">מסלול Bandit</h2><p data-i18n="banditSub"></p></div><button type="button" class="secondary-btn" onclick="openBandit()" data-i18n="openBandit">פתיחת המסלול ←</button></div>
+        <div class="section-head"><div><h2 data-i18n="banditTitle">מסלול Bandit</h2><p data-i18n="banditSub"></p></div><span class="head-actions"><button type="button" class="secondary-btn" onclick="openBandit()" data-i18n="openBandit">פתיחת המסלול ←</button><button type="button" class="secondary-btn" onclick="openMissions()" data-i18n="openMissions">משימות בטרמינל ←</button></span></div>
         <div class="section-head"><div><h2 data-i18n="tutorials">הדרכות</h2><p data-i18n="tutorialsSub">בחרו נושא בסרגל וקבלו הסבר ודוגמאות צעד אחר צעד</p></div><button type="button" class="secondary-btn" onclick="openTutorials()" data-i18n="openTutorials">פתיחת ההדרכות ←</button></div>
         <section class="recent"><div class="recent-title"><h2 data-i18n="reminder">תזכורת קטנה</h2></div><div class="command-pills"><span class="pill" data-i18n="pill1">ls · רואים מה יש</span><span class="pill" data-i18n="pill2">cd · עוברים תיקייה</span><span class="pill" data-i18n="pill3">cat · קוראים קובץ</span><span class="pill" data-i18n="pill4">לא צריך לזכור הכול עכשיו</span></div></section>
       </section>
@@ -60,6 +60,19 @@
         <p class="bandit-note"><span data-i18n="banditNote"></span> <button class="primary-btn" type="button" onclick="practiceBandit()" data-i18n="banditPractice">תרגול שלב 08 ←</button></p>
         <ol class="bandit-list" id="banditList"></ol>
       </section>
+      <section id="missions" class="screen">
+        <div class="game-top"><div><button type="button" class="back-btn" onclick="goHome()" data-i18n="backHome">← חזרה למסך הראשי</button><h1 class="game-title" data-i18n="missionsTitle">משימות בטרמינל</h1><p class="game-subtitle" id="missionsProgress"></p></div></div>
+        <p class="panel-note" data-i18n="missionsIntro"></p>
+        <ol class="mission-list" id="missionList"></ol>
+        <div id="missionView" hidden>
+          <button type="button" class="back-btn" onclick="renderMissionList()" data-i18n="missionBack">← לכל המשימות</button>
+          <h2 id="missionTitle">משימה</h2><p id="missionGoal" class="mission-goal">—</p>
+          <button type="button" class="secondary-btn" onclick="toggleMissionHint()" data-i18n="missionHint">רמז</button><p id="missionHintText" class="panel-note" hidden></p>
+          <div class="terminal" dir="ltr"><pre class="term-output" id="termOutput" role="log" aria-live="polite" aria-label="טרמינל מדומה" data-i18n-aria="termLabel"></pre><div class="term-line"><label for="termInput" id="termPrompt" class="term-prompt">bandit@bandit:~$ </label><input id="termInput" class="term-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="הקלידו פקודה ולחצו Enter" data-i18n-placeholder="termPlaceholder" onkeydown="terminalKey(event)"></div></div>
+          <form class="mission-form" onsubmit="submitMission(event)"><label for="missionPassword" data-i18n="missionPasswordLabel">הסיסמה שמצאתם</label><input id="missionPassword" class="type-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="off"><button type="submit" class="primary-btn" data-i18n="missionSubmit">בדיקת סיסמה</button></form>
+          <p id="missionResult" class="mission-result" aria-live="polite"></p><button type="button" class="secondary-btn" id="missionNextBtn" onclick="nextMission()" data-i18n="missionNext" hidden>למשימה הבאה ←</button>
+        </div>
+      </section>
       <section id="quiz" class="screen">
         <div class="game-top"><div><button type="button" class="back-btn" onclick="goHome()" data-i18n="backHome">← חזרה למסך הראשי</button><h1 class="game-title" data-i18n="quizTitle">סבב טריוויה</h1><p class="game-subtitle" id="quizSubtitle" data-i18n="quizSubtitleDefault">בחרו את התשובה הנכונה. לומדים גם מהטעויות.</p></div><div class="counter" id="quizCounter">01 / 10</div></div>
         <div class="progress-track"><div class="progress-fill" id="quizProgress"></div></div>
@@ -72,9 +85,10 @@
     <footer><div class="footer-inner"><span data-i18n="footer1">Linux Master · מעבדת פקודות לינוקס</span><span data-i18n="footer2">תוכן לימודי מבוסס על מדריך Bandit המצורף</span></div></footer>
   </div>
   <div id="toast" class="toast" role="status"></div>
-  <script src="data/content.js?v=20"></script>
-  <script src="data/content.en.js?v=20"></script>
-  <script src="shell.js?v=20"></script>
-  <script src="app.js?v=20"></script>
+  <script src="data/content.js?v=21"></script>
+  <script src="data/content.en.js?v=21"></script>
+  <script src="shell.js?v=21"></script>
+  <script src="data/missions.js?v=21"></script>
+  <script src="app.js?v=21"></script>
 </body>
 </html>

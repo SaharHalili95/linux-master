@@ -344,6 +344,8 @@ const COMMANDS = {
       else if (a === '-name' || a === '-iname') { const g = args[++i], flags = a === '-iname' ? 'i' : ''; const re = new RegExp('^' + g.replace(/[.+^${}()|\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') + '$', flags); push(p => re.test(p.slice(p.lastIndexOf('/') + 1))); }
       else if (a === '-size') { const s = args[++i], m = s.match(/^([+-]?)(\d+)([ckMG]?)$/); if (!m) throw new ShellUnsupported('find -size'); const unit = { c: 1, k: 1024, M: 1048576, G: 1073741824, '': 512 }[m[3]]; push((p, info) => { if (info.dir) return false; const size = m[3] === '' || m[3] === 'k' || m[3] === 'M' || m[3] === 'G' ? Math.ceil(info.size / unit) : info.size; return m[1] === '+' ? size > +m[2] : m[1] === '-' ? size < +m[2] : size === +m[2]; }); }
       else if (a === '-executable') push((p, info) => info.dir || (info.mode & 0o111) !== 0);
+      else if (a === '-readable') push(p => !this.locked.has(p));
+      else if (a === '-print') continue;
       else if (a === '-user') { const u = args[++i]; push((p, info) => info.owner === u); }
       else if (a === '-group') { const g = args[++i]; push((p, info) => info.group === g); }
       else throw new ShellUnsupported(`find ${a}`);

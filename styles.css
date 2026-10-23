@@ -66,3 +66,17 @@
 .answer>span:last-child{min-width:0;overflow-wrap:anywhere}
 .answer code{overflow-wrap:anywhere;white-space:normal}
 .question-card h2,.feedback{overflow-wrap:anywhere}
+
+.head-actions{display:flex;flex-direction:column;gap:8px}
+.mission-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.mission-card{width:100%;text-align:start;display:grid;gap:4px;border:1px solid var(--line);border-radius:12px;background:#141b17;color:var(--text);padding:14px;font-size:14px;cursor:pointer}
+.mission-card span{color:#c9d4cb}.mission-card.done{border-color:#4f6b3a;background:#b4f36b0a}
+.mission-goal{font-size:16px;margin:4px 0 12px}
+.terminal{margin:14px 0;border:1px solid #303a32;border-radius:10px;background:#0b0f0d;text-align:left;overflow:hidden}
+.term-output{margin:0;padding:12px;max-height:46vh;min-height:140px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 var(--mono);color:#d7e3d9}
+.term-line{display:flex;align-items:center;gap:6px;border-top:1px solid #1f2923;padding:8px 12px}
+.term-prompt{font:13px var(--mono);color:var(--green);white-space:nowrap}
+.term-input{flex:1;min-width:0;background:transparent;border:0;color:#e8f2ea;font:16px var(--mono);padding:6px 0}
+.term-input:focus{outline:none}
+.mission-form{display:grid;gap:8px;max-width:420px;margin-top:6px}
+.mission-result{font-weight:600;min-height:1.4em}.mission-result.good{color:var(--green)}.mission-result.bad{color:#f3b8a8}

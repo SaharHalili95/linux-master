@@ -17,6 +17,6 @@ module.exports = defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'iphone-webkit', use: { ...devices['iPhone 13'] }, grepInvert: /@content/ },
     { name: 'android-chrome', use: { ...devices['Pixel 7'] }, grepInvert: /@content/, testMatch: ['site.spec.js', 'learning.spec.js', 'a11y.spec.js', 'english.spec.js', 'layout.spec.js'] },
-    { name: 'iphone-se', use: { ...devices['iPhone SE'] }, grepInvert: /@content/, testMatch: ['site.spec.js', 'a11y.spec.js', 'bandit.spec.js', 'layout.spec.js'] },
+    { name: 'iphone-se', use: { ...devices['iPhone SE'] }, grepInvert: /@content/, testMatch: ['site.spec.js', 'a11y.spec.js', 'bandit.spec.js', 'layout.spec.js', 'missions.spec.js'] },
   ],
 });

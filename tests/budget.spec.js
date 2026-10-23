@@ -6,7 +6,7 @@ const zlib = require('zlib');
 const root = path.resolve(__dirname, '..');
 
 test('page weight stays within budget', () => {
-  const files = ['index.html', 'styles.css', 'shell.js', 'app.js', 'data/content.js', 'data/content.en.js'];
+  const files = ['index.html', 'styles.css', 'shell.js', 'app.js', 'data/content.js', 'data/content.en.js', 'data/missions.js'];
   const gzipped = files.reduce((n, f) => n + zlib.gzipSync(fs.readFileSync(path.join(root, f))).length, 0);
   expect(gzipped, `the page is ${Math.round(gzipped / 1024)} KiB gzipped`).toBeLessThan(120 * 1024);
   for (const icon of ['icon-180.png', 'icon-192.png', 'icon-512.png']) expect(fs.statSync(path.join(root, icon)).size).toBeLessThan(40 * 1024);

@@ -7,6 +7,8 @@ const screens = {
   home: async () => {},
   tutorials: page => page.evaluate(() => openTutorials()),
   bandit: page => page.evaluate(() => openBandit()),
+  missions: page => page.evaluate(() => openMissions()),
+  missionTerminal: page => page.evaluate(() => { openMission(5); runTerminal('ls inhere'); }),
   quizChoice: page => page.evaluate(() => { selectLevel('pipe'); startQuiz(); }),
   quizFeedback: page => page.evaluate(() => { selectLevel('pipe'); startQuiz(); document.querySelector('.answer').click(); clearTimeout(questionTimer); }),
   quizTyping: page => page.evaluate(() => { setAnswerMode('type'); selectLevel('workflow'); startQuiz(); }),
