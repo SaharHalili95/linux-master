@@ -13,28 +13,18 @@ jobs:
   browser:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # Browsers and their system libraries come preinstalled in the official image for our
+    # Playwright version, so no apt step can hang or fight over the dpkg lock.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    env:
+      HOME: /root
     defaults:
       run:
         working-directory: tests
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
       - run: npm ci
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ hashFiles('tests/package-lock.json') }}
-      - name: Install browsers (retried, each attempt capped)
-        timeout-minutes: 15
-        run: |
-          for attempt in 1 2 3; do
-            timeout 300 npx playwright install --with-deps chromium webkit && exit 0
-            echo "install attempt $attempt failed, retrying"
-          done
-          exit 1
       - run: npx playwright test
 
   ubuntu-answers:
@@ -50,10 +40,14 @@ jobs:
           node-version: 22
       - run: npm ci
       - name: Install Chromium (retried, each attempt capped)
-        timeout-minutes: 10
+        timeout-minutes: 12
         run: |
           for attempt in 1 2 3; do
             timeout 240 npx playwright install --with-deps chromium && exit 0
+            echo "install attempt $attempt failed, clearing apt before retrying"
+            sudo pkill -9 -f 'apt-get|dpkg' || true
+            sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/cache/apt/archives/lock
+            sudo dpkg --configure -a || true
           done
           exit 1
       - name: Run every stage 3-8 answer on Ubuntu
