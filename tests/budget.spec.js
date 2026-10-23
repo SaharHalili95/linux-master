@@ -6,7 +6,7 @@ const zlib = require('zlib');
 const root = path.resolve(__dirname, '..');
 
 test('page weight stays within budget', () => {
-  const files = ['index.html', 'styles.css', 'app.js', 'data/content.js', 'data/content.en.js'];
+  const files = ['index.html', 'styles.css', 'shell.js', 'app.js', 'data/content.js', 'data/content.en.js'];
   const gzipped = files.reduce((n, f) => n + zlib.gzipSync(fs.readFileSync(path.join(root, f))).length, 0);
   expect(gzipped, `the page is ${Math.round(gzipped / 1024)} KiB gzipped`).toBeLessThan(120 * 1024);
   for (const icon of ['icon-180.png', 'icon-192.png', 'icon-512.png']) expect(fs.statSync(path.join(root, icon)).size).toBeLessThan(40 * 1024);
@@ -29,5 +29,5 @@ test('every file the service worker precaches exists', () => {
 
 test('the deploy workflow copies every file the site needs', () => {
   const pages = fs.readFileSync(path.join(root, '.github', 'workflows', 'pages.yml'), 'utf8');
-  for (const f of ['index.html', 'styles.css', 'app.js', 'cp -r data', 'sw.js', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png']) expect(pages, f).toContain(f);
+  for (const f of ['index.html', 'styles.css', 'shell.js', 'app.js', 'cp -r data', 'sw.js', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png']) expect(pages, f).toContain(f);
 });

@@ -13,7 +13,7 @@ const url = `http://localhost:${PORT}/`;
 
 test.beforeAll(async () => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lm-update-'));
-  for (const f of ['index.html', 'styles.css', 'app.js', 'sw.js', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'data']) fs.cpSync(path.join(SRC, f), path.join(dir, f), { recursive: true });
+  for (const f of ['index.html', 'styles.css', 'shell.js', 'app.js', 'sw.js', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'data']) fs.cpSync(path.join(SRC, f), path.join(dir, f), { recursive: true });
   // Like GitHub Pages: content-based ETags, so a change is seen however fast it happens.
   const types = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
   server = http.createServer((req, res) => {

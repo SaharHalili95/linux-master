@@ -34,7 +34,7 @@ jobs:
       - name: Prepare site files
         run: |
           mkdir _site
-          cp index.html styles.css app.js manifest.webmanifest sw.js icon-180.png icon-192.png icon-512.png _site/
+          cp index.html styles.css shell.js app.js manifest.webmanifest sw.js icon-180.png icon-192.png icon-512.png _site/
           cp -r data _site/
           touch _site/.nojekyll
       - name: Upload site artifact

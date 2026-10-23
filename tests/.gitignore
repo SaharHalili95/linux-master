@@ -6,3 +6,4 @@ sandbox/run.sh
 sandbox/results.tsv
 lighthouse-report/
 .lighthouseci/
+sandbox/diff-run.sh

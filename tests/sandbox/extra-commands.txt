@@ -1,0 +1,67 @@
+head -n -2 notes.txt
+tail -n +3 notes.txt
+head -n5 app.log
+tail -3 names.txt
+head -c 12 report.txt
+sort -f names.txt
+sort -f -u names.txt
+sort -u names.txt
+sort -r names.txt
+sort -n scores.txt
+sort -n -r scores.txt
+sort names.txt | uniq -d
+sort names.txt | uniq -u
+sort names.txt | uniq -c
+sort -f names.txt | uniq -i
+grep -v -c DEBUG app.log
+grep -i -c timeout app.log
+grep -E 'ERROR|WARN' app.log
+grep -n -w ssh app.log
+grep -l ERROR app.log report.txt
+grep -c ERROR app.log report.txt
+cut -c 1-4 names.txt
+cut -d ' ' -f 2-3 users.txt
+cut -d : -f 1,2 inventory.txt
+tr -d aeiou < words.txt
+tr -s a < words.txt
+tr a-z A-Z < report.txt
+tr '[:lower:]' '[:upper:]' < first.txt
+sed 's/o/0/g' report.txt
+sed 's/o/0/' report.txt
+sed -n '2,3p' notes.txt
+sed '/milk/d' notes.txt
+sed -n '/SSH/p' notes.txt
+awk -F : '{print $2}' inventory.txt
+awk '{print NF}' users.txt
+awk '{print NR}' first.txt
+awk '{print $NF}' app.log
+ls -a logs
+ls -r
+ls logs config
+du -h -s logs
+du -h logs
+du -s config
+cat -n first.txt
+cat first.txt second.txt | wc -l
+find . -iname '*report*' | sort
+find . -mindepth 2 -type f | sort
+find . -type f -name '*.log' | wc -l
+find . -maxdepth 1 -type d | sort
+du -h * | sort -h
+wc -c report.txt
+wc report.txt first.txt
+strings -n 6 data.bin
+base64 first.txt
+base64 first.txt | base64 -d
+echo hello world | wc -w
+mkdir -p a/b/c && find a | sort
+cp -r config cfg && find cfg | sort
+cp first.txt copy.txt && cat copy.txt
+mv first.txt moved.txt && ls | grep moved
+rm first.txt && ls | grep -c first
+cat missing.txt
+grep x missing.txt
+sort missing.txt
+ls missing
+cd logs && ls
+cd logs && pwd

@@ -58,6 +58,8 @@ jobs:
           exit 1
       - name: Run every stage 3-8 answer on Ubuntu
         run: npm run sandbox
+      - name: Simulated shell matches real Ubuntu, command for command
+        run: npm run diff
 
   quality:
     runs-on: ubuntu-24.04

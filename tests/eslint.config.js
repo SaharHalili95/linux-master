@@ -4,7 +4,8 @@ const globals = require('globals');
 // The page loads data/content.js, data/content.en.js and app.js as classic scripts that
 // share one global scope, so names declared in one file are globals in the next.
 const content = Object.fromEntries(['commands', 'introNames', 'abbreviations', 'fullName', 'pipeScenarios', 'pipeFlagScenarios', 'professionalScenarios',
-  'pipeTwoFlagScenarios', 'workflowScenarios', 'banditScenarios', 'BANDIT_MAP', 'guideUses', 'CONTENT'].map(name => [name, 'readonly']));
+  'pipeTwoFlagScenarios', 'workflowScenarios', 'banditScenarios', 'BANDIT_MAP', 'guideUses', 'CONTENT',
+  'Shell', 'ShellUnsupported', 'sameOutput', 'previewOutput', 'lessonFixture', 'banditFixture'].map(name => [name, 'readonly']));
 
 module.exports = [
   {
