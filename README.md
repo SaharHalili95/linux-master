@@ -1,49 +1,91 @@
 # Linux Master
 
-מדריך לימודי בעברית לפקודות לינוקס, עם אזור הדרכות וטריוויה בלבד. מסלול הלימוד מתקדם בשבעה שלבים: פקודות, שימושים מתוך המדריך, צינורות, צינור עם דגל, תרגול מקצועי, צינור עם כמה דגלים ותהליכי עבודה. שלב הפקודות כולל 46 פקודות, וכל פקודה נשאלת בשני הכיוונים (איזו פקודה עושה את זה, ומה הפקודה עושה), ושלב השימושים כולל את כל 450 רשומות השימוש שחולצו ממדריך Bandit. כל אחד מחמשת השלבים המעשיים כולל 15 תרחישים. התרגול מחולק לסבבים של עד 20 שאלות, וההתקדמות בכל שלב נשמרת אחרי כל תשובה, כך שאפשר לצאת באמצע ולהמשיך מאותה נקודה. אחרי כל תשובה מוצג הסבר, והמשחק עובר אוטומטית לשאלה הבאה לאחר שתי שניות.
+[![Tests](https://github.com/SaharHalili95/linux-master/actions/workflows/tests.yml/badge.svg)](https://github.com/SaharHalili95/linux-master/actions/workflows/tests.yml)
+[![Live site](https://img.shields.io/badge/live-saharhalili95.github.io%2Flinux--master-b4f36b)](https://saharhalili95.github.io/linux-master/)
 
-האתר זמין בעברית ובאנגלית: כפתור **EN / עב** בראש המסך מחליף את כל הממשק והתוכן, וההתקדמות משותפת לשתי השפות. כדי להוסיף שפה, מוסיפים מילון ל־`I18N` ולתוכן ל־`CONTENT` ב־`index.html`, ואת השפה ל־`LANGS`.
+A Linux command-line trainer that runs entirely in the browser, in English and Hebrew. It drills commands with spaced repetition, checks typed answers by running them in a simulated shell, and ends with 12 terminal missions shaped like the first levels of OverTheWire Bandit. It is an installable, offline-capable PWA with no server, no account and no build step.
 
-**לאתר:** https://saharhalili95.github.io/linux-master/
+**Live:** https://saharhalili95.github.io/linux-master/ · [עברית](README.he.md)
 
-## מסלול Bandit
+<p>
+  <img src="docs/screenshots/home-en.jpg" width="200" alt="Home screen with daily goal and levels">
+  <img src="docs/screenshots/typing-alternative-en.jpg" width="200" alt="A different typed command accepted because it produces the same output">
+  <img src="docs/screenshots/why-wrong-en.jpg" width="200" alt="Explanation of why the chosen answer is wrong">
+  <img src="docs/screenshots/mission-terminal-en.jpg" width="200" alt="Mission 6 solved with find in the simulated terminal">
+</p>
 
-- **שלב 08 · כלים ל־Bandit:** 30 שאלות על מה שהשלבים המתקדמים דורשים: שמות קבצים שמתחילים במקף, `find` עם גודל והרשאות, `2>/dev/null`, ROT13, `mktemp`, `xxd -r`, `nmap`, `chmod 600`, פקודה מרחוק ב־ssh, setuid, האזנה ברקע, cron, `md5sum`, לולאות, git, `vi` ו־`$0`. הדוגמאות כלליות ואינן הפתרונות של השלבים.
-- **מפת Bandit:** כל 34 השלבים, מה צריך לדעת בכל אחד, קישור לדף הרשמי וסימון "עברתי". בלי סיסמאות ובלי פתרונות.
+## Features
 
-## איך מתרגלים
+- **8 levels, about 1,100 questions:** 46 commands asked in both directions, all 450 usage lines from the Bandit guide, 75 pipe and workflow scenarios, and 30 Bandit-specific tools.
+- **Choice or typing, one tap to switch.** Typed answers are normalised (flag order, merged flags like `-la`, quoting, spacing). If the text still differs, the command runs in the simulated shell and is accepted when its output matches the reference answer.
+- **An explanation for every wrong answer:** what the command you picked actually does, and why it doesn't solve this task.
+- **Leitner review:** mistakes come back 4 questions later and at the start of later rounds until answered correctly.
+- **Terminal missions:** a simulated shell with pipes, redirection, globs, `find`, `awk`, `sed`, `strings`, `base64`, `tr` and more. Every visit plants a fresh random password, so there is nothing to memorise.
+- **Habits:** daily goal and streak, a calendar reminder (`.ics`), per-level and per-command accuracy.
+- **Your data stays yours:** progress lives in `localStorage`, with export to file or clipboard and restore.
+- **Full English and Hebrew** (RTL) interface and content, switchable at any time with shared progress.
 
-- **חזרה על טעויות:** שאלה שטעיתם בה חוזרת אחרי 4 שאלות באותו סבב, ובתחילת הסבבים הבאים (עד 5 בכל סבב) עד שעונים עליה נכון. שאלות שעניתם עליהן נכון כמה פעמים מופיעות פחות במחזורים הבאים.
-- **בחירה / הקלדה:** במצב הקלדה כותבים את הפקודה בעצמכם. הבדיקה סלחנית לסדר הדגלים, לאיחוד דגלים (`-la`), לרווחים ולמרכאות. שאלות שהתשובה שלהן היא תיאור נשארות בבחירה.
-- **ליבה / הכל:** בשלב 02 אפשר לתרגל רק 167 השימושים החשובים, עם התקדמות נפרדת.
-- **סטטיסטיקה:** דיוק לכל שלב, כמה שאלות מחכות לחזרה, והפקודות שכדאי לחזק.
+<p>
+  <img src="docs/screenshots/bandit-map-en.jpg" width="200" alt="Bandit map with links to practice missions">
+  <img src="docs/screenshots/stats-en.jpg" width="200" alt="Statistics panel with accuracy and backup">
+  <img src="docs/screenshots/home-he.jpg" width="200" alt="Home screen in Hebrew">
+  <img src="docs/screenshots/mission-terminal-he.jpg" width="200" alt="Terminal mission in Hebrew">
+</p>
 
-## פרסום ב-GitHub Pages
+## Architecture
 
-ה-workflow שב-`.github/workflows/pages.yml` מפרסם את האתר אוטומטית בכל push לענף `main`. ב-GitHub יש לבחור **Settings → Pages → Build and deployment → GitHub Actions**. כתובת האתר: `https://saharhalili95.github.io/linux-master/`.
+Plain HTML, CSS and classic scripts that share one global scope, loaded in order. No framework and no bundler.
 
-## התקנה באייפון
+```mermaid
+flowchart LR
+  subgraph data
+    C[content.js<br>Hebrew questions] --> E[content.en.js<br>English overlay]
+    M[missions.js<br>12 mission builders]
+  end
+  S[shell.js<br>lexer, parser, virtual FS,<br>~30 commands] --> A
+  E --> A[app.js<br>i18n, Leitner engine,<br>typing check, UI]
+  M --> A
+  A --> L[(localStorage)]
+  W[sw.js<br>network-first service worker] -. offline cache .- A
+```
 
-1. לפתוח את כתובת האתר ב-Safari.
-2. לבחור **שיתוף → הוספה למסך הבית**.
-3. להפעיל **פתיחה כיישום רשת** ולבחור **הוספה**.
+- **shell.js** parses a POSIX-like command line (quotes, `|`, `&&`, `||`, `;`, `>`, `2>/dev/null`, globs, variables) and runs it on an in-memory file system with modes, owners and locked directories. `sameOutput(a, b, fixture)` returns true, false, or "can't tell" for unsupported commands, so the checker never guesses.
+- **Offline and updates:** the service worker serves navigations network-first and falls back to the cache, and every asset URL is versioned, so phones pick up a new release on the next open.
 
-המשחק שומר את הניקוד וההתקדמות במכשיר (localStorage), בלי שרת ובלי חשבון. טעינה ראשונה דורשת חיבור לאינטרנט; לאחריה קובצי המשחק נשמרים לשימוש ללא רשת.
+## Testing
 
-## בדיקות
+Every push runs three CI jobs, and GitHub Pages deploys only after all of them pass.
 
-כל push מריץ ב־GitHub Actions שלוש עבודות, והאתר מתפרסם רק אם כולן עברו:
+| Job | What it checks |
+| --- | --- |
+| **browser** | About 380 Playwright tests on 4 devices (desktop Chrome, iPhone 13 WebKit, Pixel 7, iPhone SE): game flow, review scheduling, typing checks with hundreds of generated variations, both languages, offline and update flow, layout overflow, size budget, and **axe WCAG 2.1 AA** on every screen in both languages |
+| **ubuntu-answers** | Runs every correct and wrong answer of levels 3-8 on real Ubuntu 24.04 in Docker. Then a **differential test** runs 570 commands both in the simulator and in Ubuntu and requires identical output, plus a safety check that none of the 190 wrong options is accepted by output |
+| **quality** | ESLint, html-validate, and Lighthouse CI with hard thresholds (performance 90, accessibility, best practices and SEO 100; currently 98/100/100/100) |
 
-- **browser:** כ־300 בדיקות Playwright על ארבעה מכשירים (Chrome, ‏iPhone 13, ‏Android, ‏iPhone SE): תוכן, זרימת משחק, חזרה על טעויות, מצב הקלדה (כולל מאות וריאציות שנוצרות אוטומטית), שתי השפות, עבודה בלי רשת ועדכון גרסה, נגישות WCAG 2.1 AA עם axe בכל מסך ובשתי השפות, ותקציב גודל.
-- **ubuntu-answers:** מריץ כל תשובה בשלבים 3-8, נכונה ושגויה, על Ubuntu אמיתי בתוך Docker.
-- **quality:** ‏ESLint, אימות HTML, ו־Lighthouse עם ספים (ביצועים 90, נגישות, שיטות עבודה ו־SEO 100).
+A weekly job also checks that every link to the official Bandit pages is still alive.
 
-בנוסף, פעם בשבוע נבדק שכל הקישורים לשלבי Bandit עדיין חיים.
+### Bugs the tests caught
+
+- **Wrong options that were actually right.** The Ubuntu sandbox found a ROT13 distractor that decoded correctly, and a `|` option that worked by race condition.
+- **Simulator drift.** The differential test caught `file` column alignment, `wc` field widths, `ls` with several operands, `cp` into a missing directory, and a missing `/tmp`.
+- **Output checking too lenient.** The safety check found 15 wrong options that produced the "right" output in a too-simple fixture (for example `cat -` waiting on the keyboard, or `grep` missing a line at the end of a file). The fixtures were made richer until it reached 0.
+- **Phones.** The stats row overflowed on iPhone SE, and long answers overflowed narrow screens.
+- **Mixed languages.** A scan for Hebrew characters in the English UI found sentences assembled from Hebrew fragments.
+
+## Run locally
 
 ```bash
-cd tests && npm install && npx playwright install chromium webkit
-npx playwright test
-npm run sandbox
-npm run quality
-npx lhci autorun
+cd tests && npm ci && npx playwright install chromium webkit
+npx playwright test        # browser tests (serves the site itself)
+npm run sandbox            # answers on Ubuntu in Docker
+npm run diff               # simulator vs Ubuntu
+npm run quality            # lint + HTML validation
+npx lhci autorun           # Lighthouse
+node screenshots.js        # regenerate README screenshots (site on :8766)
 ```
+
+To add a language, add a dictionary to `I18N` in `app.js`, a content overlay to `CONTENT`, and the code to `LANGS`.
+
+## Install on a phone
+
+Open the site in Safari or Chrome and choose **Add to Home Screen**. After the first load it works without a network.
