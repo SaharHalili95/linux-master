@@ -10,7 +10,7 @@ const sampleProgress = {
 
 (async () => {
   const browser = await chromium.launch();
-  for (const lang of ['en', 'he']) {
+  for (const lang of ['en']) {
     const context = await browser.newContext({ ...devices['iPhone 13'], reducedMotion: 'reduce' });
     const page = await context.newPage();
     await page.goto('http://localhost:8766/');

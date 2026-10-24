@@ -5,7 +5,7 @@
 
 A Linux command-line trainer that runs entirely in the browser, in English and Hebrew. It drills commands with spaced repetition, checks typed answers by running them in a simulated shell, and ends with 12 terminal missions shaped like the first levels of OverTheWire Bandit. It is an installable, offline-capable PWA with no server, no account and no build step.
 
-**Live:** https://saharhalili95.github.io/linux-master/ · [עברית](README.he.md)
+**Live:** https://saharhalili95.github.io/linux-master/
 
 <p>
   <img src="docs/screenshots/home-en.jpg" width="200" alt="Home screen with daily goal and levels">
@@ -28,8 +28,6 @@ A Linux command-line trainer that runs entirely in the browser, in English and H
 <p>
   <img src="docs/screenshots/bandit-map-en.jpg" width="200" alt="Bandit map with links to practice missions">
   <img src="docs/screenshots/stats-en.jpg" width="200" alt="Statistics panel with accuracy and backup">
-  <img src="docs/screenshots/home-he.jpg" width="200" alt="Home screen in Hebrew">
-  <img src="docs/screenshots/mission-terminal-he.jpg" width="200" alt="Terminal mission in Hebrew">
 </p>
 
 ## Architecture
