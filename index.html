@@ -16,12 +16,12 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap"></noscript>
   <title>Linux Master</title>
-  <link rel="stylesheet" href="styles.css?v=21">
+  <link rel="stylesheet" href="styles.css?v=22">
 </head>
 <body>
   <div class="shell">
     <header class="topbar">
-      <div class="brand"><div class="brand-mark">$_</div><div class="brand-name" dir="ltr">Linux <span>Master</span></div><div class="version" dir="ltr">v21</div></div>
+      <div class="brand"><div class="brand-mark">$_</div><div class="brand-name" dir="ltr">Linux <span>Master</span></div><div class="version" dir="ltr">v22</div></div>
       <div class="top-meta"><span class="status-dot"></span><span data-i18n="labTagline">מעבדת הפקודות שלכם</span><button class="lang-btn" id="langBtn" type="button" onclick="switchLanguage()">EN</button></div>
     </header>
     <main>
@@ -77,6 +77,7 @@
         <div class="game-top"><div><button type="button" class="back-btn" onclick="goHome()" data-i18n="backHome">← חזרה למסך הראשי</button><h1 class="game-title" data-i18n="quizTitle">סבב טריוויה</h1><p class="game-subtitle" id="quizSubtitle" data-i18n="quizSubtitleDefault">בחרו את התשובה הנכונה. לומדים גם מהטעויות.</p></div><div class="counter" id="quizCounter">01 / 10</div></div>
         <div class="progress-track"><div class="progress-fill" id="quizProgress"></div></div>
         <div class="question-card"><div class="question-tag" id="questionTag">COMMAND ID</div><!-- [html-validate-disable-next empty-heading -- filled with the question when a round starts] --><h2 id="questionText"></h2><div class="question-code" id="questionCode" hidden></div></div>
+        <div class="hint-area"><button type="button" class="secondary-btn hint-btn" id="hintBtn" onclick="showHint()" data-i18n="hintBtn">💡 רמז</button><div id="hintText" class="hint-text" aria-live="polite" hidden></div></div>
         <div class="answers" id="answers"></div><div id="feedback" class="feedback" aria-live="polite"></div>
         <div class="quiz-actions"><div class="score-label"><span data-i18n="roundScore">נכונות בסבב</span> <strong id="quizScore">0</strong></div><button type="button" class="primary-btn" id="nextQuestion" onclick="nextQuestion()" data-i18n="nextQ" hidden>השאלה הבאה ←</button></div>
       </section>
@@ -85,10 +86,10 @@
     <footer><div class="footer-inner"><span data-i18n="footer1">Linux Master · מעבדת פקודות לינוקס</span><span data-i18n="footer2">תוכן לימודי מבוסס על מדריך Bandit המצורף</span></div></footer>
   </div>
   <div id="toast" class="toast" role="status"></div>
-  <script src="data/content.js?v=21"></script>
-  <script src="data/content.en.js?v=21"></script>
-  <script src="shell.js?v=21"></script>
-  <script src="data/missions.js?v=21"></script>
-  <script src="app.js?v=21"></script>
+  <script src="data/content.js?v=22"></script>
+  <script src="data/content.en.js?v=22"></script>
+  <script src="shell.js?v=22"></script>
+  <script src="data/missions.js?v=22"></script>
+  <script src="app.js?v=22"></script>
 </body>
 </html>

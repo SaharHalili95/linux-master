@@ -80,3 +80,8 @@
 .term-input:focus{outline:none}
 .mission-form{display:grid;gap:8px;max-width:420px;margin-top:6px}
 .mission-result{font-weight:600;min-height:1.4em}.mission-result.good{color:var(--green)}.mission-result.bad{color:#f3b8a8}
+
+.hint-area{margin:0 0 12px}.hint-btn{padding:8px 14px;font-size:14px}.hint-btn:disabled{opacity:.6;cursor:default}
+.hint-text{margin-top:10px;border:1px dashed #4f6b3a;border-radius:9px;padding:10px 14px;font-size:15px;line-height:1.6;color:#d5e6c6;background:#b4f36b0a;overflow-wrap:anywhere}
+.answer.eliminated{opacity:.35;text-decoration:line-through}
+.hint-text code{font:14px var(--mono);color:var(--green);unicode-bidi:isolate}
