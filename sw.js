@@ -1,5 +1,5 @@
-const CACHE = 'linux-master-v22';
-const FILES = ['./', './index.html', './styles.css?v=22', './shell.js?v=22', './data/missions.js?v=22', './app.js?v=22', './data/content.js?v=22', './data/content.en.js?v=22', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png'];
+const CACHE = 'linux-master-v23';
+const FILES = ['./', './index.html', './styles.css?v=23', './shell.js?v=23', './data/missions.js?v=23', './app.js?v=23', './data/content.js?v=23', './data/content.en.js?v=23', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png'];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', event => {
