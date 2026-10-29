@@ -12,9 +12,9 @@ const save = () => { try { localStorage.setItem(STORE, JSON.stringify(S)); } cat
 const liveStreak = () => (S.lastDay === dayKey() || S.lastDay === dayKey(-1)) ? S.streak : 0;
 const questDay = () => (S.quests.day === dayKey() ? S.quests : (S.quests = { day: dayKey(), xp: 0, perfect: 0, combo: 0, claimed: [] }));
 const QUESTS = [
-  { id: 'xp', icon: '⚡', text: 'צברו 30 XP', goal: 30 },
-  { id: 'perfect', icon: '🎯', text: 'סיימו שיעור בלי טעויות', goal: 1 },
-  { id: 'combo', icon: '🔥', text: '5 תשובות נכונות ברצף', goal: 5 },
+  { id: 'xp', icon: '⚡', text: 'qXp', goal: 30 },
+  { id: 'perfect', icon: '🎯', text: 'qPerfect', goal: 1 },
+  { id: 'combo', icon: '🔥', text: 'qCombo', goal: 5 },
 ];
 
 // Sound: short synthesized tones, no audio files.
@@ -65,7 +65,7 @@ function renderPath() {
   const current = NODES.findIndex(n => !S.done.includes(n.key));
   for (const unit of COURSE) {
     const banner = el('div', `unit-banner ${unit.color}${unit.locked ? ' locked' : ''}`);
-    const txt = el('div'); txt.append(el('div', 'unit-kicker', `חלק ${unit.section}, יחידה ${unit.unit}`), el('h2', '', unit.title), el('div', 'unit-sub', unit.subtitle));
+    const txt = el('div'); txt.append(el('div', 'unit-kicker', t('kicker', unit.section, unit.unit)), el('h2', '', tr(unit.title)), el('div', 'unit-sub', tr(unit.subtitle)));
     banner.append(txt, el('div', 'unit-book', unit.locked ? '🔒' : '📘')); root.append(banner);
     const list = el('ol', 'nodes');
     const nodes = unit.locked ? Array.from({ length: 5 }, (_, i) => ({ key: `u2-${i}`, kind: i === 4 ? 'boss' : 'lesson', lockedUnit: true })) : NODES;
@@ -75,9 +75,9 @@ function renderPath() {
       const b = el('button', `node ${n.kind} ${state}`); b.type = 'button';
       b.textContent = state === 'done' && n.kind !== 'chest' ? ICONS.done : state === 'locked' && n.kind === 'lesson' ? ICONS.lock : ICONS[n.kind];
       if (n.kind === 'boss') b.dir = 'ltr';
-      b.setAttribute('aria-label', n.lockedUnit ? 'נעול' : n.kind === 'lesson' ? `שיעור ${n.i + 1}: ${unit1.lessons[n.i].title}` : n.kind === 'chest' ? 'תיבת אוצר' : unit1.boss.title);
+      b.setAttribute('aria-label', n.lockedUnit ? t('locked') : n.kind === 'lesson' ? t('lessonN', n.i + 1, tr(unit1.lessons[n.i].title)) : n.kind === 'chest' ? t('chest') : tr(unit1.boss.title));
       b.onclick = () => openPop(b, n, state);
-      if (state === 'current') { const tip = el('div', 'start-tip', n.kind === 'chest' ? 'פתחו!' : 'התחילו'); li.append(tip); }
+      if (state === 'current') { const tip = el('div', 'start-tip', n.kind === 'chest' ? t('open') : t('start')); li.append(tip); }
       li.append(b);
       if (i === 2 && !unit.locked) { const m = el('div', 'path-mascot'); m.innerHTML = mascot(current > 2 ? 'happy' : 'idle'); li.append(m); }
       list.append(li);
@@ -89,14 +89,14 @@ function renderPath() {
 function openPop(anchor, n, state) {
   closePop(); SFX.tap();
   const pop = el('div', `pop ${state}`); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
-  if (state === 'locked') { pop.append(el('h3', '', n.lockedUnit ? 'יחידה 2: קריאת קבצים' : 'עוד לא'), el('p', '', n.lockedUnit ? 'נפתחת בגרסה המלאה.' : 'סיימו את השלבים הקודמים כדי לפתוח.')); }
+  if (state === 'locked') { pop.append(el('h3', '', n.lockedUnit ? t('unit2Title') : t('notYet')), el('p', '', n.lockedUnit ? t('unit2Text') : t('notYetText'))); }
   else if (n.kind === 'chest') {
-    pop.append(el('h3', '', state === 'done' ? 'התיבה נפתחה' : 'תיבת אוצר'), el('p', '', state === 'done' ? 'כבר קיבלתם ממנה 💎 15.' : 'יש בה יהלומים. היהלומים קונים הקפאת רצף.'));
-    if (state === 'current') { const go = el('button', 'btn primary', 'פתיחה \u2066+15 💎\u2069'); go.onclick = openChest; pop.append(go); }
+    pop.append(el('h3', '', state === 'done' ? t('chestOpened') : t('chest')), el('p', '', state === 'done' ? t('chestDone') : t('chestText')));
+    if (state === 'current') { const go = el('button', 'btn primary', t('chestBtn')); go.onclick = openChest; pop.append(go); }
   } else {
-    const title = n.kind === 'boss' ? unit1.boss.title : unit1.lessons[n.i].title;
-    pop.append(el('h3', '', title), el('p', '', n.kind === 'boss' ? 'משימה בטרמינל. מוצאים את מילת הקוד.' : `שיעור ${n.i + 1} מתוך ${unit1.lessons.length}`));
-    const go = el('button', 'btn primary', state === 'done' ? 'שוב \u2066+5 XP\u2069' : n.kind === 'boss' ? 'לאתגר \u2066+25 XP\u2069' : 'התחילו \u2066+10 XP\u2069');
+    const title = tr(n.kind === 'boss' ? unit1.boss.title : unit1.lessons[n.i].title);
+    pop.append(el('h3', '', title), el('p', '', n.kind === 'boss' ? t('bossText') : t('lessonOf', n.i + 1, unit1.lessons.length)));
+    const go = el('button', 'btn primary', state === 'done' ? t('again') : n.kind === 'boss' ? t('toBoss') : t('startXp'));
     go.onclick = () => { closePop(); n.kind === 'boss' ? startBoss() : startLesson(n.key, unit1.lessons[n.i].exercises, { title, replay: state === 'done' }); };
     pop.append(go);
   }
@@ -105,7 +105,7 @@ function openPop(anchor, n, state) {
 function outside(e) { if (!e.target.closest('#pop') && !e.target.closest('.node')) closePop(); }
 function closePop() { $('pop')?.parentElement.classList.remove('open'); $('pop')?.remove(); document.removeEventListener('click', outside); }
 function openChest() {
-  closePop(); S.gems += 15; S.done.push('c1'); save(); SFX.win(); confetti(); toast('💎 +15 יהלומים'); renderPath();
+  closePop(); S.gems += 15; S.done.push('c1'); save(); SFX.win(); confetti(); toast(t('gemsToast')); renderPath();
 }
 
 // ---------- Lesson engine ----------
@@ -117,16 +117,16 @@ function startLesson(key, exercises, opts = {}) {
 }
 function startBoss() {
   const boss = bossFixture();
-  startLesson('boss', [{ type: 'boss', prompt: unit1.boss.text, boss }], { title: unit1.boss.title, boss: true });
+  startLesson('boss', [{ type: 'boss', prompt: unit1.boss.text, boss }], { boss: true });
 }
 function next() {
   if (!L.queue.length) return finishLesson();
   L.ex = L.queue.shift(); L.answered = false; L.value = null;
   const ex = L.ex;
   $('bar').style.width = `${(L.correct / Math.max(1, L.total)) * 100}%`;
-  $('exTag').textContent = ex.type === 'teach' ? '✨ פקודה חדשה' : ex.retry ? '↻ טעות קודמת' : '';
+  $('exTag').textContent = ex.type === 'teach' ? t('newCmd') : ex.retry ? t('retry') : '';
   $('exTag').className = `ex-tag${ex.type === 'teach' ? ' new' : ex.retry ? ' retry' : ''}`;
-  $('exPrompt').textContent = ex.type === 'teach' ? '' : ex.prompt;
+  $('exPrompt').textContent = ex.type === 'teach' ? '' : tr(ex.prompt);
   $('exPrompt').hidden = ex.type === 'teach';
   const body = $('exBody'); body.innerHTML = ''; body.className = `ex-body ${ex.type}`;
   setFoot('idle'); RENDER[ex.type](body, ex);
@@ -139,13 +139,13 @@ function setFoot(mode, title = '', { label = '', sol = '', note = '' } = {}) {
   const detail = $('fbDetail'); detail.innerHTML = '';
   if (sol) { const row = el('div', 'fb-sol', label); const c = el('pre', 'cmd', sol); c.dir = 'ltr'; row.append(c); detail.append(row); }
   if (note) detail.append(el('div', 'fb-note', note));
-  $('checkBtn').textContent = mode === 'idle' ? (L.ex?.type === 'teach' ? 'הבנתי' : 'בדיקה') : 'המשך';
+  $('checkBtn').textContent = mode === 'idle' ? (L.ex?.type === 'teach' ? t('gotIt') : t('check')) : t('continue');
   $('reportLink').hidden = mode === 'idle';
   if (mode !== 'idle') $('reportLink').href = reportUrl();
   if (mode === 'idle') setCan(L.ex?.type === 'teach');
 }
 function reportUrl() {
-  const ex = L.ex, body = `**Prototype exercise:** \`${ex.uid}\` (${ex.type})\n\n> ${ex.prompt || ex.cmd}\n\n**Learner answer:** \`${L.value ?? ''}\`\n\n**Details:**\n`;
+  const ex = L.ex, body = `**Prototype exercise:** \`${ex.uid}\` (${ex.type})\n\n> ${tr(ex.prompt) || ex.cmd}\n\n**Language:** ${LANG}\n\n**Learner answer:** \`${L.value ?? ''}\`\n\n**Details:**\n`;
   return `https://github.com/SaharHalili95/linux-master/issues/new?${new URLSearchParams({ title: `Prototype report: ${ex.uid}`, labels: 'question-report', body })}`;
 }
 function onFootButton() {
@@ -157,13 +157,13 @@ function answer(ok, solution = '', why = '') {
   L.answered = true;
   if (ok) {
     L.correct++; L.combo++; L.best = Math.max(L.best, L.combo); SFX.good();
-    const praise = ['מעולה!', 'נכון!', 'יפה מאוד!', 'בדיוק!', 'אלופים!'];
-    setFoot('good', L.combo >= 3 ? `🔥 ${L.combo} ברצף!` : praise[Math.floor(Math.random() * praise.length)], { label: 'הפתרון: ', sol: L.ex.type === 'match' || L.ex.type === 'terminal' ? '' : solution, note: L.ex.type === 'terminal' ? solution : '' });
+    const praise = t('praise');
+    setFoot('good', L.combo >= 3 ? t('inARow', L.combo) : praise[Math.floor(Math.random() * praise.length)], { label: t('solution'), sol: ['match', 'terminal'].includes(L.ex.type) || L.ex.plain ? '' : solution, note: L.ex.type === 'terminal' ? solution : '' });
   } else {
     L.mistakes++; L.combo = 0; SFX.bad();
     L.queue.push({ ...L.ex, retry: true });
     if (!S.mistakes.includes(L.ex.uid) && !L.ex.uid.startsWith('boss')) S.mistakes.push(L.ex.uid);
-    setFoot('bad', 'התשובה הנכונה:', L.ex.type === 'terminal' ? { note: solution } : { sol: solution, note: why });
+    setFoot('bad', t('correctAnswer'), L.ex.type === 'terminal' ? { note: solution } : L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
     $('lessonMain').classList.remove('shake'); void $('lessonMain').offsetWidth; $('lessonMain').classList.add('shake');
   }
   if (ok && L.ex.retry) S.mistakes = S.mistakes.filter(id => id !== L.ex.uid);
@@ -171,7 +171,7 @@ function answer(ok, solution = '', why = '') {
   $('comboTag').textContent = L.combo >= 2 ? `🔥 ${L.combo}` : '';
   setCan(true); $('checkBtn').focus({ preventScroll: true }); save();
 }
-function quitLesson() { if (L && (L.correct || L.mistakes) && !confirm('לצאת מהשיעור? ההתקדמות בשיעור הזה לא תישמר.')) return; closeOverlays(); }
+function quitLesson() { if (L && (L.correct || L.mistakes) && !confirm(t('quitConfirm'))) return; closeOverlays(); }
 function closeOverlays() { ['lesson', 'end', 'streakScreen'].forEach(id => { $(id).hidden = true; }); document.body.classList.remove('in-lesson'); L = null; showTab('learn'); }
 
 // ---------- Exercise renderers ----------
@@ -190,19 +190,20 @@ const RENDER = {
   teach(root, ex) {
     const card = el('div', 'teach-card');
     const head = el('div', 'teach-head'); const m = el('div', 'teach-mascot'); m.innerHTML = mascot('happy');
-    const bubble = el('div', 'bubble'); bubble.append(code(ex.cmd), el('div', 'teach-name', ex.name), el('p', '', ex.text));
+    const bubble = el('div', 'bubble'); bubble.append(code(ex.cmd), el('div', 'teach-name', ex.name), el('p', '', tr(ex.text)));
     head.append(m, bubble); card.append(head);
     if (ex.demo) {
       const [setup, cmd] = ex.demo, sh = new Shell(unitFixture()), lines = [];
       for (const c of setup) { lines.push([promptFor(sh.cwd), c, '']); sh.run(c); }
       const ps1 = promptFor(sh.cwd), r = sh.run(cmd); lines.push([ps1, cmd, (r.out + r.err).replace(/\n$/, '')]);
-      card.append(el('div', 'demo-label', 'נסו לראות מה קורה:'), termBlock(lines));
-    } else if (ex.sample) card.append(el('div', 'demo-label', 'דוגמה לשורה בפלט:'), termBlock([['user@linux:~$ ', ex.cmd, ex.sample]]));
+      card.append(el('div', 'demo-label', t('tryIt')), termBlock(lines));
+    } else if (ex.sample) card.append(el('div', 'demo-label', t('sampleLine')), termBlock([['user@linux:~$ ', ex.cmd, ex.sample]]));
     root.append(card);
   },
   choice(root, ex) {
     const list = el('div', 'opts'); const pick = pickOne(list);
-    shuffle(ex.options).forEach((o, i) => list.append(optionButton(o, o, !ex.plain, pick, i))); root.append(list);
+    const items = ex.options.map((o, i) => [ex.plain ? String(i) : o, tr(o)]);
+    shuffle(items).forEach(([value, label], i) => list.append(optionButton(label, value, !ex.plain, pick, i))); root.append(list);
   },
   fill(root, ex) {
     const line = el('div', 'fill-line'); line.dir = 'ltr';
@@ -220,7 +221,7 @@ const RENDER = {
     const options = shuffle([real.out, ...[...new Set(wrong)].slice(0, 3)]);
     ex.solution = real.out;
     const list = el('div', 'opts outputs'); const pick = pickOne(list);
-    options.forEach((o, i) => { const b = optionButton('', o, false, pick, i); b.lastChild.replaceWith(Object.assign(el('pre', 'out-opt', o || '(אין פלט)'), { dir: 'ltr' })); list.append(b); });
+    options.forEach((o, i) => { const b = optionButton('', o, false, pick, i); b.lastChild.replaceWith(Object.assign(el('pre', 'out-opt', o || t('noOutput')), { dir: 'ltr' })); list.append(b); });
     root.append(list);
   },
   tiles(root, ex) {
@@ -252,14 +253,14 @@ const RENDER = {
       } else { [a, b].forEach(x => { x.classList.add('no'); setTimeout(() => x.classList.remove('no'), 450); }); L.matchMiss = true; SFX.bad(); }
     };
     shuffle(ex.pairs).forEach(([c]) => left.append(mk(c, 'cmd', c)));
-    shuffle(ex.pairs).forEach(([c, m]) => right.append(mk(m, 'mean', c)));
+    shuffle(ex.pairs).forEach(([c, m]) => right.append(mk(tr(m), 'mean', c)));
     grid.append(left, right); grid.addEventListener('click', e => { const b = e.target.closest('.pair'); if (b) onTap(b); });
     root.append(grid); $('checkBtn').disabled = true;
   },
   terminal(root, ex) { mountTerminal(root, ex, new Shell(unitFixture())); },
   boss(root, ex) {
     const goals = el('ul', 'goals');
-    const items = [['found', 'מצאו את הקובץ המוסתר (ls -a)'], ['read', 'קראו את התוכן שלו (cat)'], ['typed', 'הקלידו את מילת הקוד למטה']];
+    const items = [['found', t('goalFound')], ['read', t('goalRead')], ['typed', t('goalTyped')]];
     for (const [id, text] of items) { const li = el('li', '', text); li.dataset.goal = id; goals.append(li); }
     const boss = ex.boss;
     const mark = (id, on) => goals.querySelector(`[data-goal="${id}"]`).classList.toggle('done', on);
@@ -269,7 +270,7 @@ const RENDER = {
       mark('found', log.some(l => /^ls\b.*-\w*a/.test(l.cmd) && l.out.split('\n').includes('.code')));
       mark('read', log.some(l => l.out.includes(boss.word)));
     });
-    const row = el('div', 'code-row'); const lab = el('label', '', 'מילת הקוד:'); lab.htmlFor = 'codeWord';
+    const row = el('div', 'code-row'); const lab = el('label', '', t('codeWord')); lab.htmlFor = 'codeWord';
     const input = el('input'); input.id = 'codeWord'; input.dir = 'ltr'; input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off');
     input.oninput = () => { L.value = input.value.trim(); mark('typed', !!L.value); setCan(!!L.value); };
     input.onkeydown = e => { if (e.key === 'Enter' && L.value) { e.preventDefault(); onFootButton(); } };
@@ -281,27 +282,27 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
   const log = []; L.term = { sh, log };
   const box = el('div', 'term live'); box.dir = 'ltr'; const out = el('div', 'term-scroll');
   const form = el('form', 'term-input'); const ps = el('span', 'ps1', promptFor(sh.cwd));
-  const input = el('input'); input.setAttribute('aria-label', 'פקודה'); input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off'); input.enterKeyHint = 'send'; input.placeholder = 'פקודה';
+  const input = el('input'); input.setAttribute('aria-label', t('command')); input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off'); input.enterKeyHint = 'send'; input.placeholder = t('command');
   form.append(ps, input); box.append(out, form);
   form.onsubmit = e => {
     e.preventDefault(); const cmd = input.value.trim(); input.value = ''; if (!cmd || L.answered) return;
     const row = el('div', 'term-line'); row.append(el('span', 'ps1', promptFor(sh.cwd)), el('span', 'typed', cmd)); out.append(row);
     let text;
-    try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { text = err instanceof ShellUnsupported ? `${cmd.split(/\s+/)[0]}: הפקודה לא זמינה בטרמינל המדומה` : String(err.message); }
+    try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { text = err instanceof ShellUnsupported ? t('unsupported', cmd.split(/\s+/)[0]) : String(err.message); }
     if (text) out.append(el('pre', 'term-out', text));
     log.push({ cmd, out: text }); ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
     L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal') setCan(true); onRun(log);
   };
-  if (ex.hint) { const h = el('button', 'hint-link', '💡 רמז'); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', ex.hint)); }; root.append(box, h); } else root.append(box);
+  if (ex.hint) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(box, h); } else root.append(box);
   setTimeout(() => input.focus({ preventScroll: true }), 50);
 }
 const CHECK = {
-  choice: (ex, v) => ({ ok: v === ex.answer, solution: ex.answer, why: ex.why?.[v] || '' }),
+  choice: (ex, v) => ex.plain ? { ok: v === '0', solution: tr(ex.options[0]), why: tr(ex.why?.[v]) || '' } : { ok: v === ex.answer, solution: ex.answer, why: tr(ex.why?.[v]) || '' },
   fill: (ex, v) => ({ ok: v === ex.answer, solution: `${ex.before}${ex.answer}${ex.after}` }),
-  output: (ex, v) => ({ ok: v === ex.solution, solution: ex.solution || '(אין פלט)' }),
+  output: (ex, v) => ({ ok: v === ex.solution, solution: ex.solution || t('noOutput') }),
   tiles: (ex, v) => ({ ok: [ex.answer, ...(ex.accept || [])].includes(v), solution: ex.answer }),
-  terminal: ex => ({ ok: ex.goal(L.term.sh, L.term.log), solution: ex.hint }),
-  boss: (ex, v) => ({ ok: v === ex.boss.word, solution: `${ex.boss.word} (בתיקייה ${ex.boss.hideIn})`, why: `ls -a ${ex.boss.hideIn} ואז cat ${ex.boss.hideIn}/.code` }),
+  terminal: ex => ({ ok: ex.goal(L.term.sh, L.term.log), solution: tr(ex.hint) }),
+  boss: (ex, v) => ({ ok: v === ex.boss.word, solution: t('bossSolution', ex.boss.word, ex.boss.hideIn), why: t('bossWhy', ex.boss.hideIn) }),
 };
 
 // ---------- End of lesson ----------
@@ -317,18 +318,18 @@ function finishLesson() {
   save();
   $('lesson').hidden = true; $('end').hidden = false;
   $('endMascot').innerHTML = mascot('party');
-  $('endTitle').textContent = L.opts.boss ? 'ניצחתם את האתגר!' : perfect ? 'שיעור מושלם!' : 'השיעור הושלם!';
+  $('endTitle').textContent = L.opts.boss ? t('bossWon') : perfect ? t('perfect') : t('done');
   $('endXp').textContent = xp; $('endAcc').textContent = `${Math.round((L.correct / Math.max(1, L.correct + L.mistakes)) * 100)}%`;
   $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
-  $('endQuests').textContent = newly.length ? `🏆 השלמתם ${newly.length === 1 ? 'משימה יומית' : `${newly.length} משימות יומיות`}: +${newly.length * 10} 💎` : '';
+  $('endQuests').textContent = newly.length ? t('questsDone', newly.length) : '';
   $('endBtn').onclick = () => firstToday ? showStreak() : closeOverlays();
   SFX.win(); confetti(); $('endBtn').focus();
 }
 function showStreak() {
   $('end').hidden = true; $('streakScreen').hidden = false; $('streakBig').textContent = S.streak;
-  $('streakText').textContent = S.streak === 1 ? 'התחלתם רצף! חזרו מחר כדי להמשיך אותו.' : `${S.streak} ימים ברצף. אל תשברו אותו!`;
+  $('streakText').textContent = S.streak === 1 ? t('streakFirst') : t('streakMore', S.streak);
   const week = $('week'); week.innerHTML = '';
-  const names = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+  const names = t('days');
   for (let i = -6; i <= 0; i++) { const d = new Date(); d.setDate(d.getDate() + i); const on = S.days.includes(dayKey(i)); const c = el('div', `day${on ? ' on' : ''}${i === 0 ? ' today' : ''}`); c.append(el('span', 'dot', on ? '✓' : ''), el('span', '', names[d.getDay()])); week.append(c); }
   SFX.win(); $('streakBtn').focus();
 }
@@ -336,12 +337,12 @@ function showStreak() {
 // ---------- Other tabs ----------
 function allExercises() { return unit1.lessons.flatMap((ls, li) => ls.exercises.map((ex, i) => ({ ...ex, uid: `L${li}.${i}` }))).filter(e => e.type !== 'teach'); }
 function renderPractice() {
-  const n = S.mistakes.length; $('mistakesCount').textContent = n ? `${n} תרגילים שטעיתם בהם` : 'אין טעויות לתרגל. כל הכבוד!';
+  const n = S.mistakes.length; $('mistakesCount').textContent = n ? t('mistakesN', n) : t('noMistakes');
   $('practiceMistakes').disabled = !n;
 }
 function practice(kind) {
   const pool = allExercises(); const items = kind === 'mistakes' ? pool.filter(e => S.mistakes.includes(e.uid)) : shuffle(pool.filter(e => S.done.includes(e.uid.split('.')[0]))).slice(0, 8);
-  if (!items.length) return toast(kind === 'mistakes' ? 'אין טעויות לתרגל' : 'סיימו קודם שיעור אחד');
+  if (!items.length) return toast(kind === 'mistakes' ? t('noMistakesToast') : t('finishFirst'));
   L = null; startLesson('practice', items.map(e => ({ ...e })), { practice: true });
   L.queue.forEach((e, i) => { e.uid = items[i].uid; });
 }
@@ -350,7 +351,7 @@ function renderQuests() {
   for (const x of QUESTS) {
     const val = Math.min(x.goal, q[x.id] || 0), li = el('li', `quest${val >= x.goal ? ' done' : ''}`);
     const bar = el('div', 'qbar'); const fill = el('div', 'qfill'); fill.style.width = `${(val / x.goal) * 100}%`; bar.append(fill, el('span', 'qnum', `${val} / ${x.goal}`));
-    const body = el('div', 'qbody'); body.append(el('div', 'qtext', x.text), bar);
+    const body = el('div', 'qbody'); body.append(el('div', 'qtext', t(x.text)), bar);
     li.append(el('div', 'qicon', x.icon), body, el('div', 'qreward', val >= x.goal ? '✓' : '💎10')); list.append(li);
   }
 }
@@ -382,11 +383,22 @@ $('streakBtn').onclick = closeOverlays;
 $('practiceMistakes').onclick = () => practice('mistakes');
 $('practiceMix').onclick = () => practice('mix');
 $('soundToggle').onchange = e => { S.sound = e.target.checked; save(); };
-$('resetBtn').onclick = () => { if (confirm('למחוק את כל ההתקדמות באב הטיפוס?')) { S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {} }; save(); renderTop(); renderProfile(); toast('ההתקדמות אופסה'); } };
+$('resetBtn').onclick = () => { if (confirm(t('resetConfirm'))) { S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {} }; save(); renderTop(); renderProfile(); toast(t('resetDone')); } };
 document.addEventListener('keydown', e => {
   if ($('lesson').hidden || !L) return;
   if (e.target.tagName === 'INPUT') return;
   if (e.key === 'Enter' && !$('checkBtn').disabled) { e.preventDefault(); onFootButton(); return; }
   const n = Number(e.key); if (!L.answered && n >= 1 && n <= 9) $('exBody').querySelectorAll('.opt')[n - 1]?.click();
 });
+function applyLanguage() {
+  document.documentElement.lang = LANG; document.documentElement.dir = LANG === 'he' ? 'rtl' : 'ltr'; document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach(e => { e.textContent = t(e.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(e => { e.setAttribute('aria-label', t(e.dataset.i18nAria)); });
+  $('langBtn').title = t('langLabel'); $('langBtn').lang = LANG === 'he' ? 'en' : 'he';
+}
+$('langBtn').onclick = () => {
+  LANG = LANG === 'he' ? 'en' : 'he'; try { localStorage.setItem('lang', LANG); } catch { /* not persisted */ }
+  applyLanguage(); showTab(document.querySelector('.tab.active').id);
+};
+applyLanguage();
 showTab('learn');

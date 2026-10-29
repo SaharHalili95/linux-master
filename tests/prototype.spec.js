@@ -1,12 +1,15 @@
 const { test, expect } = require('@playwright/test');
 
 const SHOTS = process.env.PROTO_SHOTS;
+// The language button is labelled in the other language on purpose; everything else must match the UI language.
+const hebrewOnScreen = () => document.body.innerText.replace(document.getElementById('langBtn').innerText, '').match(/[\u0590-\u05ff]+/g);
 
 // Answers the current exercise correctly by reading the lesson state, the way a learner who knows the answer would.
-async function solve(page) {
-  const ex = await page.evaluate(() => ({ type: L.ex.type, answer: L.ex.answer, solution: L.ex.solution, before: L.ex.before, uid: L.ex.uid, boss: L.ex.boss && { word: L.ex.boss.word, dir: L.ex.boss.hideIn } }));
+async function solve(page, lang = 'he') {
+  if (lang === 'en') expect(await page.evaluate(hebrewOnScreen), 'Hebrew in English UI').toBeNull();
+  const ex = await page.evaluate(() => ({ type: L.ex.type, plain: L.ex.plain, answer: L.ex.answer, solution: L.ex.solution, before: L.ex.before, uid: L.ex.uid, boss: L.ex.boss && { word: L.ex.boss.word, dir: L.ex.boss.hideIn } }));
   if (ex.type === 'teach') { await page.click('#checkBtn'); return ex; }
-  if (ex.type === 'choice') await page.locator('.opt').filter({ hasText: ex.answer }).first().click();
+  if (ex.type === 'choice') await (ex.plain ? page.locator('.opt[data-value="0"]') : page.locator(`.opt[data-value="${ex.answer}"]`)).click();
   if (ex.type === 'output') await page.evaluate(s => [...document.querySelectorAll('.opt')].find(b => b.dataset.value === s).click(), ex.solution);
   if (ex.type === 'fill') await page.locator('.chips .tile', { hasText: ex.answer }).click();
   if (ex.type === 'tiles') for (const word of ex.answer.split(' ')) await page.locator('.bank .tile', { hasText: word }).filter({ hasText: new RegExp(`^${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) }).first().click();
@@ -31,22 +34,23 @@ async function solve(page) {
   return ex;
 }
 
-test('prototype: play the whole unit, chest and boss, with streak, XP and quests', async ({ page }) => {
+for (const lang of ['he', 'en']) test(`prototype: play the whole unit, chest and boss, with streak, XP and quests (${lang})`, async ({ page }) => {
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./prototype/');
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(l => { localStorage.clear(); localStorage.setItem('lang', l); }, lang);
   await page.reload();
-  if (SHOTS) await page.screenshot({ path: `${SHOTS}/path-start.png` });
+  await expect(page.locator('html')).toHaveAttribute('dir', lang === 'he' ? 'rtl' : 'ltr');
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/path-start-${lang}.png` });
 
   for (const node of ['L0', 'L1', 'c1', 'L2', 'L3', 'boss']) {
     await page.locator('.node.current').click();
     await page.locator('#pop .btn').click();
     if (node === 'c1') continue;
-    while (await page.locator('#lesson').isVisible()) await solve(page);
+    while (await page.locator('#lesson').isVisible()) await solve(page, lang);
     await expect(page.locator('#end')).toBeVisible();
-    if (SHOTS && node === 'L0') await page.screenshot({ path: `${SHOTS}/end-L0.png` });
+    if (SHOTS && node === 'L0') await page.screenshot({ path: `${SHOTS}/end-L0-${lang}.png` });
     await page.click('#endBtn');
     if (node === 'L0') { await expect(page.locator('#streakScreen')).toBeVisible(); if (SHOTS) await page.screenshot({ path: `${SHOTS}/streak.png` }); await page.click('#streakBtn'); }
   }
@@ -59,7 +63,8 @@ test('prototype: play the whole unit, chest and boss, with streak, XP and quests
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/path-done.png`, fullPage: true });
   await page.click('[data-tab="quests"]');
   await expect(page.locator('.quest.done')).toHaveCount(3);
-  if (SHOTS) await page.screenshot({ path: `${SHOTS}/quests.png` });
+  if (lang === 'en') expect(await page.evaluate(hebrewOnScreen)).toBeNull();
+  if (SHOTS) await page.screenshot({ path: `${SHOTS}/quests-${lang}.png` });
   expect(errors).toEqual([]);
 });
 
@@ -107,3 +112,76 @@ for (const scheme of ['light', 'dark']) {
     expect(problems).toEqual([]);
   });
 }
+
+test('the Trivia | Learn switch and the home card move between the two modes', async ({ page }) => {
+  await page.goto('./');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await expect(page.locator('#betaLink')).toHaveText('לנסות ←');
+  await page.click('#langBtn');
+  await expect(page.locator('#betaLink')).toHaveText('Try it →');
+  await expect(page.locator('.mode-switch .mode.on')).toHaveText('🎯 Trivia');
+  await page.click('#modeLearn');
+  await expect(page).toHaveURL(/\/prototype\/$/);
+  await expect(page.locator('.node.current')).toBeVisible();
+  await expect(page.locator('.mode-switch .mode.on')).toHaveText('🎓 Learn');
+  await page.click('.mode-switch a.mode');
+  await expect(page.locator('.level-card')).toHaveCount(8);
+  await page.click('#betaLink');
+  await expect(page).toHaveURL(/\/prototype\/$/);
+  await page.goBack();
+  await expect(page.locator('.level-card')).toHaveCount(8);
+});
+
+test('visiting the beta does not replace the main page in the offline cache', async ({ page, context, browserName }) => {
+  test.skip(browserName === 'webkit', 'Playwright WebKit does not support service workers');
+  await page.goto('./');
+  await page.waitForFunction(async () => (await navigator.serviceWorker.ready).active?.state === 'activated');
+  await page.reload();
+  await page.goto('./prototype/');
+  await expect(page.locator('.node.current')).toBeVisible();
+  await context.setOffline(true);
+  await page.goto('./');
+  await expect(page.locator('.level-card')).toHaveCount(8);
+  await context.setOffline(false);
+});
+
+test('the path never scrolls sideways, even with a popover open on the outermost node', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ done: ['L0', 'L1'] })); });
+  await page.reload();
+  const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(await overflow()).toBeLessThanOrEqual(0);
+  await page.locator('.node.current').click();
+  await expect(page.locator('#pop')).toBeVisible();
+  expect(await overflow()).toBeLessThanOrEqual(0);
+  const box = await page.locator('#pop').boundingBox(), width = page.viewportSize().width;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(width);
+});
+
+test('the language button switches Learn mode and the choice carries over to Trivia mode', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await expect(page.locator('.tabbar [data-tab="learn"]')).toContainText('לימוד');
+  await page.click('#langBtn');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+  await expect(page.locator('.tabbar [data-tab="learn"]')).toContainText('Learn');
+  await expect(page.locator('.unit-banner h2').first()).toHaveText('Where am I?');
+  await page.click('.mode-switch a.mode');
+  await expect(page.locator('#langBtn')).toHaveText('עב');
+  await expect(page.locator('.mode-switch .mode.on')).toHaveText('🎯 Trivia');
+});
+
+for (const lang of ['he', 'en']) test(`the top bar fits a small phone, with streak and gems visible (${lang})`, async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(l => { localStorage.clear(); localStorage.setItem('lang', l); }, lang);
+  await page.reload();
+  const width = page.viewportSize().width;
+  for (const sel of ['.mode-switch', '#langBtn', '.chip.streak', '.chip.gems']) {
+    const box = await page.locator(sel).boundingBox();
+    expect(box.x, sel).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width, sel).toBeLessThanOrEqual(width);
+  }
+});

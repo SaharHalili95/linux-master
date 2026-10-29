@@ -1,4 +1,4 @@
-# Duolingo-style prototype (throwaway)
+# Learn mode (beta)
 
 One full unit of the planned course ([materials/curriculum.md](../materials/curriculum.md), Unit 1 "Where am I?"), built to feel the Duolingo loop before replacing the current app.
 
@@ -6,7 +6,9 @@ One full unit of the planned course ([materials/curriculum.md](../materials/curr
 node tests/serve.js 8791
 ```
 
-Then open http://localhost:8791/prototype/ (phone size works best).
+Then open http://localhost:8791/prototype/ (phone size works best). Live: https://saharhalili95.github.io/linux-master/prototype/
+
+The Trivia | Learn switch in both top bars moves between the classic app and this mode. Both share the `lang` setting, so Hebrew or English carries over.
 
 ## What's in it
 
@@ -18,10 +20,9 @@ Then open http://localhost:8791/prototype/ (phone size works best).
 
 ## Known gaps
 
-- Hebrew only. No English yet.
 - `ls -l` isn't supported by the simulator, so it's taught by example only.
-- Not deployed: `pages.yml` copies only the root files.
-- Before deploying under the same origin, `sw.js` must stop caching every navigation as `./index.html`. Today a visit to `/prototype/` would overwrite the cached main page.
+- Not offline yet: the root service worker deliberately skips `/prototype/` so it never overwrites the main app's cached page.
+- No backup or export yet, unlike Trivia mode.
 - Progress is stored under its own `localStorage` key and doesn't touch the main app's progress.
 
 Tests: `tests/prototype.spec.js` plays the whole unit on desktop and phones.
