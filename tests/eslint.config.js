@@ -5,7 +5,8 @@ const globals = require('globals');
 // share one global scope, so names declared in one file are globals in the next.
 const content = Object.fromEntries(['commands', 'introNames', 'abbreviations', 'fullName', 'pipeScenarios', 'pipeFlagScenarios', 'professionalScenarios',
   'pipeTwoFlagScenarios', 'workflowScenarios', 'banditScenarios', 'BANDIT_MAP', 'guideUses', 'CONTENT',
-  'Shell', 'ShellUnsupported', 'sameOutput', 'previewOutput', 'lessonFixture', 'banditFixture', 'MISSIONS', 'missionPassword'].map(name => [name, 'readonly']));
+  'Shell', 'ShellUnsupported', 'sameOutput', 'previewOutput', 'lessonFixture', 'banditFixture', 'MISSIONS', 'missionPassword',
+  'COURSE', 'unitFixture', 'bossFixture'].map(name => [name, 'readonly']));
 
 module.exports = [
   {
