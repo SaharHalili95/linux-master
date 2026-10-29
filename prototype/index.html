@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="utf-8">
@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
-  <link rel="stylesheet" href="styles.css?v=p6">
+  <link rel="stylesheet" href="styles.css?v=p9">
 </head>
 <body>
   <div class="app">
@@ -56,11 +56,11 @@
   </div>
 
   <div id="lesson" class="overlay lesson" hidden>
-    <div class="lesson-top"><button type="button" id="quitBtn" class="quit" aria-label="יציאה מהשיעור">✕</button><div class="bar" role="progressbar" aria-label="התקדמות בשיעור"><div id="bar"></div></div><span id="comboTag" class="combo-tag"></span></div>
-    <div class="lesson-main" id="lessonMain"><div id="exTag" class="ex-tag"></div><h2 id="exPrompt" class="ex-prompt"></h2><div id="exBody" class="ex-body"></div></div>
+    <div class="lesson-top"><button type="button" id="quitBtn" class="quit" aria-label="יציאה מהשיעור">✕</button><div class="bar" aria-hidden="true"><div id="bar"></div></div><span id="comboTag" class="combo-tag"></span></div>
+    <div class="lesson-main" id="lessonMain"><div id="exTag" class="ex-tag"></div><!-- [html-validate-disable-next empty-heading -- filled with the exercise prompt when it renders] --><h2 id="exPrompt" class="ex-prompt"></h2><div id="exBody" class="ex-body"></div></div>
     <div id="foot" class="lesson-foot idle">
       <div class="foot-inner">
-        <div id="fbBox" class="fb" aria-live="polite" hidden><div class="fb-icon" aria-hidden="true"></div><div><div id="fbTitle" class="fb-title"></div><div id="fbDetail" class="fb-detail"></div><a id="reportLink" class="report" target="_blank" rel="noopener" hidden>🚩 דיווח על תקלה</a></div></div>
+        <div id="fbBox" class="fb" aria-live="polite" hidden><div class="fb-icon" aria-hidden="true"></div><div><div id="fbTitle" class="fb-title"></div><div id="fbDetail" class="fb-detail"></div><a id="reportLink" class="report" href="https://github.com/SaharHalili95/linux-master/issues/new" target="_blank" rel="noopener" hidden>🚩 דיווח על תקלה</a></div></div>
         <button type="button" id="checkBtn" class="btn primary big" disabled>בדיקה</button>
       </div>
     </div>
@@ -93,8 +93,8 @@
 
   <canvas id="confetti" class="confetti" hidden></canvas>
   <div id="toast" class="toast" role="status"></div>
-  <script src="../shell.js?v=p6"></script>
-  <script src="lessons.js?v=p6"></script>
-  <script src="app.js?v=p6"></script>
+  <script src="../shell.js?v=p9"></script>
+  <script src="lessons.js?v=p9"></script>
+  <script src="app.js?v=p9"></script>
 </body>
 </html>

@@ -81,3 +81,29 @@ test('prototype: a wrong answer turns the bar red, comes back at the end, and la
   expect(tail).toMatchObject({ uid: 'L0.1', retry: true });
   expect(await page.evaluate(() => S.mistakes)).toEqual(['L0.1']);
 });
+
+const AxeBuilder = require('@axe-core/playwright').default;
+for (const scheme of ['light', 'dark']) {
+  test(`prototype: accessibility of path, lesson, feedback and end screens (${scheme})`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: scheme });
+    await page.goto('./prototype/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    const axe = async name => {
+      const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+      return r.violations.map(v => `${name}: ${v.id} ${v.nodes.slice(0, 2).map(n => n.target.join(' ')).join(', ')}`);
+    };
+    const problems = [...await axe('path')];
+    await page.locator('.node.current').click();
+    problems.push(...await axe('popover'));
+    await page.locator('#pop .btn').click();
+    problems.push(...await axe('teach'));
+    await page.click('#checkBtn');
+    problems.push(...await axe('choice'));
+    await page.locator('.opt[data-value="ls"]').click();
+    await page.click('#checkBtn');
+    problems.push(...await axe('wrong'));
+    for (const tab of ['practice', 'quests', 'profile']) { await page.evaluate(() => closeOverlays()); await page.click(`[data-tab="${tab}"]`); problems.push(...await axe(tab)); }
+    expect(problems).toEqual([]);
+  });
+}
