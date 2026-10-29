@@ -5,7 +5,6 @@ const path = require('path');
 const out = name => path.join(__dirname, '..', 'docs', 'screenshots', `${name}.jpg`);
 const sampleProgress = {
   quizStats: JSON.stringify({ correct: 412, answered: 498, byLevel: { intro: { a: 180, c: 162 }, functions: { a: 140, c: 101 }, pipe: { a: 60, c: 52 }, workflow: { a: 40, c: 27 } }, byCommand: { find: { a: 30, c: 17 }, tar: { a: 12, c: 7 }, awk: { a: 14, c: 9 }, sort: { a: 40, c: 31 } } }),
-  daily: JSON.stringify({ [new Date().toISOString().slice(0, 10)]: 14 }),
 };
 
 (async () => {

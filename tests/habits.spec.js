@@ -22,7 +22,7 @@ test.describe('backup', () => {
     await reloaded;
     const after = await page.evaluate(() => Object.fromEntries(BACKUP_KEYS.map(k => [k, localStorage.getItem(k)]).filter(([, v]) => v !== null)));
     expect(after).toEqual(before);
-    expect(Object.keys(after)).toEqual(expect.arrayContaining(['quizStats', 'levelProgress', 'reviewState', 'banditDone', 'daily']));
+    expect(Object.keys(after)).toEqual(expect.arrayContaining(['quizStats', 'levelProgress', 'reviewState', 'banditDone']));
   });
 
   test('a broken or foreign code is refused and nothing changes', async ({ page }) => {
@@ -58,39 +58,41 @@ test.describe('backup', () => {
   });
 });
 
-test.describe('daily goal and streak', () => {
-  test('answers count toward today, retries do not', async ({ page }) => {
-    await fresh(page);
-    await page.evaluate(() => { selectLevel('pipe'); startQuiz(); const e = quizQuestions[0]; [...document.querySelectorAll('.answer')].find(b => b.dataset.answer !== e.q.answer).click(); clearTimeout(questionTimer); });
-    await page.evaluate(() => { quizIndex = quizQuestions.findIndex((e, i) => i > 0 && e.retry); renderQuestion(); document.querySelector('.answer').click(); clearTimeout(questionTimer); goHome(); });
-    await expect(page.locator('#dailyProgress')).toHaveText('היום 1/20');
-    expect(await page.evaluate(() => [document.getElementById('dailyBar').value, document.getElementById('dailyBar').max])).toEqual([1, 20]);
-  });
-
-  test('streak counts consecutive days that met the goal', async ({ page }) => {
-    await fresh(page);
-    const r = await page.evaluate(() => {
-      const now = new Date(2026, 9, 23, 12);
-      const key = offset => dayKey(new Date(2026, 9, 23 + offset));
-      return {
-        none: streakDays({}, 20, now),
-        todayMet: streakDays({ [key(0)]: 20, [key(-1)]: 25, [key(-2)]: 20, [key(-3)]: 5 }, 20, now),
-        todayPending: streakDays({ [key(0)]: 3, [key(-1)]: 20, [key(-2)]: 20 }, 20, now),
-        gap: streakDays({ [key(0)]: 20, [key(-2)]: 20 }, 20, now),
-        monthEdge: streakDays({ [dayKey(new Date(2026, 10, 1))]: 10, [dayKey(new Date(2026, 9, 31))]: 10 }, 10, new Date(2026, 10, 1, 9)),
-      };
+test.describe('questions per round', () => {
+  for (const size of [5, 10, 20]) {
+    test(`a round has ${size} questions, reviews included`, async ({ page }) => {
+      await fresh(page, { reviewState: JSON.stringify({ intro: { boxes: {}, review: [1, 3, 5, 7, 9, 11, 13] } }) });
+      await page.click(`#sizeToggle [data-value="${size}"]`);
+      const r = await page.evaluate(() => { selectLevel('intro'); startQuiz(); return { total: quizQuestions.length, reviews: quizQuestions.filter(e => e.review).length, counter: document.getElementById('quizCounter').textContent }; });
+      expect(r.total).toBe(size);
+      expect(r.reviews).toBeLessThanOrEqual(Math.ceil(size / 4));
+      expect(r.reviews).toBeGreaterThan(0);
+      expect(r.counter).toBe(`01 / ${size}`);
     });
-    expect(r).toEqual({ none: 0, todayMet: 3, todayPending: 2, gap: 1, monthEdge: 2 });
+  }
+
+  test('the choice is saved, shown on the level and kept in backups', async ({ page }) => {
+    await fresh(page);
+    await expect(page.locator('#sizeToggle [data-value="20"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.click('#sizeToggle [data-value="5"]');
+    await expect(page.locator('#quizModeMeta')).toContainText('סבבים של 5');
+    await page.reload();
+    await expect(page.locator('#sizeToggle [data-value="5"]')).toHaveAttribute('aria-pressed', 'true');
+    expect(await page.evaluate(() => BACKUP_KEYS.includes('roundSize'))).toBe(true);
   });
 
-  test('changing the goal is saved and updates the streak', async ({ page }) => {
+  test('progress carries over between rounds of different sizes', async ({ page }) => {
     await fresh(page);
-    await page.evaluate(() => { daily[dayKey(new Date())] = 12; save('daily', daily); renderDaily(); });
-    await expect(page.locator('#streak')).toHaveText('');
-    await page.click('#goalToggle [data-value="10"]');
-    await expect(page.locator('#streak')).toHaveText('🔥 יום אחד ברצף');
-    await page.reload();
-    await expect(page.locator('#goalToggle [data-value="10"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.click('#sizeToggle [data-value="5"]');
+    const r = await page.evaluate(() => {
+      selectLevel('pipe'); startQuiz();
+      const first = quizQuestions.map(e => e.id);
+      while (!document.getElementById('result').classList.contains('active')) { document.querySelector('.answer').click(); clearTimeout(questionTimer); nextQuestion(); }
+      setRoundSize(10); startQuiz();
+      return { first, next: quizQuestions.filter(e => !e.review && !e.retry).map(e => e.id), pos: progress.pipe.pos };
+    });
+    expect(r.pos).toBe(5);
+    expect(r.next.some(id => r.first.includes(id))).toBe(false);
   });
 });
 
