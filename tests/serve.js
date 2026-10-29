@@ -10,7 +10,7 @@ const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 
 
 http.createServer((req, res) => {
   const name = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-  const file = path.join(root, name === '/' ? 'index.html' : path.normalize(name).replace(/^(\.\.[/\\])+/, ''));
+  const file = path.join(root, path.normalize(name).replace(/^(\.\.[/\\])+/, ''), name.endsWith('/') ? 'index.html' : '');
   if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
   const type = types[path.extname(file)] || 'application/octet-stream';
   const body = fs.readFileSync(file);
