@@ -6,8 +6,21 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 const code = text => { const c = el('code', 'cmd', text); c.dir = 'ltr'; return c; };
 
 const DEFAULTS = { xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {} };
-let S = { ...DEFAULTS };
-try { S = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(STORE) || '{}') }; } catch { /* private mode: keep defaults */ }
+// Saved state can be stale or hand-edited; keep only fields of the expected type.
+function loadState(raw) {
+  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {} };
+  let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
+  if (!saved || typeof saved !== 'object') return S;
+  for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
+  for (const key of ['done', 'days', 'mistakes']) if (Array.isArray(saved[key])) S[key] = saved[key].filter(x => typeof x === 'string');
+  if (typeof saved.lastDay === 'string') S.lastDay = saved.lastDay;
+  if (typeof saved.sound === 'boolean') S.sound = saved.sound;
+  const q = saved.quests;
+  if (q && typeof q === 'object' && typeof q.day === 'string' && Array.isArray(q.claimed)) S.quests = { day: q.day, xp: +q.xp || 0, perfect: +q.perfect || 0, combo: +q.combo || 0, claimed: q.claimed.filter(x => typeof x === 'string') };
+  return S;
+}
+let S;
+try { S = loadState(localStorage.getItem(STORE)); } catch { S = loadState(null); }
 const save = () => { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch { /* not persisted */ } };
 const liveStreak = () => (S.lastDay === dayKey() || S.lastDay === dayKey(-1)) ? S.streak : 0;
 const questDay = () => (S.quests.day === dayKey() ? S.quests : (S.quests = { day: dayKey(), xp: 0, perfect: 0, combo: 0, claimed: [] }));
@@ -383,7 +396,7 @@ $('streakBtn').onclick = closeOverlays;
 $('practiceMistakes').onclick = () => practice('mistakes');
 $('practiceMix').onclick = () => practice('mix');
 $('soundToggle').onchange = e => { S.sound = e.target.checked; save(); };
-$('resetBtn').onclick = () => { if (confirm(t('resetConfirm'))) { S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {} }; save(); renderTop(); renderProfile(); toast(t('resetDone')); } };
+$('resetBtn').onclick = () => { if (confirm(t('resetConfirm'))) { S = loadState(null); save(); renderTop(); renderProfile(); toast(t('resetDone')); } };
 document.addEventListener('keydown', e => {
   if ($('lesson').hidden || !L) return;
   if (e.target.tagName === 'INPUT') return;

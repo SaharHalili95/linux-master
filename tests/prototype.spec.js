@@ -1,4 +1,6 @@
 const { test, expect } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
 
 const SHOTS = process.env.PROTO_SHOTS;
 // The language button is labelled in the other language on purpose; everything else must match the UI language.
@@ -184,4 +186,29 @@ for (const lang of ['he', 'en']) test(`the top bar fits a small phone, with stre
     expect(box.x, sel).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width, sel).toBeLessThanOrEqual(width);
   }
+});
+
+test('corrupted saved progress does not break Learn mode', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  for (const bad of ['{not json', 'null', '"text"', JSON.stringify({ done: 'L0', days: 5, mistakes: [1, null], quests: null, xp: 'lots', gems: -3, streak: {} })]) {
+    await page.goto('./prototype/');
+    await page.evaluate(v => { localStorage.clear(); localStorage.setItem('linux-master-proto', v); }, bad);
+    await page.reload();
+    await expect(page.locator('.node.current')).toBeVisible();
+    await page.click('[data-tab="quests"]');
+    await expect(page.locator('.quest')).toHaveCount(3);
+    await page.click('[data-tab="profile"]');
+    await expect(page.locator('#pXp')).toHaveText('0');
+  }
+  expect(errors).toEqual([]);
+});
+
+test('Pages deploys every file Learn mode loads', () => {
+  const root = path.join(__dirname, '..');
+  const html = fs.readFileSync(path.join(root, 'prototype/index.html'), 'utf8');
+  const local = [...html.matchAll(/(?:src|href)="([^"#:]+?)(?:\?[^"]*)?"/g)].map(m => m[1]).filter(f => !f.startsWith('..') && f !== './');
+  const deploy = fs.readFileSync(path.join(root, '.github/workflows/pages.yml'), 'utf8').match(/cp (prototype\/.*) _site\/prototype\//)[1].split(/\s+/);
+  expect(local.length).toBeGreaterThan(3);
+  for (const file of local) expect(deploy, file).toContain(`prototype/${file}`);
 });
