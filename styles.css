@@ -87,3 +87,4 @@
 .mode-switch{display:flex;border:1px solid var(--line);border-radius:999px;padding:2px;background:#151c18}.mode-switch .mode{padding:5px 11px;border-radius:999px;font-size:13px;font-weight:700;color:var(--muted);text-decoration:none;white-space:nowrap}.mode-switch .mode.on{background:var(--green);color:#14200f}.mode-switch a.mode:hover{color:var(--text)}
 @media (max-width:640px){.top-meta .tagline,.top-meta .status-dot{display:none}}
 @media (max-width:400px){.brand .version{display:none}.mode-switch .mode{padding:4px 8px;font-size:12px}}
+@media (max-width:360px){.brand .brand-name{display:none}}
