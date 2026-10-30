@@ -188,6 +188,32 @@ for (const lang of ['he', 'en']) test(`the top bar fits a small phone, with stre
   }
 });
 
+for (const lang of ['he', 'en']) test(`match tiles form an even grid on a phone (${lang})`, async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(l => { localStorage.clear(); localStorage.setItem('lang', l); }, lang);
+  await page.reload();
+  const boxes = await page.evaluate(() => COURSE[0].lessons.flatMap(l => l.exercises).filter(e => e.type === 'match').map(ex => {
+    startLesson('layout', [ex]);
+    return [...document.querySelectorAll('.pair')].map(b => { const r = b.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) }; });
+  }));
+  const width = page.viewportSize().width;
+  for (const tiles of boxes) {
+    expect(new Set(tiles.map(t => `${t.w}x${t.h}`)).size).toBe(1);
+    expect(new Set(tiles.map(t => t.x)).size).toBe(2);
+    expect(new Set(tiles.map(t => t.y)).size).toBe(tiles.length / 2);
+    for (const t of tiles) expect(t.x + t.w).toBeLessThanOrEqual(width);
+  }
+});
+
+test('the start bubble never covers the finished lesson above it', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ done: ['L0'] })); });
+  await page.reload();
+  const tip = await page.locator('.start-tip').boundingBox();
+  const above = await page.locator('.node-row:has(.start-tip)').locator('xpath=preceding-sibling::*[1]').locator('.node').boundingBox();
+  expect(tip.y).toBeGreaterThanOrEqual(above.y + above.height);
+});
+
 test('corrupted saved progress does not break Learn mode', async ({ page }) => {
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
