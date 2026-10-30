@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 
 async function fresh(page, setup = {}) {
-  await page.goto('./');
+  await page.goto('./?mode=trivia');
   await page.evaluate(values => { localStorage.clear(); for (const [k, v] of Object.entries(values)) localStorage.setItem(k, v); }, setup);
   await page.reload();
   await page.waitForFunction(() => typeof startQuiz === 'function');

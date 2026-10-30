@@ -11,7 +11,7 @@ async function fresh(page) {
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto('./');
+  await page.goto('./?mode=trivia');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.waitForFunction(() => typeof startQuiz === 'function');
@@ -51,7 +51,7 @@ test.describe('content @content', () => {
 
   test('every translation lines up with the Hebrew content', async ({ browser }) => {
     const page = await browser.newPage();
-    await page.goto('./');
+    await page.goto('./?mode=trivia');
     const sizes = await page.evaluate(() => ({
       guide: [CONTENT.en.guide.length, guideUses.length],
       commands: commands.every(c => CONTENT.en.commands[c.name]),

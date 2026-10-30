@@ -20,7 +20,7 @@ for (const lang of ['he', 'en']) {
   for (const [name, open] of Object.entries(screens)) {
     test(`accessibility: ${name} (${lang})`, async ({ page }) => {
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      await page.goto('./');
+      await page.goto('./?mode=trivia');
       await page.evaluate(l => { localStorage.clear(); localStorage.setItem('lang', l); }, lang);
       await page.reload();
       await page.waitForFunction(() => typeof startQuiz === 'function');

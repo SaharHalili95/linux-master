@@ -15,7 +15,7 @@
 <body>
   <div class="app">
     <header class="topbar">
-      <div class="course"><span class="course-mark" dir="ltr">$_</span><nav class="mode-switch" aria-label="מצב" data-i18n-aria="mode"><a class="mode" href="../" data-i18n="trivia">🎯 טריוויה</a><span class="mode on" aria-current="page" data-i18n="learn">🎓 למידה</span></nav></div>
+      <div class="course"><span class="course-mark" dir="ltr">$_</span><nav class="mode-switch" aria-label="מצב" data-i18n-aria="mode"><a class="mode" href="../?mode=trivia" data-i18n="trivia">🎯 טריוויה</a><span class="mode on" aria-current="page" data-i18n="learn">🎓 למידה</span></nav></div>
       <button type="button" class="lang-btn" id="langBtn" data-i18n="langBtn">EN</button>
       <div class="chip streak" id="streakChip" title="רצף ימים"><span aria-hidden="true">🔥</span><b id="streakN">0</b><span class="sr" data-i18n="streak">ימי רצף</span></div>
       <div class="chip gems" title="יהלומים"><span aria-hidden="true">💎</span><b id="gemsN">0</b><span class="sr" data-i18n="gems">יהלומים</span></div>
@@ -44,7 +44,7 @@
         <div class="card settings">
           <label class="switch"><input type="checkbox" id="soundToggle"><span data-i18n="sound">צלילים</span></label>
           <button type="button" class="btn ghost" id="resetBtn" data-i18n="reset">איפוס ההתקדמות</button>
-          <a class="btn ghost" href="../" data-i18n="toTrivia">למצב טריוויה ←</a>
+          <a class="btn ghost" href="../?mode=trivia" data-i18n="toTrivia">למצב טריוויה ←</a>
         </div>
       </section>
     </main>
@@ -94,7 +94,7 @@
 
   <canvas id="confetti" class="confetti" hidden></canvas>
   <div id="toast" class="toast" role="status"></div>
-  <script src="../shell.js?v=26"></script>
+  <script src="../shell.js?v=27"></script>
   <script src="i18n.js?v=p19"></script>
   <script src="units.js?v=p19"></script>
   <script src="lessons.js?v=p19"></script>

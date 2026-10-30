@@ -15,7 +15,7 @@ test('page weight stays within budget', () => {
 test('the page only talks to itself and Google Fonts', async ({ page }) => {
   const hosts = new Set();
   page.on('request', r => hosts.add(new URL(r.url()).hostname));
-  await page.goto('./');
+  await page.goto('./?mode=trivia');
   await page.waitForLoadState('networkidle');
   const allowed = new Set(['localhost', 'fonts.googleapis.com', 'fonts.gstatic.com']);
   expect([...hosts].filter(h => !allowed.has(h))).toEqual([]);

@@ -113,8 +113,18 @@ for (const scheme of ['light', 'dark']) {
   });
 }
 
-test('the Trivia | Learn switch and the home card move between the two modes', async ({ page }) => {
+test('the app opens in Learn mode, and Trivia stays put once chosen', async ({ page }) => {
   await page.goto('./');
+  await expect(page).toHaveURL(/\/prototype\/$/);
+  await expect(page.locator('.node.current')).toBeVisible();
+  await page.click('.mode-switch a.mode');
+  await expect(page.locator('.level-card')).toHaveCount(8);
+  await page.goto('./');
+  await expect(page.locator('.level-card')).toHaveCount(8);
+});
+
+test('the Trivia | Learn switch and the home card move between the two modes', async ({ page }) => {
+  await page.goto('./?mode=trivia');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await expect(page.locator('#betaLink')).toHaveText('לנסות ←');
@@ -135,7 +145,7 @@ test('the Trivia | Learn switch and the home card move between the two modes', a
 
 test('visiting the beta does not replace the main page in the offline cache', async ({ page, context, browserName }) => {
   test.skip(browserName === 'webkit', 'Playwright WebKit does not support service workers');
-  await page.goto('./');
+  await page.goto('./?mode=trivia');
   await page.waitForFunction(async () => (await navigator.serviceWorker.ready).active?.state === 'activated');
   await page.reload();
   await page.goto('./prototype/');
