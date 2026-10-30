@@ -2,7 +2,7 @@
   "ci": {
     "collect": {
       "url": [
-        "http://localhost:8790/"
+        "http://localhost:8790/?mode=trivia"
       ],
       "numberOfRuns": 3,
       "startServerCommand": "node serve.js 8790",

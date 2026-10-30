@@ -12,7 +12,7 @@ const sampleProgress = {
   for (const lang of ['en']) {
     const context = await browser.newContext({ ...devices['iPhone 13'], reducedMotion: 'reduce' });
     const page = await context.newPage();
-    await page.goto('http://localhost:8766/');
+    await page.goto('http://localhost:8766/?mode=trivia');
     await page.evaluate(([l, p]) => { localStorage.clear(); localStorage.setItem('lang', l); for (const [k, v] of Object.entries(p)) localStorage.setItem(k, v); }, [lang, sampleProgress]);
     await page.reload();
     await page.waitForFunction(() => typeof startQuiz === 'function');
