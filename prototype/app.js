@@ -90,7 +90,7 @@ function renderPath() {
       if (n.kind === 'boss') b.dir = 'ltr';
       b.setAttribute('aria-label', n.lockedUnit ? t('locked') : n.kind === 'lesson' ? t('lessonN', n.i + 1, tr(unit1.lessons[n.i].title)) : n.kind === 'chest' ? t('chest') : tr(unit1.boss.title));
       b.onclick = () => openPop(b, n, state);
-      if (state === 'current') { const tip = el('div', 'start-tip', n.kind === 'chest' ? t('open') : t('start')); li.append(tip); }
+      if (state === 'current') { const tip = el('div', 'start-tip', n.kind === 'chest' ? t('open') : t('start')); li.append(tip); li.classList.add('tipped'); }
       li.append(b);
       if (i === 2 && !unit.locked) { const m = el('div', 'path-mascot'); m.innerHTML = mascot(current > 2 ? 'happy' : 'idle'); li.append(m); }
       list.append(li);
@@ -253,7 +253,7 @@ const RENDER = {
     root.append(answerRow, bank);
   },
   match(root, ex) {
-    const grid = el('div', 'match'); const left = el('div', 'col'), right = el('div', 'col');
+    const grid = el('div', 'match-grid'); const left = el('div', 'col'), right = el('div', 'col');
     let picked = null, matched = 0;
     const mk = (text, side, key) => { const b = el('button', `tile pair ${side}`); b.type = 'button'; b.dataset.key = key; if (side === 'cmd') b.append(code(text)); else b.textContent = text; return b; };
     const onTap = b => {
