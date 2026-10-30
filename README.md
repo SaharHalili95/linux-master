@@ -19,6 +19,7 @@ A Linux command-line trainer that runs entirely in the browser, in English and H
 - **8 levels, about 1,100 questions:** 46 commands asked in both directions, all 450 usage lines from the Bandit guide, 75 pipe and workflow scenarios, and 30 Bandit-specific tools.
 - **Choice or typing, one tap to switch.** Typed answers are normalised (flag order, merged flags like `-la`, quoting, spacing). If the text still differs, the command runs in the simulated shell and is accepted when its output matches the reference answer.
 - **An explanation for every wrong answer:** what the command you picked actually does, and why it doesn't solve this task.
+- **Report a problem on any question:** one tap opens a pre-filled GitHub issue with the level, question id, options, correct answer and what the learner answered.
 - **Leitner review:** mistakes come back 4 questions later and at the start of later rounds until answered correctly.
 - **Terminal missions:** a simulated shell with pipes, redirection, globs, `find`, `awk`, `sed`, `strings`, `base64`, `tr` and more. Every visit plants a fresh random password, so there is nothing to memorise.
 - **Habits:** daily goal and streak, a calendar reminder (`.ics`), per-level and per-command accuracy.

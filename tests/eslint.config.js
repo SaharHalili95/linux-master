@@ -5,7 +5,10 @@ const globals = require('globals');
 // share one global scope, so names declared in one file are globals in the next.
 const content = Object.fromEntries(['commands', 'introNames', 'abbreviations', 'fullName', 'pipeScenarios', 'pipeFlagScenarios', 'professionalScenarios',
   'pipeTwoFlagScenarios', 'workflowScenarios', 'banditScenarios', 'BANDIT_MAP', 'guideUses', 'CONTENT',
-  'Shell', 'ShellUnsupported', 'sameOutput', 'previewOutput', 'lessonFixture', 'banditFixture', 'MISSIONS', 'missionPassword'].map(name => [name, 'readonly']));
+  'Shell', 'ShellUnsupported', 'sameOutput', 'previewOutput', 'lessonFixture', 'banditFixture', 'MISSIONS', 'missionPassword',
+  'COURSE', 'unitFixture', 'bossFixture', 'T', 'tr', 't', 'I18N'].map(name => [name, 'readonly']));
+// The prototype's i18n.js declares LANG and its app.js switches it.
+content.LANG = 'writable';
 
 module.exports = [
   {

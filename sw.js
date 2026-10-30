@@ -1,5 +1,5 @@
-const CACHE = 'linux-master-v24';
-const FILES = ['./', './index.html', './styles.css?v=24', './shell.js?v=24', './data/missions.js?v=24', './app.js?v=24', './data/content.js?v=24', './data/content.en.js?v=24', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png'];
+const CACHE = 'linux-master-v26';
+const FILES = ['./', './index.html', './styles.css?v=26', './shell.js?v=26', './data/missions.js?v=26', './app.js?v=26', './data/content.js?v=26', './data/content.en.js?v=26', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png'];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', event => {
@@ -14,6 +14,8 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  // The beta lives under the same scope; caching its pages here would replace the main app's index.html.
+  if (new URL(event.request.url).pathname.includes('/prototype/')) return;
   if (event.request.mode === 'navigate') {
     event.respondWith(fetch(event.request.url, { cache: 'no-cache' }).then(response => {
       const copy = response.clone();

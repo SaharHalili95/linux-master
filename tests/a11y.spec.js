@@ -11,6 +11,7 @@ const screens = {
   missionTerminal: page => page.evaluate(() => { openMission(5); runTerminal('ls inhere'); }),
   quizChoice: page => page.evaluate(() => { selectLevel('pipe'); startQuiz(); }),
   quizFeedback: page => page.evaluate(() => { selectLevel('pipe'); startQuiz(); document.querySelector('.answer').click(); clearTimeout(questionTimer); }),
+  quizReport: page => page.evaluate(() => { selectLevel('pipe'); startQuiz(); openReport(); }),
   quizTyping: page => page.evaluate(() => { setAnswerMode('type'); selectLevel('workflow'); startQuiz(); }),
   result: page => page.evaluate(() => { selectLevel('pipe'); startQuiz(); while (!document.getElementById('result').classList.contains('active')) { const e = quizQuestions[quizIndex]; [...document.querySelectorAll('.answer')].find(b => b.dataset.answer === e.q.answer).click(); clearTimeout(questionTimer); nextQuestion(); } }),
 };

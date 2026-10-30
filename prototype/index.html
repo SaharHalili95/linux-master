@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Linux Master · מצב למידה</title>
+  <meta name="description" content="מצב הלמידה של Linux Master: מסלול בסגנון דואולינגו עם שיעורים קצרים, XP ורצף.">
+  <link rel="icon" href="../icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+  <link rel="stylesheet" href="styles.css?v=p14">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="course"><span class="course-mark" dir="ltr">$_</span><nav class="mode-switch" aria-label="מצב" data-i18n-aria="mode"><a class="mode" href="../" data-i18n="trivia">🎯 טריוויה</a><span class="mode on" aria-current="page" data-i18n="learn">🎓 למידה</span></nav></div>
+      <button type="button" class="lang-btn" id="langBtn" data-i18n="langBtn">EN</button>
+      <div class="chip streak" id="streakChip" title="רצף ימים"><span aria-hidden="true">🔥</span><b id="streakN">0</b><span class="sr" data-i18n="streak">ימי רצף</span></div>
+      <div class="chip gems" title="יהלומים"><span aria-hidden="true">💎</span><b id="gemsN">0</b><span class="sr" data-i18n="gems">יהלומים</span></div>
+      <div class="chip xp" title="נקודות XP"><span aria-hidden="true">⚡</span><b id="xpN">0</b><span class="sr">XP</span></div>
+    </header>
+    <main>
+      <section id="learn" class="tab active" aria-label="מסלול הלימוד" data-i18n-aria="pathLabel"><div id="path" class="path"></div></section>
+      <section id="practice" class="tab">
+        <h1 class="tab-title" data-i18n="practiceTitle">תרגול</h1>
+        <div class="card practice-card"><div class="pc-icon">↻</div><div><h2 data-i18n="mistakesTitle">חזרה על טעויות</h2><p id="mistakesCount"></p></div><button type="button" class="btn primary" id="practiceMistakes" data-i18n="practiceBtn">תרגול</button></div>
+        <div class="card practice-card"><div class="pc-icon blue">⚡</div><div><h2 data-i18n="mixTitle">תרגול מעורב</h2><p data-i18n="mixText">8 תרגילים מהשיעורים שסיימתם</p></div><button type="button" class="btn blue" id="practiceMix" data-i18n="startBtn">התחלה</button></div>
+      </section>
+      <section id="quests" class="tab">
+        <h1 class="tab-title" data-i18n="questsTitle">משימות יומיות</h1>
+        <p class="tab-sub" data-i18n="questsSub">מתחדשות כל יום. כל משימה שווה 💎 10.</p>
+        <ul id="questList" class="quests"></ul>
+      </section>
+      <section id="profile" class="tab">
+        <div class="profile-head"><div id="profileMascot" class="profile-mascot"></div><div><h1 class="tab-title" data-i18n="profileTitle">הפרופיל שלי</h1><p class="tab-sub" data-i18n="profileSub">ההתקדמות נשמרת רק במכשיר הזה</p></div></div>
+        <div class="stats">
+          <div class="stat"><span aria-hidden="true">🔥</span><b id="pStreak">0</b><span data-i18n="pStreak">ימי רצף</span></div>
+          <div class="stat"><span aria-hidden="true">⚡</span><b id="pXp">0</b><span data-i18n="pXp">XP בסך הכול</span></div>
+          <div class="stat"><span aria-hidden="true">📘</span><b id="pLessons">0</b><span data-i18n="pLessons">שיעורים</span></div>
+          <div class="stat"><span aria-hidden="true">💎</span><b id="pGems">0</b><span data-i18n="pGems">יהלומים</span></div>
+        </div>
+        <div class="card settings">
+          <label class="switch"><input type="checkbox" id="soundToggle"><span data-i18n="sound">צלילים</span></label>
+          <button type="button" class="btn ghost" id="resetBtn" data-i18n="reset">איפוס ההתקדמות</button>
+          <a class="btn ghost" href="../" data-i18n="toTrivia">למצב טריוויה ←</a>
+        </div>
+      </section>
+    </main>
+    <nav class="tabbar" aria-label="ניווט" data-i18n-aria="nav">
+      <button type="button" data-tab="learn"><span aria-hidden="true">🏠</span><span data-i18n="tabLearn">לימוד</span></button>
+      <button type="button" data-tab="practice"><span aria-hidden="true">🏋️</span><span data-i18n="tabPractice">תרגול</span></button>
+      <button type="button" data-tab="quests"><span aria-hidden="true">🎯</span><span data-i18n="tabQuests">משימות</span></button>
+      <button type="button" data-tab="profile"><span aria-hidden="true">👤</span><span data-i18n="tabProfile">פרופיל</span></button>
+    </nav>
+  </div>
+
+  <div id="lesson" class="overlay lesson" hidden>
+    <div class="lesson-top"><button type="button" id="quitBtn" class="quit" aria-label="יציאה מהשיעור" data-i18n-aria="quit">✕</button><div class="bar" aria-hidden="true"><div id="bar"></div></div><span id="comboTag" class="combo-tag"></span></div>
+    <div class="lesson-main" id="lessonMain"><div id="exTag" class="ex-tag"></div><!-- [html-validate-disable-next empty-heading -- filled with the exercise prompt when it renders] --><h2 id="exPrompt" class="ex-prompt"></h2><div id="exBody" class="ex-body"></div></div>
+    <div id="foot" class="lesson-foot idle">
+      <div class="foot-inner">
+        <div id="fbBox" class="fb" aria-live="polite" hidden><div class="fb-icon" aria-hidden="true"></div><div><div id="fbTitle" class="fb-title"></div><div id="fbDetail" class="fb-detail"></div><a id="reportLink" class="report" href="https://github.com/SaharHalili95/linux-master/issues/new" target="_blank" rel="noopener" data-i18n="report" hidden>🚩 דיווח על תקלה</a></div></div>
+        <button type="button" id="checkBtn" class="btn primary big" disabled>בדיקה</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="end" class="overlay end" hidden>
+    <div class="end-inner">
+      <div id="endMascot" class="end-mascot"></div>
+      <h1 id="endTitle">השיעור הושלם!</h1>
+      <div class="end-stats">
+        <div class="es gold"><div class="es-h" data-i18n="endXp">סה״כ XP</div><div class="es-v"><span aria-hidden="true">⚡</span><span id="endXp">0</span></div></div>
+        <div class="es green"><div class="es-h" data-i18n="endAcc">דיוק</div><div class="es-v"><span aria-hidden="true">🎯</span><span id="endAcc" dir="ltr">0%</span></div></div>
+        <div class="es blue"><div class="es-h" data-i18n="endTime">זמן</div><div class="es-v"><span aria-hidden="true">⏱</span><span id="endTime" dir="ltr">0:00</span></div></div>
+      </div>
+      <p id="endQuests" class="end-quests"></p>
+    </div>
+    <div class="end-foot"><button type="button" id="endBtn" class="btn primary big" data-i18n="continue">המשך</button></div>
+  </div>
+
+  <div id="streakScreen" class="overlay streak-screen" hidden>
+    <div class="end-inner">
+      <div class="flame" aria-hidden="true">🔥</div>
+      <div class="streak-big" id="streakBig">1</div>
+      <h1 data-i18n="streakDays">ימי רצף</h1>
+      <p id="streakText"></p>
+      <div id="week" class="week"></div>
+    </div>
+    <div class="end-foot"><button type="button" id="streakBtn" class="btn primary big" data-i18n="continue">המשך</button></div>
+  </div>
+
+  <canvas id="confetti" class="confetti" hidden></canvas>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="../shell.js?v=26"></script>
+  <script src="i18n.js?v=p14"></script>
+  <script src="lessons.js?v=p14"></script>
+  <script src="app.js?v=p14"></script>
+</body>
+</html>
