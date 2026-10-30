@@ -1,5 +1,6 @@
-// Unit 1 of the Duolingo-style course. Correct outputs are never written by hand:
-// "output" exercises run the command in the simulated shell (../shell.js) on unitFixture().
+// The Duolingo-style course. Correct outputs are never written by hand:
+// "output" exercises run the command in the simulated shell (../shell.js) on the unit's fixture.
+// Every terminal exercise lists a `solve` the tests type in, so each goal is known to be reachable.
 function unitFixture() {
   return {
     cwd: '/home/user', env: { HOME: '/home/user', USER: 'user' },
@@ -49,7 +50,7 @@ const COURSE = [
         { type: 'teach', cmd: 'cd ..', name: 'parent directory', text: T('עולה תיקייה אחת למעלה. שתי הנקודות הן התיקייה שמעל.', 'Goes up one folder. The two dots mean the folder above.'), demo: [['cd projects', 'cd ..'], 'pwd'] },
         { type: 'tiles', prompt: T('עלו תיקייה אחת למעלה', 'Go up one folder'), answer: 'cd ..', tiles: ['cd', '..', '.', '~', 'ls'] },
         { type: 'terminal', prompt: T('היכנסו לתיקייה photos, ואז הדפיסו איפה אתם', 'Go into photos, then print where you are'), hint: T('קודם cd, אחר כך pwd', 'First cd, then pwd'),
-          goal: (sh, log) => sh.cwd === '/home/user/photos' && log.some(l => l.cmd === 'pwd' && l.out.trim() === '/home/user/photos') },
+          goal: (sh, log) => sh.cwd === '/home/user/photos' && log.some(l => l.cmd === 'pwd' && l.out.trim() === '/home/user/photos'), solve: ['cd photos', 'pwd'] },
         { type: 'output', prompt: T('מה תדפיס pwd עכשיו?', 'What will pwd print now?'), setup: ['cd projects', 'cd ..'], cmd: 'pwd', wrongText: ['/home', '/home/user/projects', '/'] },
       ] },
       { title: T('קבצים מוסתרים', 'Hidden files'), exercises: [
@@ -73,11 +74,16 @@ const COURSE = [
           why: [null, T('docs לבד עובד רק כשאתם בתיקייה שמכילה אותה.', 'docs alone only works when you are in the folder that contains it.'), T('שניהם יכולים להצביע על אותה תיקייה.', 'Both can point to the same folder.'), T('נתיב שלא מתחיל ב־/ מתחיל מהמקום שבו אתם.', 'A path that does not start with / starts from where you are.')] },
         { type: 'tiles', prompt: T('עברו לתיקייה docs בעזרת נתיב מלא', 'Go to docs using a full path'), answer: 'cd /home/user/docs', accept: ['cd ~/docs'], tiles: ['cd', '/home/user/docs', 'docs/home', 'ls', '..'] },
         { type: 'terminal', prompt: T('אתם ב־docs. עברו ל־projects בפקודת cd אחת', 'You are in docs. Get to projects with a single cd'), setup: ['cd docs'], hint: T('עלו למעלה ואז היכנסו: ‎../projects', 'Go up, then in: ../projects'),
-          goal: (sh, log) => sh.cwd === '/home/user/projects' && log.filter(l => /^cd\b/.test(l.cmd)).length === 1 },
+          goal: (sh, log) => sh.cwd === '/home/user/projects' && log.filter(l => /^cd\b/.test(l.cmd)).length === 1, solve: ['cd ../projects'] },
         { type: 'output', prompt: T('מה תדפיס הפקודה?', 'What will this print?'), setup: ['cd docs'], cmd: 'cd ../photos && pwd', wrongText: ['/home/user/docs/photos', '/photos', '/home/user/docs'] },
       ] },
     ],
     boss: { title: T('אתגר היחידה', 'Unit challenge'), text: T('בבית יש מילת קוד בקובץ מוסתר, באחת מהתיקיות. מצאו אותה.', 'There is a code word in a hidden file in one of the home folders. Find it.') },
   },
-  { section: 1, unit: 2, title: T('קריאת קבצים', 'Reading files'), subtitle: T('קוראים קבצים מההתחלה ומהסוף', 'Reading files from the start and the end'), color: 'purple', locked: true },
+  UNIT_2,
+  UNIT_3,
+  UNIT_4,
+  UNIT_5,
+  UNIT_6,
+  { section: 2, unit: 7, title: T('תבניות', 'Patterns'), subtitle: T('ביטויים רגולריים עם grep', 'Regular expressions with grep'), color: 'green', locked: true },
 ];

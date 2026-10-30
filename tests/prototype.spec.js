@@ -11,8 +11,7 @@ async function solve(page, lang = 'he') {
   if (lang === 'en') expect(await page.evaluate(hebrewOnScreen), 'Hebrew in English UI').toBeNull();
   const ex = await page.evaluate(() => ({ type: L.ex.type, plain: L.ex.plain, answer: L.ex.answer, solution: L.ex.solution, before: L.ex.before, uid: L.ex.uid, boss: L.ex.boss && { word: L.ex.boss.word, dir: L.ex.boss.hideIn } }));
   if (ex.type === 'teach') { await page.click('#checkBtn'); return ex; }
-  if (ex.type === 'choice') await (ex.plain ? page.locator('.opt[data-value="0"]') : page.locator(`.opt[data-value="${ex.answer}"]`)).click();
-  if (ex.type === 'output') await page.evaluate(s => [...document.querySelectorAll('.opt')].find(b => b.dataset.value === s).click(), ex.solution);
+  if (ex.type === 'choice' || ex.type === 'output') await page.evaluate(v => [...document.querySelectorAll('.opt')].find(b => b.dataset.value === v).click(), ex.type === 'output' ? ex.solution : ex.plain ? '0' : ex.answer);
   if (ex.type === 'fill') await page.locator('.chips .tile', { hasText: ex.answer }).click();
   if (ex.type === 'tiles') for (const word of ex.answer.split(' ')) await page.locator('.bank .tile', { hasText: word }).filter({ hasText: new RegExp(`^${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) }).first().click();
   if (ex.type === 'match') {
@@ -20,8 +19,7 @@ async function solve(page, lang = 'he') {
     for (const key of pairs) { await page.locator(`.pair.cmd[data-key="${key}"]`).click(); await page.locator(`.pair.mean[data-key="${key}"]`).click(); }
   }
   if (ex.type === 'terminal') {
-    const cmds = ex.uid.startsWith('L1') ? ['cd photos', 'pwd'] : ['cd ../projects'];
-    for (const c of cmds) { await page.fill('.term-input input', c); await page.press('.term-input input', 'Enter'); }
+    for (const c of await page.evaluate(() => L.ex.solve)) { await page.fill('.term-input input', c); await page.press('.term-input input', 'Enter'); }
   }
   if (ex.type === 'boss') {
     for (const c of [`ls -a ${ex.boss.dir}`, `cat ${ex.boss.dir}/.code`]) { await page.fill('.term-input input', c); await page.press('.term-input input', 'Enter'); }
@@ -212,6 +210,72 @@ test('the start bubble never covers the finished lesson above it', async ({ page
   const tip = await page.locator('.start-tip').boundingBox();
   const above = await page.locator('.node-row:has(.start-tip)').locator('xpath=preceding-sibling::*[1]').locator('.node').boundingBox();
   expect(tip.y).toBeGreaterThanOrEqual(above.y + above.height);
+});
+
+test('the whole course can be played to the end, unit after unit @content', async ({ page }) => {
+  test.setTimeout(240_000);
+  const errors = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
+  await page.reload();
+  const units = await page.evaluate(() => COURSE.filter(u => !u.locked).length);
+  for (let n = 0; n < units * 6; n++) {
+    await page.locator('.node.current').click();
+    await page.locator('#pop .btn').click();
+    if (!(await page.locator('#lesson').isVisible())) continue;
+    while (await page.locator('#lesson').isVisible()) await solve(page);
+    await page.click('#endBtn');
+    if (await page.locator('#streakScreen').isVisible()) await page.click('#streakBtn');
+  }
+  await expect(page.locator('.node.current')).toHaveCount(0);
+  const state = await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')));
+  expect(state.done).toHaveLength(units * 6);
+  expect(state.mistakes).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+// Checks every exercise against the simulator itself, so a typo in a lesson fails here instead of on a learner's phone.
+test('every exercise in every unit is answerable and fully translated @content', () => {
+  const vm = require('vm');
+  const root = path.join(__dirname, '..');
+  const src = ['shell.js', 'prototype/i18n.js', 'prototype/units.js', 'prototype/lessons.js'].map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
+  const ctx = vm.createContext({ localStorage: { getItem: () => null } });
+  vm.runInContext(`${src}\nthis.out = { COURSE, Shell };`, ctx);
+  const { COURSE, Shell } = ctx.out;
+  const run = (fx, setup, cmd) => { const sh = new Shell(fx()); for (const c of setup || []) sh.run(c); const r = sh.run(cmd); return (r.out + r.err).replace(/\n$/, ''); };
+  const texts = [];
+  const walk = v => { if (v && typeof v === 'object') { if ('he' in v && 'en' in v) texts.push(v); else Object.values(v).forEach(walk); } };
+  let count = 0;
+  for (const unit of COURSE.filter(u => !u.locked)) {
+    const fx = unit.fixture || ctx.unitFixture || (() => vm.runInContext('unitFixture()', ctx));
+    const exercises = [...unit.lessons.flatMap((l, li) => l.exercises.map((ex, i) => [`${unit.unit}/L${li}.${i}`, ex])), ...(unit.boss.exercises || []).map((ex, i) => [`${unit.unit}/boss.${i}`, ex])];
+    expect(unit.lessons, `unit ${unit.unit}`).toHaveLength(4);
+    walk(unit);
+    for (const [id, ex] of exercises) {
+      count++;
+      if (ex.demo) run(fx, ex.demo[0], ex.demo[1]);
+      if (ex.type === 'output') {
+        const real = run(fx, ex.setup, ex.cmd);
+        const wrong = new Set([...(ex.wrongCmds || []).map(c => run(fx, ex.setup, c)), ...(ex.wrongText || [])].filter(w => w !== real));
+        expect(wrong.size, `${id} needs wrong options`).toBeGreaterThanOrEqual(2);
+      }
+      if (ex.type === 'choice' && !ex.plain) { expect(ex.options, id).toContain(ex.answer); for (const k of Object.keys(ex.why || {})) expect(ex.options, id).toContain(k); }
+      if (ex.type === 'choice' && ex.plain) expect(ex.why, id).toHaveLength(ex.options.length);
+      if (ex.type === 'fill') expect(ex.options, id).toContain(ex.answer);
+      if (ex.type === 'tiles') { const bank = [...ex.tiles]; for (const w of ex.answer.split(' ')) { expect(bank, `${id}: ${w}`).toContain(w); bank.splice(bank.indexOf(w), 1); } }
+      if (ex.type === 'match') expect(new Set(ex.pairs.map(p => p[0])).size, id).toBe(ex.pairs.length);
+      if (ex.type === 'terminal') {
+        const sh = new Shell(fx()); for (const c of ex.setup || []) sh.run(c);
+        expect(ex.goal(sh, []), `${id} is solved before typing anything`).toBe(false);
+        const log = ex.solve.map(cmd => { const r = sh.run(cmd); return { cmd, out: (r.out + r.err).replace(/\n$/, '') }; });
+        expect(ex.goal(sh, log), `${id} solve does not reach the goal`).toBe(true);
+      }
+    }
+  }
+  expect(count).toBeGreaterThan(100);
+  for (const v of texts) { expect(v.he, JSON.stringify(v)).toBeTruthy(); expect(v.en, JSON.stringify(v)).toBeTruthy(); expect(v.en, v.en).not.toMatch(/[\u0590-\u05ff]/); }
 });
 
 test('corrupted saved progress does not break Learn mode', async ({ page }) => {
