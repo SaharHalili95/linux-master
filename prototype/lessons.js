@@ -57,7 +57,7 @@ const COURSE = [
       ] },
       { title: T('קבצים מוסתרים', 'Hidden files'), exercises: [
         { type: 'teach', cmd: 'ls -a', name: 'all', text: T('מציגה גם קבצים מוסתרים. קובץ ששמו מתחיל בנקודה לא מופיע ב־ls רגיל.', 'Also shows hidden files. A file whose name starts with a dot does not show up in plain ls.'), demo: [['cd projects'], 'ls -a'] },
-        { type: 'output', prompt: T('מה תדפיס הפקודה?', 'What will this print?'), setup: ['cd projects'], cmd: 'ls -a', wrongCmds: ['ls'], wrongText: ['.env'] },
+        { type: 'output', prompt: T('בתיקייה projects יש את app.py ואת הקובץ המוסתר ‎.env. מה תדפיס הפקודה?', 'The projects folder has app.py and the hidden file .env. What will this print?'), setup: ['cd projects'], cmd: 'ls -a', wrongCmds: ['ls'], wrongText: ['.env'] },
         { type: 'sentence', prompt: READ, text: T('קבצים ששמם מתחיל בנקודה מוסתרים. כדי לראות גם אותם כותבים ls ___.', 'Files whose name starts with a dot are hidden. To see them too, type ls ___.'), options: ['-a', '-l', '-n'], answer: '-a' },
         { type: 'fill', prompt: T('השלימו כדי לראות גם קבצים מוסתרים', 'Fill in the blank to see hidden files too'), before: 'ls ', after: '', options: ['-a', '-h', '..', '~'], answer: '-a' },
         { type: 'choice', prompt: T('מה הן . ו־.. שמופיעות בפלט של ls -a?', 'What are . and .. in the output of ls -a?'), plain: true,
@@ -72,7 +72,7 @@ const COURSE = [
         { type: 'choice', prompt: T('איזו פקודה תחזיר אתכם הביתה מכל מקום?', 'Which command takes you home from anywhere?'), options: ['cd ~', 'cd /', 'cd ..', 'ls ~'], answer: 'cd ~',
           why: { 'cd /': T('cd / לוקחת אתכם לשורש, לא הביתה.', 'cd / takes you to the root, not home.'), 'cd ..': T('cd .. עולה רק תיקייה אחת.', 'cd .. only goes up one folder.'), 'ls ~': T('ls ~ מציגה מה יש בבית, אבל לא מעבירה אתכם לשם.', 'ls ~ shows what is at home, but does not take you there.') } },
         { type: 'sentence', prompt: READ, text: T('הסימן ___ מייצג את תיקיית הבית שלכם.', 'The ___ sign stands for your home folder.'), options: ['~', '/', '..'], answer: '~' },
-        { type: 'output', prompt: T('מה תדפיס הפקודה?', 'What will this print?'), setup: ['cd /'], cmd: 'ls', wrongCmds: ['ls ~'], wrongText: ['/'] },
+        { type: 'output', prompt: T('בשורש יש שלוש תיקיות: etc, home ו־tmp. מה תדפיס הפקודה?', 'The root has three folders: etc, home and tmp. What will this print?'), setup: ['cd /'], cmd: 'ls', wrongCmds: ['ls ~'], wrongText: ['/'] },
         { type: 'choice', prompt: T('מה ההבדל בין ‎/home/user/docs לבין docs?', 'What is the difference between /home/user/docs and docs?'), plain: true,
           options: [T('הראשון נתיב מלא מהשורש, השני יחסי למקום שבו אתם', 'The first is a full path from the root, the second is relative to where you are'), T('אין הבדל', 'There is no difference'), T('הראשון תיקייה, השני קובץ', 'The first is a folder, the second a file'), T('השני תמיד מתחיל מהשורש', 'The second always starts at the root')],
           why: [null, T('docs לבד עובד רק כשאתם בתיקייה שמכילה אותה.', 'docs alone only works when you are in the folder that contains it.'), T('שניהם יכולים להצביע על אותה תיקייה.', 'Both can point to the same folder.'), T('נתיב שלא מתחיל ב־/ מתחיל מהמקום שבו אתם.', 'A path that does not start with / starts from where you are.')] },
