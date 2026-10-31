@@ -33,7 +33,7 @@ const UNIT_2 = {
   section: 1, unit: 2, title: T('קריאת קבצים', 'Reading files'), subtitle: T('קוראים קבצים מההתחלה ומהסוף', 'Reading files from the start and the end'), color: 'purple', fixture: homeFixture,
   lessons: [
     { title: T('cat', 'cat'), exercises: [
-      { type: 'teach', cmd: 'cat', name: 'concatenate', text: T('מדפיסה את כל התוכן של קובץ למסך.', 'Prints the whole content of a file to the screen.'), demo: [[], 'cat notes.txt'] },
+      { type: 'teach', known: true, cmd: 'cat', name: 'concatenate', text: T('כבר השתמשתם בה באתגר. היא מדפיסה את כל התוכן של קובץ למסך.', 'You already used it in the challenge. It prints the whole content of a file to the screen.'), demo: [[], 'cat notes.txt'] },
       { type: 'output', prompt: WHAT, cmd: 'cat readme.txt', wrongCmds: ['cat notes.txt'], wrongText: ['readme.txt', 'cat: readme.txt: No such file or directory'] },
       { type: 'choice', prompt: T('איזו פקודה מציגה את התוכן של קובץ?', 'Which command shows what is inside a file?'), options: ['cat', 'ls', 'cd', 'pwd'], answer: 'cat',
         why: { ls: T('ls מציגה שמות של קבצים, לא את מה שכתוב בהם.', 'ls shows file names, not what is written in them.'), cd: T('cd עוברת לתיקייה.', 'cd moves you to a folder.'), pwd: T('pwd מדפיסה איפה אתם.', 'pwd prints where you are.') } },
