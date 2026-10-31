@@ -173,12 +173,12 @@ function answer(ok, solution = '', why = '') {
   if (ok) {
     L.correct++; L.combo++; L.best = Math.max(L.best, L.combo); SFX.good();
     const praise = t('praise');
-    setFoot('good', L.combo >= 3 ? t('inARow', L.combo) : praise[Math.floor(Math.random() * praise.length)], { label: t('solution'), sol: ['match', 'terminal'].includes(L.ex.type) || L.ex.plain ? '' : solution, note: L.ex.type === 'terminal' ? solution : '' });
+    setFoot('good', L.combo >= 3 ? t('inARow', L.combo) : praise[Math.floor(Math.random() * praise.length)], { label: t('solution'), sol: L.ex.type === 'match' || L.ex.plain ? '' : solution });
   } else {
     L.mistakes++; L.combo = 0; SFX.bad();
     L.queue.push({ ...L.ex, retry: true });
     if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss) S.mistakes.push(L.ex.uid);
-    setFoot('bad', t('correctAnswer'), L.ex.type === 'terminal' ? { note: solution } : L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
+    setFoot('bad', t('correctAnswer'), L.ex.type === 'terminal' ? { sol: solution } : L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
     $('lessonMain').classList.remove('shake'); void $('lessonMain').offsetWidth; $('lessonMain').classList.add('shake');
   }
   if (ok && L.ex.retry) S.mistakes = S.mistakes.filter(id => id !== L.ex.uid);
@@ -280,7 +280,18 @@ const RENDER = {
     grid.append(left, right); grid.addEventListener('click', e => { const b = e.target.closest('.pair'); if (b) onTap(b); });
     root.append(grid); $('checkBtn').disabled = true;
   },
-  terminal(root, ex) { mountTerminal(root, ex, new Shell(ex.fx())); },
+  terminal(root, ex) {
+    mountTerminal(root, ex, new Shell(ex.fx()));
+    if (!ex.ask) return;
+    // Counting tasks end with typing the number, so a learner has to read the result, not only run a command.
+    const sh = new Shell(ex.fx()); for (const c of [...(ex.setup || []), ...ex.solve]) L.expected = sh.run(c).out;
+    L.expected = L.expected.match(/\d+/)[0]; L.ask = '';
+    const row = el('div', 'code-row'); const lab = el('label', '', tr(ex.ask)); lab.htmlFor = 'askAnswer';
+    const input = el('input'); input.id = 'askAnswer'; input.dir = 'ltr'; input.inputMode = 'numeric'; input.autocomplete = 'off';
+    input.oninput = () => { L.ask = input.value.trim(); setCan(!!L.ask); };
+    input.onkeydown = e => { if (e.key === 'Enter' && L.ask) { e.preventDefault(); onFootButton(); } };
+    row.append(lab, input); root.append(row);
+  },
   boss(root, ex) {
     const goals = el('ul', 'goals');
     const items = [['found', t('goalFound')], ['read', t('goalRead')], ['typed', t('goalTyped')]];
@@ -314,7 +325,7 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
     try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { text = err instanceof ShellUnsupported ? t('unsupported', cmd.split(/\s+/)[0]) : String(err.message); }
     if (text) out.append(el('pre', 'term-out', text));
     log.push({ cmd, out: text }); ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
-    L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal') setCan(true); onRun(log);
+    L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal' && !ex.ask) setCan(true); onRun(log);
   };
   if (ex.hint) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(box, h); } else root.append(box);
   // Never steal focus from a field the learner already moved to.
@@ -326,7 +337,7 @@ const CHECK = {
   fill: (ex, v) => ({ ok: v === ex.answer, solution: `${ex.before}${ex.answer}${ex.after}` }),
   output: (ex, v) => ({ ok: v === ex.solution, solution: ex.solution || t('noOutput') }),
   tiles: (ex, v) => ({ ok: [ex.answer, ...(ex.accept || [])].includes(v), solution: ex.answer }),
-  terminal: ex => ({ ok: ex.goal(L.term.sh, L.term.log), solution: tr(ex.hint) }),
+  terminal: ex => ({ ok: ex.goal(L.term.sh, L.term.log) && (!ex.ask || L.ask === L.expected), solution: ex.ask ? `${ex.solve.join('\n')}\n${tr(ex.ask)} ${L.expected}` : ex.solve.join('\n') }),
   boss: (ex, v) => ({ ok: v === ex.boss.word, solution: t('bossSolution', ex.boss.word, ex.boss.hideIn), why: t('bossWhy', ex.boss.hideIn) }),
 };
 
