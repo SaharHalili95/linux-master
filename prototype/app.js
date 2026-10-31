@@ -308,7 +308,8 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
     L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal') setCan(true); onRun(log);
   };
   if (ex.hint) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(box, h); } else root.append(box);
-  setTimeout(() => input.focus({ preventScroll: true }), 50);
+  // Never steal focus from a field the learner already moved to.
+  setTimeout(() => { if (document.activeElement?.tagName !== 'INPUT') input.focus({ preventScroll: true }); }, 50);
 }
 const CHECK = {
   choice: (ex, v) => ex.plain ? { ok: v === '0', solution: tr(ex.options[0]), why: tr(ex.why?.[v]) || '' } : { ok: v === ex.answer, solution: ex.answer, why: tr(ex.why?.[v]) || '' },
