@@ -216,6 +216,20 @@ for (const lang of ['he', 'en']) test(`match tiles form an even grid on a phone 
   }
 });
 
+test('"what will it print?" shows the files the command reads, and nothing for made-up files', async ({ page }) => {
+  await page.goto('./prototype/');
+  const seen = await page.evaluate(() => COURSE.filter(u => !u.locked).flatMap(unit => withFixture(unit, unit.lessons.flatMap(l => l.exercises))).filter(ex => ex.type === 'output').map(ex => {
+    startLesson('peek', [ex]);
+    return { cmd: ex.cmd, files: [...document.querySelectorAll('.file-peek-h')].map(h => h.textContent) };
+  }));
+  const of = cmd => seen.find(s => s.cmd === cmd).files;
+  expect(of('cat todo.txt')).toEqual([expect.stringContaining('todo.txt')]);
+  expect(of('cat readme.txt')).toEqual([expect.stringContaining('readme.txt')]);
+  expect(of('grep ERROR logs/app.log | wc -l')).toEqual([expect.stringContaining('logs/app.log')]);
+  expect(of('cat nothing.txt')).toEqual([]);
+  expect(of('cat x.txt')).toEqual([]);
+});
+
 test('the start bubble never covers the finished lesson above it', async ({ page }) => {
   await page.goto('./prototype/');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ done: ['L0'] })); });

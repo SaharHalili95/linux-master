@@ -229,9 +229,14 @@ const RENDER = {
   },
   output(root, ex) {
     const fx = ex.fx, real = runIn(ex.setup, ex.cmd, fx());
-    const lines = []; let sh = new Shell(fx());
-    for (const c of ex.setup || []) { lines.push([promptFor(sh.cwd), c, '']); sh.run(c); }
-    lines.push([promptFor(sh.cwd), ex.cmd, '?']); root.append(termBlock(lines));
+    // Show every starting file the commands read, so the answer never depends on content the learner has not seen.
+    const lines = [], start = new Shell(fx()), peek = new Map(); let sh = new Shell(fx());
+    for (const c of [...(ex.setup || []), ex.cmd]) {
+      for (const word of c.split(/[\s|;&<>]+/)) { const p = word && sh.abs(word); if (p && start.files.has(p) && !peek.has(p)) peek.set(p, [word, start.files.get(p).content]); }
+      if (c === ex.cmd) lines.push([promptFor(sh.cwd), c, '?']); else { lines.push([promptFor(sh.cwd), c, '']); sh.run(c); }
+    }
+    for (const [name, content] of peek.values()) { const card = el('div', 'file-peek'); card.append(el('div', 'file-peek-h', t('fileHas', name)), Object.assign(el('pre', '', content.replace(/\n$/, '')), { dir: 'ltr' })); root.append(card); }
+    root.append(termBlock(lines));
     const wrong = [...(ex.wrongCmds || []).map(c => runIn(ex.setup, c, fx()).out), ...(ex.wrongText || [])].filter(w => w !== real.out);
     const options = shuffle([real.out, ...[...new Set(wrong)].slice(0, 3)]);
     ex.solution = real.out;
