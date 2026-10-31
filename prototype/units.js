@@ -72,12 +72,12 @@ const UNIT_2 = {
       { type: 'tiles', prompt: T('הציגו את 3 השורות האחרונות של הלוג', 'Show the last 3 lines of the log'), answer: 'tail -n 3 logs/app.log', tiles: ['tail', '-n', '3', 'logs/app.log', 'head', '-l'] },
       { type: 'choice', prompt: T('איזו פקודה תגיד אם cv.pdf הוא באמת PDF?', 'Which command tells you if cv.pdf really is a PDF?'), options: ['file docs/cv.pdf', 'cat docs/cv.pdf', 'wc docs/cv.pdf', 'ls docs/cv.pdf'], answer: 'file docs/cv.pdf',
         why: { 'cat docs/cv.pdf': T('cat מדפיסה את התוכן, אבל לא אומרת מה סוג הקובץ.', 'cat prints the content but does not say what type the file is.'), 'wc docs/cv.pdf': T('wc רק סופרת.', 'wc only counts.'), 'ls docs/cv.pdf': T('ls רק מראה שהקובץ קיים.', 'ls only shows that the file exists.') } },
-      { type: 'terminal', prompt: T('כמה שורות יש ב־logs/app.log? בדקו בטרמינל', 'How many lines are in logs/app.log? Check in the terminal'), hint: T('wc -l ואחריה הנתיב', 'wc -l, then the path'), goal: (sh, log) => printed(log, 'wc -l logs/app.log'), solve: ['wc -l logs/app.log'] },
+      { type: 'terminal', ask: T('כמה שורות יש?', 'How many lines?'), prompt: T('כמה שורות יש ב־logs/app.log? בדקו בטרמינל', 'How many lines are in logs/app.log? Check in the terminal'), hint: T('wc -l ואחריה הנתיב', 'wc -l, then the path'), goal: (sh, log) => printed(log, 'wc -l logs/app.log'), solve: ['wc -l logs/app.log'] },
     ] },
   ],
   boss: { title: CHALLENGE, text: T('השרת נפל. קראו את הלוג וגלו מה קרה בסוף.', 'The server went down. Read the log and find out what happened at the end.'), exercises: [
     { type: 'terminal', prompt: T('הציגו את 3 השורות האחרונות של logs/app.log', 'Show the last 3 lines of logs/app.log'), hint: T('tail -n 3', 'tail -n 3'), goal: (sh, log) => printed(log, 'tail -n 3 logs/app.log'), solve: ['tail -n 3 logs/app.log'] },
-    { type: 'terminal', prompt: T('ספרו כמה שורות יש בלוג', 'Count the lines in the log'), hint: T('wc -l', 'wc -l'), goal: (sh, log) => printed(log, 'wc -l logs/app.log'), solve: ['wc -l logs/app.log'] },
+    { type: 'terminal', ask: T('כמה שורות יש?', 'How many lines?'), prompt: T('ספרו כמה שורות יש בקובץ logs/app.log', 'Count the lines in logs/app.log'), hint: T('wc -l ואחריה הנתיב logs/app.log', 'wc -l, then the path logs/app.log'), goal: (sh, log) => printed(log, 'wc -l logs/app.log'), solve: ['wc -l logs/app.log'] },
     { type: 'terminal', prompt: T('הציגו את כל הלוג עם מספרי שורות', 'Show the whole log with line numbers'), hint: T('cat -n', 'cat -n'), goal: (sh, log) => printed(log, 'cat -n logs/app.log'), solve: ['cat -n logs/app.log'] },
   ] },
 };
@@ -182,7 +182,7 @@ const UNIT_4 = {
     ] },
   ],
   boss: { title: CHALLENGE, text: T('חקירה: מה השתבש בשרת, ואיפה הקבצים?', 'Investigation: what went wrong on the server, and where are the files?'), exercises: [
-    { type: 'terminal', prompt: T('כמה שורות ERROR יש בלוג? מצאו עם grep', 'How many ERROR lines are in the log? Find out with grep'), hint: T('grep -c ERROR logs/app.log', 'grep -c ERROR logs/app.log'), goal: (sh, log) => printed(log, 'grep -c ERROR logs/app.log'), solve: ['grep -c ERROR logs/app.log'] },
+    { type: 'terminal', ask: T('כמה שורות ERROR יש?', 'How many ERROR lines?'), prompt: T('כמה שורות ERROR יש ב־logs/app.log? מצאו עם grep', 'How many ERROR lines are in logs/app.log? Find out with grep'), hint: T('grep -c ERROR logs/app.log', 'grep -c ERROR logs/app.log'), goal: (sh, log) => printed(log, 'grep -c ERROR logs/app.log'), solve: ['grep -c ERROR logs/app.log'] },
     { type: 'terminal', prompt: T('הציגו כל שורה שאינה INFO, עם מספרי שורות', 'Show every line that is not INFO, with line numbers'), hint: T('אפשר לשלב: grep -vn', 'Options combine: grep -vn'), goal: (sh, log) => printed(log, 'grep -v -n INFO logs/app.log'), solve: ['grep -vn INFO logs/app.log'] },
     { type: 'terminal', prompt: T('מצאו את כל קבצי ה־.txt בכל התיקיות', 'Find every .txt file in every folder'), hint: T('find . -name "*.txt"', 'find . -name "*.txt"'), goal: (sh, log) => printed(log, 'find . -name "*.txt"'), solve: ['find . -name "*.txt"'] },
   ] },
@@ -232,7 +232,7 @@ const UNIT_5 = {
         options: [T('שומרת את שורות ה־ERROR בקובץ, בלי להדפיס למסך', 'Saves the ERROR lines into a file, printing nothing on screen'), T('מדפיסה את השורות וגם שומרת אותן', 'Prints the lines and also saves them'), T('מחפשת ERROR בתוך errors.txt', 'Searches for ERROR inside errors.txt'), T('מוסיפה את השורות לסוף errors.txt', 'Adds the lines to the end of errors.txt')],
         why: [null, T('> לוקחת את הפלט מהמסך. כדי לקבל את שניהם יש tee.', '> takes the output away from the screen. To get both there is tee.'), T('errors.txt הוא היעד, לא המקור.', 'errors.txt is the destination, not the source.'), T('את זה עושה >>. הסימן > כותב מחדש.', 'That is what >> does. > writes from scratch.')] },
       { type: 'fill', prompt: T('השלימו כדי להעביר את הפלט ל־wc', 'Fill in to pass the output to wc'), before: 'cat fruits.txt ', after: ' wc -l', options: ['|', '>', '>>', '2>'], answer: '|' },
-      { type: 'terminal', prompt: T('ספרו כמה אנשים גרים ב־haifa, עם grep וצינור', 'Count how many people live in haifa, with grep and a pipe'), hint: T('grep haifa people.csv | wc -l', 'grep haifa people.csv | wc -l'),
+      { type: 'terminal', ask: T('כמה אנשים?', 'How many people?'), prompt: T('ספרו כמה אנשים גרים ב־haifa, עם grep וצינור', 'Count how many people live in haifa, with grep and a pipe'), hint: T('grep haifa people.csv | wc -l', 'grep haifa people.csv | wc -l'),
         goal: (sh, log) => log.some(l => l.cmd.includes('|') && l.out.trim() === outputOf('grep -c haifa people.csv').trim()), solve: ['grep haifa people.csv | wc -l'] },
     ] },
   ],
@@ -241,7 +241,7 @@ const UNIT_5 = {
       goal: sh => fileIs(sh, '/home/user/report.txt', outputOf('grep -v INFO logs/app.log')), solve: ['grep -v INFO logs/app.log > report.txt'] },
     { type: 'terminal', prompt: T('הוסיפו לסוף report.txt שורה שכתוב בה done', 'Add a line that says done to the end of report.txt'), setup: ['grep -v INFO logs/app.log > report.txt'], hint: T('echo done >> report.txt', 'echo done >> report.txt'),
       goal: sh => fileIs(sh, '/home/user/report.txt', outputOf('grep -v INFO logs/app.log') + 'done\n'), solve: ['echo done >> report.txt'] },
-    { type: 'terminal', prompt: T('ספרו בעזרת צינור כמה שורות יש ב־report.txt', 'Count the lines in report.txt with a pipe'), setup: ['grep -v INFO logs/app.log > report.txt', 'echo done >> report.txt'], hint: T('cat report.txt | wc -l', 'cat report.txt | wc -l'),
+    { type: 'terminal', ask: T('כמה שורות יש?', 'How many lines?'), prompt: T('ספרו בעזרת צינור כמה שורות יש ב־report.txt', 'Count the lines in report.txt with a pipe'), setup: ['grep -v INFO logs/app.log > report.txt', 'echo done >> report.txt'], hint: T('cat report.txt | wc -l', 'cat report.txt | wc -l'),
       goal: (sh, log) => log.some(l => l.cmd.includes('|') && l.out.trim() === outputOf('wc -l < report.txt', ['grep -v INFO logs/app.log > report.txt', 'echo done >> report.txt']).trim()), solve: ['cat report.txt | wc -l'] },
   ] },
 };
