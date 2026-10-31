@@ -9,7 +9,7 @@ const SRC = process.env.SITE_DIR || path.resolve(__dirname, '..');
 const V = SRC ? Number(fs.readFileSync(path.join(SRC, 'sw.js'), 'utf8').match(/linux-master-v(\d+)/)[1]) : 0;
 let dir, server;
 const PORT = 8799;
-const url = `http://localhost:${PORT}/`;
+const url = `http://localhost:${PORT}/?mode=trivia`;
 
 test.beforeAll(async () => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lm-update-'));

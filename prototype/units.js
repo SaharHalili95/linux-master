@@ -1,0 +1,278 @@
+// Units 2 onward. They share homeFixture(), a home folder with text files, a log and a CSV to work on.
+function homeFixture() {
+  const log = ['08:00 INFO server started', '08:05 INFO user login', '08:07 ERROR disk almost full', '08:10 INFO backup done', '08:12 WARN slow response', '08:15 ERROR database timeout',
+    '08:20 INFO user logout', '08:25 INFO cache cleared', '08:30 ERROR disk full', '08:35 INFO server stopped', '08:40 INFO server started', '08:45 INFO user login'];
+  return {
+    cwd: '/home/user', env: { HOME: '/home/user', USER: 'user' },
+    dirs: ['/home/user', '/home/user/docs', '/home/user/projects', '/home/user/photos', '/home/user/logs', '/tmp', '/etc'],
+    files: [
+      ['/home/user/readme.txt', { content: 'Welcome to Linux!\n' }],
+      ['/home/user/notes.txt', { content: 'buy milk\ncall mom\nlearn grep\n' }],
+      ['/home/user/fruits.txt', { content: 'banana\napple\ncherry\napple\nbanana\napple\n' }],
+      ['/home/user/people.csv', { content: 'name,city,age\ndana,haifa,31\nomer,tel-aviv,27\nnoa,haifa,25\nyossi,eilat,40\n' }],
+      ['/home/user/.bashrc', { content: 'alias ll="ls -l"\n' }],
+      ['/home/user/logs/app.log', { content: log.join('\n') + '\n' }],
+      ['/home/user/projects/app.py', { content: 'print("hi")\n' }],
+      ['/home/user/projects/.env', { content: 'MODE=dev\n' }],
+      ['/home/user/docs/todo.txt', { content: 'learn cd\nlearn grep\n' }],
+      ['/home/user/docs/cv.pdf', { content: 'pdf\n' }],
+      ['/home/user/photos/cat.jpg', { content: 'jpg\n' }],
+      ['/home/user/photos/dog.jpg', { content: 'jpg\n' }],
+    ],
+    history: [],
+  };
+}
+// Terminal goals compare against what the simulator itself prints, never a hand-written answer.
+function outputOf(cmd, setup = []) { const sh = new Shell(homeFixture()); for (const c of setup) sh.run(c); return sh.run(cmd).out; }
+const printed = (log, cmd, setup) => { const want = outputOf(cmd, setup).trim(); return !!want && log.some(l => l.out.trim() === want); };
+const fileIs = (sh, path, content) => sh.files.get(path)?.content === content;
+const WHAT = T('מה תדפיס הפקודה?', 'What will this print?');
+const CHALLENGE = T('אתגר היחידה', 'Unit challenge');
+
+const UNIT_2 = {
+  section: 1, unit: 2, title: T('קריאת קבצים', 'Reading files'), subtitle: T('קוראים קבצים מההתחלה ומהסוף', 'Reading files from the start and the end'), color: 'purple', fixture: homeFixture,
+  lessons: [
+    { title: T('cat', 'cat'), exercises: [
+      { type: 'teach', cmd: 'cat', name: 'concatenate', text: T('מדפיסה את כל התוכן של קובץ למסך.', 'Prints the whole content of a file to the screen.'), demo: [[], 'cat notes.txt'] },
+      { type: 'output', prompt: WHAT, cmd: 'cat readme.txt', wrongCmds: ['cat notes.txt'], wrongText: ['readme.txt', 'cat: readme.txt: No such file or directory'] },
+      { type: 'choice', prompt: T('איזו פקודה מציגה את התוכן של קובץ?', 'Which command shows what is inside a file?'), options: ['cat', 'ls', 'cd', 'pwd'], answer: 'cat',
+        why: { ls: T('ls מציגה שמות של קבצים, לא את מה שכתוב בהם.', 'ls shows file names, not what is written in them.'), cd: T('cd עוברת לתיקייה.', 'cd moves you to a folder.'), pwd: T('pwd מדפיסה איפה אתם.', 'pwd prints where you are.') } },
+      { type: 'tiles', prompt: T('הציגו את התוכן של todo.txt שבתיקייה docs', 'Show what is inside todo.txt in the docs folder'), answer: 'cat docs/todo.txt', tiles: ['cat', 'docs/todo.txt', 'ls', 'todo.txt/docs', 'cd'] },
+      { type: 'output', prompt: WHAT, setup: ['cd docs'], cmd: 'cat todo.txt', wrongCmds: ['cat ../notes.txt'], wrongText: ['todo.txt', 'learn cd'] },
+      { type: 'terminal', prompt: T('קראו מה כתוב בקובץ notes.txt', 'Read what notes.txt says'), hint: T('cat ואחריה שם הקובץ', 'cat followed by the file name'), goal: (sh, log) => printed(log, 'cat notes.txt'), solve: ['cat notes.txt'] },
+    ] },
+    { title: T('head ו־tail', 'head and tail'), exercises: [
+      { type: 'teach', cmd: 'head', name: 'head', text: T('מדפיסה רק את השורות הראשונות של קובץ. ‎-n קובע כמה. בלי ‎-n מקבלים 10.', 'Prints only the first lines of a file. -n sets how many. Without -n you get 10.'), demo: [[], 'head -n 3 logs/app.log'] },
+      { type: 'output', prompt: WHAT, cmd: 'head -n 2 logs/app.log', wrongCmds: ['tail -n 2 logs/app.log', 'head -n 3 logs/app.log'] },
+      { type: 'teach', cmd: 'tail', name: 'tail', text: T('מדפיסה את השורות האחרונות. שימושית ללוגים, כי הדברים החדשים נמצאים בסוף.', 'Prints the last lines. Handy for logs, because new entries are at the end.'), demo: [[], 'tail -n 3 logs/app.log'] },
+      { type: 'choice', prompt: T('רוצים לראות את 5 השורות האחרונות בלוג. מה מריצים?', 'You want the last 5 lines of a log. What do you run?'), options: ['tail -n 5 logs/app.log', 'head -n 5 logs/app.log', 'cat -n 5 logs/app.log', 'tail logs/app.log 5'], answer: 'tail -n 5 logs/app.log',
+        why: { 'head -n 5 logs/app.log': T('head מתחילה מההתחלה, לא מהסוף.', 'head starts from the top, not the end.'), 'cat -n 5 logs/app.log': T('‎-n של cat ממספרת שורות. היא לא בוחרת כמה.', 'cat -n numbers lines. It does not pick how many.'), 'tail logs/app.log 5': T('המספר בא אחרי ‎-n, לפני שם הקובץ.', 'The number goes after -n, before the file name.') } },
+      { type: 'fill', prompt: T('השלימו כדי לראות רק את השורה הראשונה', 'Fill in to see only the first line'), before: 'head ', after: ' 1 people.csv', options: ['-n', '-a', '-l', '~'], answer: '-n' },
+      { type: 'terminal', prompt: T('הציגו את 4 השורות הראשונות של logs/app.log', 'Show the first 4 lines of logs/app.log'), hint: T('head -n 4 ואחריה הנתיב', 'head -n 4, then the path'), goal: (sh, log) => printed(log, 'head -n 4 logs/app.log'), solve: ['head -n 4 logs/app.log'] },
+    ] },
+    { title: T('wc ו־file', 'wc and file'), exercises: [
+      { type: 'teach', cmd: 'wc -l', name: 'word count', text: T('סופרת שורות בקובץ. בלי ‎-l היא מראה שורות, מילים ותווים.', 'Counts the lines in a file. Without -l it shows lines, words and characters.'), demo: [[], 'wc -l fruits.txt'] },
+      { type: 'output', prompt: WHAT, cmd: 'wc -l notes.txt', wrongCmds: ['wc -l fruits.txt'], wrongText: ['notes.txt 3', '3 lines'] },
+      { type: 'choice', prompt: T('מה מראה המספר בפלט של wc -l?', 'What does the number in wc -l output show?'), plain: true,
+        options: [T('כמה שורות יש בקובץ', 'How many lines the file has'), T('כמה מילים יש בקובץ', 'How many words the file has'), T('הגודל של הקובץ בקילובייט', 'The file size in kilobytes'), T('מספר השורה האחרונה ששונתה', 'The number of the last changed line')],
+        why: [null, T('מילים סופרים עם wc -w.', 'Words are counted with wc -w.'), T('wc -c סופרת בתים, לא קילובייטים.', 'wc -c counts bytes, not kilobytes.'), T('wc לא יודעת מה שונה בקובץ.', 'wc does not know what changed in a file.')] },
+      { type: 'teach', cmd: 'file', name: 'file type', text: T('אומרת מה סוג הקובץ: טקסט, תיקייה, תמונה ועוד. היא לא סומכת על הסיומת.', 'Tells you what kind of file it is: text, folder, image and more. It does not trust the extension.'), demo: [[], 'file readme.txt docs'] },
+      { type: 'output', prompt: WHAT, cmd: 'file docs', wrongCmds: ['ls docs', 'file readme.txt'], wrongText: ['docs: ASCII text'] },
+      { type: 'tiles', prompt: T('ספרו כמה שורות יש ב־people.csv', 'Count the lines in people.csv'), answer: 'wc -l people.csv', tiles: ['wc', '-l', 'people.csv', '-n', 'head', 'cat'] },
+    ] },
+    { title: T('cat -n וחזרה', 'cat -n and review'), exercises: [
+      { type: 'teach', cmd: 'cat -n', name: 'number', text: T('מדפיסה את הקובץ עם מספר לפני כל שורה.', 'Prints the file with a number before each line.'), demo: [[], 'cat -n notes.txt'] },
+      { type: 'match', prompt: T('התאימו כל פקודה למה שהיא עושה', 'Match each command to what it does'), pairs: [['cat', T('מדפיסה את כל הקובץ', 'prints the whole file')], ['head', T('השורות הראשונות', 'the first lines')], ['tail', T('השורות האחרונות', 'the last lines')], ['wc -l', T('סופרת שורות', 'counts lines')]] },
+      { type: 'output', prompt: WHAT, cmd: 'tail -n 1 people.csv', wrongCmds: ['head -n 1 people.csv', 'tail -n 2 people.csv'] },
+      { type: 'tiles', prompt: T('הציגו את 3 השורות האחרונות של הלוג', 'Show the last 3 lines of the log'), answer: 'tail -n 3 logs/app.log', tiles: ['tail', '-n', '3', 'logs/app.log', 'head', '-l'] },
+      { type: 'choice', prompt: T('איזו פקודה תגיד אם cv.pdf הוא באמת PDF?', 'Which command tells you if cv.pdf really is a PDF?'), options: ['file docs/cv.pdf', 'cat docs/cv.pdf', 'wc docs/cv.pdf', 'ls docs/cv.pdf'], answer: 'file docs/cv.pdf',
+        why: { 'cat docs/cv.pdf': T('cat מדפיסה את התוכן, אבל לא אומרת מה סוג הקובץ.', 'cat prints the content but does not say what type the file is.'), 'wc docs/cv.pdf': T('wc רק סופרת.', 'wc only counts.'), 'ls docs/cv.pdf': T('ls רק מראה שהקובץ קיים.', 'ls only shows that the file exists.') } },
+      { type: 'terminal', prompt: T('כמה שורות יש ב־logs/app.log? בדקו בטרמינל', 'How many lines are in logs/app.log? Check in the terminal'), hint: T('wc -l ואחריה הנתיב', 'wc -l, then the path'), goal: (sh, log) => printed(log, 'wc -l logs/app.log'), solve: ['wc -l logs/app.log'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('השרת נפל. קראו את הלוג וגלו מה קרה בסוף.', 'The server went down. Read the log and find out what happened at the end.'), exercises: [
+    { type: 'terminal', prompt: T('הציגו את 3 השורות האחרונות של logs/app.log', 'Show the last 3 lines of logs/app.log'), hint: T('tail -n 3', 'tail -n 3'), goal: (sh, log) => printed(log, 'tail -n 3 logs/app.log'), solve: ['tail -n 3 logs/app.log'] },
+    { type: 'terminal', prompt: T('ספרו כמה שורות יש בלוג', 'Count the lines in the log'), hint: T('wc -l', 'wc -l'), goal: (sh, log) => printed(log, 'wc -l logs/app.log'), solve: ['wc -l logs/app.log'] },
+    { type: 'terminal', prompt: T('הציגו את כל הלוג עם מספרי שורות', 'Show the whole log with line numbers'), hint: T('cat -n', 'cat -n'), goal: (sh, log) => printed(log, 'cat -n logs/app.log'), solve: ['cat -n logs/app.log'] },
+  ] },
+};
+
+const UNIT_3 = {
+  section: 1, unit: 3, title: T('יוצרים ומזיזים', 'Making and moving'), subtitle: T('תיקיות, העתקה, העברה ומחיקה', 'Folders, copying, moving and deleting'), color: 'blue', fixture: homeFixture,
+  lessons: [
+    { title: T('mkdir', 'mkdir'), exercises: [
+      { type: 'teach', cmd: 'mkdir', name: 'make directory', text: T('יוצרת תיקייה חדשה. אין פלט, אבל ls תראה אותה.', 'Creates a new folder. No output, but ls will show it.'), demo: [['mkdir music'], 'ls'] },
+      { type: 'output', prompt: T('מה תדפיס ls אחרי הפקודה הזו?', 'What will ls print after this command?'), setup: ['mkdir music'], cmd: 'ls', wrongCmds: ['ls docs'], wrongText: ['docs\nfruits.txt\nlogs\nnotes.txt\npeople.csv\nphotos\nprojects\nreadme.txt', 'music'] },
+      { type: 'choice', prompt: T('איזו פקודה יוצרת תיקייה בשם backup?', 'Which command creates a folder named backup?'), options: ['mkdir backup', 'cd backup', 'ls backup', 'cat backup'], answer: 'mkdir backup',
+        why: { 'cd backup': T('cd נכנסת לתיקייה שכבר קיימת.', 'cd goes into a folder that already exists.'), 'ls backup': T('ls מציגה מה יש בתיקייה קיימת.', 'ls shows what is in an existing folder.'), 'cat backup': T('cat קוראת קבצים.', 'cat reads files.') } },
+      { type: 'teach', cmd: 'mkdir -p', name: 'parents', text: T('יוצרת כמה רמות של תיקיות בבת אחת.', 'Creates several levels of folders at once.'), demo: [['mkdir -p a/b/c'], 'find a'] },
+      { type: 'fill', prompt: T('השלימו כדי ליצור את כל התיקיות בנתיב', 'Fill in to create every folder in the path'), before: 'mkdir ', after: ' 2024/june/photos', options: ['-p', '-a', '-n', '..'], answer: '-p' },
+      { type: 'terminal', prompt: T('צרו תיקייה בשם music והיכנסו אליה', 'Create a folder named music and go into it'), hint: T('mkdir music ואז cd music', 'mkdir music, then cd music'), goal: sh => sh.cwd === '/home/user/music', solve: ['mkdir music', 'cd music'] },
+    ] },
+    { title: T('cp', 'cp'), exercises: [
+      { type: 'teach', cmd: 'cp', name: 'copy', text: T('מעתיקה קובץ. קודם המקור, אחר כך היעד. המקור נשאר במקומו.', 'Copies a file. Source first, then destination. The source stays where it was.'), demo: [['cp notes.txt notes.bak'], 'ls'] },
+      { type: 'output', prompt: T('מה תדפיס ls docs אחרי ההעתקה?', 'What will ls docs print after the copy?'), setup: ['cp readme.txt docs'], cmd: 'ls docs', wrongText: ['cv.pdf\ntodo.txt', 'readme.txt'] },
+      { type: 'choice', prompt: T('אחרי cp notes.txt docs, איפה נמצא notes.txt?', 'After cp notes.txt docs, where is notes.txt?'), plain: true,
+        options: [T('גם בבית וגם ב־docs', 'Both at home and in docs'), T('רק ב־docs', 'Only in docs'), T('רק בבית', 'Only at home'), T('בשום מקום, הוא נמחק', 'Nowhere, it was deleted')],
+        why: [null, T('ככה עובדת mv. cp משאירה את המקור.', 'That is what mv does. cp leaves the source.'), T('cp יצרה עותק חדש ב־docs.', 'cp made a new copy in docs.'), T('cp אף פעם לא מוחקת.', 'cp never deletes.')] },
+      { type: 'tiles', prompt: T('העתיקו את notes.txt לתיקייה docs', 'Copy notes.txt into the docs folder'), answer: 'cp notes.txt docs', tiles: ['cp', 'notes.txt', 'docs', 'mv', 'rm'] },
+      { type: 'output', prompt: T('מה תדפיס cat copy.txt?', 'What will cat copy.txt print?'), setup: ['cp notes.txt copy.txt'], cmd: 'cat copy.txt', wrongCmds: ['cat readme.txt'], wrongText: ['copy.txt', 'cat: copy.txt: No such file or directory'] },
+      { type: 'terminal', prompt: T('צרו גיבוי: העתיקו את people.csv לקובץ people.bak', 'Make a backup: copy people.csv to people.bak'), hint: T('cp people.csv people.bak', 'cp people.csv people.bak'),
+        goal: sh => fileIs(sh, '/home/user/people.bak', outputOf('cat people.csv')) && sh.files.has('/home/user/people.csv'), solve: ['cp people.csv people.bak'] },
+    ] },
+    { title: T('mv ו־rm', 'mv and rm'), exercises: [
+      { type: 'teach', cmd: 'mv', name: 'move', text: T('מעבירה קובץ למקום אחר, או משנה לו את השם. במקום הישן הוא כבר לא נמצא.', 'Moves a file somewhere else, or renames it. It is no longer in the old place.'), demo: [['mv notes.txt list.txt'], 'ls'] },
+      { type: 'output', prompt: T('מה תדפיס ls אחרי ההעברה?', 'What will ls print after the move?'), setup: ['mv notes.txt docs'], cmd: 'ls', wrongCmds: ['ls docs'], wrongText: ['docs\nfruits.txt\nlogs\nnotes.txt\npeople.csv\nphotos\nprojects\nreadme.txt'] },
+      { type: 'teach', cmd: 'rm', name: 'remove', text: T('מוחקת קובץ. אין סל מחזור: מה שנמחק, נעלם.', 'Deletes a file. There is no trash: what is deleted is gone.'), demo: [['rm readme.txt'], 'ls'] },
+      { type: 'choice', prompt: T('איזו פקודה תשנה את השם של fruits.txt ל־food.txt?', 'Which command renames fruits.txt to food.txt?'), options: ['mv fruits.txt food.txt', 'cp fruits.txt food.txt', 'rm fruits.txt food.txt', 'mv food.txt fruits.txt'], answer: 'mv fruits.txt food.txt',
+        why: { 'cp fruits.txt food.txt': T('cp תשאיר גם את fruits.txt.', 'cp would keep fruits.txt too.'), 'rm fruits.txt food.txt': T('rm מוחקת, היא לא משנה שמות.', 'rm deletes, it does not rename.'), 'mv food.txt fruits.txt': T('הסדר הפוך: קודם השם הישן, אחר כך החדש.', 'Wrong order: the old name first, then the new one.') } },
+      { type: 'match', prompt: T('התאימו כל פקודה למה שהיא עושה', 'Match each command to what it does'), pairs: [['cp', T('מעתיקה', 'copies')], ['mv', T('מעבירה או משנה שם', 'moves or renames')], ['rm', T('מוחקת', 'deletes')], ['mkdir', T('יוצרת תיקייה', 'creates a folder')]] },
+      { type: 'terminal', prompt: T('שנו את השם של fruits.txt ל־food.txt', 'Rename fruits.txt to food.txt'), hint: T('mv, קודם השם הישן', 'mv, the old name first'),
+        goal: sh => sh.files.has('/home/user/food.txt') && !sh.files.has('/home/user/fruits.txt'), solve: ['mv fruits.txt food.txt'] },
+    ] },
+    { title: T('echo ו־*', 'echo and *'), exercises: [
+      { type: 'teach', cmd: 'echo', name: 'echo', text: T('מדפיסה טקסט. עם > הטקסט נכתב לקובץ במקום למסך.', 'Prints text. With > the text goes into a file instead of the screen.'), demo: [['echo hello > hi.txt'], 'cat hi.txt'] },
+      { type: 'output', prompt: T('מה תדפיס cat a.txt?', 'What will cat a.txt print?'), setup: ['echo hi > a.txt'], cmd: 'cat a.txt', wrongText: ['echo hi', 'a.txt', 'hi > a.txt'] },
+      { type: 'teach', cmd: '*', name: 'wildcard', text: T('כוכבית מחליפה כל רצף של תווים. ‎*.txt אומר: כל מה שנגמר ב־.txt.', 'A star stands for any run of characters. *.txt means: anything ending in .txt.'), demo: [[], 'ls *.txt'] },
+      { type: 'output', prompt: WHAT, cmd: 'ls photos/*.jpg', wrongCmds: ['ls photos'], wrongText: ['photos/cat.jpg', '*.jpg'] },
+      { type: 'tiles', prompt: T('מחקו את כל קבצי ה־.txt בתיקייה הנוכחית', 'Delete every .txt file in the current folder'), answer: 'rm *.txt', tiles: ['rm', '*.txt', '*', 'ls', '.txt'] },
+      { type: 'terminal', prompt: T('צרו קובץ plan.txt שכתוב בו go', 'Create a file plan.txt that says go'), hint: T('echo go > plan.txt', 'echo go > plan.txt'), goal: sh => fileIs(sh, '/home/user/plan.txt', 'go\n'), solve: ['echo go > plan.txt'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('סדרו את הבית: גיבוי למה שחשוב, ומחיקה של מה שלא.', 'Tidy up your home: back up what matters, delete what does not.'), exercises: [
+    { type: 'terminal', prompt: T('צרו תיקייה בשם backup', 'Create a folder named backup'), hint: T('mkdir backup', 'mkdir backup'), goal: sh => sh.dirs.has('/home/user/backup'), solve: ['mkdir backup'] },
+    { type: 'terminal', prompt: T('העתיקו את notes.txt ואת people.csv לתוך backup', 'Copy notes.txt and people.csv into backup'), setup: ['mkdir backup'], hint: T('cp notes.txt people.csv backup', 'cp notes.txt people.csv backup'),
+      goal: sh => sh.files.has('/home/user/backup/notes.txt') && sh.files.has('/home/user/backup/people.csv'), solve: ['cp notes.txt people.csv backup'] },
+    { type: 'terminal', prompt: T('מחקו את כל קבצי ה־.jpg בתיקייה photos', 'Delete every .jpg file in photos'), hint: T('rm photos/*.jpg', 'rm photos/*.jpg'),
+      goal: sh => ![...sh.files.keys()].some(p => p.startsWith('/home/user/photos/') && p.endsWith('.jpg')), solve: ['rm photos/*.jpg'] },
+  ] },
+};
+
+const UNIT_4 = {
+  section: 2, unit: 4, title: T('מחפשים', 'Searching'), subtitle: T('מוצאים מילים בקבצים וקבצים בתיקיות', 'Finding words in files and files in folders'), color: 'green', fixture: homeFixture,
+  lessons: [
+    { title: T('grep', 'grep'), exercises: [
+      { type: 'teach', cmd: 'grep', name: 'global regular expression print', text: T('מחפשת מילה בקובץ ומדפיסה רק את השורות שבהן היא מופיעה.', 'Searches a file for a word and prints only the lines that contain it.'), demo: [[], 'grep ERROR logs/app.log'] },
+      { type: 'output', prompt: WHAT, cmd: 'grep haifa people.csv', wrongCmds: ['grep omer people.csv', 'cut -d , -f 1 people.csv'], wrongText: ['haifa\nhaifa'] },
+      { type: 'choice', prompt: T('איך מוצאים את השורות עם המילה milk ב־notes.txt?', 'How do you find the lines with the word milk in notes.txt?'), options: ['grep milk notes.txt', 'grep notes.txt milk', 'cat milk notes.txt', 'find milk notes.txt'], answer: 'grep milk notes.txt',
+        why: { 'grep notes.txt milk': T('הסדר הפוך: קודם מה מחפשים, אחר כך איפה.', 'Wrong order: first what you look for, then where.'), 'cat milk notes.txt': T('cat מדפיסה הכול ולא מסננת.', 'cat prints everything and does not filter.'), 'find milk notes.txt': T('find מחפשת שמות של קבצים, לא תוכן.', 'find searches file names, not content.') } },
+      { type: 'tiles', prompt: T('מצאו את כל שורות ה־WARN בלוג', 'Find every WARN line in the log'), answer: 'grep WARN logs/app.log', tiles: ['grep', 'WARN', 'logs/app.log', 'cat', 'find'] },
+      { type: 'output', prompt: WHAT, cmd: 'grep call notes.txt', wrongCmds: ['grep milk notes.txt', 'cat notes.txt'] },
+      { type: 'terminal', prompt: T('הציגו רק את שורות ה־ERROR מתוך logs/app.log', 'Show only the ERROR lines from logs/app.log'), hint: T('grep ERROR ואחריה הנתיב', 'grep ERROR, then the path'), goal: (sh, log) => printed(log, 'grep ERROR logs/app.log'), solve: ['grep ERROR logs/app.log'] },
+    ] },
+    { title: T('האפשרויות של grep', 'grep options'), exercises: [
+      { type: 'teach', cmd: 'grep -i', name: 'ignore case', text: T('מתעלמת מאותיות גדולות וקטנות: error, Error ו־ERROR נחשבות אותו דבר.', 'Ignores upper and lower case: error, Error and ERROR count as the same.'), demo: [[], 'grep -i error logs/app.log'] },
+      { type: 'teach', cmd: 'grep -c', name: 'count', text: T('במקום להדפיס את השורות, סופרת כמה יש.', 'Instead of printing the lines, counts how many there are.'), demo: [[], 'grep -c ERROR logs/app.log'] },
+      { type: 'output', prompt: WHAT, cmd: 'grep -c INFO logs/app.log', wrongCmds: ['grep -c ERROR logs/app.log', 'grep -c WARN logs/app.log'] },
+      { type: 'teach', cmd: 'grep -v', name: 'invert', text: T('ההפך: מדפיסה את כל השורות שלא מכילות את המילה.', 'The opposite: prints every line that does not contain the word.'), demo: [[], 'grep -v INFO logs/app.log'] },
+      { type: 'match', prompt: T('התאימו כל אפשרות למה שהיא עושה', 'Match each option to what it does'), pairs: [['grep -i', T('בלי הבדל בין גדולות לקטנות', 'ignores case')], ['grep -c', T('סופרת שורות מתאימות', 'counts matching lines')], ['grep -v', T('שורות שלא מתאימות', 'lines that do not match')], ['grep -n', T('עם מספרי שורות', 'with line numbers')]] },
+      { type: 'fill', prompt: T('השלימו כדי לראות כל שורה שאין בה INFO', 'Fill in to see every line without INFO'), before: 'grep ', after: ' INFO logs/app.log', options: ['-v', '-i', '-c', '-n'], answer: '-v' },
+    ] },
+    { title: T('find', 'find'), exercises: [
+      { type: 'teach', cmd: 'find', name: 'find', text: T('מחפשת קבצים לפי שם, בתיקייה ובכל מה שבתוכה. ‎-name מקבלת שם או תבנית עם *.', 'Searches for files by name, in a folder and everything inside it. -name takes a name or a pattern with *.'), demo: [[], 'find . -name "*.jpg"'] },
+      { type: 'output', prompt: WHAT, cmd: 'find . -name todo.txt', wrongText: ['docs/todo.txt', 'todo.txt', './todo.txt'] },
+      { type: 'choice', prompt: T('איזו פקודה תמצא את כל קבצי ה־.py?', 'Which command finds every .py file?'), options: ['find . -name "*.py"', 'grep . "*.py"', 'ls -name "*.py"', 'find "*.py" -name .'], answer: 'find . -name "*.py"',
+        why: { 'grep . "*.py"': T('grep מחפשת בתוך קבצים, לא שמות.', 'grep searches inside files, not their names.'), 'ls -name "*.py"': T('ל־ls אין ‎-name.', 'ls has no -name.'), 'find "*.py" -name .': T('קודם איפה מחפשים, אחר כך ‎-name והתבנית.', 'First where to search, then -name and the pattern.') } },
+      { type: 'teach', cmd: 'find -type d', name: 'type', text: T('‎-type d מוצאת רק תיקיות. ‎-type f מוצאת רק קבצים.', '-type d finds only folders. -type f finds only files.'), demo: [[], 'find . -type d'] },
+      { type: 'tiles', prompt: T('מצאו את כל קבצי ה־.jpg מהתיקייה הנוכחית', 'Find every .jpg file from the current folder'), answer: 'find . -name "*.jpg"', tiles: ['find', '.', '-name', '"*.jpg"', 'grep', '-type'] },
+      { type: 'terminal', prompt: T('מצאו איפה מסתתר הקובץ cv.pdf', 'Find where cv.pdf is hiding'), hint: T('find . -name ואחריה שם הקובץ', 'find . -name, then the file name'), goal: (sh, log) => log.some(l => /^find\b/.test(l.cmd) && l.out.includes('docs/cv.pdf')), solve: ['find . -name cv.pdf'] },
+    ] },
+    { title: T('חזרה', 'Review'), exercises: [
+      { type: 'output', prompt: WHAT, cmd: 'grep -n milk notes.txt', wrongCmds: ['grep milk notes.txt', 'grep -c milk notes.txt'] },
+      { type: 'choice', prompt: T('מה ההבדל בין grep ל־find?', 'What is the difference between grep and find?'), plain: true,
+        options: [T('grep מחפשת בתוך התוכן, find מחפשת שמות של קבצים', 'grep searches inside the content, find searches file names'), T('אין הבדל', 'There is no difference'), T('grep מחפשת שמות, find מחפשת תוכן', 'grep searches names, find searches content'), T('find עובדת רק בתיקיית הבית', 'find only works in the home folder')],
+        why: [null, T('הן עונות על שאלות שונות: מה כתוב, ואיפה הקובץ.', 'They answer different questions: what is written, and where the file is.'), T('זה הפוך.', 'It is the other way round.'), T('find עובדת מכל תיקייה שתתנו לה.', 'find works from any folder you give it.')] },
+      { type: 'output', prompt: WHAT, cmd: 'grep -v a fruits.txt', wrongCmds: ['grep a fruits.txt'], wrongText: ['banana\napple'] },
+      { type: 'tiles', prompt: T('ספרו כמה שורות ERROR יש בלוג', 'Count how many ERROR lines the log has'), answer: 'grep -c ERROR logs/app.log', tiles: ['grep', '-c', 'ERROR', 'logs/app.log', '-v', 'wc'] },
+      { type: 'match', prompt: T('התאימו כל פקודה למה שהיא עושה', 'Match each command to what it does'), pairs: [['grep', T('מחפשת בתוך קבצים', 'searches inside files')], ['find', T('מחפשת קבצים לפי שם', 'finds files by name')], ['grep -n', T('מוסיפה מספרי שורות', 'adds line numbers')], ['find -type d', T('רק תיקיות', 'only folders')]] },
+      { type: 'terminal', prompt: T('מי ב־people.csv גר ב־eilat?', 'Who in people.csv lives in eilat?'), hint: T('grep eilat people.csv', 'grep eilat people.csv'), goal: (sh, log) => printed(log, 'grep eilat people.csv'), solve: ['grep eilat people.csv'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('חקירה: מה השתבש בשרת, ואיפה הקבצים?', 'Investigation: what went wrong on the server, and where are the files?'), exercises: [
+    { type: 'terminal', prompt: T('כמה שורות ERROR יש בלוג? מצאו עם grep', 'How many ERROR lines are in the log? Find out with grep'), hint: T('grep -c ERROR logs/app.log', 'grep -c ERROR logs/app.log'), goal: (sh, log) => printed(log, 'grep -c ERROR logs/app.log'), solve: ['grep -c ERROR logs/app.log'] },
+    { type: 'terminal', prompt: T('הציגו כל שורה שאינה INFO, עם מספרי שורות', 'Show every line that is not INFO, with line numbers'), hint: T('אפשר לשלב: grep -vn', 'Options combine: grep -vn'), goal: (sh, log) => printed(log, 'grep -v -n INFO logs/app.log'), solve: ['grep -vn INFO logs/app.log'] },
+    { type: 'terminal', prompt: T('מצאו את כל קבצי ה־.txt בכל התיקיות', 'Find every .txt file in every folder'), hint: T('find . -name "*.txt"', 'find . -name "*.txt"'), goal: (sh, log) => printed(log, 'find . -name "*.txt"'), solve: ['find . -name "*.txt"'] },
+  ] },
+};
+
+const UNIT_5 = {
+  section: 2, unit: 5, title: T('צינורות והפניות', 'Pipes and redirection'), subtitle: T('מחברים פקודות ושומרים פלט לקבצים', 'Chaining commands and saving output to files'), color: 'purple', fixture: homeFixture,
+  lessons: [
+    { title: T('הצינור |', 'The pipe |'), exercises: [
+      { type: 'teach', cmd: '|', name: 'pipe', text: T('הצינור מעביר את הפלט של פקודה אחת לפקודה הבאה.', "The pipe sends one command's output into the next command."), demo: [[], 'cat notes.txt | grep call'] },
+      { type: 'output', prompt: WHAT, cmd: 'grep ERROR logs/app.log | wc -l', wrongCmds: ['grep -c INFO logs/app.log', 'wc -l logs/app.log'] },
+      { type: 'choice', prompt: T('ב־cat notes.txt | head -n 1, מה head מקבלת?', 'In cat notes.txt | head -n 1, what does head get?'), plain: true,
+        options: [T('את הפלט של cat', 'The output of cat'), T('את השם notes.txt', 'The name notes.txt'), T('כלום, היא מחכה למקלדת', 'Nothing, it waits for the keyboard'), T('את הפקודה cat עצמה', 'The cat command itself')],
+        why: [null, T('head מקבלת טקסט, לא שם של קובץ.', 'head gets text, not a file name.'), T('הצינור מחובר במקום המקלדת.', 'The pipe is plugged in instead of the keyboard.'), T('עוברות רק השורות שהפקודה הדפיסה.', 'Only the lines the command printed go through.')] },
+      { type: 'tiles', prompt: T('ספרו כמה שורות WARN יש, בעזרת צינור', 'Count the WARN lines using a pipe'), answer: 'grep WARN logs/app.log | wc -l', tiles: ['grep', 'WARN', 'logs/app.log', '|', 'wc', '-l', '>'] },
+      { type: 'output', prompt: WHAT, cmd: 'cat fruits.txt | head -n 2', wrongCmds: ['tail -n 2 fruits.txt'], wrongText: ['banana', 'apple\napple'] },
+      { type: 'terminal', prompt: T('הציגו את השורה הראשונה של notes.txt בעזרת cat וצינור', 'Show the first line of notes.txt using cat and a pipe'), hint: T('cat notes.txt | head -n 1', 'cat notes.txt | head -n 1'),
+        goal: (sh, log) => log.some(l => l.cmd.includes('|') && l.out.trim() === outputOf('head -n 1 notes.txt').trim()), solve: ['cat notes.txt | head -n 1'] },
+    ] },
+    { title: T('> ו־>>', '> and >>'), exercises: [
+      { type: 'teach', cmd: '>', name: 'redirect', text: T('שולחת את הפלט לקובץ במקום למסך. אם הקובץ קיים, התוכן הישן נמחק.', 'Sends the output to a file instead of the screen. If the file exists, the old content is replaced.'), demo: [['grep ERROR logs/app.log > errors.txt'], 'cat errors.txt'] },
+      { type: 'teach', cmd: '>>', name: 'append', text: T('כמו >, אבל מוסיפה לסוף הקובץ בלי למחוק את מה שהיה.', 'Like >, but adds to the end of the file without erasing what was there.'), demo: [['echo one > list.txt', 'echo two >> list.txt'], 'cat list.txt'] },
+      { type: 'output', prompt: T('מה תדפיס cat x.txt?', 'What will cat x.txt print?'), setup: ['echo a > x.txt', 'echo b > x.txt'], cmd: 'cat x.txt', wrongText: ['a\nb', 'a', 'b\na'] },
+      { type: 'output', prompt: T('מה תדפיס cat y.txt?', 'What will cat y.txt print?'), setup: ['echo a > y.txt', 'echo b >> y.txt'], cmd: 'cat y.txt', wrongText: ['b', 'a', 'b\na'] },
+      { type: 'fill', prompt: T('השלימו כדי להוסיף שורה בלי למחוק את מה שיש', 'Fill in to add a line without erasing what is there'), before: 'echo milk ', after: ' notes.txt', options: ['>>', '>', '|', '<'], answer: '>>' },
+      { type: 'terminal', prompt: T('שמרו את שורות ה־ERROR בקובץ errors.txt', 'Save the ERROR lines into errors.txt'), hint: T('grep ERROR logs/app.log > errors.txt', 'grep ERROR logs/app.log > errors.txt'),
+        goal: sh => fileIs(sh, '/home/user/errors.txt', outputOf('grep ERROR logs/app.log')), solve: ['grep ERROR logs/app.log > errors.txt'] },
+    ] },
+    { title: T('שגיאות ו־/dev/null', 'Errors and /dev/null'), exercises: [
+      { type: 'teach', cmd: '2>', name: 'errors', text: T('הודעות שגיאה עוברות בערוץ נפרד. ‎2> שולחת רק אותן לקובץ.', 'Error messages travel on a separate channel. 2> sends only them to a file.'), demo: [['cat nothing.txt 2> err.txt'], 'cat err.txt'] },
+      { type: 'teach', cmd: '/dev/null', name: 'the void', text: T('קובץ מיוחד שבולע כל מה ששולחים אליו. ‎2> /dev/null משתיקה שגיאות.', 'A special file that swallows everything sent to it. 2> /dev/null silences errors.'), demo: [[], 'cat notes.txt nothing.txt 2> /dev/null'] },
+      { type: 'output', prompt: WHAT, cmd: 'cat nothing.txt', wrongText: ['', 'nothing.txt', 'cat: nothing.txt: Permission denied'] },
+      { type: 'output', prompt: WHAT, cmd: 'cat notes.txt nothing.txt 2> /dev/null', wrongCmds: ['cat notes.txt nothing.txt'], wrongText: [''] },
+      { type: 'match', prompt: T('התאימו כל סימן למה שהוא עושה', 'Match each symbol to what it does'), pairs: [['|', T('מעבירה לפקודה הבאה', 'passes to the next command')], ['>', T('כותבת קובץ מחדש', 'writes a file from scratch')], ['>>', T('מוסיפה לסוף הקובץ', 'adds to the end of a file')], ['2>', T('שולחת שגיאות לקובץ', 'sends errors to a file')]] },
+      { type: 'choice', prompt: T('איך מריצים cat על קובץ שאולי לא קיים, בלי לראות שגיאה?', 'How do you run cat on a file that may not exist, without seeing an error?'), options: ['cat file.txt 2> /dev/null', 'cat file.txt > /dev/null', 'cat file.txt | /dev/null', 'cat /dev/null file.txt'], answer: 'cat file.txt 2> /dev/null',
+        why: { 'cat file.txt > /dev/null': T('> משתיקה את הפלט הרגיל, והשגיאה עדיין תופיע.', '> silences the normal output, and the error still shows.'), 'cat file.txt | /dev/null': T('/dev/null היא קובץ, לא פקודה, אז אי אפשר להעביר אליה בצינור.', '/dev/null is a file, not a command, so you cannot pipe into it.'), 'cat /dev/null file.txt': T('זה רק מוסיף את /dev/null הריק למה שנקרא.', 'This just adds the empty /dev/null to what is read.') } },
+    ] },
+    { title: T('צינורות ארוכים', 'Longer pipes'), exercises: [
+      { type: 'output', prompt: WHAT, cmd: 'grep haifa people.csv | wc -l', wrongCmds: ['grep -c eilat people.csv', 'wc -l people.csv'] },
+      { type: 'tiles', prompt: T('הציגו את 2 שורות ה־ERROR האחרונות', 'Show the last 2 ERROR lines'), answer: 'grep ERROR logs/app.log | tail -n 2', tiles: ['grep', 'ERROR', 'logs/app.log', '|', 'tail', '-n', '2', 'head'] },
+      { type: 'output', prompt: WHAT, cmd: 'grep INFO logs/app.log | tail -n 1', wrongCmds: ['grep INFO logs/app.log | head -n 1', 'grep ERROR logs/app.log | tail -n 1'] },
+      { type: 'choice', prompt: T('מה עושה grep ERROR logs/app.log > errors.txt?', 'What does grep ERROR logs/app.log > errors.txt do?'), plain: true,
+        options: [T('שומרת את שורות ה־ERROR בקובץ, בלי להדפיס למסך', 'Saves the ERROR lines into a file, printing nothing on screen'), T('מדפיסה את השורות וגם שומרת אותן', 'Prints the lines and also saves them'), T('מחפשת ERROR בתוך errors.txt', 'Searches for ERROR inside errors.txt'), T('מוסיפה את השורות לסוף errors.txt', 'Adds the lines to the end of errors.txt')],
+        why: [null, T('> לוקחת את הפלט מהמסך. כדי לקבל את שניהם יש tee.', '> takes the output away from the screen. To get both there is tee.'), T('errors.txt הוא היעד, לא המקור.', 'errors.txt is the destination, not the source.'), T('את זה עושה >>. הסימן > כותב מחדש.', 'That is what >> does. > writes from scratch.')] },
+      { type: 'fill', prompt: T('השלימו כדי להעביר את הפלט ל־wc', 'Fill in to pass the output to wc'), before: 'cat fruits.txt ', after: ' wc -l', options: ['|', '>', '>>', '2>'], answer: '|' },
+      { type: 'terminal', prompt: T('ספרו כמה אנשים גרים ב־haifa, עם grep וצינור', 'Count how many people live in haifa, with grep and a pipe'), hint: T('grep haifa people.csv | wc -l', 'grep haifa people.csv | wc -l'),
+        goal: (sh, log) => log.some(l => l.cmd.includes('|') && l.out.trim() === outputOf('grep -c haifa people.csv').trim()), solve: ['grep haifa people.csv | wc -l'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('בנו דוח שגיאות מהלוג, צעד אחר צעד.', 'Build an error report from the log, step by step.'), exercises: [
+    { type: 'terminal', prompt: T('שמרו בקובץ report.txt כל שורה שאינה INFO', 'Save every line that is not INFO into report.txt'), hint: T('grep -v INFO logs/app.log > report.txt', 'grep -v INFO logs/app.log > report.txt'),
+      goal: sh => fileIs(sh, '/home/user/report.txt', outputOf('grep -v INFO logs/app.log')), solve: ['grep -v INFO logs/app.log > report.txt'] },
+    { type: 'terminal', prompt: T('הוסיפו לסוף report.txt שורה שכתוב בה done', 'Add a line that says done to the end of report.txt'), setup: ['grep -v INFO logs/app.log > report.txt'], hint: T('echo done >> report.txt', 'echo done >> report.txt'),
+      goal: sh => fileIs(sh, '/home/user/report.txt', outputOf('grep -v INFO logs/app.log') + 'done\n'), solve: ['echo done >> report.txt'] },
+    { type: 'terminal', prompt: T('ספרו בעזרת צינור כמה שורות יש ב־report.txt', 'Count the lines in report.txt with a pipe'), setup: ['grep -v INFO logs/app.log > report.txt', 'echo done >> report.txt'], hint: T('cat report.txt | wc -l', 'cat report.txt | wc -l'),
+      goal: (sh, log) => log.some(l => l.cmd.includes('|') && l.out.trim() === outputOf('wc -l < report.txt', ['grep -v INFO logs/app.log > report.txt', 'echo done >> report.txt']).trim()), solve: ['cat report.txt | wc -l'] },
+  ] },
+};
+
+const UNIT_6 = {
+  section: 2, unit: 6, title: T('ממיינים, סופרים, חותכים', 'Sort, count, cut'), subtitle: T('הופכים טקסט לנתונים', 'Turning text into data'), color: 'blue', fixture: homeFixture,
+  lessons: [
+    { title: T('sort', 'sort'), exercises: [
+      { type: 'teach', cmd: 'sort', name: 'sort', text: T('ממיינת שורות לפי סדר האלפבית.', 'Sorts lines into alphabetical order.'), demo: [[], 'sort fruits.txt'] },
+      { type: 'output', prompt: WHAT, cmd: 'sort people.csv', wrongCmds: ['cat people.csv', 'sort -r people.csv'] },
+      { type: 'teach', cmd: 'sort -r', name: 'reverse', text: T('ממיינת בסדר הפוך, מהסוף להתחלה.', 'Sorts in reverse order, from the end to the start.'), demo: [[], 'sort -r fruits.txt'] },
+      { type: 'choice', prompt: T('איך ממיינים מספרים לפי הערך שלהם?', 'How do you sort numbers by their value?'), options: ['sort -n', 'sort -r', 'sort -c', 'sort -v'], answer: 'sort -n',
+        why: { 'sort -r': T('‎-r רק הופכת את הסדר.', '-r only reverses the order.'), 'sort -c': T('‎-c בודקת אם הקובץ כבר ממוין.', '-c checks whether the file is already sorted.'), 'sort -v': T('ל־sort אין ‎-v.', 'sort has no -v.') } },
+      { type: 'tiles', prompt: T('מיינו את fruits.txt בסדר הפוך', 'Sort fruits.txt in reverse'), answer: 'sort -r fruits.txt', tiles: ['sort', '-r', 'fruits.txt', '-n', 'uniq'] },
+      { type: 'terminal', prompt: T('הציגו את people.csv ממוין', 'Show people.csv sorted'), hint: T('sort people.csv', 'sort people.csv'), goal: (sh, log) => printed(log, 'sort people.csv'), solve: ['sort people.csv'] },
+    ] },
+    { title: T('uniq', 'uniq'), exercises: [
+      { type: 'teach', cmd: 'uniq', name: 'unique', text: T('מוחקת שורות כפולות שבאות אחת אחרי השנייה. לכן קודם ממיינים.', 'Removes duplicate lines that come one after another. That is why you sort first.'), demo: [[], 'sort fruits.txt | uniq'] },
+      { type: 'teach', cmd: 'uniq -c', name: 'count', text: T('סופרת כמה פעמים כל שורה מופיעה.', 'Counts how many times each line appears.'), demo: [[], 'sort fruits.txt | uniq -c'] },
+      { type: 'output', prompt: WHAT, cmd: 'sort fruits.txt | uniq', wrongCmds: ['uniq fruits.txt', 'sort fruits.txt'] },
+      { type: 'choice', prompt: T('למה מריצים sort לפני uniq?', 'Why run sort before uniq?'), plain: true,
+        options: [T('כי uniq מאחדת רק כפילויות שצמודות זו לזו', 'Because uniq only merges duplicates that sit next to each other'), T('כי uniq לא עובדת על קבצים', 'Because uniq does not work on files'), T('כי sort מוחקת כפילויות', 'Because sort removes duplicates'), T('זה לא משנה, הסדר לא חשוב', 'It does not matter, the order is not important')],
+        why: [null, T('uniq עובדת גם על קבצים, היא פשוט לא רואה כפילויות רחוקות.', 'uniq works on files too, it just misses duplicates that are far apart.'), T('sort רק מסדרת. הכפילויות נשארות.', 'sort only orders. The duplicates stay.'), T('בלי sort, כפילויות רחוקות יישארו.', 'Without sort, far-apart duplicates stay.')] },
+      { type: 'tiles', prompt: T('ספרו כמה פעמים מופיע כל פרי', 'Count how many times each fruit appears'), answer: 'sort fruits.txt | uniq -c', tiles: ['sort', 'fruits.txt', '|', 'uniq', '-c', 'wc'] },
+      { type: 'terminal', prompt: T('הציגו כל פרי פעם אחת בלבד', 'Show each fruit only once'), hint: T('sort ואז uniq, עם צינור', 'sort, then uniq, with a pipe'), goal: (sh, log) => printed(log, 'sort fruits.txt | uniq'), solve: ['sort fruits.txt | uniq'] },
+    ] },
+    { title: T('cut', 'cut'), exercises: [
+      { type: 'teach', cmd: 'cut', name: 'cut', text: T('חותכת עמודה מכל שורה. ‎-d קובע מה מפריד בין העמודות, ‎-f איזו עמודה לקחת.', 'Cuts a column out of each line. -d sets what separates the columns, -f which column to take.'), demo: [[], 'cut -d , -f 1 people.csv'] },
+      { type: 'output', prompt: WHAT, cmd: 'cut -d , -f 2 people.csv', wrongCmds: ['cut -d , -f 1 people.csv', 'cut -d , -f 3 people.csv'] },
+      { type: 'fill', prompt: T('השלימו כדי לקחת את עמודת הגיל, השלישית', 'Fill in to take the age column, the third one'), before: 'cut -d , -f ', after: ' people.csv', options: ['3', '2', '1', 'c'], answer: '3' },
+      { type: 'choice', prompt: T('ב־people.csv העמודות מופרדות בפסיק. מה ידפיס רק את השמות?', 'In people.csv the columns are separated by commas. What prints only the names?'), options: ['cut -d , -f 1 people.csv', 'cut -f 1 people.csv', 'cut -d , -f name people.csv', 'head -n 1 people.csv'], answer: 'cut -d , -f 1 people.csv',
+        why: { 'cut -f 1 people.csv': T('בלי ‎-d , הפקודה מחפשת טאבים ומדפיסה שורות שלמות.', 'Without -d , it looks for tabs and prints whole lines.'), 'cut -d , -f name people.csv': T('‎-f מקבלת מספר עמודה, לא שם.', '-f takes a column number, not a name.'), 'head -n 1 people.csv': T('head נותנת שורה, לא עמודה.', 'head gives a row, not a column.') } },
+      { type: 'tiles', prompt: T('הציגו רק את עמודת הערים', 'Show only the cities column'), answer: 'cut -d , -f 2 people.csv', tiles: ['cut', '-d', ',', '-f', '2', 'people.csv', 'sort', '1'] },
+      { type: 'terminal', prompt: T('הציגו רק את עמודת הגיל מ־people.csv', 'Show only the age column from people.csv'), hint: T('cut -d , -f 3', 'cut -d , -f 3'), goal: (sh, log) => printed(log, 'cut -d , -f 3 people.csv'), solve: ['cut -d , -f 3 people.csv'] },
+    ] },
+    { title: T('tr ושילובים', 'tr and combos'), exercises: [
+      { type: 'teach', cmd: 'tr', name: 'translate', text: T('מחליפה תווים. tr a-z A-Z הופכת אותיות קטנות לגדולות. היא קוראת רק מצינור.', 'Replaces characters. tr a-z A-Z turns lowercase into uppercase. It only reads from a pipe.'), demo: [[], 'cat notes.txt | tr a-z A-Z'] },
+      { type: 'output', prompt: WHAT, cmd: 'echo hello | tr a-z A-Z', wrongText: ['hello', 'Hello', 'HELLO\nhello'] },
+      { type: 'output', prompt: WHAT, cmd: 'cut -d , -f 2 people.csv | sort | uniq -c', wrongCmds: ['cut -d , -f 2 people.csv | uniq -c', 'cut -d , -f 2 people.csv | sort | uniq'] },
+      { type: 'match', prompt: T('התאימו כל פקודה למה שהיא עושה', 'Match each command to what it does'), pairs: [['sort', T('מסדרת שורות', 'orders lines')], ['uniq', T('מאחדת כפילויות צמודות', 'merges neighbouring duplicates')], ['cut', T('לוקחת עמודה', 'takes a column')], ['tr', T('מחליפה תווים', 'replaces characters')]] },
+      { type: 'tiles', prompt: T('הדפיסו את notes.txt באותיות גדולות', 'Print notes.txt in capital letters'), answer: 'cat notes.txt | tr a-z A-Z', tiles: ['cat', 'notes.txt', '|', 'tr', 'a-z', 'A-Z', 'sort'] },
+      { type: 'terminal', prompt: T('גלו כמה פעמים מופיע כל פרי, עם sort ו־uniq -c', 'Find how many times each fruit appears, with sort and uniq -c'), hint: T('sort fruits.txt | uniq -c', 'sort fruits.txt | uniq -c'), goal: (sh, log) => printed(log, 'sort fruits.txt | uniq -c'), solve: ['sort fruits.txt | uniq -c'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('בלשי נתונים: מה אפשר ללמוד מ־people.csv ומהלוג?', 'Data detective: what can you learn from people.csv and the log?'), exercises: [
+    { type: 'terminal', prompt: T('הציגו רק את השמות, ממוינים', 'Show only the names, sorted'), hint: T('cut -d , -f 1 people.csv | sort', 'cut -d , -f 1 people.csv | sort'), goal: (sh, log) => printed(log, 'cut -d , -f 1 people.csv | sort'), solve: ['cut -d , -f 1 people.csv | sort'] },
+    { type: 'terminal', prompt: T('ספרו כמה שורות יש בלוג מכל סוג: INFO, ERROR ו־WARN', 'Count how many log lines there are of each kind: INFO, ERROR and WARN'), hint: T('הסוג הוא העמודה השנייה, והמפריד הוא רווח: cut -d " " -f 2', 'The kind is the second column, split by spaces: cut -d " " -f 2'),
+      goal: (sh, log) => printed(log, 'cut -d " " -f 2 logs/app.log | sort | uniq -c'), solve: ['cut -d " " -f 2 logs/app.log | sort | uniq -c'] },
+    { type: 'terminal', prompt: T('הדפיסו את 2 השורות האחרונות בלוג, באותיות גדולות', 'Print the last 2 log lines in capital letters'), hint: T('tail ואז tr, עם צינור', 'tail, then tr, with a pipe'), goal: (sh, log) => printed(log, 'tail -n 2 logs/app.log | tr a-z A-Z'), solve: ['tail -n 2 logs/app.log | tr a-z A-Z'] },
+  ] },
+};

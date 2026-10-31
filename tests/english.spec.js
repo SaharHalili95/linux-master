@@ -7,7 +7,7 @@ const visibleHebrew = page => page.evaluate(() => [...document.querySelectorAll(
 async function english(page) {
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
-  await page.goto('./');
+  await page.goto('./?mode=trivia');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('lang', 'en'); });
   await page.reload();
   await page.waitForFunction(() => typeof startQuiz === 'function');
@@ -15,7 +15,7 @@ async function english(page) {
 }
 
 test('switch button toggles language and direction', async ({ page }) => {
-  await page.goto('./');
+  await page.goto('./?mode=trivia');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   expect(await page.evaluate(() => document.documentElement.dir)).toBe('rtl');

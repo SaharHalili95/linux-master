@@ -66,33 +66,34 @@ function showTab(name) {
 }
 
 // ---------- Path ----------
-const unit1 = COURSE[0];
-const NODES = [
-  { key: 'L0', kind: 'lesson', i: 0 }, { key: 'L1', kind: 'lesson', i: 1 }, { key: 'c1', kind: 'chest' },
-  { key: 'L2', kind: 'lesson', i: 2 }, { key: 'L3', kind: 'lesson', i: 3 }, { key: 'boss', kind: 'boss' },
-];
+// Unit 1 keeps its original keys (L0, c1, boss) so progress saved before more units existed still counts.
+const unitKey = (unit, id) => (unit.unit === 1 ? id : `u${unit.unit}-${id}`);
+const NODE_PLAN = [['L0', 'lesson', 0], ['L1', 'lesson', 1], ['c1', 'chest'], ['L2', 'lesson', 2], ['L3', 'lesson', 3], ['boss', 'boss']];
+const unitNodes = unit => NODE_PLAN.map(([id, kind, i]) => ({ key: unitKey(unit, id), kind, i, unit }));
+const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: unit.fixture || unitFixture }));
 const OFFSETS = [0, 52, 78, 52, 0, -52, -78, -52];
 const ICONS = { lesson: '★', chest: '🎁', boss: '$_', done: '✓', lock: '🔒' };
 function renderPath() {
   const root = $('path'); root.innerHTML = '';
-  const current = NODES.findIndex(n => !S.done.includes(n.key));
+  const order = COURSE.filter(u => !u.locked).flatMap(unitNodes);
+  const current = order.find(n => !S.done.includes(n.key))?.key;
   for (const unit of COURSE) {
     const banner = el('div', `unit-banner ${unit.color}${unit.locked ? ' locked' : ''}`);
     const txt = el('div'); txt.append(el('div', 'unit-kicker', t('kicker', unit.section, unit.unit)), el('h2', '', tr(unit.title)), el('div', 'unit-sub', tr(unit.subtitle)));
     banner.append(txt, el('div', 'unit-book', unit.locked ? '🔒' : '📘')); root.append(banner);
     const list = el('ol', 'nodes');
-    const nodes = unit.locked ? Array.from({ length: 5 }, (_, i) => ({ key: `u2-${i}`, kind: i === 4 ? 'boss' : 'lesson', lockedUnit: true })) : NODES;
+    const nodes = unit.locked ? NODE_PLAN.map(([id, kind]) => ({ key: unitKey(unit, id), kind: kind === 'boss' ? 'boss' : 'lesson', unit, lockedUnit: true })).filter(n => n.key !== unitKey(unit, 'c1')) : unitNodes(unit);
     nodes.forEach((n, i) => {
       const li = el('li', 'node-row'); li.style.setProperty('--x', `${OFFSETS[i % OFFSETS.length]}px`);
-      const state = n.lockedUnit ? 'locked' : S.done.includes(n.key) ? 'done' : i === current ? 'current' : 'locked';
+      const state = n.lockedUnit ? 'locked' : S.done.includes(n.key) ? 'done' : n.key === current ? 'current' : 'locked';
       const b = el('button', `node ${n.kind} ${state}`); b.type = 'button';
       b.textContent = state === 'done' && n.kind !== 'chest' ? ICONS.done : state === 'locked' && n.kind === 'lesson' ? ICONS.lock : ICONS[n.kind];
       if (n.kind === 'boss') b.dir = 'ltr';
-      b.setAttribute('aria-label', n.lockedUnit ? t('locked') : n.kind === 'lesson' ? t('lessonN', n.i + 1, tr(unit1.lessons[n.i].title)) : n.kind === 'chest' ? t('chest') : tr(unit1.boss.title));
+      b.setAttribute('aria-label', n.lockedUnit ? t('locked') : n.kind === 'lesson' ? t('lessonN', n.i + 1, tr(unit.lessons[n.i].title)) : n.kind === 'chest' ? t('chest') : tr(unit.boss.title));
       b.onclick = () => openPop(b, n, state);
       if (state === 'current') { const tip = el('div', 'start-tip', n.kind === 'chest' ? t('open') : t('start')); li.append(tip); li.classList.add('tipped'); }
       li.append(b);
-      if (i === 2 && !unit.locked) { const m = el('div', 'path-mascot'); m.innerHTML = mascot(current > 2 ? 'happy' : 'idle'); li.append(m); }
+      if (i === 2 && !unit.locked) { const m = el('div', 'path-mascot'); m.innerHTML = mascot(S.done.includes(n.key) ? 'happy' : 'idle'); li.append(m); }
       list.append(li);
     });
     root.append(list);
@@ -101,24 +102,24 @@ function renderPath() {
 }
 function openPop(anchor, n, state) {
   closePop(); SFX.tap();
-  const pop = el('div', `pop ${state}`); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
-  if (state === 'locked') { pop.append(el('h3', '', n.lockedUnit ? t('unit2Title') : t('notYet')), el('p', '', n.lockedUnit ? t('unit2Text') : t('notYetText'))); }
+  const unit = n.unit, pop = el('div', `pop ${state}`); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
+  if (state === 'locked') { pop.append(el('h3', '', n.lockedUnit ? tr(unit.title) : t('notYet')), el('p', '', n.lockedUnit ? t('lockedUnitText') : t('notYetText'))); }
   else if (n.kind === 'chest') {
     pop.append(el('h3', '', state === 'done' ? t('chestOpened') : t('chest')), el('p', '', state === 'done' ? t('chestDone') : t('chestText')));
-    if (state === 'current') { const go = el('button', 'btn primary', t('chestBtn')); go.onclick = openChest; pop.append(go); }
+    if (state === 'current') { const go = el('button', 'btn primary', t('chestBtn')); go.onclick = () => openChest(n.key); pop.append(go); }
   } else {
-    const title = tr(n.kind === 'boss' ? unit1.boss.title : unit1.lessons[n.i].title);
-    pop.append(el('h3', '', title), el('p', '', n.kind === 'boss' ? t('bossText') : t('lessonOf', n.i + 1, unit1.lessons.length)));
+    const title = tr(n.kind === 'boss' ? unit.boss.title : unit.lessons[n.i].title);
+    pop.append(el('h3', '', title), el('p', '', n.kind === 'boss' ? tr(unit.boss.text) : t('lessonOf', n.i + 1, unit.lessons.length)));
     const go = el('button', 'btn primary', state === 'done' ? t('again') : n.kind === 'boss' ? t('toBoss') : t('startXp'));
-    go.onclick = () => { closePop(); n.kind === 'boss' ? startBoss() : startLesson(n.key, unit1.lessons[n.i].exercises, { title, replay: state === 'done' }); };
+    go.onclick = () => { closePop(); n.kind === 'boss' ? startBoss(unit, n.key) : startLesson(n.key, withFixture(unit, unit.lessons[n.i].exercises), { title, replay: state === 'done' }); };
     pop.append(go);
   }
   anchor.parentElement.append(pop); anchor.parentElement.classList.add('open'); setTimeout(() => document.addEventListener('click', outside), 0);
 }
 function outside(e) { if (!e.target.closest('#pop') && !e.target.closest('.node')) closePop(); }
 function closePop() { $('pop')?.parentElement.classList.remove('open'); $('pop')?.remove(); document.removeEventListener('click', outside); }
-function openChest() {
-  closePop(); S.gems += 15; S.done.push('c1'); save(); SFX.win(); confetti(); toast(t('gemsToast')); renderPath();
+function openChest(key) {
+  closePop(); S.gems += 15; S.done.push(key); save(); SFX.win(); confetti(); toast(t('gemsToast')); renderPath();
 }
 
 // ---------- Lesson engine ----------
@@ -128,9 +129,9 @@ function startLesson(key, exercises, opts = {}) {
   L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
   $('lesson').hidden = false; document.body.classList.add('in-lesson'); next();
 }
-function startBoss() {
-  const boss = bossFixture();
-  startLesson('boss', [{ type: 'boss', prompt: unit1.boss.text, boss }], { boss: true });
+function startBoss(unit, key) {
+  if (unit.boss.exercises) return startLesson(key, withFixture(unit, unit.boss.exercises), { boss: true });
+  startLesson(key, [{ type: 'boss', prompt: unit.boss.text, boss: bossFixture() }], { boss: true });
 }
 function next() {
   if (!L.queue.length) return finishLesson();
@@ -175,7 +176,7 @@ function answer(ok, solution = '', why = '') {
   } else {
     L.mistakes++; L.combo = 0; SFX.bad();
     L.queue.push({ ...L.ex, retry: true });
-    if (!S.mistakes.includes(L.ex.uid) && !L.ex.uid.startsWith('boss')) S.mistakes.push(L.ex.uid);
+    if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss) S.mistakes.push(L.ex.uid);
     setFoot('bad', t('correctAnswer'), L.ex.type === 'terminal' ? { note: solution } : L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
     $('lessonMain').classList.remove('shake'); void $('lessonMain').offsetWidth; $('lessonMain').classList.add('shake');
   }
@@ -206,7 +207,7 @@ const RENDER = {
     const bubble = el('div', 'bubble'); bubble.append(code(ex.cmd), el('div', 'teach-name', ex.name), el('p', '', tr(ex.text)));
     head.append(m, bubble); card.append(head);
     if (ex.demo) {
-      const [setup, cmd] = ex.demo, sh = new Shell(unitFixture()), lines = [];
+      const [setup, cmd] = ex.demo, sh = new Shell(ex.fx()), lines = [];
       for (const c of setup) { lines.push([promptFor(sh.cwd), c, '']); sh.run(c); }
       const ps1 = promptFor(sh.cwd), r = sh.run(cmd); lines.push([ps1, cmd, (r.out + r.err).replace(/\n$/, '')]);
       card.append(el('div', 'demo-label', t('tryIt')), termBlock(lines));
@@ -226,7 +227,7 @@ const RENDER = {
     root.append(line, chips);
   },
   output(root, ex) {
-    const fx = unitFixture, real = runIn(ex.setup, ex.cmd, fx());
+    const fx = ex.fx, real = runIn(ex.setup, ex.cmd, fx());
     const lines = []; let sh = new Shell(fx());
     for (const c of ex.setup || []) { lines.push([promptFor(sh.cwd), c, '']); sh.run(c); }
     lines.push([promptFor(sh.cwd), ex.cmd, '?']); root.append(termBlock(lines));
@@ -270,7 +271,7 @@ const RENDER = {
     grid.append(left, right); grid.addEventListener('click', e => { const b = e.target.closest('.pair'); if (b) onTap(b); });
     root.append(grid); $('checkBtn').disabled = true;
   },
-  terminal(root, ex) { mountTerminal(root, ex, new Shell(unitFixture())); },
+  terminal(root, ex) { mountTerminal(root, ex, new Shell(ex.fx())); },
   boss(root, ex) {
     const goals = el('ul', 'goals');
     const items = [['found', t('goalFound')], ['read', t('goalRead')], ['typed', t('goalTyped')]];
@@ -348,7 +349,7 @@ function showStreak() {
 }
 
 // ---------- Other tabs ----------
-function allExercises() { return unit1.lessons.flatMap((ls, li) => ls.exercises.map((ex, i) => ({ ...ex, uid: `L${li}.${i}` }))).filter(e => e.type !== 'teach'); }
+function allExercises() { return COURSE.filter(u => !u.locked).flatMap(u => u.lessons.flatMap((ls, li) => withFixture(u, ls.exercises).map((ex, i) => ({ ...ex, uid: `${unitKey(u, `L${li}`)}.${i}` })))).filter(e => e.type !== 'teach'); }
 function renderPractice() {
   const n = S.mistakes.length; $('mistakesCount').textContent = n ? t('mistakesN', n) : t('noMistakes');
   $('practiceMistakes').disabled = !n;
@@ -369,7 +370,7 @@ function renderQuests() {
   }
 }
 function renderProfile() {
-  $('pXp').textContent = S.xp; $('pStreak').textContent = liveStreak(); $('pLessons').textContent = S.done.filter(k => k.startsWith('L')).length; $('pGems').textContent = S.gems;
+  $('pXp').textContent = S.xp; $('pStreak').textContent = liveStreak(); $('pLessons').textContent = S.done.filter(k => /(^|-)L\d$/.test(k)).length; $('pGems').textContent = S.gems;
   $('soundToggle').checked = S.sound; $('profileMascot').innerHTML = mascot('happy');
 }
 
