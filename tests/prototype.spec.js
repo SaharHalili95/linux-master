@@ -230,6 +230,19 @@ test('"what will it print?" shows the files the command reads, and nothing for m
   expect(of('cat x.txt')).toEqual([]);
 });
 
+test('every exercise fits the screen width, with no sideways scrolling', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  const wide = await page.evaluate(() => COURSE.filter(u => !u.locked).flatMap(unit => withFixture(unit, [...unit.lessons.flatMap(l => l.exercises), ...(unit.boss.exercises || [])])).flatMap(ex => {
+    startLesson('layout', [ex]);
+    if (ex.type === 'teach') $('checkBtn').click();
+    const main = $('lessonMain');
+    return main.scrollWidth > main.clientWidth || document.documentElement.scrollWidth > innerWidth ? [tr(ex.prompt) || ex.cmd] : [];
+  }));
+  expect(wide).toEqual([]);
+});
+
 test('the start bubble never covers the finished lesson above it', async ({ page }) => {
   await page.goto('./prototype/');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ done: ['L0'] })); });

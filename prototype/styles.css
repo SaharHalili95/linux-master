@@ -128,14 +128,14 @@ button { cursor: pointer; }
 .opt.sel { border-color: var(--blue); background: var(--blue-soft); box-shadow: 0 4px 0 var(--blue); color: var(--blue-ink); }
 .opt.sel .key { border-color: var(--blue); color: var(--blue-ink); }
 .opt:active { transform: translateY(2px); }
-.out-opt { margin: 0; font: 600 15px/1.45 var(--mono); white-space: pre; text-align: left; flex: 1; }
+.out-opt { margin: 0; font: 600 15px/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; text-align: left; flex: 1; min-width: 0; }
 
 .term { background: var(--term-bg); color: var(--term-ink); border-radius: 16px; padding: 14px 16px; font: 500 15px/1.6 var(--mono); text-align: left; margin-bottom: 18px; overflow-x: auto; }
 .term-line { white-space: pre-wrap; overflow-wrap: anywhere; } .ps1 { color: var(--term-green); } .typed { color: #fff; font-weight: 700; }
 .file-peek { border: 2px dashed var(--line-strong); border-radius: 16px; padding: 10px 14px; margin-bottom: 12px; background: var(--soft); }
 .file-peek-h { font-weight: 700; font-size: 14px; color: var(--muted); margin-bottom: 4px; }
 .file-peek pre { margin: 0; font: 600 15px/1.5 var(--mono); text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; }
-.term-out { margin: 0 0 4px; font: inherit; white-space: pre; color: var(--term-ink); }
+.term-out { margin: 0 0 4px; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--term-ink); }
 .term.live { min-height: 170px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; }
 .term-input { display: flex; align-items: center; gap: 2px; }
 .term-input input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #fff; font: 700 16px var(--mono); padding: 4px 0; caret-color: var(--term-green); }
