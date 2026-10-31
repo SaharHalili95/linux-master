@@ -78,7 +78,7 @@ const COURSE = [
         { type: 'output', prompt: T('מה תדפיס הפקודה?', 'What will this print?'), setup: ['cd docs'], cmd: 'cd ../photos && pwd', wrongText: ['/home/user/docs/photos', '/photos', '/home/user/docs'] },
       ] },
     ],
-    boss: { title: T('אתגר היחידה', 'Unit challenge'), text: T('בבית יש מילת קוד בקובץ מוסתר, באחת מהתיקיות. מצאו אותה.', 'There is a code word in a hidden file in one of the home folders. Find it.') },
+    boss: { title: T('אתגר היחידה', 'Unit challenge'), intro: T('מצאו סיסמה בקובץ מוסתר.', 'Find a password in a hidden file.'), text: d => T(`בתיקייה ${d} יש קובץ מוסתר בשם ‎.code, ובתוכו סיסמה. הציגו אותו עם ls -a ${d}, קראו אותו עם cat ${d}/.code והקלידו את הסיסמה למטה.`, `The ${d} folder has a hidden file called .code with a password inside. Show it with ls -a ${d}, read it with cat ${d}/.code and type the password below.`) },
   },
   UNIT_2,
   UNIT_3,

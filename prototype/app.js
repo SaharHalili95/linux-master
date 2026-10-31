@@ -109,7 +109,7 @@ function openPop(anchor, n, state) {
     if (state === 'current') { const go = el('button', 'btn primary', t('chestBtn')); go.onclick = () => openChest(n.key); pop.append(go); }
   } else {
     const title = tr(n.kind === 'boss' ? unit.boss.title : unit.lessons[n.i].title);
-    pop.append(el('h3', '', title), el('p', '', n.kind === 'boss' ? tr(unit.boss.text) : t('lessonOf', n.i + 1, unit.lessons.length)));
+    pop.append(el('h3', '', title), el('p', '', n.kind === 'boss' ? tr(unit.boss.intro || unit.boss.text) : t('lessonOf', n.i + 1, unit.lessons.length)));
     const go = el('button', 'btn primary', state === 'done' ? t('again') : n.kind === 'boss' ? t('toBoss') : t('startXp'));
     go.onclick = () => { closePop(); n.kind === 'boss' ? startBoss(unit, n.key) : startLesson(n.key, withFixture(unit, unit.lessons[n.i].exercises), { title, replay: state === 'done' }); };
     pop.append(go);
@@ -131,7 +131,8 @@ function startLesson(key, exercises, opts = {}) {
 }
 function startBoss(unit, key) {
   if (unit.boss.exercises) return startLesson(key, withFixture(unit, unit.boss.exercises), { boss: true });
-  startLesson(key, [{ type: 'boss', prompt: unit.boss.text, boss: bossFixture() }], { boss: true });
+  const boss = bossFixture();
+  startLesson(key, [{ type: 'boss', prompt: unit.boss.text(boss.hideIn), boss }], { boss: true });
 }
 function next() {
   if (!L.queue.length) return finishLesson();
