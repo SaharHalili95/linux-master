@@ -25,6 +25,7 @@ async function solve(page, lang = 'he') {
     for (const c of [`ls -a ${ex.boss.dir}`, `cat ${ex.boss.dir}/.code`]) { await page.fill('.term-input input', c); await page.press('.term-input input', 'Enter'); }
     await expect(page.locator('.goals li.done')).toHaveCount(2);
     await expect(page.locator('.term')).toContainText(`The password is: ${ex.boss.word}`);
+    await expect(page.locator('#exPrompt')).toContainText(`cat ${ex.boss.dir}/.code`);
     await page.fill('#codeWord', ex.boss.word);
   }
   if (SHOTS && ex.type !== 'match') await page.screenshot({ path: `${SHOTS}/ex-${ex.uid}-${ex.type}.png` });
