@@ -69,7 +69,8 @@ button { cursor: pointer; }
 .unit-book { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; border: 2px solid #ffffff55; font-size: 22px; }
 .nodes { list-style: none; margin: 0; padding: 44px 0 0; display: flex; flex-direction: column; align-items: center; gap: 18px; }
 .node-row { position: relative; transform: translateX(var(--x)); display: flex; flex-direction: column; align-items: center; }
-.node { width: 72px; height: 66px; border-radius: 50%; border: 0; font-size: 28px; font-weight: 800; color: #fff; background: var(--green-bright); box-shadow: 0 7px 0 var(--green-bright-dark); transition: transform .08s, box-shadow .08s; }
+.node { position: relative; width: 72px; height: 66px; border-radius: 50%; border: 0; font-size: 28px; font-weight: 800; color: #fff; background: var(--green-bright); box-shadow: 0 7px 0 var(--green-bright-dark); transition: transform .08s, box-shadow .08s; }
+.node-num { position: absolute; top: -4px; inset-inline-end: -4px; min-width: 26px; height: 26px; border-radius: 13px; background: var(--surface); border: 2px solid var(--line-strong); color: var(--ink); font: 800 14px/22px Rubik, sans-serif; }
 .node:active { transform: translateY(5px); box-shadow: 0 2px 0 var(--green-bright-dark); }
 .node.locked { background: var(--locked); color: var(--locked-dark); box-shadow: 0 7px 0 var(--locked-dark); font-size: 24px; }
 .node.done { background: var(--gold); color: #6b4e00; box-shadow: 0 7px 0 var(--gold-dark); }
