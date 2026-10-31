@@ -138,7 +138,7 @@ function next() {
   L.ex = L.queue.shift(); L.answered = false; L.value = null;
   const ex = L.ex;
   $('bar').style.width = `${(L.correct / Math.max(1, L.total)) * 100}%`;
-  $('exTag').textContent = ex.type === 'teach' ? t('newCmd') : ex.retry ? t('retry') : '';
+  $('exTag').textContent = ex.type === 'teach' ? t(ex.known ? 'knownCmd' : 'newCmd') : ex.retry ? t('retry') : '';
   $('exTag').className = `ex-tag${ex.type === 'teach' ? ' new' : ex.retry ? ' retry' : ''}`;
   $('exPrompt').textContent = ex.type === 'teach' ? '' : tr(ex.prompt);
   $('exPrompt').hidden = ex.type === 'teach';
