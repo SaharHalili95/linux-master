@@ -27,6 +27,7 @@ function outputOf(cmd, setup = []) { const sh = new Shell(homeFixture()); for (c
 const printed = (log, cmd, setup) => { const want = outputOf(cmd, setup).trim(); return !!want && log.some(l => l.out.trim() === want); };
 const fileIs = (sh, path, content) => sh.files.get(path)?.content === content;
 const WHAT = T('מה תדפיס הפקודה?', 'What will this print?');
+const READ = T('קראו והשלימו את המשפט', 'Read and complete the sentence');
 const CHALLENGE = T('אתגר היחידה', 'Unit challenge');
 
 const UNIT_2 = {
@@ -35,6 +36,7 @@ const UNIT_2 = {
     { title: T('cat', 'cat'), exercises: [
       { type: 'teach', known: true, cmd: 'cat', name: 'concatenate', text: T('כבר השתמשתם בה באתגר. היא מדפיסה את כל התוכן של קובץ למסך.', 'You already used it in the challenge. It prints the whole content of a file to the screen.'), demo: [[], 'cat notes.txt'] },
       { type: 'output', prompt: WHAT, cmd: 'cat readme.txt', wrongCmds: ['cat notes.txt'], wrongText: ['readme.txt', 'cat: readme.txt: No such file or directory'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מדפיסה את כל התוכן של קובץ.', 'The ___ command prints the whole content of a file.'), options: ['cat', 'ls', 'pwd'], answer: 'cat' },
       { type: 'choice', prompt: T('איזו פקודה מציגה את התוכן של קובץ?', 'Which command shows what is inside a file?'), options: ['cat', 'ls', 'cd', 'pwd'], answer: 'cat',
         why: { ls: T('ls מציגה שמות של קבצים, לא את מה שכתוב בהם.', 'ls shows file names, not what is written in them.'), cd: T('cd עוברת לתיקייה.', 'cd moves you to a folder.'), pwd: T('pwd מדפיסה איפה אתם.', 'pwd prints where you are.') } },
       { type: 'tiles', prompt: T('הציגו את התוכן של todo.txt שבתיקייה docs', 'Show what is inside todo.txt in the docs folder'), answer: 'cat docs/todo.txt', tiles: ['cat', 'docs/todo.txt', 'ls', 'todo.txt/docs', 'cd'] },
@@ -44,6 +46,7 @@ const UNIT_2 = {
     { title: T('head ו־tail', 'head and tail'), exercises: [
       { type: 'teach', cmd: 'head', name: 'head', text: T('מדפיסה רק את השורות הראשונות של קובץ. ‎-n קובע כמה. בלי ‎-n מקבלים 10.', 'Prints only the first lines of a file. -n sets how many. Without -n you get 10.'), demo: [[], 'head -n 3 logs/app.log'] },
       { type: 'output', prompt: WHAT, cmd: 'head -n 2 logs/app.log', wrongCmds: ['tail -n 2 logs/app.log', 'head -n 3 logs/app.log'] },
+      { type: 'sentence', prompt: READ, text: T('כדי לראות את השורות האחרונות של קובץ משתמשים ב־___.', 'To see the last lines of a file, use ___.'), options: ['tail', 'head', 'cat'], answer: 'tail' },
       { type: 'teach', cmd: 'tail', name: 'tail', text: T('מדפיסה את השורות האחרונות. שימושית ללוגים, כי הדברים החדשים נמצאים בסוף.', 'Prints the last lines. Handy for logs, because new entries are at the end.'), demo: [[], 'tail -n 3 logs/app.log'] },
       { type: 'choice', prompt: T('רוצים לראות את 5 השורות האחרונות בלוג. מה מריצים?', 'You want the last 5 lines of a log. What do you run?'), options: ['tail -n 5 logs/app.log', 'head -n 5 logs/app.log', 'cat -n 5 logs/app.log', 'tail logs/app.log 5'], answer: 'tail -n 5 logs/app.log',
         why: { 'head -n 5 logs/app.log': T('head מתחילה מההתחלה, לא מהסוף.', 'head starts from the top, not the end.'), 'cat -n 5 logs/app.log': T('‎-n של cat ממספרת שורות. היא לא בוחרת כמה.', 'cat -n numbers lines. It does not pick how many.'), 'tail logs/app.log 5': T('המספר בא אחרי ‎-n, לפני שם הקובץ.', 'The number goes after -n, before the file name.') } },
@@ -53,6 +56,7 @@ const UNIT_2 = {
     { title: T('wc ו־file', 'wc and file'), exercises: [
       { type: 'teach', cmd: 'wc -l', name: 'word count', text: T('סופרת שורות בקובץ. בלי ‎-l היא מראה שורות, מילים ותווים.', 'Counts the lines in a file. Without -l it shows lines, words and characters.'), demo: [[], 'wc -l fruits.txt'] },
       { type: 'output', prompt: WHAT, cmd: 'wc -l notes.txt', wrongCmds: ['wc -l fruits.txt'], wrongText: ['notes.txt 3', '3 lines'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה wc ___ סופרת כמה שורות יש בקובץ.', 'wc ___ counts how many lines a file has.'), options: ['-l', '-n', '-a'], answer: '-l' },
       { type: 'choice', prompt: T('מה מראה המספר בפלט של wc -l?', 'What does the number in wc -l output show?'), plain: true,
         options: [T('כמה שורות יש בקובץ', 'How many lines the file has'), T('כמה מילים יש בקובץ', 'How many words the file has'), T('הגודל של הקובץ בקילובייט', 'The file size in kilobytes'), T('מספר השורה האחרונה ששונתה', 'The number of the last changed line')],
         why: [null, T('מילים סופרים עם wc -w.', 'Words are counted with wc -w.'), T('wc -c סופרת בתים, לא קילובייטים.', 'wc -c counts bytes, not kilobytes.'), T('wc לא יודעת מה שונה בקובץ.', 'wc does not know what changed in a file.')] },
@@ -63,6 +67,7 @@ const UNIT_2 = {
     { title: T('cat -n וחזרה', 'cat -n and review'), exercises: [
       { type: 'teach', cmd: 'cat -n', name: 'number', text: T('מדפיסה את הקובץ עם מספר לפני כל שורה.', 'Prints the file with a number before each line.'), demo: [[], 'cat -n notes.txt'] },
       { type: 'match', prompt: T('התאימו כל פקודה למה שהיא עושה', 'Match each command to what it does'), pairs: [['cat', T('מדפיסה את כל הקובץ', 'prints the whole file')], ['head', T('השורות הראשונות', 'the first lines')], ['tail', T('השורות האחרונות', 'the last lines')], ['wc -l', T('סופרת שורות', 'counts lines')]] },
+      { type: 'sentence', prompt: READ, text: T('cat ___ מדפיסה את הקובץ עם מספר לפני כל שורה.', 'cat ___ prints the file with a number before each line.'), options: ['-n', '-l', '-a'], answer: '-n' },
       { type: 'output', prompt: WHAT, cmd: 'tail -n 1 people.csv', wrongCmds: ['head -n 1 people.csv', 'tail -n 2 people.csv'] },
       { type: 'tiles', prompt: T('הציגו את 3 השורות האחרונות של הלוג', 'Show the last 3 lines of the log'), answer: 'tail -n 3 logs/app.log', tiles: ['tail', '-n', '3', 'logs/app.log', 'head', '-l'] },
       { type: 'choice', prompt: T('איזו פקודה תגיד אם cv.pdf הוא באמת PDF?', 'Which command tells you if cv.pdf really is a PDF?'), options: ['file docs/cv.pdf', 'cat docs/cv.pdf', 'wc docs/cv.pdf', 'ls docs/cv.pdf'], answer: 'file docs/cv.pdf',
@@ -83,6 +88,7 @@ const UNIT_3 = {
     { title: T('mkdir', 'mkdir'), exercises: [
       { type: 'teach', cmd: 'mkdir', name: 'make directory', text: T('יוצרת תיקייה חדשה. אין פלט, אבל ls תראה אותה.', 'Creates a new folder. No output, but ls will show it.'), demo: [['mkdir music'], 'ls'] },
       { type: 'output', prompt: T('מה תדפיס ls אחרי הפקודה הזו?', 'What will ls print after this command?'), setup: ['mkdir music'], cmd: 'ls', wrongCmds: ['ls docs'], wrongText: ['docs\nfruits.txt\nlogs\nnotes.txt\npeople.csv\nphotos\nprojects\nreadme.txt', 'music'] },
+      { type: 'sentence', prompt: READ, text: T('כדי ליצור תיקייה חדשה כותבים ___ ואחריו את השם שלה.', 'To create a new folder, type ___ and then its name.'), options: ['mkdir', 'cd', 'cp'], answer: 'mkdir' },
       { type: 'choice', prompt: T('איזו פקודה יוצרת תיקייה בשם backup?', 'Which command creates a folder named backup?'), options: ['mkdir backup', 'cd backup', 'ls backup', 'cat backup'], answer: 'mkdir backup',
         why: { 'cd backup': T('cd נכנסת לתיקייה שכבר קיימת.', 'cd goes into a folder that already exists.'), 'ls backup': T('ls מציגה מה יש בתיקייה קיימת.', 'ls shows what is in an existing folder.'), 'cat backup': T('cat קוראת קבצים.', 'cat reads files.') } },
       { type: 'teach', cmd: 'mkdir -p', name: 'parents', text: T('יוצרת כמה רמות של תיקיות בבת אחת.', 'Creates several levels of folders at once.'), demo: [['mkdir -p a/b/c'], 'find a'] },
@@ -92,6 +98,7 @@ const UNIT_3 = {
     { title: T('cp', 'cp'), exercises: [
       { type: 'teach', cmd: 'cp', name: 'copy', text: T('מעתיקה קובץ. קודם המקור, אחר כך היעד. המקור נשאר במקומו.', 'Copies a file. Source first, then destination. The source stays where it was.'), demo: [['cp notes.txt notes.bak'], 'ls'] },
       { type: 'output', prompt: T('מה תדפיס ls docs אחרי ההעתקה?', 'What will ls docs print after the copy?'), setup: ['cp readme.txt docs'], cmd: 'ls docs', wrongText: ['cv.pdf\ntodo.txt', 'readme.txt'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מעתיקה קובץ, והמקור נשאר במקומו.', 'The ___ command copies a file, and the original stays where it was.'), options: ['cp', 'mv', 'rm'], answer: 'cp' },
       { type: 'choice', prompt: T('אחרי cp notes.txt docs, איפה נמצא notes.txt?', 'After cp notes.txt docs, where is notes.txt?'), plain: true,
         options: [T('גם בבית וגם ב־docs', 'Both at home and in docs'), T('רק ב־docs', 'Only in docs'), T('רק בבית', 'Only at home'), T('בשום מקום, הוא נמחק', 'Nowhere, it was deleted')],
         why: [null, T('ככה עובדת mv. cp משאירה את המקור.', 'That is what mv does. cp leaves the source.'), T('cp יצרה עותק חדש ב־docs.', 'cp made a new copy in docs.'), T('cp אף פעם לא מוחקת.', 'cp never deletes.')] },
@@ -103,6 +110,7 @@ const UNIT_3 = {
     { title: T('mv ו־rm', 'mv and rm'), exercises: [
       { type: 'teach', cmd: 'mv', name: 'move', text: T('מעבירה קובץ למקום אחר, או משנה לו את השם. במקום הישן הוא כבר לא נמצא.', 'Moves a file somewhere else, or renames it. It is no longer in the old place.'), demo: [['mv notes.txt list.txt'], 'ls'] },
       { type: 'output', prompt: T('מה תדפיס ls אחרי ההעברה?', 'What will ls print after the move?'), setup: ['mv notes.txt docs'], cmd: 'ls', wrongCmds: ['ls docs'], wrongText: ['docs\nfruits.txt\nlogs\nnotes.txt\npeople.csv\nphotos\nprojects\nreadme.txt'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מוחקת קובץ, ואין סל מחזור.', 'The ___ command deletes a file, and there is no trash.'), options: ['rm', 'mv', 'cp'], answer: 'rm' },
       { type: 'teach', cmd: 'rm', name: 'remove', text: T('מוחקת קובץ. אין סל מחזור: מה שנמחק, נעלם.', 'Deletes a file. There is no trash: what is deleted is gone.'), demo: [['rm readme.txt'], 'ls'] },
       { type: 'choice', prompt: T('איזו פקודה תשנה את השם של fruits.txt ל־food.txt?', 'Which command renames fruits.txt to food.txt?'), options: ['mv fruits.txt food.txt', 'cp fruits.txt food.txt', 'rm fruits.txt food.txt', 'mv food.txt fruits.txt'], answer: 'mv fruits.txt food.txt',
         why: { 'cp fruits.txt food.txt': T('cp תשאיר גם את fruits.txt.', 'cp would keep fruits.txt too.'), 'rm fruits.txt food.txt': T('rm מוחקת, היא לא משנה שמות.', 'rm deletes, it does not rename.'), 'mv food.txt fruits.txt': T('הסדר הפוך: קודם השם הישן, אחר כך החדש.', 'Wrong order: the old name first, then the new one.') } },
@@ -113,6 +121,7 @@ const UNIT_3 = {
     { title: T('echo ו־*', 'echo and *'), exercises: [
       { type: 'teach', cmd: 'echo', name: 'echo', text: T('מדפיסה טקסט. עם > הטקסט נכתב לקובץ במקום למסך.', 'Prints text. With > the text goes into a file instead of the screen.'), demo: [['echo hello > hi.txt'], 'cat hi.txt'] },
       { type: 'output', prompt: T('מה תדפיס cat a.txt?', 'What will cat a.txt print?'), setup: ['echo hi > a.txt'], cmd: 'cat a.txt', wrongText: ['echo hi', 'a.txt', 'hi > a.txt'] },
+      { type: 'sentence', prompt: READ, text: T('הסימן ___ מחליף כל רצף של תווים בשם של קובץ.', 'The ___ sign stands for any run of characters in a file name.'), options: ['*', '~', '..'], answer: '*' },
       { type: 'teach', cmd: '*', name: 'wildcard', text: T('כוכבית מחליפה כל רצף של תווים. ‎*.txt אומר: כל מה שנגמר ב־.txt.', 'A star stands for any run of characters. *.txt means: anything ending in .txt.'), demo: [[], 'ls *.txt'] },
       { type: 'output', prompt: WHAT, cmd: 'ls photos/*.jpg', wrongCmds: ['ls photos'], wrongText: ['photos/cat.jpg', '*.jpg'] },
       { type: 'tiles', prompt: T('מחקו את כל קבצי ה־.txt בתיקייה הנוכחית', 'Delete every .txt file in the current folder'), answer: 'rm *.txt', tiles: ['rm', '*.txt', '*', 'ls', '.txt'] },
@@ -134,6 +143,7 @@ const UNIT_4 = {
     { title: T('grep', 'grep'), exercises: [
       { type: 'teach', cmd: 'grep', name: 'global regular expression print', text: T('מחפשת מילה בקובץ ומדפיסה רק את השורות שבהן היא מופיעה.', 'Searches a file for a word and prints only the lines that contain it.'), demo: [[], 'grep ERROR logs/app.log'] },
       { type: 'output', prompt: WHAT, cmd: 'grep haifa people.csv', wrongCmds: ['grep omer people.csv', 'cut -d , -f 1 people.csv'], wrongText: ['haifa\nhaifa'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מדפיסה רק את השורות שמכילות מילה מסוימת.', 'The ___ command prints only the lines that contain a given word.'), options: ['grep', 'find', 'cat'], answer: 'grep' },
       { type: 'choice', prompt: T('איך מוצאים את השורות עם המילה milk ב־notes.txt?', 'How do you find the lines with the word milk in notes.txt?'), options: ['grep milk notes.txt', 'grep notes.txt milk', 'cat milk notes.txt', 'find milk notes.txt'], answer: 'grep milk notes.txt',
         why: { 'grep notes.txt milk': T('הסדר הפוך: קודם מה מחפשים, אחר כך איפה.', 'Wrong order: first what you look for, then where.'), 'cat milk notes.txt': T('cat מדפיסה הכול ולא מסננת.', 'cat prints everything and does not filter.'), 'find milk notes.txt': T('find מחפשת שמות של קבצים, לא תוכן.', 'find searches file names, not content.') } },
       { type: 'tiles', prompt: T('מצאו את כל שורות ה־WARN בלוג', 'Find every WARN line in the log'), answer: 'grep WARN logs/app.log', tiles: ['grep', 'WARN', 'logs/app.log', 'cat', 'find'] },
@@ -144,6 +154,7 @@ const UNIT_4 = {
       { type: 'teach', cmd: 'grep -i', name: 'ignore case', text: T('מתעלמת מאותיות גדולות וקטנות: error, Error ו־ERROR נחשבות אותו דבר.', 'Ignores upper and lower case: error, Error and ERROR count as the same.'), demo: [[], 'grep -i error logs/app.log'] },
       { type: 'teach', cmd: 'grep -c', name: 'count', text: T('במקום להדפיס את השורות, סופרת כמה יש.', 'Instead of printing the lines, counts how many there are.'), demo: [[], 'grep -c ERROR logs/app.log'] },
       { type: 'output', prompt: WHAT, cmd: 'grep -c INFO logs/app.log', wrongCmds: ['grep -c ERROR logs/app.log', 'grep -c WARN logs/app.log'] },
+      { type: 'sentence', prompt: READ, text: T('grep ___ מתעלמת מאותיות גדולות וקטנות.', 'grep ___ ignores upper and lower case.'), options: ['-i', '-v', '-c'], answer: '-i' },
       { type: 'teach', cmd: 'grep -v', name: 'invert', text: T('ההפך: מדפיסה את כל השורות שלא מכילות את המילה.', 'The opposite: prints every line that does not contain the word.'), demo: [[], 'grep -v INFO logs/app.log'] },
       { type: 'match', prompt: T('התאימו כל אפשרות למה שהיא עושה', 'Match each option to what it does'), pairs: [['grep -i', T('בלי הבדל בין גדולות לקטנות', 'ignores case')], ['grep -c', T('סופרת שורות מתאימות', 'counts matching lines')], ['grep -v', T('שורות שלא מתאימות', 'lines that do not match')], ['grep -n', T('עם מספרי שורות', 'with line numbers')]] },
       { type: 'fill', prompt: T('השלימו כדי לראות כל שורה שאין בה INFO', 'Fill in to see every line without INFO'), before: 'grep ', after: ' INFO logs/app.log', options: ['-v', '-i', '-c', '-n'], answer: '-v' },
@@ -151,6 +162,7 @@ const UNIT_4 = {
     { title: T('find', 'find'), exercises: [
       { type: 'teach', cmd: 'find', name: 'find', text: T('מחפשת קבצים לפי שם, בתיקייה ובכל מה שבתוכה. ‎-name מקבלת שם או תבנית עם *.', 'Searches for files by name, in a folder and everything inside it. -name takes a name or a pattern with *.'), demo: [[], 'find . -name "*.jpg"'] },
       { type: 'output', prompt: WHAT, cmd: 'find . -name todo.txt', wrongText: ['docs/todo.txt', 'todo.txt', './todo.txt'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מחפשת קבצים לפי שם, גם בתוך תיקיות.', 'The ___ command searches for files by name, inside folders too.'), options: ['find', 'grep', 'ls'], answer: 'find' },
       { type: 'choice', prompt: T('איזו פקודה תמצא את כל קבצי ה־.py?', 'Which command finds every .py file?'), options: ['find . -name "*.py"', 'grep . "*.py"', 'ls -name "*.py"', 'find "*.py" -name .'], answer: 'find . -name "*.py"',
         why: { 'grep . "*.py"': T('grep מחפשת בתוך קבצים, לא שמות.', 'grep searches inside files, not their names.'), 'ls -name "*.py"': T('ל־ls אין ‎-name.', 'ls has no -name.'), 'find "*.py" -name .': T('קודם איפה מחפשים, אחר כך ‎-name והתבנית.', 'First where to search, then -name and the pattern.') } },
       { type: 'teach', cmd: 'find -type d', name: 'type', text: T('‎-type d מוצאת רק תיקיות. ‎-type f מוצאת רק קבצים.', '-type d finds only folders. -type f finds only files.'), demo: [[], 'find . -type d'] },
@@ -159,6 +171,7 @@ const UNIT_4 = {
     ] },
     { title: T('חזרה', 'Review'), exercises: [
       { type: 'output', prompt: WHAT, cmd: 'grep -n milk notes.txt', wrongCmds: ['grep milk notes.txt', 'grep -c milk notes.txt'] },
+      { type: 'sentence', prompt: READ, text: T('grep ___ מדפיסה את השורות שלא מכילות את המילה.', 'grep ___ prints the lines that do not contain the word.'), options: ['-v', '-i', '-c'], answer: '-v' },
       { type: 'choice', prompt: T('מה ההבדל בין grep ל־find?', 'What is the difference between grep and find?'), plain: true,
         options: [T('grep מחפשת בתוך התוכן, find מחפשת שמות של קבצים', 'grep searches inside the content, find searches file names'), T('אין הבדל', 'There is no difference'), T('grep מחפשת שמות, find מחפשת תוכן', 'grep searches names, find searches content'), T('find עובדת רק בתיקיית הבית', 'find only works in the home folder')],
         why: [null, T('הן עונות על שאלות שונות: מה כתוב, ואיפה הקובץ.', 'They answer different questions: what is written, and where the file is.'), T('זה הפוך.', 'It is the other way round.'), T('find עובדת מכל תיקייה שתתנו לה.', 'find works from any folder you give it.')] },
@@ -181,6 +194,7 @@ const UNIT_5 = {
     { title: T('הצינור |', 'The pipe |'), exercises: [
       { type: 'teach', cmd: '|', name: 'pipe', text: T('הצינור מעביר את הפלט של פקודה אחת לפקודה הבאה.', "The pipe sends one command's output into the next command."), demo: [[], 'cat notes.txt | grep call'] },
       { type: 'output', prompt: WHAT, cmd: 'grep ERROR logs/app.log | wc -l', wrongCmds: ['grep -c INFO logs/app.log', 'wc -l logs/app.log'] },
+      { type: 'sentence', prompt: READ, text: T('הסימן ___ מעביר את הפלט של פקודה אחת לפקודה הבאה.', 'The ___ sign sends one command\'s output into the next command.'), options: ['|', '>', '>>'], answer: '|' },
       { type: 'choice', prompt: T('ב־cat notes.txt | head -n 1, מה head מקבלת?', 'In cat notes.txt | head -n 1, what does head get?'), plain: true,
         options: [T('את הפלט של cat', 'The output of cat'), T('את השם notes.txt', 'The name notes.txt'), T('כלום, היא מחכה למקלדת', 'Nothing, it waits for the keyboard'), T('את הפקודה cat עצמה', 'The cat command itself')],
         why: [null, T('head מקבלת טקסט, לא שם של קובץ.', 'head gets text, not a file name.'), T('הצינור מחובר במקום המקלדת.', 'The pipe is plugged in instead of the keyboard.'), T('עוברות רק השורות שהפקודה הדפיסה.', 'Only the lines the command printed go through.')] },
@@ -193,6 +207,7 @@ const UNIT_5 = {
       { type: 'teach', cmd: '>', name: 'redirect', text: T('שולחת את הפלט לקובץ במקום למסך. אם הקובץ קיים, התוכן הישן נמחק.', 'Sends the output to a file instead of the screen. If the file exists, the old content is replaced.'), demo: [['grep ERROR logs/app.log > errors.txt'], 'cat errors.txt'] },
       { type: 'teach', cmd: '>>', name: 'append', text: T('כמו >, אבל מוסיפה לסוף הקובץ בלי למחוק את מה שהיה.', 'Like >, but adds to the end of the file without erasing what was there.'), demo: [['echo one > list.txt', 'echo two >> list.txt'], 'cat list.txt'] },
       { type: 'output', prompt: T('מה תדפיס cat x.txt?', 'What will cat x.txt print?'), setup: ['echo a > x.txt', 'echo b > x.txt'], cmd: 'cat x.txt', wrongText: ['a\nb', 'a', 'b\na'] },
+      { type: 'sentence', prompt: READ, text: T('הסימן ___ מוסיף לסוף הקובץ בלי למחוק את מה שהיה בו.', 'The ___ sign adds to the end of a file without erasing what was there.'), options: ['>>', '>', '|'], answer: '>>' },
       { type: 'output', prompt: T('מה תדפיס cat y.txt?', 'What will cat y.txt print?'), setup: ['echo a > y.txt', 'echo b >> y.txt'], cmd: 'cat y.txt', wrongText: ['b', 'a', 'b\na'] },
       { type: 'fill', prompt: T('השלימו כדי להוסיף שורה בלי למחוק את מה שיש', 'Fill in to add a line without erasing what is there'), before: 'echo milk ', after: ' notes.txt', options: ['>>', '>', '|', '<'], answer: '>>' },
       { type: 'terminal', prompt: T('שמרו את שורות ה־ERROR בקובץ errors.txt', 'Save the ERROR lines into errors.txt'), hint: T('grep ERROR logs/app.log > errors.txt', 'grep ERROR logs/app.log > errors.txt'),
@@ -202,6 +217,7 @@ const UNIT_5 = {
       { type: 'teach', cmd: '2>', name: 'errors', text: T('הודעות שגיאה עוברות בערוץ נפרד. ‎2> שולחת רק אותן לקובץ.', 'Error messages travel on a separate channel. 2> sends only them to a file.'), demo: [['cat nothing.txt 2> err.txt'], 'cat err.txt'] },
       { type: 'teach', cmd: '/dev/null', name: 'the void', text: T('קובץ מיוחד שבולע כל מה ששולחים אליו. ‎2> /dev/null משתיקה שגיאות.', 'A special file that swallows everything sent to it. 2> /dev/null silences errors.'), demo: [[], 'cat notes.txt nothing.txt 2> /dev/null'] },
       { type: 'output', prompt: WHAT, cmd: 'cat nothing.txt', wrongText: ['', 'nothing.txt', 'cat: nothing.txt: Permission denied'] },
+      { type: 'sentence', prompt: READ, text: T('כדי לשלוח לקובץ רק את הודעות השגיאה כותבים ___ ואחריו את שם הקובץ.', 'To send only the error messages to a file, type ___ and then the file name.'), options: ['2>', '>', '|'], answer: '2>' },
       { type: 'output', prompt: WHAT, cmd: 'cat notes.txt nothing.txt 2> /dev/null', wrongCmds: ['cat notes.txt nothing.txt'], wrongText: [''] },
       { type: 'match', prompt: T('התאימו כל סימן למה שהוא עושה', 'Match each symbol to what it does'), pairs: [['|', T('מעבירה לפקודה הבאה', 'passes to the next command')], ['>', T('כותבת קובץ מחדש', 'writes a file from scratch')], ['>>', T('מוסיפה לסוף הקובץ', 'adds to the end of a file')], ['2>', T('שולחת שגיאות לקובץ', 'sends errors to a file')]] },
       { type: 'choice', prompt: T('איך מריצים cat על קובץ שאולי לא קיים, בלי לראות שגיאה?', 'How do you run cat on a file that may not exist, without seeing an error?'), options: ['cat file.txt 2> /dev/null', 'cat file.txt > /dev/null', 'cat file.txt | /dev/null', 'cat /dev/null file.txt'], answer: 'cat file.txt 2> /dev/null',
@@ -209,6 +225,7 @@ const UNIT_5 = {
     ] },
     { title: T('צינורות ארוכים', 'Longer pipes'), exercises: [
       { type: 'output', prompt: WHAT, cmd: 'grep haifa people.csv | wc -l', wrongCmds: ['grep -c eilat people.csv', 'wc -l people.csv'] },
+      { type: 'sentence', prompt: READ, text: T('בשורה grep ERROR app.log | wc -l, הפקודה ___ סופרת את השורות.', 'In grep ERROR app.log | wc -l, the ___ command counts the lines.'), options: ['wc', 'grep', 'cat'], answer: 'wc' },
       { type: 'tiles', prompt: T('הציגו את 2 שורות ה־ERROR האחרונות', 'Show the last 2 ERROR lines'), answer: 'grep ERROR logs/app.log | tail -n 2', tiles: ['grep', 'ERROR', 'logs/app.log', '|', 'tail', '-n', '2', 'head'] },
       { type: 'output', prompt: WHAT, cmd: 'grep INFO logs/app.log | tail -n 1', wrongCmds: ['grep INFO logs/app.log | head -n 1', 'grep ERROR logs/app.log | tail -n 1'] },
       { type: 'choice', prompt: T('מה עושה grep ERROR logs/app.log > errors.txt?', 'What does grep ERROR logs/app.log > errors.txt do?'), plain: true,
@@ -235,6 +252,7 @@ const UNIT_6 = {
     { title: T('sort', 'sort'), exercises: [
       { type: 'teach', cmd: 'sort', name: 'sort', text: T('ממיינת שורות לפי סדר האלפבית.', 'Sorts lines into alphabetical order.'), demo: [[], 'sort fruits.txt'] },
       { type: 'output', prompt: WHAT, cmd: 'sort people.csv', wrongCmds: ['cat people.csv', 'sort -r people.csv'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מסדרת שורות לפי סדר האלפבית.', 'The ___ command puts lines in alphabetical order.'), options: ['sort', 'uniq', 'cut'], answer: 'sort' },
       { type: 'teach', cmd: 'sort -r', name: 'reverse', text: T('ממיינת בסדר הפוך, מהסוף להתחלה.', 'Sorts in reverse order, from the end to the start.'), demo: [[], 'sort -r fruits.txt'] },
       { type: 'choice', prompt: T('איך ממיינים מספרים לפי הערך שלהם?', 'How do you sort numbers by their value?'), options: ['sort -n', 'sort -r', 'sort -c', 'sort -v'], answer: 'sort -n',
         why: { 'sort -r': T('‎-r רק הופכת את הסדר.', '-r only reverses the order.'), 'sort -c': T('‎-c בודקת אם הקובץ כבר ממוין.', '-c checks whether the file is already sorted.'), 'sort -v': T('ל־sort אין ‎-v.', 'sort has no -v.') } },
@@ -245,6 +263,7 @@ const UNIT_6 = {
       { type: 'teach', cmd: 'uniq', name: 'unique', text: T('מוחקת שורות כפולות שבאות אחת אחרי השנייה. לכן קודם ממיינים.', 'Removes duplicate lines that come one after another. That is why you sort first.'), demo: [[], 'sort fruits.txt | uniq'] },
       { type: 'teach', cmd: 'uniq -c', name: 'count', text: T('סופרת כמה פעמים כל שורה מופיעה.', 'Counts how many times each line appears.'), demo: [[], 'sort fruits.txt | uniq -c'] },
       { type: 'output', prompt: WHAT, cmd: 'sort fruits.txt | uniq', wrongCmds: ['uniq fruits.txt', 'sort fruits.txt'] },
+      { type: 'sentence', prompt: READ, text: T('uniq מוחקת רק כפילויות צמודות, ולכן קודם מריצים ___.', 'uniq only removes duplicates that sit next to each other, so you run ___ first.'), options: ['sort', 'cut', 'tr'], answer: 'sort' },
       { type: 'choice', prompt: T('למה מריצים sort לפני uniq?', 'Why run sort before uniq?'), plain: true,
         options: [T('כי uniq מאחדת רק כפילויות שצמודות זו לזו', 'Because uniq only merges duplicates that sit next to each other'), T('כי uniq לא עובדת על קבצים', 'Because uniq does not work on files'), T('כי sort מוחקת כפילויות', 'Because sort removes duplicates'), T('זה לא משנה, הסדר לא חשוב', 'It does not matter, the order is not important')],
         why: [null, T('uniq עובדת גם על קבצים, היא פשוט לא רואה כפילויות רחוקות.', 'uniq works on files too, it just misses duplicates that are far apart.'), T('sort רק מסדרת. הכפילויות נשארות.', 'sort only orders. The duplicates stay.'), T('בלי sort, כפילויות רחוקות יישארו.', 'Without sort, far-apart duplicates stay.')] },
@@ -254,6 +273,7 @@ const UNIT_6 = {
     { title: T('cut', 'cut'), exercises: [
       { type: 'teach', cmd: 'cut', name: 'cut', text: T('חותכת עמודה מכל שורה. ‎-d קובע מה מפריד בין העמודות, ‎-f איזו עמודה לקחת.', 'Cuts a column out of each line. -d sets what separates the columns, -f which column to take.'), demo: [[], 'cut -d , -f 1 people.csv'] },
       { type: 'output', prompt: WHAT, cmd: 'cut -d , -f 2 people.csv', wrongCmds: ['cut -d , -f 1 people.csv', 'cut -d , -f 3 people.csv'] },
+      { type: 'sentence', prompt: READ, text: T('ב־cut, האפשרות ___ קובעת איזו עמודה לקחת.', 'In cut, the ___ option sets which column to take.'), options: ['-f', '-d', '-c'], answer: '-f' },
       { type: 'fill', prompt: T('השלימו כדי לקחת את עמודת הגיל, השלישית', 'Fill in to take the age column, the third one'), before: 'cut -d , -f ', after: ' people.csv', options: ['3', '2', '1', 'c'], answer: '3' },
       { type: 'choice', prompt: T('ב־people.csv העמודות מופרדות בפסיק. מה ידפיס רק את השמות?', 'In people.csv the columns are separated by commas. What prints only the names?'), options: ['cut -d , -f 1 people.csv', 'cut -f 1 people.csv', 'cut -d , -f name people.csv', 'head -n 1 people.csv'], answer: 'cut -d , -f 1 people.csv',
         why: { 'cut -f 1 people.csv': T('בלי ‎-d , הפקודה מחפשת טאבים ומדפיסה שורות שלמות.', 'Without -d , it looks for tabs and prints whole lines.'), 'cut -d , -f name people.csv': T('‎-f מקבלת מספר עמודה, לא שם.', '-f takes a column number, not a name.'), 'head -n 1 people.csv': T('head נותנת שורה, לא עמודה.', 'head gives a row, not a column.') } },
@@ -263,6 +283,7 @@ const UNIT_6 = {
     { title: T('tr ושילובים', 'tr and combos'), exercises: [
       { type: 'teach', cmd: 'tr', name: 'translate', text: T('מחליפה תווים. tr a-z A-Z הופכת אותיות קטנות לגדולות. היא קוראת רק מצינור.', 'Replaces characters. tr a-z A-Z turns lowercase into uppercase. It only reads from a pipe.'), demo: [[], 'cat notes.txt | tr a-z A-Z'] },
       { type: 'output', prompt: WHAT, cmd: 'echo hello | tr a-z A-Z', wrongText: ['hello', 'Hello', 'HELLO\nhello'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מחליפה תווים, למשל אותיות קטנות בגדולות.', 'The ___ command replaces characters, for example lowercase with uppercase.'), options: ['tr', 'cut', 'sort'], answer: 'tr' },
       { type: 'output', prompt: WHAT, cmd: 'cut -d , -f 2 people.csv | sort | uniq -c', wrongCmds: ['cut -d , -f 2 people.csv | uniq -c', 'cut -d , -f 2 people.csv | sort | uniq'] },
       { type: 'match', prompt: T('התאימו כל פקודה למה שהיא עושה', 'Match each command to what it does'), pairs: [['sort', T('מסדרת שורות', 'orders lines')], ['uniq', T('מאחדת כפילויות צמודות', 'merges neighbouring duplicates')], ['cut', T('לוקחת עמודה', 'takes a column')], ['tr', T('מחליפה תווים', 'replaces characters')]] },
       { type: 'tiles', prompt: T('הדפיסו את notes.txt באותיות גדולות', 'Print notes.txt in capital letters'), answer: 'cat notes.txt | tr a-z A-Z', tiles: ['cat', 'notes.txt', '|', 'tr', 'a-z', 'A-Z', 'sort'] },
