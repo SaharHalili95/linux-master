@@ -23,7 +23,7 @@ function bossFixture() {
   const word = CODE_WORDS[Math.floor(Math.random() * CODE_WORDS.length)];
   const dirs = ['docs', 'projects', 'photos'], hideIn = dirs[Math.floor(Math.random() * dirs.length)];
   const fx = unitFixture();
-  fx.files.push([`/home/user/${hideIn}/.code`, { content: `${word}\n` }]);
+  fx.files.push([`/home/user/${hideIn}/.code`, { content: `The password is: ${word}\n` }]);
   for (const d of dirs) if (d !== hideIn) fx.files.push([`/home/user/${d}/note.txt`, { content: 'Not here. Keep looking.\n' }]);
   return { fx, word, hideIn };
 }
