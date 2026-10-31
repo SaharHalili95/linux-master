@@ -12,6 +12,7 @@ async function solve(page, lang = 'he') {
   const ex = await page.evaluate(() => ({ type: L.ex.type, plain: L.ex.plain, answer: L.ex.answer, solution: L.ex.solution, before: L.ex.before, uid: L.ex.uid, boss: L.ex.boss && { word: L.ex.boss.word, dir: L.ex.boss.hideIn } }));
   if (ex.type === 'teach') { await page.click('#checkBtn'); return ex; }
   if (ex.type === 'choice' || ex.type === 'output') await page.evaluate(v => [...document.querySelectorAll('.opt')].find(b => b.dataset.value === v).click(), ex.type === 'output' ? ex.solution : ex.plain ? '0' : ex.answer);
+  if (ex.type === 'sentence') await page.locator('.chips .tile').filter({ hasText: new RegExp(`^${ex.answer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) }).click();
   if (ex.type === 'fill') await page.locator('.chips .tile', { hasText: ex.answer }).click();
   if (ex.type === 'tiles') for (const word of ex.answer.split(' ')) await page.locator('.bank .tile', { hasText: word }).filter({ hasText: new RegExp(`^${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) }).first().click();
   if (ex.type === 'match') {
@@ -277,6 +278,7 @@ test('every exercise in every unit is answerable and fully translated @content',
       if (ex.type === 'choice' && !ex.plain) { expect(ex.options, id).toContain(ex.answer); for (const k of Object.keys(ex.why || {})) expect(ex.options, id).toContain(k); }
       if (ex.type === 'choice' && ex.plain) expect(ex.why, id).toHaveLength(ex.options.length);
       if (ex.type === 'fill') expect(ex.options, id).toContain(ex.answer);
+      if (ex.type === 'sentence') { expect(ex.options, id).toContain(ex.answer); for (const l of ['he', 'en']) expect(ex.text[l].split('___'), id).toHaveLength(2); }
       if (ex.type === 'tiles') { const bank = [...ex.tiles]; for (const w of ex.answer.split(' ')) { expect(bank, `${id}: ${w}`).toContain(w); bank.splice(bank.indexOf(w), 1); } }
       if (ex.type === 'match') expect(new Set(ex.pairs.map(p => p[0])).size, id).toBe(ex.pairs.length);
       if (ex.type === 'terminal') {

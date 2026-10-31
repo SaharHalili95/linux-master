@@ -158,6 +158,8 @@ button { cursor: pointer; }
 .tile.sel { border-color: var(--blue); background: var(--blue-soft); box-shadow: 0 4px 0 var(--blue); color: var(--blue-ink); }
 
 .fill-line { background: var(--term-bg); border-radius: 16px; padding: 18px 16px; font: 600 18px var(--mono); color: #fff; margin-bottom: 22px; text-align: left; }
+.sentence { font-size: 20px; font-weight: 700; line-height: 2; margin: 8px 0 26px; }
+.sentence .slot { font-family: var(--mono); margin: 0 4px; }
 .slot { display: inline-block; min-width: 52px; border-bottom: 3px solid var(--term-green); text-align: center; color: var(--term-green); white-space: pre; }
 .chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 

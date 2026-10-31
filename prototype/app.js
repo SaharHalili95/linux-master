@@ -227,6 +227,14 @@ const RENDER = {
     shuffle(ex.options).forEach(o => { const c = el('button', 'tile', o); c.type = 'button'; c.dir = 'ltr'; c.onclick = () => { if (L.answered) return; SFX.tap(); chips.querySelectorAll('.tile').forEach(t => t.classList.toggle('sel', t === c)); slot.textContent = o; slot.classList.add('filled'); L.value = o; setCan(true); }; chips.append(c); });
     root.append(line, chips);
   },
+  sentence(root, ex) {
+    const [head, tail] = tr(ex.text).split('___');
+    const line = el('p', 'sentence'); const slot = Object.assign(el('span', 'slot', '   '), { dir: 'ltr' });
+    line.append(head, slot, tail);
+    const chips = el('div', 'chips');
+    shuffle(ex.options).forEach(o => { const c = el('button', 'tile', o); c.type = 'button'; c.dir = 'ltr'; c.onclick = () => { if (L.answered) return; SFX.tap(); chips.querySelectorAll('.tile').forEach(t => t.classList.toggle('sel', t === c)); slot.textContent = o; slot.classList.add('filled'); L.value = o; setCan(true); }; chips.append(c); });
+    root.append(line, chips);
+  },
   output(root, ex) {
     const fx = ex.fx, real = runIn(ex.setup, ex.cmd, fx());
     const lines = []; let sh = new Shell(fx());
@@ -314,6 +322,7 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
 }
 const CHECK = {
   choice: (ex, v) => ex.plain ? { ok: v === '0', solution: tr(ex.options[0]), why: tr(ex.why?.[v]) || '' } : { ok: v === ex.answer, solution: ex.answer, why: tr(ex.why?.[v]) || '' },
+  sentence: (ex, v) => ({ ok: v === ex.answer, solution: tr(ex.text).replace('___', ex.answer) }),
   fill: (ex, v) => ({ ok: v === ex.answer, solution: `${ex.before}${ex.answer}${ex.after}` }),
   output: (ex, v) => ({ ok: v === ex.solution, solution: ex.solution || t('noOutput') }),
   tiles: (ex, v) => ({ ok: [ex.answer, ...(ex.accept || [])].includes(v), solution: ex.answer }),
