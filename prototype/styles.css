@@ -1,22 +1,20 @@
 :root {
-  --bg: #ffffff; --surface: #ffffff; --soft: #f7f7f7; --ink: #3c3c3c; --muted: #6b6b6b; --line: #e5e5e5; --line-strong: #d6d6d6;
-  --green-bright: #58c43b; --green-bright-dark: #46a32e; --green: #2b7f18; --green-dark: #1f5f10; --green-soft: #d7ffb8; --green-ink: #2f7a1b;
-  --blue: #1877c9; --blue-dark: #125ea3; --blue-soft: #ddf2ff; --blue-ink: #145fa0;
-  --red: #d93636; --red-dark: #b02828; --red-soft: #ffdfe0; --red-ink: #b82a2a;
-  --gold: #f7c531; --gold-dark: #d9a714; --gold-ink: #7a5a00; --orange: #b35f00; --purple: #8a45d0; --purple-dark: #6c32a8;
-  --locked: #e5e5e5; --locked-dark: #c9c9c9; --term-bg: #1d2421; --term-ink: #d7f5c4; --term-green: #9be46d;
+  --bg: #070b14; --surface: #0d1524; --soft: #111c2e; --ink: #e6f1ff; --muted: #8fa5bd; --line: #1f2f47; --line-strong: #2c4060;
+  --green-bright: #58c43b; --green-bright-dark: #46a32e; --green: #2b7f18; --green-dark: #1f5f10; --green-soft: #12301a; --green-ink: #79e05a;
+  --blue: #1877c9; --blue-dark: #125ea3; --blue-soft: #0f2a45; --blue-ink: #5fc4ff;
+  --red: #d93636; --red-dark: #b02828; --red-soft: #3a1820; --red-ink: #ff7b8a;
+  --gold: #f7c531; --gold-dark: #d9a714; --gold-ink: #f7c531; --orange: #ffa53a; --purple: #c08af5; --purple-dark: #6c32a8;
+  --locked: #1f2f47; --locked-dark: #15223a; --term-bg: #03060c; --term-ink: #d7f5c4; --term-green: #9be46d;
+  --cyber: linear-gradient(#22d3ee0d 1px, transparent 1px) 0 0 / 28px 28px, linear-gradient(90deg, #22d3ee0d 1px, transparent 1px) 0 0 / 28px 28px,
+    radial-gradient(60% 40% at 85% 0%, #22d3ee26, transparent 70%), radial-gradient(55% 40% at 0% 100%, #a855f726, transparent 70%), var(--bg);
   --font: 'Rubik', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #131f24; --surface: #131f24; --soft: #1a2a31; --ink: #f1f7fb; --muted: #9bb0bb; --line: #37464f; --line-strong: #4b5c66;
-    --green-soft: #203a1c; --green-ink: #79d65a; --blue-soft: #16344a; --blue-ink: #5fb3f5; --red-soft: #3d2224; --red-ink: #ff7b7b; --gold-ink: #f7c531; --orange: #ffa53a; --purple: #c08af5;
-    --locked: #37464f; --locked-dark: #2a383f; --term-bg: #0d1512; color-scheme: dark;
-  }
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); -webkit-tap-highlight-color: transparent; }
+body { background: transparent; }
+/* A fixed layer, because iOS ignores background-attachment: fixed. */
+body::before { content: ''; position: fixed; inset: 0; z-index: -1; background: var(--cyber); pointer-events: none; }
 body.in-lesson { overflow: hidden; }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
@@ -36,7 +34,7 @@ button { cursor: pointer; }
 
 /* Layout */
 .app { max-width: 620px; margin: 0 auto; overflow-x: clip; min-height: 100vh; padding: 0 16px calc(84px + env(safe-area-inset-bottom)); }
-.topbar { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; align-items: center; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 12px; border-bottom: 2px solid var(--line); }
+.topbar { position: sticky; top: 0; z-index: 5; background: #070b14d9; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 12px; border-bottom: 2px solid var(--line); }
 .course { margin-inline-end: auto; display: flex; align-items: center; gap: 8px; }
 .mode-switch { display: flex; border: 2px solid var(--line); border-radius: 999px; padding: 2px; }
 .mode-switch .mode { padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--muted); text-decoration: none; white-space: nowrap; }
@@ -55,7 +53,7 @@ button { cursor: pointer; }
 .tab-sub { color: var(--muted); margin: 0 0 16px; }
 .card { border: 2px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 14px; background: var(--surface); }
 
-.tabbar { position: fixed; bottom: 0; inset-inline: 0; z-index: 6; display: flex; justify-content: center; gap: 4px; background: var(--bg); border-top: 2px solid var(--line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); }
+.tabbar { position: fixed; bottom: 0; inset-inline: 0; z-index: 6; display: flex; justify-content: center; gap: 4px; background: #070b14d9; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 2px solid var(--line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); }
 .tabbar button { flex: 0 1 140px; border: 2px solid transparent; background: none; border-radius: 14px; padding: 6px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; font-weight: 700; color: var(--muted); }
 .tabbar button span[aria-hidden] { font-size: 22px; }
 .tabbar button[aria-current="page"] { border-color: var(--blue); background: var(--blue-soft); color: var(--blue-ink); }
@@ -112,7 +110,7 @@ button { cursor: pointer; }
 @keyframes hop { 0%, 100% { transform: translateY(0); } 15% { transform: translateY(-6px); } 30% { transform: translateY(0); } }
 
 /* Lesson */
-.overlay { position: fixed; inset: 0; z-index: 10; background: var(--bg); display: flex; flex-direction: column; }
+.overlay { position: fixed; inset: 0; z-index: 10; background: var(--cyber); display: flex; flex-direction: column; }
 .lesson-top { display: flex; align-items: center; gap: 14px; max-width: 760px; width: 100%; margin: 0 auto; padding: calc(18px + env(safe-area-inset-top)) 16px 6px; }
 .quit { border: 0; background: none; font-size: 22px; color: var(--muted); padding: 4px 8px; }
 .bar { flex: 1; height: 16px; border-radius: 99px; background: var(--locked); overflow: hidden; }
