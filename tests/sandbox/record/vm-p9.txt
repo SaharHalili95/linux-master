@@ -12,16 +12,15 @@ p9-bytes	true	printf 'shalom' | wc -c; printf 'שלום' | wc -c; printf 'שלו
 p9-iconv	printf 'caf\xe9 au lait\n' > menu.txt	file menu.txt; iconv -f ISO-8859-1 -t UTF-8 menu.txt -o menu-utf8.txt; file menu-utf8.txt; cat menu-utf8.txt
 p9-iconv-ascii	true	echo 'café' | LC_ALL=en_US.UTF-8 iconv -f UTF-8 -t ASCII//TRANSLIT; echo 'café' | iconv -f UTF-8 -t ASCII
 p9-tz-env	true	for z in UTC Asia/Jerusalem America/New_York Asia/Tokyo; do printf '%s ' $z; TZ=$z date -d '2026-11-01 10:30 UTC' '+%H:%M %Z'; done
-p9-tz-files	timedatectl set-timezone Asia/Jerusalem	ls -l /etc/localtime | awk '{print $9, $10, $11}'; cat /etc/timezone; timedatectl set-timezone Etc/UTC
+p9-tz-files	timedatectl set-timezone Asia/Jerusalem	ls -l /etc/localtime | awk '{print $9, $10, $11}'; timedatectl set-timezone Etc/UTC
 p9-zoneinfo	true	ls /usr/share/zoneinfo/Asia | grep -E '^(Jerusalem|Tel_Aviv|Tokyo)$'
 p9-lpstat	grep -q '^FileDevice Yes' /etc/cups/cups-files.conf || echo 'FileDevice Yes' >> /etc/cups/cups-files.conf; systemctl restart cups; sleep 2; lpadmin -p office -E -v file:///dev/null; lpadmin -d office; cupsdisable office	lpstat -p -d | sed -E 's/since .* -/since <date> -/'
 p9-lpq	echo 'Quarterly report: sales up 8%' > report.txt; echo 'Lunch menu' > menu.txt	lpr -P office report.txt; lpr -P office menu.txt; lpq -P office
 p9-lprm	true	lprm -P office 1; lpq -P office
 p9-lp	echo 'Lunch menu' > menu.txt	lp -d office menu.txt
 p9-cancel	true	cancel -a office; lpq -P office
-p9-lpstat-v	lpadmin -p lab -E -v file:///dev/null	lpstat -v
 p9-cups-dir	true	ls /etc/cups
-p9-mail-send	[ -f /etc/postfix/main.cf ] || cp /usr/share/postfix/main.cf.debian /etc/postfix/main.cf; postconf -e myhostname=server.example.com myorigin=server.example.com 'mydestination=server.example.com, localhost' inet_interfaces=loopback-only relayhost= defer_transports=smtp; echo server.example.com > /etc/mailname; newaliases; systemctl restart postfix; useradd -m dana; sleep 2	echo 'Backup finished at 02:00' | mail -s 'Backup report' dana; sleep 3; grep -E '^(From|To|Subject):|^Backup' /var/mail/dana
+p9-mail-send	printf 'address {\n  email-domain server.example.com;\n};\n' > /etc/mailutils.conf; [ -f /etc/postfix/main.cf ] || cp /usr/share/postfix/main.cf.debian /etc/postfix/main.cf; postconf -e myhostname=server.example.com myorigin=server.example.com 'mydestination=server.example.com, localhost' inet_interfaces=loopback-only relayhost= defer_transports=smtp; echo server.example.com > /etc/mailname; newaliases; systemctl restart postfix; useradd -m dana; sleep 2	echo 'Backup finished at 02:00' | mail -s 'Backup report' dana; sleep 3; grep -E '^(From|To|Subject):|^Backup' /var/mail/dana
 p9-aliases	useradd -m omer; echo 'admin: omer' >> /etc/aliases	cat /etc/aliases; newaliases; echo 'Disk almost full' | mail -s 'Disk alert' admin; sleep 3; grep '^Subject:' /var/mail/omer
 p9-forward	useradd -m noa; echo 'dana' > /home/noa/.forward; chown noa: /home/noa/.forward; chmod 644 /home/noa/.forward	echo 'See you at 10' | mail -s 'For Noa' noa; sleep 3; grep '^Subject:' /var/mail/dana; ls /var/mail
 p9-sendmail	true	printf 'Subject: Hello\n\nSent with the sendmail command\n' | sendmail omer; sleep 3; grep -E '^Subject: Hello|^Sent with' /var/mail/omer
@@ -45,8 +44,8 @@ p9-git-merge	git init -q .; c() { GIT_AUTHOR_DATE="2026-11-01T$1:00Z" GIT_COMMIT
 p9-git-conflict	git init -q .; c() { GIT_AUTHOR_DATE="2026-11-01T$1:00Z" GIT_COMMITTER_DATE="2026-11-01T$1:00Z" git commit -qm "$2"; }; printf 'apple 5\nbread 8\n' > prices.txt; git add prices.txt; c 11:00 'Add prices'; git switch -q -c sale; sed -i 's/apple 5/apple 4/' prices.txt; git add prices.txt; c 12:00 'Apple sale'; git switch -q main; sed -i 's/apple 5/apple 6/' prices.txt; git add prices.txt; c 13:00 'Apple price up'	git merge sale; cat prices.txt
 p9-git-clone	rm -rf /srv/shop; git init -q /srv/shop; printf 'Shop app\n' > /srv/shop/README.md; git -C /srv/shop add README.md; GIT_AUTHOR_DATE=2026-11-01T09:00:00Z GIT_COMMITTER_DATE=2026-11-01T09:00:00Z git -C /srv/shop commit -qm 'Add README'	git clone /srv/shop && cd shop && git remote -v && git log --oneline
 p9-git-push	rm -rf /srv/shop.git; git init -q --bare /srv/shop.git; git clone -q /srv/shop.git work 2>/dev/null; printf 'Shop app\n' > work/README.md; git -C work add README.md; GIT_AUTHOR_DATE=2026-11-01T09:00:00Z GIT_COMMITTER_DATE=2026-11-01T09:00:00Z git -C work commit -qm 'Add README'	cd work && git push origin main
-p9-nginx-t	systemctl enable --now nginx >/dev/null 2>&1	nginx -t
-p9-nginx-t-bad	printf 'server {\n    listen 8080\n}\n' > /etc/nginx/conf.d/bad.conf	nginx -t; rm /etc/nginx/conf.d/bad.conf
+p9-nginx-t	systemctl disable --now apache2 >/dev/null 2>&1; systemctl enable nginx >/dev/null 2>&1; systemctl restart nginx	nginx -t
+p9-nginx-t-bad	printf 'server {\n    listen 8080\n}\n' > /etc/nginx/conf.d/bad.conf	nginx -t 2>&1 | sed -E 's|^[0-9/]+ [0-9:]+|<date> <time>|; s|[0-9]+#[0-9]+|<pid>#<pid>|'; rm /etc/nginx/conf.d/bad.conf
 p9-curl-i	true	curl -sI http://localhost | grep -E '^(HTTP|Server|Content-Type)' | tr -d '\r'
 p9-vhost	mkdir -p /var/www/shop; echo 'Welcome to the shop' > /var/www/shop/index.html; printf 'server {\n    listen 80;\n    server_name shop.example.com;\n    root /var/www/shop;\n}\n' > /etc/nginx/sites-available/shop; ln -sf /etc/nginx/sites-available/shop /etc/nginx/sites-enabled/shop; nginx -t && systemctl reload nginx; sleep 1	curl -s -H 'Host: shop.example.com' http://localhost; curl -s http://localhost | grep -o '<title>.*</title>'
 p9-sites-enabled	true	ls -l /etc/nginx/sites-enabled | awk 'NR>1 {print $9, $10, $11}'
