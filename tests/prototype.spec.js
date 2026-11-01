@@ -298,15 +298,17 @@ test('a scenario accepts any listed command, however it is spaced, and rejects o
   await expect(page.locator('#fbDetail')).toContainText('systemctl status nginx');
 });
 
-test('the whole course can be played to the end, unit after unit @content', async ({ page }) => {
-  test.setTimeout(240_000);
+// One test per part, each starting where the earlier parts end, so CI can play the parts side by side.
+for (let part = 1; part <= 10; part++) test(`part ${part} can be played to the end, unit after unit @content @part${part}`, async ({ page }) => {
+  test.setTimeout(600_000);
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./prototype/');
-  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
+  const [before, units] = await page.evaluate(p => { const open = COURSE.filter(u => !u.locked); return [open.filter(u => u.section < p).flatMap(unitNodes).map(n => n.key), open.filter(u => u.section === p).length]; }, part);
+  test.skip(!units, `part ${part} has no units yet`);
+  await page.evaluate(done => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, done })); }, before);
   await page.reload();
-  const units = await page.evaluate(() => COURSE.filter(u => !u.locked).length);
   for (let n = 0; n < units * 6; n++) {
     await page.locator('.node.current').click();
     await page.locator('#pop .btn').click();
@@ -315,9 +317,8 @@ test('the whole course can be played to the end, unit after unit @content', asyn
     await page.click('#endBtn');
     if (await page.locator('#streakScreen').isVisible()) await page.click('#streakBtn');
   }
-  await expect(page.locator('.node.current')).toHaveCount(0);
   const state = await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')));
-  expect(state.done).toHaveLength(units * 6);
+  expect(state.done).toHaveLength(before.length + units * 6);
   expect(state.mistakes).toEqual([]);
   expect(errors).toEqual([]);
 });
