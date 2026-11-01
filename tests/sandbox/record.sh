@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Records real command output for Learn mode. Usage: bash sandbox/record.sh ubuntu|alma
 # A line is id<TAB>command, or id<TAB>setup<TAB>command where setup runs first, unrecorded.
-# Each command runs in a fresh temporary folder. Recorded on linux/amd64, like most servers. Each command runs in its own fresh container, so no recording depends on another.
+# All lines share one container, each in a fresh temporary folder. Recorded on linux/amd64, like most servers.
 set -euo pipefail
 cd "$(dirname "$0")"
 case "$1" in
@@ -16,7 +16,7 @@ after=$(sed -n 's/^# after: //p' "$list")
 out=$(mktemp -d)
 trap 'rm -rf "$out"' EXIT
 grep -v '^#' "$list" | grep . > "$out/cmds.tsv"
-docker run --rm --privileged --platform linux/amd64 -v "$out":/out "$image" bash -c "
+docker run --rm --privileged --platform linux/amd64 -v "$out":/var/tmp/rec "$image" bash -c "
   $setup
   $install $packages >/dev/null 2>&1
   $after
@@ -25,6 +25,6 @@ docker run --rm --privileged --platform linux/amd64 -v "$out":/out "$image" bash
   while IFS=\$'\t' read -r id setup cmd; do
     [ -z \"\$cmd\" ] && { cmd=\$setup; setup=; }
     d=\$(mktemp -d); chown user \$d; cd \$d
-    bash -c \"\$setup\" >/dev/null 2>&1; bash -c \"\$cmd\" >/out/\$id.out 2>&1 || true
-  done </out/cmds.tsv"
+    bash -c \"\$setup\" >/dev/null 2>&1; bash -c \"\$cmd\" >/var/tmp/rec/\$id.out 2>&1 || true
+  done </var/tmp/rec/cmds.tsv"
 node record-merge.js "$distro" "$out"

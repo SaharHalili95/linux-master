@@ -46,12 +46,12 @@ Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a u
 
 | # | Unit | Commands and ideas | Exams | Sim | Status |
 | --- | --- | --- | --- | --- | --- |
-| 21 | Links and inodes | `ln`, `ln -s`, `ls -li`, `stat`, `readlink`, hard vs soft | L104.6 R | 🟡 | |
-| 22 | Permissions | `ls -l` columns, `rwx`, octal `755`, `chmod u+x` | L104.5 R F | 🟡 | |
-| 23 | Owners and umask | `chown`, `chgrp`, `umask 022`, default modes | L104.5 R | 🟡 | |
-| 24 | Special bits and ACLs | SUID, SGID, sticky, `chmod 4755`, `getfacl`, `setfacl` | L104.5 R F | 🎞 | |
-| 25 | The filesystem tree | FHS: `/etc` `/var` `/usr` `/opt` `/home` `/proc` `/dev` `/boot` `/tmp` | L104.7 | ✅ | |
-| 26 | Finding anything | `find -perm -user -size -mtime -exec`, `locate`, `updatedb`, `whereis`, `which` | L104.7 R | 🟡 | |
+| 21 | Links and inodes | `ln`, `ln -s`, `ls -li`, `stat`, `readlink`, hard vs soft | L104.6 R | 🟡 | live |
+| 22 | Permissions | `ls -l` columns, `rwx`, octal `755`, `chmod u+x` | L104.5 R F | 🟡 | live |
+| 23 | Owners and umask | `chown`, `chgrp`, `umask 022`, default modes | L104.5 R | 🟡 | live |
+| 24 | Special bits and ACLs | SUID, SGID, sticky, `chmod 4755`, `getfacl`, `setfacl` | L104.5 R F | 🎞 | live |
+| 25 | The filesystem tree | FHS: `/etc` `/var` `/usr` `/opt` `/home` `/proc` `/dev` `/boot` `/tmp` | L104.7 | ✅ | live |
+| 26 | Finding anything | `find -perm -user -size -mtime -exec`, `locate`, `updatedb`, `whereis`, `which` | L104.7 R | 🟡 | live |
 | 27 | Disks and partitions | `lsblk`, `blkid`, `fdisk`, `gdisk`, `parted`, MBR vs GPT, partition layout | L102.1 L104.1 R F | 🎞 | |
 | 28 | Filesystems | `mkfs.ext4`, `mkfs.xfs`, `mkfs.vfat`, `fsck`, `e2fsck`, `xfs_repair`, `tune2fs` | L104.1 L104.2 R F | 🎞 | |
 | 29 | Mounting | `mount`, `umount`, `/etc/fstab`, UUID, `findmnt`, `mount -a` | L104.3 R F | 🎞 | |

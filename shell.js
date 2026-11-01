@@ -46,8 +46,11 @@ class Shell {
     this.aliases = { ...fixture.aliases };
     this.locked = new Set(fixture.locked || []);
     this.history = fixture.history || []; this.processes = fixture.processes || []; this.who = fixture.who || [];
+    this.dmeta = new Map(); this.umaskValue = 0o022;
     for (const d of fixture.dirs || []) this.mkdirp(this.abs(d));
     for (const [p, f] of fixture.files) this.write(this.abs(p), f.content, f);
+    for (const [p, target] of fixture.links || []) this.symlink(this.abs(p), target);
+    for (const [p, m] of fixture.dirMeta || []) Object.assign(this.dirInfo(this.abs(p)), m);
   }
   abs(p) {
     if (p === '~' || p.startsWith('~/')) p = this.env.HOME + p.slice(1);
@@ -57,16 +60,45 @@ class Shell {
   }
   rel(p) { const base = this.cwd === '/' ? '/' : this.cwd + '/'; return p.startsWith(base) ? p.slice(base.length) : p; }
   parent(p) { return p.slice(0, p.lastIndexOf('/')) || '/'; }
-  mkdirp(p) { const segs = p.split('/').filter(Boolean); let cur = ''; for (const s of segs) { cur += '/' + s; if (this.files.has(cur)) throw new ShellError(`not a directory: ${cur}`); if (!this.dirs.has(cur)) { this.dirs.add(cur); this.order.push(cur); } } }
+  mkdirp(p) { const segs = p.split('/').filter(Boolean); let cur = ''; for (const s of segs) { cur += '/' + s; if (this.files.has(cur)) throw new ShellError(`not a directory: ${cur}`); if (!this.dirs.has(cur)) { this.dirs.add(cur); this.order.push(cur); this.dirInfo(cur); } } }
+  // Folders outside the home folder belong to root, like on a real system; /tmp is world-writable with the sticky bit.
+  dirInfo(p) {
+    if (!this.dmeta.has(p)) { const home = p === this.env.HOME || p.startsWith(this.env.HOME + '/'); this.dmeta.set(p, { mode: p === '/tmp' ? 0o1777 : home ? 0o777 & ~this.umaskValue : 0o755, owner: home ? this.whoAmI() : 'root', group: home ? this.whoAmI() : 'root' }); }
+    return this.dmeta.get(p);
+  }
+  whoAmI() { return this.asRoot ? 'root' : this.env.USER; }
   write(p, content, meta = {}) {
     if (this.dirs.has(p)) throw new ShellError(`Is a directory`);
     if (!this.dirs.has(this.parent(p))) throw new ShellError(`No such file or directory`);
     const old = this.files.get(p);
-    if (!old) this.order.push(p);
-    this.files.set(p, { content, mode: meta.mode ?? old?.mode ?? 0o644, owner: meta.owner ?? old?.owner ?? 'user', group: meta.group ?? old?.group ?? 'user' });
+    if (old?.link !== undefined) { const t = this.resolve(p); if (!t) throw new ShellError('No such file or directory'); return this.write(t, content, meta); }
+    if (old) { old.content = content; for (const k of ['mode', 'owner', 'group']) if (meta[k] !== undefined) old[k] = meta[k]; return; }
+    this.order.push(p);
+    this.files.set(p, { content, mode: meta.mode ?? 0o666 & ~this.umaskValue, owner: meta.owner ?? this.whoAmI(), group: meta.group ?? meta.owner ?? this.whoAmI() });
   }
-  read(p) { const f = this.files.get(p); if (!f) throw new ShellError(this.dirs.has(p) ? 'Is a directory' : 'No such file or directory'); return f.content; }
+  symlink(p, target) {
+    if (this.exists(p)) throw new ShellError(`failed to create symbolic link '${p}': File exists`);
+    if (!this.dirs.has(this.parent(p))) throw new ShellError(`failed to create symbolic link '${p}': No such file or directory`);
+    const shell = this; this.order.push(p);
+    this.files.set(p, { link: target, mode: 0o777, owner: this.whoAmI(), group: this.whoAmI(), get content() { const t = shell.resolve(p); if (!t) throw new ShellError('No such file or directory'); return shell.files.get(t).content; } });
+  }
+  // The file a path finally points to, following symbolic links; null if the chain is broken.
+  resolve(p, depth = 0) { const f = this.files.get(p); if (!f || depth > 8) return null; if (f.link === undefined) return p; const t = f.link.startsWith('/') ? f.link : `${this.parent(p)}/${f.link}`; return this.resolve(this.abs(t), depth + 1); }
+  read(p) { const f = this.files.get(p); if (!f) throw new ShellError(this.dirs.has(p) ? 'Is a directory' : 'No such file or directory'); if (f.link !== undefined && !this.resolve(p)) throw new ShellError('No such file or directory'); return f.content; }
+  meta(p) { return this.dirs.has(p) ? this.dirInfo(p) : this.files.get(p); }
   exists(p) { return this.files.has(p) || this.dirs.has(p); }
+  blocks(p) { const f = this.files.get(p); return this.dirs.has(p) ? 4 : !f || f.link !== undefined ? 0 : Math.ceil(f.content.length / 4096) * 4; }
+  // ls -l: GNU column layout. Every file shows the same fixed time, since the simulation has no clock.
+  longList(entries, o) {
+    const rows = entries.map(([name, p]) => {
+      const f = this.files.get(p), dir = this.dirs.has(p), m = this.meta(p);
+      const links = dir ? 2 + this.children(p).filter(c => this.dirs.has(c)).length : [...this.files.values()].filter(x => x === f).length;
+      const size = dir ? 4096 : f.link !== undefined ? f.link.length : f.content.length;
+      return [modeString(m.mode, dir ? 'd' : f.link !== undefined ? 'l' : '-'), String(links), m.owner, m.group, o.h ? humanSize(size) : String(size), name + (f && f.link !== undefined ? ` -> ${f.link}` : '')];
+    });
+    const w = i => Math.max(...rows.map(r => r[i].length));
+    return join(rows.map(r => `${r[0]} ${r[1].padStart(w(1))} ${r[2].padEnd(w(2))} ${r[3].padEnd(w(3))} ${r[4].padStart(w(4))} Nov  1 10:00 ${r[5]}`));
+  }
   children(dir) { const base = dir === '/' ? '/' : dir + '/'; return this.order.filter(p => p.startsWith(base) && !p.slice(base.length).includes('/') && this.exists(p)); }
   glob(word, cwd = this.cwd) {
     const dir = word.includes('/') ? this.abs(word.slice(0, word.lastIndexOf('/')) || '/') : cwd;
@@ -197,9 +229,36 @@ function inputs(shell, files, stdin, name) {
     if (shell.keyboard && shell.interactive) throw new ShellError('waiting for keyboard input (nothing was piped in)', 130);
     return [{ name: '-', text: stdin }];
   }
-  return files.map(f => { const p = shell.abs(f); if (shell.dirs.has(p)) return { name: f, error: `${name}: ${f}: Is a directory\n` }; if (!shell.files.has(p)) return { name: f, error: `${name}: ${f}: No such file or directory\n` }; return { name: f, text: shell.read(p) }; });
+  return files.map(f => { const p = shell.abs(f); if (shell.dirs.has(p)) return { name: f, error: `${name}: ${f}: Is a directory\n` }; if (!shell.files.has(p) || !shell.resolve(p)) return { name: f, error: `${name}: ${f}: No such file or directory\n` }; return { name: f, text: shell.read(p) }; });
 }
 const isBinary = text => text.includes('\u0000');
+function modeString(mode, type) {
+  const bit = (b, ch) => (mode & b ? ch : '-');
+  const x = (exec, special, on, off) => special ? (exec ? on : off) : exec ? 'x' : '-';
+  return type + bit(0o400, 'r') + bit(0o200, 'w') + x(mode & 0o100, mode & 0o4000, 's', 'S') + bit(0o40, 'r') + bit(0o20, 'w') + x(mode & 0o10, mode & 0o2000, 's', 'S') + bit(0o4, 'r') + bit(0o2, 'w') + x(mode & 0o1, mode & 0o1000, 't', 'T');
+}
+function humanSize(n) { if (n < 1024) return String(n); const units = ['K', 'M', 'G']; let v = n / 1024, u = 0; while (v >= 1024 && u < 2) { v /= 1024; u++; } return v < 10 ? `${(Math.ceil(v * 10) / 10).toFixed(1)}${units[u]}` : `${Math.ceil(v)}${units[u]}`; }
+// chmod's symbolic and octal modes, applied to an existing mode.
+function applyMode(spec, mode, isDir, umask) {
+  if (/^[0-7]{3,4}$/.test(spec)) return parseInt(spec, 8) | (isDir && spec.length === 3 ? mode & 0o6000 : 0);
+  for (const clause of spec.split(',')) {
+    const whole = clause.match(/^([ugoa]*)((?:[+=-][rwxXst]*)+)$/); if (!whole) throw new ShellUnsupported('chmod mode');
+    for (const [, op, perms] of whole[2].matchAll(/([+=-])([rwxXst]*)/g)) mode = applyOne([null, whole[1], op, perms], mode, isDir, umask);
+  }
+  return mode;
+}
+function applyOne(m, mode, isDir, umask) {
+  {
+    const who = m[1] || 'a', bits = { r: 4, w: 2, x: 1 }, shift = { u: 6, g: 3, o: 0 };
+    let mask = 0, clear = 0;
+    for (const w of who === 'a' ? 'ugo' : who) {
+      clear |= 0o7 << shift[w] | (w === 'u' ? 0o4000 : w === 'g' ? 0o2000 : 0o1000);
+      for (const b of m[3]) { if (bits[b]) mask |= bits[b] << shift[w]; if (b === 'X' && (isDir || mode & 0o111)) mask |= 1 << shift[w]; if (b === 's' && w !== 'o') mask |= w === 'u' ? 0o4000 : 0o2000; if (b === 't') mask |= 0o1000; }
+    }
+    if (!m[1] && m[2] !== '=') mask &= ~umask;
+    return m[2] === '+' ? mode | mask : m[2] === '-' ? mode & ~mask : (mode & ~clear) | mask;
+  }
+}
 function blocks(bytes) { return Math.ceil(bytes / 4096) * 4; }
 function human(kib) {
   const units = ['K', 'M', 'G']; let v = kib, u = 0;
@@ -492,19 +551,23 @@ const COMMANDS = {
     return { out, err, code: err ? 1 : 0 };
   },
   ls(args) {
-    const [o, paths] = opts(args, 'alhrt1R'); if (o.t || o.R) throw new ShellUnsupported('ls option');
-    if (o.l) throw new ShellUnsupported('ls -l');
-    const targets = (paths.length ? paths : ['.']).slice().sort((x, y) => (this.dirs.has(this.abs(x)) - this.dirs.has(this.abs(y))) || cmpC(x, y));
+    const [o, paths] = opts(args, 'alhrt1Rd'); if (o.t || o.R) throw new ShellUnsupported('ls option');
+    const targets = (paths.length ? paths : ['.']).slice().sort((x, y) => (o.d ? 0 : (this.dirs.has(this.abs(x)) - this.dirs.has(this.abs(y)))) || cmpC(x, y));
     let out = '', err = '', sections = 0;
+    const files = targets.filter(t => this.files.has(this.abs(t)) || (o.d && this.dirs.has(this.abs(t))));
+    if (files.length) out += o.l ? this.longList(files.map(t => [t, this.abs(t)]), o) : join(files);
     for (const t of targets) {
       const p = this.abs(t);
-      if (this.files.has(p)) { out += t + '\n'; continue; }
+      if (files.includes(t)) continue;
       if (!this.dirs.has(p)) { err += `ls: cannot access '${t}': No such file or directory\n`; continue; }
       let names = this.children(p).map(c => c.slice(c.lastIndexOf('/') + 1)).filter(n => o.a || !n.startsWith('.'));
       if (o.a) names.push('.', '..');
       names.sort(cmpC); if (o.r) names.reverse();
       if (targets.length > 1) out += `${sections++ || out ? '\n' : ''}${t}:\n`;
-      out += join(names);
+      if (!o.l) { out += join(names); continue; }
+      const entries = names.map(n => [n, n === '.' ? p : n === '..' ? this.parent(p) : (p === '/' ? '' : p) + '/' + n]);
+      const total = entries.reduce((s, [, q]) => s + this.blocks(q), 0);
+      out += `total ${o.h && total ? humanSize(total * 1024) : total}\n` + this.longList(entries, o);
     }
     return { out, err, code: err ? 2 : 0 };
   },
@@ -635,14 +698,18 @@ const COMMANDS = {
   find(args) {
     const start = []; let i = 0;
     while (i < args.length && !args[i].startsWith('-') && args[i] !== '!' && args[i] !== '(') start.push(args[i++]);
-    const tests = []; let maxdepth = Infinity, mindepth = 0, negate = false;
+    const tests = []; let maxdepth = Infinity, mindepth = 0, negate = false, exec = null, del = false;
     for (; i < args.length; i++) {
       const a = args[i];
       if (a === '!' || a === '-not') { negate = true; continue; }
       const push = fn => { const n = negate; tests.push(n ? (p, info) => !fn(p, info) : fn); negate = false; };
       if (a === '-maxdepth') maxdepth = +args[++i];
       else if (a === '-mindepth') mindepth = +args[++i];
-      else if (a === '-type') { const t = args[++i]; push((p, info) => (t === 'd') === info.dir); }
+      else if (a === '-type') { const t = args[++i]; push((p, info) => t === 'd' ? info.dir : t === 'l' ? info.link : t === 'f' ? !info.dir && !info.link : false); }
+      else if (a === '-perm') { const s = args[++i], m = s.match(/^([-/]?)([0-7]{3,4})$/); if (!m) throw new ShellUnsupported('find -perm'); const want = parseInt(m[2], 8); push((p, info) => m[1] === '-' ? (info.mode & want) === want : m[1] === '/' ? (info.mode & want) !== 0 : (info.mode & 0o7777) === want); }
+      else if (a === '-empty') push((p, info) => info.dir ? !this.children(p).length : info.size === 0);
+      else if (a === '-exec') { const cmd = []; while (++i < args.length && args[i] !== ';' && args[i] !== '+') cmd.push(args[i]); if (i >= args.length) throw new ShellError("missing argument to `-exec'", 1); exec = { cmd, batch: args[i] === '+' }; }
+      else if (a === '-delete') del = true;
       else if (a === '-name' || a === '-iname') { const g = args[++i], flags = a === '-iname' ? 'i' : ''; const re = new RegExp('^' + g.replace(/[.+^${}()|\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') + '$', flags); push(p => re.test(p.slice(p.lastIndexOf('/') + 1))); }
       else if (a === '-size') { const s = args[++i], m = s.match(/^([+-]?)(\d+)([ckMG]?)$/); if (!m) throw new ShellUnsupported('find -size'); const unit = { c: 1, k: 1024, M: 1048576, G: 1073741824, '': 512 }[m[3]]; push((p, info) => { if (info.dir) return false; const size = m[3] === '' || m[3] === 'k' || m[3] === 'M' || m[3] === 'G' ? Math.ceil(info.size / unit) : info.size; return m[1] === '+' ? size > +m[2] : m[1] === '-' ? size < +m[2] : size === +m[2]; }); }
       else if (a === '-executable') push((p, info) => info.dir || (info.mode & 0o111) !== 0);
@@ -652,17 +719,24 @@ const COMMANDS = {
       else if (a === '-group') { const g = args[++i]; push((p, info) => info.group === g); }
       else throw new ShellUnsupported(`find ${a}`);
     }
-    let out = '', err = '';
+    let out = '', err = ''; const found = [];
     for (const s of start.length ? start : ['.']) {
       const root = this.abs(s);
       if (!this.exists(root)) { err += `find: '${s}': No such file or directory\n`; continue; }
       const walk = (p, depth, shown) => {
-        const info = { dir: this.dirs.has(p), size: this.files.get(p) ? this.files.get(p).content.length : 0, mode: this.files.get(p)?.mode ?? 0o755, owner: this.files.get(p)?.owner ?? 'user', group: this.files.get(p)?.group ?? 'user' };
-        if (depth >= mindepth && tests.every(t => t(p, info))) out += shown + '\n';
+        const f = this.files.get(p), m = this.meta(p), link = f?.link !== undefined;
+        const info = { dir: this.dirs.has(p), link, size: f && !link ? f.content.length : 0, mode: m.mode, owner: m.owner, group: m.group };
+        if (depth >= mindepth && tests.every(t => t(p, info))) { if (exec || del) found.push([p, shown]); else out += shown + '\n'; }
         if (info.dir && this.locked.has(p)) { err += `find: '${shown}': Permission denied\n`; return; }
         if (info.dir && depth < maxdepth) for (const c of this.children(p)) walk(c, depth + 1, (shown === '/' ? '' : shown) + '/' + c.slice(c.lastIndexOf('/') + 1));
       };
       walk(root, 0, s.replace(/\/+$/, '') || '/');
+    }
+    if (del) for (const [p] of found.reverse()) { if (this.dirs.has(p)) { if (!this.children(p).length) this.dirs.delete(p); } else this.files.delete(p); }
+    if (exec) {
+      const call = words => { const r = this.exec(words, ''); out += r.out; err += r.err || ''; };
+      if (exec.batch) call(exec.cmd.flatMap(w => w === '{}' ? found.map(x => x[1]) : [w]));
+      else for (const [, shown] of found) call(exec.cmd.map(w => w.split('{}').join(shown)));
     }
     return { out, err, code: err ? 1 : 0 };
   },
@@ -698,18 +772,47 @@ const COMMANDS = {
     return { out: join(out) };
   },
   chmod(args) {
-    const [mode, ...files] = args.filter(a => a !== '-v');
+    const [o, rest] = opts(args, 'Rv'); const [mode, ...files] = rest;
     if (!mode || !files.length) throw new ShellError('missing operand');
-    for (const f of files) {
-      const p = this.abs(f), file = this.files.get(p);
-      if (!file) throw new ShellError(`cannot access '${f}': No such file or directory`);
-      if (/^[0-7]{3}$/.test(mode)) { file.mode = parseInt(mode, 8); continue; }
-      const m = mode.match(/^([ugoa]*)([+-])([rwx]+)$/); if (!m) throw new ShellUnsupported('chmod mode');
-      const who = m[1] || 'a', bits = { r: 4, w: 2, x: 1 }, shift = { u: 6, g: 3, o: 0 };
-      let mask = 0; for (const w of who === 'a' ? 'ugo' : who) for (const b of m[3]) mask |= bits[b] << shift[w];
-      file.mode = m[2] === '+' ? file.mode | mask : file.mode & ~mask;
+    const targets = files.flatMap(f => { const p = this.abs(f); return o.R && this.dirs.has(p) ? [[f, p], ...this.order.filter(q => q.startsWith(p + '/') && this.exists(q)).map(q => [q, q])] : [[f, p]]; });
+    for (const [f, p] of targets) {
+      const m = this.meta(this.files.has(p) ? this.resolve(p) ?? p : p);
+      if (!m) throw new ShellError(`cannot access '${f}': No such file or directory`);
+      if (!this.asRoot && m.owner !== this.env.USER) throw new ShellError(`changing permissions of '${f}': Operation not permitted`);
+      m.mode = applyMode(mode, m.mode, this.dirs.has(p), this.umaskValue);
     }
     return { out: '' };
+  },
+  chown(args) { return changeOwner.call(this, args, 'chown'); },
+  chgrp(args) { return changeOwner.call(this, args, 'chgrp'); },
+  umask(args) {
+    if (!args.length) return { out: this.umaskValue.toString(8).padStart(4, '0') + '\n' };
+    if (args[0] === '-S') { const k = 0o777 & ~this.umaskValue, part = s => (k >> s & 4 ? 'r' : '') + (k >> s & 2 ? 'w' : '') + (k >> s & 1 ? 'x' : ''); return { out: `u=${part(6)},g=${part(3)},o=${part(0)}\n` }; }
+    if (!/^[0-7]{1,4}$/.test(args[0])) throw new ShellUnsupported('umask mode');
+    this.umaskValue = parseInt(args[0], 8); return { out: '' };
+  },
+  sudo(args) {
+    if (!args.length) throw new ShellError('usage: sudo command', 1);
+    const was = this.asRoot, user = this.env.USER; this.asRoot = true; this.env.USER = 'root';
+    try { return this.exec(args, ''); } finally { this.asRoot = was; this.env.USER = user; }
+  },
+  ln(args) {
+    const [o, paths] = opts(args, 'sf'); if (paths.length !== 2) throw new ShellUnsupported('ln form');
+    let [target, link] = paths; let lp = this.abs(link);
+    if (this.dirs.has(lp)) lp = `${lp}/${target.slice(target.lastIndexOf('/') + 1)}`;
+    if (o.f && this.files.has(lp)) this.files.delete(lp);
+    if (o.s) { this.symlink(lp, target); return { out: '' }; }
+    const tp = this.abs(target);
+    if (this.dirs.has(tp)) throw new ShellError(`${target}: hard link not allowed for directory`);
+    if (!this.files.has(tp)) throw new ShellError(`failed to access '${target}': No such file or directory`);
+    if (this.exists(lp)) throw new ShellError(`failed to create hard link '${link}': File exists`);
+    this.order.push(lp); this.files.set(lp, this.files.get(tp));
+    return { out: '' };
+  },
+  readlink(args) {
+    const [o, paths] = opts(args, 'f'); let out = '', code = 0;
+    for (const f of paths) { const p = this.abs(f), file = this.files.get(p); if (o.f) { const r = this.resolve(p); if (r) out += r + '\n'; else if (this.dirs.has(p)) out += p + '\n'; else code = 1; } else if (file?.link !== undefined) out += file.link + '\n'; else code = 1; }
+    return { out, code };
   },
   mkdir(args) { const [o, dirs] = opts(args, 'p'); for (const d of dirs) { const p = this.abs(d); if (this.exists(p)) { if (!o.p) throw new ShellError(`cannot create directory '${d}': File exists`); continue; } if (!o.p && !this.dirs.has(this.parent(p))) throw new ShellError(`cannot create directory '${d}': No such file or directory`); this.mkdirp(p); } return { out: '' }; },
   cp(args) {
@@ -816,6 +919,19 @@ const COMMANDS = {
 // What bash's type reports as builtins, and which of those have no /usr/bin twin for which to find.
 const BUILTINS = ['alias', 'cd', 'echo', 'history', 'pwd', 'type', 'unalias'];
 const BUILTIN_ONLY = ['alias', 'cd', 'history', 'type', 'unalias'];
+function changeOwner(args, name) {
+  const [o, rest] = opts(args, 'R'); const [spec, ...files] = rest;
+  if (!spec || !files.length) throw new ShellError('missing operand');
+  const [owner, group] = name === 'chgrp' ? [undefined, spec] : spec.split(':');
+  for (const f of files) {
+    const p = this.abs(f), m = this.meta(p);
+    if (!m) throw new ShellError(`cannot access '${f}': No such file or directory`);
+    if (!this.asRoot) throw new ShellError(`changing ${name === 'chgrp' ? 'group' : 'ownership'} of '${f}': Operation not permitted`);
+    const targets = o.R && this.dirs.has(p) ? [p, ...this.order.filter(q => q.startsWith(p + '/') && this.exists(q))] : [p];
+    for (const q of targets) { const mq = this.meta(q); if (owner) mq.owner = owner; if (group !== undefined) mq.group = group || mq.group; if (this.files.has(q) && mq.mode & 0o111) mq.mode &= ~0o6000; }
+  }
+  return { out: '' };
+}
 function headTail(args, stdin, which) {
   const [o, files] = opts(args, 'qv', 'nc', { numericFlag: true });
   const sources = inputs(this, files, stdin, which), many = sources.length > 1;

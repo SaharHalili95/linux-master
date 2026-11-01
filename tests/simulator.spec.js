@@ -31,7 +31,8 @@ test.describe('simulated shell', () => {
       for (const [name, list] of Object.entries(pools)) list.forEach((s, i) => {
         const fixture = name === 'banditScenarios' ? banditFixture : lessonFixture;
         if (sameOutput(s.answer, s.answer, fixture) === null) return;
-        for (const alt of s.accept || []) if (sameOutput(s.answer, alt, fixture) === false) out.push(`${name}#${i}: ${alt}`);
+        // An accepted long listing (ls -l -a for ls -a) shows the same files with more columns, so its output differs on purpose.
+        for (const alt of s.accept || []) if (!/\bls -l\b/.test(alt) && sameOutput(s.answer, alt, fixture) === false) out.push(`${name}#${i}: ${alt}`);
       });
       return out;
     });
@@ -131,4 +132,20 @@ test('braces, touch, rmdir, alias, type and which behave like bash', () => {
   expect(run('type ll cd ls')).toBe("ll is aliased to `ls -a'\ncd is a shell builtin\nls is /usr/bin/ls\n");
   expect(run('which ls cd')).toBe('/usr/bin/ls\n');
   expect(run('echo $SHELL')).toBe('/bin/bash\n');
+});
+
+// ls -l, chmod and umask are checked against output recorded on Ubuntu with the same files (tests/sandbox/record/ubuntu.txt, check-*).
+test('ls -l, chmod, umask and links print exactly what Ubuntu printed', () => {
+  const fs = require('fs'), vm = require('vm'), path = require('path');
+  const ctx = vm.createContext({});
+  vm.runInContext(`${fs.readFileSync(path.join(__dirname, '../shell.js'), 'utf8')}\n${fs.readFileSync(path.join(__dirname, '../prototype/recorded.js'), 'utf8')}\nthis.Shell = Shell; this.R = RECORDED;`, ctx);
+  const sh = (files, dirs = []) => new ctx.Shell({ cwd: '/home/user', dirs: ['/home/user', ...dirs.map(d => `/home/user/${d}`)], files: files.map(([p, c]) => [`/home/user/${p}`, { content: c }]) });
+  const run = (s, cmds) => { let out; for (const c of cmds) out = s.run(c).out; return out; };
+  expect(run(sh([['readme.txt', 'Welcome to Linux!\n'], ['notes.txt', 'buy milk\ncall mom\nlearn grep\n'], ['big.txt', 'x'.repeat(5000)]], ['docs', 'logs', 'photos', 'projects']),
+    ['chmod 600 notes.txt', 'chmod 4755 readme.txt', 'chmod 1777 photos', 'chmod 2775 projects', 'ln -s notes.txt link.txt', 'ln notes.txt hard.txt', 'sudo chown -R user:user readme.txt', 'ls -l'])).toBe(ctx.R['check-ls-l'].out);
+  expect(run(sh([['big.txt', 'x'.repeat(5000)], ['small.txt', 'hi\n']], ['dir']), ['ls -lh'])).toBe(ctx.R['check-ls-lh'].out);
+  expect(run(sh([['f.txt', 'hi\n']], ['sub', 'sub/a', 'sub/b']), ['chmod 640 f.txt', 'ls -ld sub f.txt'])).toBe(ctx.R['check-ls-ld'].out);
+  expect(run(sh([]), ['umask 027', 'touch f.txt', 'mkdir d', 'ls -ld f.txt d'])).toBe(ctx.R['check-umask'].out);
+  expect(run(sh([['f.txt', 'hi\n']]), ['chmod 644 f.txt', 'chmod u+x,g+w,o-r f.txt', 'ls -l f.txt'])).toBe(ctx.R['check-chmod-sym'].out);
+  expect(run(sh([['f.txt', 'hi\n']]), ['chmod 777 f.txt', 'chmod u=rwx,go=rx f.txt', 'chmod g-x+s f.txt', 'ls -l f.txt'])).toBe(ctx.R['check-chmod-eq'].out);
 });
