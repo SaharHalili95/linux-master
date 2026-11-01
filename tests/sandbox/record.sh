@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Records real command output for Learn mode. Usage: bash sandbox/record.sh ubuntu|alma
-# Recorded on linux/amd64, like most servers. Each command runs in its own fresh container, so no recording depends on another.
+# A line is id<TAB>command, or id<TAB>setup<TAB>command where setup runs first, unrecorded.
+# Each command runs in a fresh temporary folder. Recorded on linux/amd64, like most servers. Each command runs in its own fresh container, so no recording depends on another.
 set -euo pipefail
 cd "$(dirname "$0")"
 case "$1" in
@@ -21,5 +22,9 @@ docker run --rm --privileged --platform linux/amd64 -v "$out":/out "$image" bash
   $after
   mandb -q 2>/dev/null || true
   useradd -m user 2>/dev/null; cd /home/user
-  while IFS=\$'\t' read -r id cmd; do (cd /home/user && bash -c \"\$cmd\") >/out/\$id.out 2>&1 || true; done </out/cmds.tsv"
+  while IFS=\$'\t' read -r id setup cmd; do
+    [ -z \"\$cmd\" ] && { cmd=\$setup; setup=; }
+    d=\$(mktemp -d); chown user \$d; cd \$d
+    bash -c \"\$setup\" >/dev/null 2>&1; bash -c \"\$cmd\" >/out/\$id.out 2>&1 || true
+  done </out/cmds.tsv"
 node record-merge.js "$distro" "$out"
