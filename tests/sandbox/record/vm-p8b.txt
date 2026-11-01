@@ -4,5 +4,3 @@ p8-ulimit-raise	true	su user -s /bin/bash -c 'ulimit -n 100; ulimit -n; ulimit -
 p8-ssh-ok	useradd -m -s /bin/bash dana; mkdir -p /home/dana/.ssh; ssh-keygen -q -t ed25519 -N '' -f /root/dkey; cp /root/dkey.pub /home/dana/.ssh/authorized_keys; chown -R dana /home/dana/.ssh; chmod 700 /home/dana/.ssh; systemctl start ssh; sleep 1	ssh -n -o BatchMode=yes -o StrictHostKeyChecking=no -o LogLevel=ERROR -i /root/dkey dana@localhost echo logged in
 p8-hosts-deny	echo 'sshd: ALL' >> /etc/hosts.deny	ssh -n -o BatchMode=yes -o StrictHostKeyChecking=no -o LogLevel=ERROR -i /root/dkey dana@localhost echo logged in
 p8-hosts-allow	echo 'sshd: 127.0.0.1 [::1]' >> /etc/hosts.allow	ssh -n -o BatchMode=yes -o StrictHostKeyChecking=no -o LogLevel=ERROR -i /root/dkey dana@localhost echo logged in
-p8-nologin	sed -i '/^sshd: ALL/d' /etc/hosts.deny; echo 'Maintenance until 14:00' > /etc/nologin	ssh -n -o BatchMode=yes -o StrictHostKeyChecking=no -o LogLevel=ERROR -i /root/dkey dana@localhost echo logged in
-p8-nologin-gone	rm -f /etc/nologin	ssh -n -o BatchMode=yes -o StrictHostKeyChecking=no -o LogLevel=ERROR -i /root/dkey dana@localhost echo logged in
