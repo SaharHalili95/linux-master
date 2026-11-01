@@ -31,11 +31,11 @@ Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a u
 
 | # | Unit | Commands and ideas | Exams | Sim | Status |
 | --- | --- | --- | --- | --- | --- |
-| 11 | Extended regex | `grep -E` `+` `?` `{n}` `\|` `( )`, `grep -o`, `grep -w`, `grep -r` | L103.7 R | 🟡 | |
-| 12 | sed basics | `sed 's/a/b/'`, `/g`, `-n p`, `d`, line numbers | L103.2 | ✅ | |
-| 13 | sed in practice | `sed -i`, ranges `2,5`, `/re/d`, `-e` chains, backups | L103.2 F | 🟡 | |
-| 14 | awk basics | `awk '{print $1}'`, `-F`, `NR`, `NF`, patterns | L103.2 | 🟡 | |
-| 15 | awk reports | sums, `BEGIN`/`END`, conditions, `printf` | L103.2 | 🟡 | |
+| 11 | Extended regex | `grep -E` `+` `?` `{n}` `\|` `( )`, `grep -o`, `grep -w`, `grep -r` | L103.7 R | 🟡 | live |
+| 12 | sed basics | `sed 's/a/b/'`, `/g`, `-n p`, `d`, line numbers | L103.2 | ✅ | live |
+| 13 | sed in practice | `sed -i`, ranges `2,5`, `/re/d`, `-e` chains, backups | L103.2 F | 🟡 | live |
+| 14 | awk basics | `awk '{print $1}'`, `-F`, `NR`, `NF`, patterns | L103.2 | 🟡 | live |
+| 15 | awk reports | sums, `BEGIN`/`END`, conditions, `printf` | L103.2 | 🟡 | live |
 | 16 | Plumbing | `tee`, `xargs`, `$( )`, `` ` ` ``, `&&`, `\|\|`, `;`, `<` | L103.4 R | 🟡 | |
 | 17 | vi: survive | modes, `i` `a` `o` `Esc`, `:w` `:q` `:wq` `:q!`, `h j k l` | L103.8 R | 🎞 | |
 | 18 | vi: edit fast | `dd` `yy` `p` `u`, `/search` `n`, `:%s/a/b/g`, `G` `gg` | L103.8 | 🎞 | |

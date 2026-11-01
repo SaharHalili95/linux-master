@@ -198,9 +198,259 @@ function charSet(spec) {
   return out;
 }
 function grepRegex(pattern, o) {
-  let src = o.F ? pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : o.E ? pattern : pattern.replace(/\\([|(){}+?])/g, '\uE001$1').replace(/([|(){}+?])/g, '\\$1').replace(/\uE001([|(){}+?])/g, '$1');
+  let src = o.F ? pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : posixRegex(pattern, o.E);
   if (o.w) src = `(?<![A-Za-z0-9_])(?:${src})(?![A-Za-z0-9_])`;
   return new RegExp(src, o.i ? 'i' : '');
+}
+// BRE (grep, sed) or ERE (grep -E, sed -E, awk) to a JavaScript regular expression source.
+function posixRegex(pattern, extended) {
+  let src = extended ? pattern : pattern.replace(/\\([|(){}+?])|([|(){}+?])/g, (_, esc, plain) => esc || '\\' + plain);
+  return src.replace(/\[\[:(alpha|digit|alnum|upper|lower|space|punct):\]\]/g, (_, c) => `[${{ alpha: 'A-Za-z', digit: '0-9', alnum: 'A-Za-z0-9', upper: 'A-Z', lower: 'a-z', space: '\\s', punct: '!-\\/:-@\\[-`{-~' }[c]}]`);
+}
+
+function parseSed(script, extended) {
+  const cmds = []; let i = 0;
+  const regexAt = () => { const d = script[i++]; let r = ''; while (i < script.length && script[i] !== d) { if (script[i] === '\\' && script[i + 1] === d) { r += d; i += 2; continue; } if (script[i] === '\\') { r += script[i] + script[i + 1]; i += 2; continue; } r += script[i++]; } i++; return r; };
+  const addr = () => {
+    if (/\d/.test(script[i])) { let n = ''; while (/\d/.test(script[i])) n += script[i++]; return { line: +n }; }
+    if (script[i] === '$') { i++; return { last: true }; }
+    if (script[i] === '/') return { re: new RegExp(posixRegex(regexAt(), extended)) };
+    return null;
+  };
+  while (i < script.length) {
+    while (/[\s;]/.test(script[i] || '')) i++;
+    if (i >= script.length) break;
+    const c = { a1: addr(), a2: null, not: false };
+    if (c.a1 && script[i] === ',') { i++; c.a2 = addr(); }
+    while (script[i] === ' ') i++;
+    if (script[i] === '!') { c.not = true; i++; }
+    c.cmd = script[i++];
+    if (c.cmd === 's') {
+      const d = script[i]; const re = regexAt(); i--; script[i] === d; const rep = (() => { i++; let r = ''; while (i < script.length && script[i] !== d) { if (script[i] === '\\' && script[i + 1] === d) { r += d; i += 2; continue; } r += script[i++]; } i++; return r; })();
+      let flags = ''; while (/[gpI0-9]/.test(script[i] || '')) flags += script[i++];
+      c.re = new RegExp(posixRegex(re, extended), (flags.includes('g') ? 'g' : '') + (flags.includes('I') ? 'i' : ''));
+      c.nth = +(flags.match(/\d+/) || [0])[0]; c.print = flags.includes('p');
+      c.rep = rep.replace(/\$/g, '$$$$').replace(/\\([1-9])/g, '$$$1').replace(/\\&/g, '\uE002').replace(/&/g, '$$&').replace(/\uE002/g, '&').replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\\(.)/g, '$1');
+    } else if (c.cmd === 'y') {
+      const from = regexAt(); i--; const to = regexAt(); c.map = Object.fromEntries([...from].map((ch, k) => [ch, to[k]]));
+    } else if (!'pdq='.includes(c.cmd)) throw new ShellUnsupported(`sed command ${c.cmd}`);
+    cmds.push(c);
+  }
+  return cmds;
+}
+function runSed(cmds, text, quiet) {
+  const ls = lines(text), out = [], active = new Map();
+  const hit = (a, line, n) => a.line !== undefined ? n === a.line : a.last ? n === ls.length : a.re.test(line);
+  for (let n = 1; n <= ls.length; n++) {
+    let line = ls[n - 1], deleted = false, quit = false;
+    for (const c of cmds) {
+      let on;
+      if (!c.a1) on = true;
+      else if (!c.a2) on = hit(c.a1, line, n);
+      else if (active.get(c)) { on = true; if (c.a2.line !== undefined ? n >= c.a2.line : hit(c.a2, line, n)) active.set(c, false); }
+      else if (hit(c.a1, line, n)) { on = true; if (!(c.a2.line !== undefined && c.a2.line <= n)) active.set(c, true); }
+      else on = false;
+      if (on === c.not) continue;
+      if (c.cmd === 'd') { deleted = true; break; }
+      if (c.cmd === 'p') out.push(line);
+      if (c.cmd === '=') out.push(String(n));
+      if (c.cmd === 'q') { quit = true; break; }
+      if (c.cmd === 'y') line = [...line].map(ch => c.map[ch] ?? ch).join('');
+      if (c.cmd === 's') {
+        let k = 0, changed = false;
+        const next = c.nth ? line.replace(new RegExp(c.re.source, 'g' + c.re.flags.replace('g', '')), (...m) => { k++; if (k !== c.nth) return m[0]; changed = true; return m[0].replace(new RegExp(c.re.source, c.re.flags.replace('g', '')), c.rep); })
+          : line.replace(c.re, (...m) => { changed = true; return m[0].replace(new RegExp(c.re.source, c.re.flags.replace('g', '')), c.rep); });
+        line = next; if (changed && c.print) out.push(line);
+      }
+    }
+    if (!deleted && !quiet) out.push(line);
+    if (quit) break;
+  }
+  return { out: join(out) };
+}
+
+// A small awk: patterns, BEGIN/END, fields, variables, arrays, if/else, for, printf and the common functions.
+function runAwk(program, read, fs, vars) {
+  const T = awkTokens(program); let p = 0;
+  const peek = (v, k = 0) => T[p + k] && (v === undefined ? T[p + k] : T[p + k].v === v && T[p + k].t !== 'str');
+  const eat = v => { if (!peek(v)) throw new ShellUnsupported(`awk syntax near ${T[p] ? T[p].v : 'end'}`); return T[p++]; };
+  const skipNl = () => { while (peek('\n') || peek(';')) p++; };
+  const binary = (next, ops) => () => { let l = next(); while (T[p] && T[p].t === 'op' && ops.includes(T[p].v)) { const op = T[p++].v; skipOptNl(); l = { k: 'bin', op, l, r: next() }; } return l; };
+  const skipOptNl = () => { while (peek('\n')) p++; };
+  let noGt = false;
+  const primary = () => {
+    const tk = T[p++]; if (!tk) throw new ShellUnsupported('awk syntax');
+    if (tk.t === 'num') return { k: 'num', v: +tk.v };
+    if (tk.t === 'str') return { k: 'str', v: tk.v };
+    if (tk.t === 're') return { k: 're', v: new RegExp(tk.v) };
+    if (tk.v === '$') return { k: 'field', e: postfix() };
+    if (tk.v === '(') { const save = noGt; noGt = false; const e = expr(); noGt = save; eat(')'); return e; }
+    if (tk.v === '-') return { k: 'neg', e: unary() };
+    if (tk.v === '!') return { k: 'not', e: unary() };
+    if (tk.v === '++' || tk.v === '--') return { k: 'preinc', op: tk.v, e: postfix() };
+    if (tk.t === 'name') {
+      if (peek('(') && AWK_FUNCS.includes(tk.v)) { p++; const a = []; if (!peek(')')) { a.push(expr()); while (peek(',')) { p++; a.push(expr()); } } eat(')'); return { k: 'call', f: tk.v, a }; }
+      if (tk.v === 'length') return { k: 'call', f: 'length', a: [] };
+      if (peek('[')) { p++; const i = expr(); eat(']'); return { k: 'idx', n: tk.v, i }; }
+      return { k: 'var', n: tk.v };
+    }
+    throw new ShellUnsupported(`awk syntax near ${tk.v}`);
+  };
+  const postfix = () => { const e = primary(); if (peek('++') || peek('--')) return { k: 'postinc', op: T[p++].v, e }; return e; };
+  const unary = () => postfix();
+  const pow = binary(unary, ['^']);
+  const mul = binary(pow, ['*', '/', '%']);
+  const add = binary(mul, ['+', '-']);
+  const startsOperand = () => { const tk = T[p]; return tk && (['num', 'str', 'name', 're'].includes(tk.t) || ['$', '(', '!', '++', '--'].includes(tk.v)) && !(tk.t === 'name' && ['in', 'else'].includes(tk.v)); };
+  const concat = () => { let l = add(); while (startsOperand()) l = { k: 'cat', l, r: add() }; return l; };
+  const cmp = () => { let l = concat(); while (T[p] && T[p].t === 'op' && ['<', '<=', '>', '>=', '==', '!=', '~', '!~'].includes(T[p].v) && !(noGt && T[p].v === '>')) { const op = T[p++].v; l = { k: 'bin', op, l, r: concat() }; } return l; };
+  const inop = () => { let l = cmp(); if (peek('in')) { p++; return { k: 'in', key: l, n: T[p++].v }; } return l; };
+  const and = binary(inop, ['&&']);
+  const or = binary(and, ['||']);
+  const ternary = () => { const c = or(); if (peek('?')) { p++; const a = ternary(); eat(':'); return { k: 'tern', c, a, b: ternary() }; } return c; };
+  const expr = () => { const l = ternary(); if (T[p] && T[p].t === 'op' && ['=', '+=', '-=', '*=', '/=', '%='].includes(T[p].v) && ['var', 'field', 'idx'].includes(l.k)) { const op = T[p++].v; return { k: 'assign', op, l, r: expr() }; } return l; };
+  const simple = () => {
+    if (peek('print') || peek('printf')) {
+      const f = T[p++].v, a = []; noGt = true;
+      if (!(peek(';') || peek('\n') || peek('}') || peek('>'))) { const paren = peek('(') && awkParenList(T, p); if (paren) { p++; a.push(expr()); while (peek(',')) { p++; a.push(expr()); } eat(')'); } else { a.push(expr()); while (peek(',')) { p++; a.push(expr()); } } }
+      noGt = false; if (peek('>') || peek('>>')) throw new ShellUnsupported('awk redirection');
+      return { k: f, a };
+    }
+    if (peek('next')) { p++; return { k: 'next' }; }
+    if (peek('delete')) { p++; const n = T[p++].v; if (peek('[')) { p++; const i = expr(); eat(']'); return { k: 'delete', n, i }; } return { k: 'delete', n }; }
+    return { k: 'expr', e: expr() };
+  };
+  const stmt = () => {
+    skipNl();
+    if (peek('{')) return block();
+    if (peek('if')) { p++; eat('('); const c = expr(); eat(')'); const a = stmt(); const save = p; skipNl(); if (peek('else')) { p++; return { k: 'if', c, a, b: stmt() }; } p = save; return { k: 'if', c, a }; }
+    if (peek('while')) { p++; eat('('); const c = expr(); eat(')'); return { k: 'while', c, body: stmt() }; }
+    if (peek('for')) {
+      p++; eat('(');
+      if (T[p + 1] && T[p + 1].v === 'in' && T[p + 3] && T[p + 3].v === ')') { const v = T[p].v, n = T[p + 2].v; p += 4; return { k: 'forin', v, n, body: stmt() }; }
+      const init = peek(';') ? null : simple(); eat(';'); const c = peek(';') ? null : expr(); eat(';'); const inc = peek(')') ? null : simple(); eat(')');
+      return { k: 'for', init, c, inc, body: stmt() };
+    }
+    const s = simple(); if (peek(';')) p++; return s;
+  };
+  const block = () => { eat('{'); const body = []; skipNl(); while (!peek('}')) { body.push(stmt()); skipNl(); } eat('}'); return { k: 'block', body }; };
+  const items = [];
+  skipNl();
+  while (p < T.length) {
+    if (peek('BEGIN')) { p++; skipOptNl(); items.push({ when: 'BEGIN', body: block() }); }
+    else if (peek('END')) { p++; skipOptNl(); items.push({ when: 'END', body: block() }); }
+    else { const pat = peek('{') ? null : expr(); items.push({ when: 'main', pat, body: peek('{') ? block() : { k: 'block', body: [{ k: 'print', a: [] }] } }); }
+    skipNl();
+  }
+  const V = { NR: 0, NF: 0, FS: fs ?? ' ', OFS: ' ', ORS: '\n', ...Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, strnum(v)])) }, A = {};
+  let fields = [], line = '', out = '';
+  const split = l => { const f = V.FS === ' ' ? l.trim().split(/[ \t]+/).filter(Boolean) : V.FS.length === 1 ? l.split(V.FS) : l.split(new RegExp(V.FS)); return l === '' ? [] : f; };
+  const setLine = l => { line = l; fields = split(l); V.NF = fields.length; };
+  const getField = i => i === 0 ? strnum(line) : strnum(fields[i - 1] ?? '');
+  const num = v => typeof v === 'number' ? v : v && typeof v === 'object' ? v.n : (parseFloat(String(v ?? '').match(/^\s*[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?/i)?.[0]) || 0);
+  const str = v => typeof v === 'number' ? awkNum(v) : v && typeof v === 'object' ? v.s : String(v ?? '');
+  const isNum = v => typeof v === 'number' || (v && typeof v === 'object');
+  const truth = v => isNum(v) ? num(v) !== 0 : str(v) !== '';
+  const lval = (e, val) => { if (e.k === 'var') V[e.n] = val; else if (e.k === 'idx') (A[e.n] ||= {})[str(ev(e.i))] = val; else { const i = num(ev(e.e)); if (i === 0) setLine(str(val)); else { while (fields.length < i) fields.push(''); fields[i - 1] = str(val); V.NF = fields.length; line = fields.join(V.OFS); } } };
+  const ev = e => {
+    switch (e.k) {
+      case 'num': return e.v; case 'str': return e.v; case 're': return e.v.test(line) ? 1 : 0;
+      case 'field': return getField(num(ev(e.e)));
+      case 'var': return e.n === 'NF' ? V.NF : V[e.n] ?? '';
+      case 'idx': return (A[e.n] || {})[str(ev(e.i))] ?? '';
+      case 'in': return str(ev(e.key)) in (A[e.n] || {}) ? 1 : 0;
+      case 'neg': return -num(ev(e.e)); case 'not': return truth(ev(e.e)) ? 0 : 1;
+      case 'cat': return str(ev(e.l)) + str(ev(e.r));
+      case 'tern': return truth(ev(e.c)) ? ev(e.a) : ev(e.b);
+      case 'preinc': case 'postinc': { const old = num(ev(e.e)), nv = old + (e.op === '++' ? 1 : -1); lval(e.e, nv); return e.k === 'preinc' ? nv : old; }
+      case 'assign': { let v = ev(e.r); if (e.op !== '=') { const a = num(ev(e.l)), b = num(v); v = { '+=': a + b, '-=': a - b, '*=': a * b, '/=': a / b, '%=': a % b }[e.op]; } lval(e.l, v); return v; }
+      case 'call': return awkCall(e.f, e.a.map(ev), { str, num, line: () => line, a: e.a, A });
+      case 'bin': {
+        if (e.op === '&&') return truth(ev(e.l)) && truth(ev(e.r)) ? 1 : 0;
+        if (e.op === '||') return truth(ev(e.l)) || truth(ev(e.r)) ? 1 : 0;
+        const l = ev(e.l);
+        if (e.op === '~' || e.op === '!~') { const re = e.r.k === 're' ? e.r.v : new RegExp(str(ev(e.r))); return re.test(str(l)) === (e.op === '~') ? 1 : 0; }
+        const r = ev(e.r);
+        if (['+', '-', '*', '/', '%', '^'].includes(e.op)) { const a = num(l), b = num(r); return { '+': a + b, '-': a - b, '*': a * b, '/': a / b, '%': a % b, '^': a ** b }[e.op]; }
+        const numeric = isNum(l) && isNum(r), a = numeric ? num(l) : str(l), b = numeric ? num(r) : str(r);
+        return { '<': a < b, '<=': a <= b, '>': a > b, '>=': a >= b, '==': a === b, '!=': a !== b }[e.op] ? 1 : 0;
+      }
+    }
+    throw new ShellUnsupported('awk expression');
+  };
+  class Next {}
+  const exec = s => {
+    switch (s.k) {
+      case 'block': for (const x of s.body) exec(x); return;
+      case 'print': out += (s.a.length ? s.a.map(x => { const v = ev(x); return typeof v === 'number' ? awkNum(v, V.OFMT) : str(v); }).join(str(V.OFS)) : line) + str(V.ORS); return;
+      case 'printf': { const [f, ...rest] = s.a.map(ev); out += awkFormat(str(f), rest, str, num); return; }
+      case 'expr': ev(s.e); return;
+      case 'if': if (truth(ev(s.c))) exec(s.a); else if (s.b) exec(s.b); return;
+      case 'while': { let g = 0; while (truth(ev(s.c))) { exec(s.body); if (++g > 100000) throw new ShellUnsupported('awk loop'); } return; }
+      case 'for': { let g = 0; if (s.init) exec(s.init); while (!s.c || truth(ev(s.c))) { exec(s.body); if (s.inc) exec(s.inc); if (++g > 100000) throw new ShellUnsupported('awk loop'); } return; }
+      case 'forin': for (const k of Object.keys(A[s.n] || {})) { V[s.v] = strnum(k); exec(s.body); } return;
+      case 'next': throw new Next();
+      case 'delete': if (s.i) delete (A[s.n] || {})[str(ev(s.i))]; else A[s.n] = {}; return;
+    }
+  };
+  for (const it of items.filter(i => i.when === 'BEGIN')) exec(it.body);
+  if (items.some(i => i.when !== 'BEGIN')) for (const l of lines(read())) {
+    V.NR++; setLine(l);
+    try { for (const it of items.filter(i => i.when === 'main')) if (!it.pat || truth(ev(it.pat))) exec(it.body); } catch (e) { if (!(e instanceof Next)) throw e; }
+  }
+  for (const it of items.filter(i => i.when === 'END')) exec(it.body);
+  return out;
+}
+const AWK_FUNCS = ['length', 'substr', 'index', 'toupper', 'tolower', 'int', 'split', 'sprintf', 'sub', 'gsub'];
+// Field values that look like numbers compare as numbers, like awk's "strnum".
+function strnum(s) { s = String(s); return /^\s*[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?\s*$/i.test(s) ? { s, n: parseFloat(s) } : s; }
+function awkNum(n) { return Number.isInteger(n) ? String(n) : String(+n.toPrecision(6)); }
+function awkParenList(T, p) { let depth = 0; for (let i = p; i < T.length; i++) { if (T[i].v === '(') depth++; else if (T[i].v === ')') { depth--; if (!depth) return !T[i + 1] || [';', '\n', '}'].includes(T[i + 1].v); } } return false; }
+function awkCall(f, args, h) {
+  const { str, num } = h;
+  switch (f) {
+    case 'length': return args.length ? str(args[0]).length : h.line().length;
+    case 'substr': { const s = str(args[0]), start = Math.round(num(args[1])); const from = Math.max(start, 1), end = args.length > 2 ? start + Math.round(num(args[2])) : Infinity; return s.slice(from - 1, Math.max(from - 1, end - 1)); }
+    case 'index': return str(args[0]).indexOf(str(args[1])) + 1;
+    case 'toupper': return str(args[0]).toUpperCase(); case 'tolower': return str(args[0]).toLowerCase();
+    case 'int': return Math.trunc(num(args[0]));
+    case 'sprintf': return awkFormat(str(args[0]), args.slice(1), str, num);
+    case 'split': { const parts = str(args[0]).split(args.length > 2 ? str(args[2]) : /\s+/); const n = h.a[1].n; h.A[n] = Object.fromEntries(parts.map((v, i) => [i + 1, strnum(v)])); return parts.length; }
+    default: throw new ShellUnsupported(`awk function ${f}`);
+  }
+}
+function awkFormat(fmt, args, str, num) {
+  let i = 0;
+  return fmt.replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/%([-0 ]*)(\d*)(?:\.(\d+))?([sdifcxeg%])/g, (_, flags, w, prec, c) => {
+    if (c === '%') return '%';
+    const v = args[i++]; let s;
+    if (c === 's') s = prec !== undefined ? str(v).slice(0, +prec) : str(v);
+    else if (c === 'd' || c === 'i') s = String(Math.trunc(num(v)));
+    else if (c === 'f') s = num(v).toFixed(prec !== undefined ? +prec : 6);
+    else if (c === 'c') s = typeof v === 'number' ? String.fromCharCode(v) : str(v)[0] || '';
+    else if (c === 'x') s = Math.trunc(num(v)).toString(16);
+    else s = String(+num(v).toPrecision(prec !== undefined ? +prec || 1 : 6));
+    if (w && s.length < +w) s = flags.includes('-') ? s.padEnd(+w) : flags.includes('0') && c !== 's' ? s.padStart(+w, '0') : s.padStart(+w);
+    return s;
+  });
+}
+function awkTokens(src) {
+  const T = []; let i = 0;
+  const operandEnd = () => { const l = T[T.length - 1]; return l && (['num', 'str', 'name', 're'].includes(l.t) && !['print', 'printf', 'return', 'in'].includes(l.v) || [')', ']', '$', '++', '--'].includes(l.v) && l.v !== '$'); };
+  while (i < src.length) {
+    const c = src[i];
+    if (c === '\\' && src[i + 1] === '\n') { i += 2; continue; }
+    if (c === ' ' || c === '\t') { i++; continue; }
+    if (c === '#') { while (i < src.length && src[i] !== '\n') i++; continue; }
+    if (c === '\n') { T.push({ t: 'op', v: '\n' }); i++; continue; }
+    if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(src[i + 1] || ''))) { const m = src.slice(i).match(/^(\d+\.?\d*|\.\d+)(e[-+]?\d+)?/i); if (m) { T.push({ t: 'num', v: m[0] }); i += m[0].length; continue; } }
+    if (c === '"') { let s = ''; i++; while (i < src.length && src[i] !== '"') { if (src[i] === '\\') { const n = src[++i]; s += n === 'n' ? '\n' : n === 't' ? '\t' : n; i++; continue; } s += src[i++]; } i++; T.push({ t: 'str', v: s }); continue; }
+    if (c === '/' && !operandEnd()) { let r = ''; i++; while (i < src.length && src[i] !== '/') { if (src[i] === '\\') { r += src[i] + src[i + 1]; i += 2; continue; } r += src[i++]; } i++; T.push({ t: 're', v: posixRegex(r, true) }); continue; }
+    if (/[A-Za-z_]/.test(c)) { const m = src.slice(i).match(/^[A-Za-z_]\w*/)[0]; T.push({ t: 'name', v: m }); i += m.length; continue; }
+    const op = ['+=', '-=', '*=', '/=', '%=', '==', '!=', '<=', '>=', '&&', '||', '++', '--', '!~', '>>'].find(o => src.startsWith(o, i)) || c;
+    T.push({ t: 'op', v: op }); i += op.length;
+  }
+  return T;
 }
 function sortKey(line, o) {
   if (o.k === undefined) return line;
@@ -242,8 +492,12 @@ const COMMANDS = {
     const [o, rest] = opts(args, 'ivnclwEFrsho', 'eAB');
     const pattern = o.e ?? rest.shift();
     if (pattern === undefined) throw new ShellError('usage: grep [OPTION]... PATTERNS [FILE]...', 2);
-    if (o.r || o.A || o.B || o.h || o.o) throw new ShellUnsupported('grep option');
-    const re = grepRegex(pattern, o), sources = inputs(this, rest, stdin, 'grep'), many = sources.length > 1;
+    if (o.A || o.B || o.h) throw new ShellUnsupported('grep option');
+    const re = grepRegex(pattern, o);
+    // -r walks folders in sorted order; real grep uses disk order, so lessons sort or search one file.
+    const walk = (p, label) => this.dirs.has(p) ? this.order.filter(f => f.startsWith(p === '/' ? '/' : p + '/') && this.files.has(f)).sort(cmpC).map(f => ({ name: label + f.slice(p.length + (p === '/' ? 0 : 1)), text: this.read(f) })) : this.files.has(p) ? [{ name: label.replace(/\/$/, ''), text: this.read(p) }] : [{ name: label, error: `grep: ${label}: No such file or directory\n` }];
+    const sources = o.r ? (rest.length ? rest.flatMap(r => walk(this.abs(r), r.replace(/\/?$/, '/'))) : walk(this.cwd, '')) : inputs(this, rest, stdin, 'grep');
+    const many = sources.length > 1 || (o.r && !(rest.length === 1 && this.files.has(this.abs(rest[0]))));
     let out = '', err = '', matched = false;
     for (const src of sources) {
       if (src.error) { if (!o.s) err += src.error; continue; }
@@ -253,7 +507,11 @@ const COMMANDS = {
       if (o.c) { out += (many ? `${label}:` : '') + hits.length + '\n'; continue; }
       if (o.l) { if (hits.length) out += label + '\n'; continue; }
       if (hits.length && isBinary(src.text)) { err += `grep: ${label}: binary file matches\n`; continue; }
-      for (const [n, l] of hits) out += (many ? `${label}:` : '') + (o.n ? `${n}:` : '') + l + '\n';
+      const g = new RegExp(re.source, re.flags + 'g');
+      for (const [n, l] of hits) {
+        if (o.o && !o.v) { for (const m of l.match(g) || []) if (m) out += (many ? `${label}:` : '') + (o.n ? `${n}:` : '') + m + '\n'; continue; }
+        out += (many ? `${label}:` : '') + (o.n ? `${n}:` : '') + l + '\n';
+      }
     }
     return { out, err, code: err && !matched ? 2 : matched ? 0 : 1 };
   },
@@ -326,27 +584,33 @@ const COMMANDS = {
     return { out };
   },
   awk(args, stdin) {
-    const [o, rest] = opts(args, '', 'F'); const program = rest.shift(); const src = inputs(this, rest, stdin, 'awk')[0]; if (src.error) return { out: '', err: src.error, code: 2 };
-    const m = program && program.trim().match(/^\{\s*print(?:\s+(\$NF|\$\d+|NR|NF))?\s*\}$/);
-    if (!m) throw new ShellUnsupported('awk program');
-    const out = lines(src.text).map((l, i) => {
-      const fields = o.F !== undefined ? l.split(o.F) : l.trim().split(/\s+/).filter(Boolean);
-      const what = m[1];
-      if (!what) return l; if (what === 'NR') return String(i + 1); if (what === 'NF') return String(fields.length);
-      if (what === '$NF') return fields[fields.length - 1] ?? ''; const n = +what.slice(1); return n === 0 ? l : fields[n - 1] ?? '';
-    });
-    return { out: join(out) };
+    const [o, rest] = opts(args, '', 'Fv'); const program = rest.shift();
+    if (program === undefined) throw new ShellError('usage: awk [-F fs] [-v var=value] program [file ...]', 2);
+    const vars = {}; if (o.v !== undefined) { const eq = o.v.indexOf('='); vars[o.v.slice(0, eq)] = o.v.slice(eq + 1); }
+    let err = '';
+    const read = () => { const sources = inputs(this, rest, stdin, 'awk'), bad = sources.find(s => s.error); if (bad) { err = bad.error.replace(/^awk: (.*): No such file or directory\n$/, 'awk: cannot open "$1" (No such file or directory)\n'); return ''; } return sources.map(s => s.text).join(''); };
+    const out = runAwk(program, read, o.F, vars);
+    return { out, err, code: err ? 2 : 0 };
   },
   sed(args, stdin) {
-    const [o, rest] = opts(args, 'n', 'e'); const script = o.e ?? rest.shift(); const src = inputs(this, rest, stdin, 'sed')[0]; if (src.error) return { out: '', err: src.error, code: 2 };
-    let m, out = [];
-    const ls = lines(src.text);
-    if ((m = script.match(/^s\/((?:\\.|[^/])*)\/((?:\\.|[^/])*)\/(g?)$/))) { const re = new RegExp(m[1], m[3] ? 'g' : ''); out = ls.map(l => l.replace(re, m[2])); if (o.n) out = []; }
-    else if ((m = script.match(/^\/((?:\\.|[^/])*)\/d$/))) out = ls.filter(l => !new RegExp(m[1]).test(l));
-    else if ((m = script.match(/^\/((?:\\.|[^/])*)\/p$/)) && o.n) out = ls.filter(l => new RegExp(m[1]).test(l));
-    else if ((m = script.match(/^(\d+),(\d+)p$/)) && o.n) out = ls.slice(+m[1] - 1, +m[2]);
-    else throw new ShellUnsupported('sed script');
-    return { out: join(out) };
+    const o = {}, scripts = [], files = [];
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      if (a === '-n') o.n = true; else if (a === '-E' || a === '-r') o.E = true; else if (a === '-e') scripts.push(args[++i]);
+      else if (a.startsWith('-i')) o.i = a.slice(2) || ''; else if (/^-[nE]+$/.test(a)) { if (a.includes('n')) o.n = true; if (a.includes('E')) o.E = true; }
+      else if (a.startsWith('-') && a !== '-') throw new ShellUnsupported(`sed option ${a}`); else files.push(a);
+    }
+    if (!scripts.length) { if (!files.length) throw new ShellError('usage: sed [OPTION]... {script} [input-file]...', 1); scripts.push(files.shift()); }
+    const cmds = parseSed(scripts.join('\n'), o.E);
+    if (o.i !== undefined) {
+      if (!files.length) throw new ShellError('no input files', 1);
+      for (const f of files) { const p = this.abs(f); const text = this.read(p); if (o.i) this.write(p + o.i, text); this.write(p, runSed(cmds, text, o.n).out); }
+      return { out: '' };
+    }
+    const sources = inputs(this, files, stdin, 'sed'); let err = '';
+    for (const s of sources) if (s.error) err += s.error.replace(/^sed: (.*): No such/, "sed: can't read $1: No such");
+    const r = runSed(cmds, sources.filter(s => !s.error).map(s => s.text).join(''), o.n);
+    return { out: r.out, err, code: err ? 2 : 0 };
   },
   find(args) {
     const start = []; let i = 0;
