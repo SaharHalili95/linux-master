@@ -6,17 +6,17 @@ p5-apt-search	apt search --names-only '^hello$' 2>/dev/null
 p5-apt-show	apt show hello 2>/dev/null | grep -E '^(Package|Version|Installed-Size|Depends|Description):'
 p5-apt-install	apt-get install -y hello 2>&1 | grep -E '^(The following|  |[0-9]+ upgraded|Setting up)'; hello
 p5-apt-install-deps	apt-get install -y lynx 2>&1 | sed -n '/additional packages/,/upgraded/p'
-p5-apt-upgradable	apt list --upgradable 2>/dev/null | head -n 4 | cut -c1-60
+p5-apt-upgradable	apt list --upgradable 2>/dev/null | cut -d / -f 1
 p5-apt-remove	apt-get install -y -qq vsftpd >/dev/null 2>&1	apt-get remove -y vsftpd 2>&1 | grep '^Removing'; dpkg -l vsftpd | tail -n 1 | awk '{print $1, $2, $3}'; ls /etc/vsftpd.conf
 p5-apt-purge	true	apt-get purge -y vsftpd 2>&1 | grep '^Purging'; ls /etc/vsftpd.conf
 p5-dpkg-l	dpkg -l bash hello | tail -n 2 | awk '{print $1, $2, $3}'
-p5-dpkg-L	dpkg -L hello | grep -E 'bin|man1'
+p5-dpkg-files	dpkg -L hello | grep -E 'bin|man1'
 p5-dpkg-S	dpkg -S /usr/bin/passwd /usr/bin/ssh
-p5-dpkg-i	apt-get download sl >/dev/null 2>&1	ls; dpkg -i sl_*.deb | grep -E '^(Unpacking|Setting up)'
-p5-dpkg-r	true	dpkg -r sl | grep ^Removing
+p5-dpkg-i	apt-get download sl >/dev/null 2>&1	ls; dpkg -i sl_*.deb 2>&1 | grep -E '^(Unpacking|Setting up)'
+p5-dpkg-r	true	dpkg -r sl 2>&1 | grep ^Removing
 p5-dpkg-deps	apt-get purge -y -qq lynx lynx-common >/dev/null 2>&1; apt-get download lynx >/dev/null 2>&1	dpkg -i lynx_*.deb 2>&1 | grep -E 'depends on|not installed|^Errors|^ lynx'
 p5-apt-fix	true	apt-get install -f -y 2>&1 | grep -E '^(Correcting|The following|  lynx|Setting up)'
-p5-sources	grep -v '^#' /etc/apt/sources.list.d/ubuntu.sources | head -n 5
+p5-sources	grep -E '^(Types|URIs|Suites|Components)' /etc/apt/sources.list.d/ubuntu.sources | head -n 4
 p5-apt-cache-policy	apt-cache policy hello | head -n 3
 p5-apt-cache-depends	apt-cache depends hello
 p5-apt-cache-search	apt-cache search --names-only '^cowsay'
