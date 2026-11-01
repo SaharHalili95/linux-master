@@ -165,3 +165,31 @@ sed "s/a/&&/g" names.txt
 sed -i "s/Dana/Dina/" names.txt && cat names.txt
 sed -i.bak "1d" names.txt && cat names.txt.bak names.txt
 sed "s/x/y/" nope.txt
+echo "Lines: $(wc -l < names.txt)"
+echo $(wc -l < names.txt) names
+echo `head -n 1 names.txt`
+cat $(ls *.txt | head -n 1)
+echo "$(grep -c Dana names.txt) x Dana"
+echo $(sort names.txt | head -n 3)
+grep Avi names.txt | tee avi.txt
+grep Avi names.txt | tee avi.txt | wc -l
+sort names.txt | tee sorted.txt | head -n 2 && wc -l sorted.txt
+echo hi | tee -a notes.txt > /dev/null && tail -n 1 notes.txt
+ls *.txt | xargs wc -l
+ls config | xargs echo
+echo a b c d | xargs -n 2 echo
+head -n 2 names.txt | xargs -I {} echo hello {}
+find . -name "*.conf" | sort | xargs cat
+nl names.txt
+nl report.txt
+paste first.txt second.txt
+paste -d , first.txt second.txt
+paste -s names.txt
+paste -s -d , first.txt
+mkdir d && cd d && pwd
+cd nowhere || echo no
+cd nowhere && echo yes
+echo a; echo b; echo c
+true && echo ok || echo bad
+false && echo ok || echo bad
+grep -q Dana names.txt && echo found

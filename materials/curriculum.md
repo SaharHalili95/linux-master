@@ -36,11 +36,11 @@ Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a u
 | 13 | sed in practice | `sed -i`, ranges `2,5`, `/re/d`, `-e` chains, backups | L103.2 F | 🟡 | live |
 | 14 | awk basics | `awk '{print $1}'`, `-F`, `NR`, `NF`, patterns | L103.2 | 🟡 | live |
 | 15 | awk reports | sums, `BEGIN`/`END`, conditions, `printf` | L103.2 | 🟡 | live |
-| 16 | Plumbing | `tee`, `xargs`, `$( )`, `` ` ` ``, `&&`, `\|\|`, `;`, `<` | L103.4 R | 🟡 | |
-| 17 | vi: survive | modes, `i` `a` `o` `Esc`, `:w` `:q` `:wq` `:q!`, `h j k l` | L103.8 R | 🎞 | |
-| 18 | vi: edit fast | `dd` `yy` `p` `u`, `/search` `n`, `:%s/a/b/g`, `G` `gg` | L103.8 | 🎞 | |
-| 19 | More text tools | `diff`, `cmp`, `comm`, `paste`, `join`, `nl`, `split`, `od`, `xxd`, `md5sum`, `sha256sum` | L103.2 | 🟡 | |
-| 20 | Archives | `tar -czf -xzf -tf -C`, `gzip`, `bzip2`, `xz`, `zip`, `cpio`, `dd` | L103.3 R F | 🎞 | |
+| 16 | Plumbing | `tee`, `xargs`, `$( )`, `` ` ` ``, `&&`, `\|\|`, `;`, `<` | L103.4 R | 🟡 | live |
+| 17 | vi: survive | modes, `i` `a` `o` `Esc`, `:w` `:q` `:wq` `:q!`, `h j k l` | L103.8 R | 🎞 | live |
+| 18 | vi: edit fast | `dd` `yy` `p` `u`, `/search` `n`, `:%s/a/b/g`, `G` `gg` | L103.8 | 🎞 | live |
+| 19 | More text tools | `diff`, `cmp`, `comm`, `paste`, `join`, `nl`, `split`, `od`, `xxd`, `md5sum`, `sha256sum` | L103.2 | 🟡 | live |
+| 20 | Archives | `tar -czf -xzf -tf -C`, `gzip`, `bzip2`, `xz`, `zip`, `cpio`, `dd` | L103.3 R F | 🎞 | live |
 
 ## Part 3: Files, permissions and disks (units 21-32)
 

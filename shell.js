@@ -17,10 +17,21 @@ function shellTokens(text) {
     let parts = [];
     while (i < text.length && !/\s/.test(text[i]) && !SHELL_OPS.some(o => o !== '2>' && text.startsWith(o, i)) && text[i] !== '&') {
       const c = text[i];
+      if (c === '"' && /\$\(|`/.test(text.slice(i + 1, text.indexOf('"', i + 1)))) {
+        const end = text.indexOf('"', i + 1); const inner = text.slice(i + 1, end); let k = 0;
+        while (k < inner.length) {
+          if (inner.startsWith('$(', k)) { let depth = 0, j = k + 1; for (; j < inner.length; j++) { if (inner[j] === '(') depth++; else if (inner[j] === ')' && --depth === 0) break; } parts.push({ sub: inner.slice(k + 2, j), quoted: true }); k = j + 1; }
+          else if (inner[k] === '`') { const e = inner.indexOf('`', k + 1); parts.push({ sub: inner.slice(k + 1, e), quoted: true }); k = e + 1; }
+          else { let j = k; while (j < inner.length && !inner.startsWith('$(', j) && inner[j] !== '`') j++; parts.push({ text: inner.slice(k, j).replace(/\\(["\\$`])/g, '$1'), quoted: true, expand: true }); k = j; }
+        }
+        i = end + 1; continue;
+      }
       if (c === "'") { const end = text.indexOf("'", i + 1); if (end < 0) throw new ShellUnsupported('quote'); parts.push({ text: text.slice(i + 1, end), quoted: true, expand: false }); i = end + 1; }
       else if (c === '"') { const end = text.indexOf('"', i + 1); if (end < 0) throw new ShellUnsupported('quote'); parts.push({ text: text.slice(i + 1, end).replace(/\\(["\\$`])/g, '$1'), quoted: true, expand: true }); i = end + 1; }
       else if (c === '\\') { parts.push({ text: text[i + 1] || '', quoted: true, expand: false }); i += 2; }
-      else { let j = i; while (j < text.length && !/[\s'"\\&|;<>]/.test(text[j])) j++; if (j === i) j++; parts.push({ text: text.slice(i, j), quoted: false, expand: true }); i = j; }
+      else if (text.startsWith('$(', i)) { let depth = 0, j = i + 1; for (; j < text.length; j++) { if (text[j] === '(') depth++; else if (text[j] === ')' && --depth === 0) break; } if (j >= text.length) throw new ShellUnsupported('quote'); parts.push({ sub: text.slice(i + 2, j), quoted: false }); i = j + 1; }
+      else if (c === '`') { const end = text.indexOf('`', i + 1); if (end < 0) throw new ShellUnsupported('quote'); parts.push({ sub: text.slice(i + 1, end), quoted: false }); i = end + 1; }
+      else { let j = i; while (j < text.length && !/[\s'"\\&|;<>`]/.test(text[j]) && !text.startsWith('$(', j)) j++; if (j === i) j++; parts.push({ text: text.slice(i, j), quoted: false, expand: true }); i = j; }
     }
     tokens.push({ parts });
   }
@@ -66,16 +77,25 @@ class Shell {
   }
   expandWord(token) {
     let text = '', hasGlob = false, quotedAll = true;
+    const words = [];
     for (const part of token.parts) {
+      if (part.sub !== undefined) {
+        const r = this.run(part.sub), value = r.out.replace(/\n+$/, '');
+        if (part.quoted) { text += value.replace(/[*?{}]/g, m => '\uE000' + m); continue; }
+        const pieces = value.split(/\s+/).filter(Boolean);
+        if (!pieces.length) continue;
+        text += pieces[0]; for (const w of pieces.slice(1)) { words.push(text); text = w; }
+        quotedAll = false; continue;
+      }
       let t = part.text;
       if (part.expand) {
-        if (/\$\(|`/.test(t)) throw new ShellUnsupported('command substitution');
         t = t.replace(/\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?/g, (_, name) => this.env[name] ?? '').replace(/\$([0-9?#@*!])/g, () => { throw new ShellUnsupported('special variable'); });
       }
       if (!part.quoted) { quotedAll = false; if (/[*?]/.test(t)) hasGlob = true; }
       text += part.quoted ? t.replace(/[*?{}]/g, m => '\uE000' + m) : t;
     }
-    return braces(text).flatMap(word => {
+    if (!text && !words.length && token.parts.every(p => p.sub !== undefined)) return [];
+    return [...words, text].flatMap(braces).flatMap(word => {
       if (hasGlob && !quotedAll) { const matches = this.glob(word.replace(/\uE000/g, '')); if (matches.length) return matches; }
       return [word.replace(/\uE000/g, '')];
     });
@@ -711,6 +731,38 @@ const COMMANDS = {
     const [o, files] = opts(args, 'd'); const src = inputs(this, files, stdin, 'base64')[0]; if (src.error) return { out: '', err: src.error, code: 1 };
     if (o.d) { try { return { out: atob(src.text.replace(/\s+/g, '')) }; } catch { throw new ShellError('invalid input'); } }
     const enc = btoa(src.text); return { out: join(enc.match(/.{1,76}/g) || []) };
+  },
+  tee(args, stdin) {
+    const [o, files] = opts(args, 'a');
+    for (const f of files) { const p = this.abs(f); this.write(p, (o.a && this.files.has(p) ? this.read(p) : '') + stdin); }
+    return { out: stdin };
+  },
+  xargs(args, stdin) {
+    const o = {}; let k = 0;
+    for (; k < args.length && args[k].startsWith('-'); k++) { if (args[k] === '-n' || args[k] === '-I') o[args[k][1]] = args[++k]; else if (/^-n\d+$/.test(args[k])) o.n = args[k].slice(2); else throw new ShellUnsupported(`xargs option ${args[k]}`); }
+    const rest = args.slice(k);
+    const items = (stdin.match(/\S+/g) || []), cmd = rest.length ? rest : ['echo'];
+    let out = '', err = '', code = 0;
+    const call = words => { const r = this.exec(words, ''); out += r.out; err += r.err || ''; if (r.code) code = 123; };
+    try {
+      if (o.I !== undefined) for (const line of lines(stdin)) call(cmd.map(w => w.split(o.I).join(line)));
+      else if (o.n) for (let i = 0; i < items.length; i += +o.n) call([...cmd, ...items.slice(i, i + +o.n)]);
+      else if (items.length || cmd[0] === 'echo') call([...cmd, ...items]);
+    } catch (e) { if (!(e instanceof ShellError)) throw e; err += `${cmd[0]}: ${e.message}\n`; code = 123; }
+    return { out, err, code };
+  },
+  nl(args, stdin) {
+    const [o, files] = opts(args, '', 'b'); const src = inputs(this, files, stdin, 'nl')[0]; if (src.error) return { out: '', err: src.error, code: 1 };
+    let n = 0; return { out: join(lines(src.text).map(l => (l || o.b === 'a') ? `${String(++n).padStart(6)}\t${l}` : '')) };
+  },
+  paste(args, stdin) {
+    const [o, files] = opts(args, 's', 'd'); const d = o.d ?? '\t';
+    const srcs = inputs(this, files, stdin, 'paste'); const bad = srcs.find(s => s.error); if (bad) return { out: '', err: bad.error, code: 1 };
+    const cols = srcs.map(s => lines(s.text));
+    if (o.s) return { out: join(cols.map(c => c.join(d))) };
+    const rows = Math.max(...cols.map(c => c.length)); const out = [];
+    for (let i = 0; i < rows; i++) out.push(cols.map(c => c[i] ?? '').join(d));
+    return { out: join(out) };
   },
   touch(args) {
     if (!args.length) throw new ShellError('missing file operand');

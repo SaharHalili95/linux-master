@@ -274,4 +274,248 @@ const UNIT_15 = {
   ] },
 };
 
-COURSE.push(UNIT_11, UNIT_12, UNIT_13, UNIT_14, UNIT_15);
+
+const VI = T('בעורך vi', 'In the vi editor');
+
+const UNIT_16 = {
+  section: 2, unit: 16, exams: ['L103.4', 'R'], title: T('צנרת מתקדמת', 'Plumbing'), subtitle: T('tee, ‏$( ), xargs ו־&&', 'tee, $( ), xargs and &&'), color: 'green', fixture: textFixture,
+  lessons: [
+    { title: T('tee', 'tee'), exercises: [
+      { type: 'teach', cmd: 'tee', name: 'tee', text: T('כמו צומת T בצינור: tee כותבת את מה שמגיע אליה לקובץ, וגם מעבירה אותו הלאה למסך או לפקודה הבאה. ‎-a‎ מוסיפה לסוף הקובץ במקום לדרוס.', 'Like a T joint in a pipe: tee writes what it gets into a file, and also passes it on to the screen or the next command. -a appends instead of overwriting.'), demo: [[], 'grep ERROR logs/app.log | tee errors.txt'] },
+      { type: 'output', prompt: T('מה תדפיס cat errors.txt אחרי הפקודה?', 'What will cat errors.txt print after this command?'), setup: ['grep -c ERROR logs/app.log | tee errors.txt'], cmd: 'cat errors.txt', wrongCmds: ['grep ERROR logs/app.log'], wrongText: [''] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ שומרת פלט לקובץ וגם מציגה אותו.', 'The ___ command saves output to a file and also shows it.'), options: ['tee', 'cat', 'echo'], answer: 'tee' },
+      { type: 'choice', prompt: T('מה ההבדל בין ‎grep ERROR logs/app.log > e.txt‎ לבין ‎grep ERROR logs/app.log | tee e.txt‎?', 'What is the difference between grep ERROR logs/app.log > e.txt and grep ERROR logs/app.log | tee e.txt?'), plain: true,
+        options: [T('עם tee השורות גם מוצגות על המסך', 'With tee the lines also show on screen'), T('אין הבדל', 'There is no difference'), T('tee לא יוצרת קובץ', 'tee does not create a file'), T('> מוסיפה לסוף הקובץ', '> appends to the file')],
+        why: [null, T('> שולחת הכול לקובץ ולא מציגה כלום.', '> sends everything to the file and shows nothing.'), T('tee יוצרת את הקובץ.', 'tee creates the file.'), T('> דורסת. ‎>>‎ מוסיפה.', '> overwrites. >> appends.')] },
+      { type: 'fill', prompt: T('השלימו כדי להוסיף את התוצאה לסוף log.txt בלי לדרוס אותו', 'Fill in to add the result to the end of log.txt without overwriting it'), before: 'date | tee ', after: ' log.txt', options: ['-a', '-n', '>>', '-i'], answer: '-a' },
+      { type: 'terminal', prompt: T('שמרו את שורות ה־WARN של logs/app.log בקובץ warn.txt, וגם הציגו אותן על המסך', 'Save the WARN lines of logs/app.log into warn.txt, and show them on screen too'), hint: T('grep WARN logs/app.log | tee warn.txt', 'grep WARN logs/app.log | tee warn.txt'), goal: (sh, log) => shows(log, 'grep WARN logs/app.log') && sh.files.get('/home/user/warn.txt')?.content === textOut('grep WARN logs/app.log'), solve: ['grep WARN logs/app.log | tee warn.txt'] },
+    ] },
+    { title: T('‎$( )', '$( )'), exercises: [
+      { type: 'teach', cmd: '$( )', name: 'command substitution', text: T('‎$(command)‎ מריצה פקודה ושמה את הפלט שלה בתוך פקודה אחרת. ‎echo "Lines: $(wc -l < notes.txt)"‎. הצורה הישנה היא בגרשיים הפוכים: ‎`command`‎.', '$(command) runs a command and puts its output inside another command. echo "Lines: $(wc -l < notes.txt)". The old form uses backticks: `command`.'), demo: [[], 'echo "Lines: $(wc -l < notes.txt)"'] },
+      { type: 'output', prompt: WHAT, cmd: 'echo "I am $(whoami)"', wrongCmds: ["echo 'I am $(whoami)'"], wrongText: ['I am whoami'] },
+      { type: 'sentence', prompt: READ, text: T('הצורה ___ מריצה פקודה ושמה את הפלט שלה במקומה.', 'The ___ form runs a command and puts its output in its place.'), options: ['$( )', '${ }', '$[ ]'], answer: '$( )' },
+      { type: 'output', prompt: WHAT, cmd: 'echo "There are $(grep -c ERROR logs/app.log) errors"', wrongCmds: ['echo "There are $(grep -c WARN logs/app.log) errors"'], wrongText: ['There are grep -c ERROR logs/app.log errors'] },
+      { type: 'match', prompt: T('התאימו כל צורה למה שהיא', 'Match each form to what it is'), pairs: [['$(cmd)', T('הפלט של פקודה', 'the output of a command')], ['`cmd`', T('אותו דבר, בצורה הישנה', 'the same, old style')], ['$HOME', T('ערך של משתנה', 'a variable\'s value')], ["'$(cmd)'", T('הטקסט כמו שהוא', 'the text as it is')]] },
+      { type: 'choice', prompt: T('איזו פקודה פותחת את הקובץ שנמצא בשם todo.txt, בלי לדעת איפה הוא?', 'Which command shows the file named todo.txt without knowing where it is?'), options: ['cat $(find . -name todo.txt)', 'cat find . -name todo.txt', 'find . -name todo.txt cat', 'cat "find . -name todo.txt"'], answer: 'cat $(find . -name todo.txt)',
+        why: { 'cat find . -name todo.txt': T('cat תנסה לפתוח קבצים בשם find, ‏. וכן הלאה.', 'cat would try to open files named find, . and so on.'), 'find . -name todo.txt cat': T('find לא מריצה את cat כך.', 'find does not run cat like that.'), 'cat "find . -name todo.txt"': T('במרכאות זה שם קובץ אחד ארוך.', 'In quotes it is one long file name.') } },
+      { type: 'terminal', prompt: T('הדפיסו את המשפט "Last line: " ואחריו השורה האחרונה של notes.txt, בפקודה אחת עם ‎$( )', 'Print "Last line: " followed by the last line of notes.txt, in one command with $( )'), hint: T('echo "Last line: $(tail -n 1 notes.txt)"', 'echo "Last line: $(tail -n 1 notes.txt)"'), goal: (sh, log) => log.some(l => l.out === 'Last line: learn grep' && l.cmd.includes('$(')), solve: ['echo "Last line: $(tail -n 1 notes.txt)"'] },
+    ] },
+    { title: T('xargs', 'xargs'), exercises: [
+      { type: 'teach', cmd: 'xargs', name: 'build arguments', text: T('הופכת שורות שמגיעות בצינור לארגומנטים של פקודה. ‎find . -name "*.jpg" | xargs ls‎ מריצה ls על כל מה ש־find מצאה. ‎-n 1‎ מריצה פעם לכל פריט, ו־‎-I {}‎ שמה כל פריט במקום {}.', 'Turns lines coming down a pipe into arguments for a command. find . -name "*.jpg" | xargs ls runs ls on everything find found. -n 1 runs once per item, and -I {} puts each item where {} is.'), demo: [[], 'ls photos | xargs -I {} echo photo: {}'] },
+      { type: 'output', prompt: WHAT, cmd: 'echo a b c | xargs -n 1 echo', wrongCmds: ['echo a b c | xargs echo'], wrongText: ['a b c\na b c\na b c'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ הופכת את מה שמגיע בצינור לארגומנטים של פקודה אחרת.', 'The ___ command turns what comes down a pipe into arguments for another command.'), options: ['xargs', 'tee', 'echo'], answer: 'xargs' },
+      { type: 'output', prompt: T('ב־docs יש cv.pdf ו־todo.txt (2 שורות). מה תדפיס הפקודה?', 'docs has cv.pdf and todo.txt (2 lines). What will this print?'), cmd: 'find docs -name "*.txt" | xargs wc -l', wrongCmds: ['find docs -name "*.txt"'], wrongText: ['2'] },
+      { type: 'choice', prompt: T('למה ‎find . -name "*.log" | rm‎ לא מוחקת כלום?', 'Why does find . -name "*.log" | rm delete nothing?'), plain: true,
+        options: [T('rm לא קוראת שמות מהצינור, היא צריכה אותם כארגומנטים: ‎| xargs rm', 'rm does not read names from the pipe, it needs them as arguments: | xargs rm'), T('find לא מוצאת קבצים', 'find finds no files'), T('צריך sudo', 'You need sudo'), T('קבצי log מוגנים', 'Log files are protected')],
+        why: [null, T('find כן מוצאת, הבעיה ב־rm.', 'find does find them; the problem is rm.'), T('אין קשר להרשאות.', 'It has nothing to do with permissions.'), T('אין הגנה כזו.', 'There is no such protection.')] },
+      { type: 'fill', prompt: T('השלימו כדי להריץ echo פעם אחת לכל שם', 'Fill in to run echo once per name'), before: 'cat notes.txt | xargs ', after: ' 1 echo', options: ['-n', '-I', '-a', '-1'], answer: '-n' },
+      { type: 'terminal', prompt: T('ספרו שורות בכל קבצי ה־.txt בתיקייה docs, עם find ו־xargs', 'Count the lines of every .txt file in docs, with find and xargs'), hint: T('find docs -name "*.txt" | xargs wc -l', 'find docs -name "*.txt" | xargs wc -l'), goal: (sh, log) => shows(log, 'find docs -name "*.txt" | xargs wc -l') && log.some(l => l.cmd.includes('xargs')), solve: ['find docs -name "*.txt" | xargs wc -l'] },
+    ] },
+    { title: T('‎&&, || ו־;', '&&, || and ;'), exercises: [
+      { type: 'teach', cmd: '&&', name: 'and then', text: T('‎a && b‎ מריצה את b רק אם a הצליחה. ‎a || b‎ מריצה את b רק אם a נכשלה. ‎a ; b‎ מריצה את שתיהן, תמיד.', 'a && b runs b only if a succeeded. a || b runs b only if a failed. a ; b runs both, always.'), demo: [[], 'mkdir work && cd work && pwd'] },
+      { type: 'output', prompt: WHAT, cmd: 'cd nowhere || echo "no such folder"', wrongCmds: ['echo "no such folder"'], wrongText: ['cd: nowhere: No such file or directory'] },
+      { type: 'sentence', prompt: READ, text: T('בפקודה ‎a ___ b‎, הפקודה b רצה רק אם a הצליחה.', 'In a ___ b, b runs only if a succeeded.'), options: ['&&', '||', ';'], answer: '&&' },
+      { type: 'output', prompt: WHAT, cmd: 'cd nowhere && echo moved', wrongCmds: ['echo moved'], wrongText: ['moved\ncd: nowhere: No such file or directory'] },
+      { type: 'match', prompt: T('התאימו כל סימן למתי b רצה', 'Match each sign to when b runs'), pairs: [['a && b', T('רק אם a הצליחה', 'only if a worked')], ['a || b', T('רק אם a נכשלה', 'only if a failed')], ['a ; b', T('תמיד', 'always')], ['a | b', T('b מקבלת את הפלט של a', 'b gets a\'s output')]] },
+      { type: 'tiles', prompt: T('צרו תיקייה בשם build ורק אם זה הצליח, היכנסו אליה', 'Create a folder named build and, only if that worked, go into it'), answer: 'mkdir build && cd build', tiles: ['mkdir', 'build', '&&', 'cd', 'build', '||', ';'] },
+      { type: 'terminal', prompt: T('נסו להיכנס לתיקייה backup, ואם היא לא קיימת, צרו אותה (בפקודה אחת)', 'Try to go into backup, and if it does not exist, create it (in one command)'), hint: T('cd backup || mkdir backup', 'cd backup || mkdir backup'), goal: (sh, log) => sh.dirs.has('/home/user/backup') && log.some(l => l.cmd.includes('||')), solve: ['cd backup || mkdir backup'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('מחברים כמה פקודות לשרשרת אחת.', 'Linking several commands into one chain.'), exercises: [
+    { type: 'terminal', prompt: T('שמרו בקובץ ips.txt את כתובות ה־IP השונות מ־access.log, ממוינות, וגם הציגו אותן', 'Save the distinct IP addresses from access.log, sorted, into ips.txt, and show them too'), hint: T("awk '{print $1}' access.log | sort -u | tee ips.txt", "awk '{print $1}' access.log | sort -u | tee ips.txt"), goal: sh => sh.files.get('/home/user/ips.txt')?.content === '10.0.0.1\n10.0.0.2\n10.0.0.3\n', solve: ["awk '{print $1}' access.log | sort -u | tee ips.txt"] },
+    { type: 'terminal', prompt: T('הדפיסו "Errors today: " ואחריו מספר שורות ה־ERROR ב־logs/app.log', 'Print "Errors today: " followed by the number of ERROR lines in logs/app.log'), hint: T('echo "Errors today: $(grep -c ERROR logs/app.log)"', 'echo "Errors today: $(grep -c ERROR logs/app.log)"'), goal: (sh, log) => log.some(l => l.out === 'Errors today: 3'), solve: ['echo "Errors today: $(grep -c ERROR logs/app.log)"'] },
+    { type: 'terminal', prompt: T('צרו תיקייה archive, ורק אם זה הצליח, העתיקו אליה את כל קבצי ה־.csv', 'Create an archive folder and, only if that worked, copy every .csv file into it'), hint: T('mkdir archive && cp *.csv archive', 'mkdir archive && cp *.csv archive'), goal: sh => sh.files.has('/home/user/archive/sales.csv') && sh.files.has('/home/user/archive/people.csv'), solve: ['mkdir archive && cp *.csv archive'] },
+  ] },
+};
+
+const UNIT_17 = {
+  section: 2, unit: 17, exams: ['L103.8', 'R'], title: T('vi: לשרוד', 'vi: survive'), subtitle: T('מצבים, שמירה ויציאה', 'Modes, saving and quitting'), color: 'purple', fixture: textFixture,
+  lessons: [
+    { title: T('מצבים', 'Modes'), exercises: [
+      { type: 'teach', cmd: 'vi', name: 'visual editor', text: T('vi (או vim) הוא העורך שיש כמעט בכל שרת. הוא נפתח במצב פקודות: מקשים לא כותבים טקסט אלא עושים פעולות. i עוברת למצב כתיבה, ו־Esc חוזרת למצב פקודות.', 'vi (or vim) is the editor found on almost every server. It opens in command mode: keys do not type text, they run actions. i switches to insert mode, and Esc goes back to command mode.') },
+      { type: 'choice', prompt: T('פתחתם קובץ ב־vi והקלדתם hello, אבל הטקסט לא הופיע ודברים מוזרים קרו. למה?', 'You opened a file in vi and typed hello, but no text appeared and strange things happened. Why?'), plain: true,
+        options: [T('vi נפתח במצב פקודות, וכל אות היא פקודה', 'vi opens in command mode, and every letter is a command'), T('הקובץ לקריאה בלבד', 'The file is read-only'), T('המקלדת לא מחוברת', 'The keyboard is not connected'), T('צריך לשמור קודם', 'You have to save first')],
+        why: [null, T('גם בקובץ שאפשר לכתוב בו זה יקרה.', 'It would happen in a writable file too.'), T('המקשים עובדים, רק כפקודות.', 'The keys work, just as commands.'), T('שמירה לא קשורה למצב.', 'Saving has nothing to do with the mode.')] },
+      { type: 'sentence', prompt: READ, text: T('כדי לחזור ממצב כתיבה למצב פקודות לוחצים ___.', 'To go from insert mode back to command mode, press ___.'), options: ['Esc', 'Enter', 'Tab'], answer: 'Esc' },
+      { type: 'match', prompt: T('התאימו כל מקש למה שהוא עושה במצב פקודות', 'Match each key to what it does in command mode'), pairs: [['i', T('כתיבה לפני הסמן', 'insert before the cursor')], ['a', T('כתיבה אחרי הסמן', 'append after the cursor')], ['o', T('שורה חדשה מתחת', 'a new line below')], ['Esc', T('חזרה למצב פקודות', 'back to command mode')]] },
+      { type: 'choice', prompt: T('איזה מקש פותח שורה חדשה מתחת לשורה הנוכחית ומתחיל לכתוב בה?', 'Which key opens a new line below the current one and starts typing there?'), options: ['o', 'i', 'a', 'n'], answer: 'o',
+        why: { i: T('i כותבת במקום, לפני הסמן.', 'i types in place, before the cursor.'), a: T('a כותבת אחרי הסמן באותה שורה.', 'a types after the cursor on the same line.'), n: T('n היא "החיפוש הבא".', 'n is "next search match".') } },
+      { type: 'scenario', prompt: T('אתם במצב פקודות ורוצים להתחיל לכתוב לפני הסמן. איזה מקש?', 'You are in command mode and want to start typing before the cursor. Which key?'), hint: T('האות הראשונה של insert', 'The first letter of insert'), accept: ['i'] },
+    ] },
+    { title: T('שמירה ויציאה', 'Save and quit'), exercises: [
+      { type: 'teach', cmd: ':wq', name: 'write and quit', text: T('במצב פקודות, : פותחת שורת פקודה בתחתית. ‎:w‎ שומרת, ‎:q‎ יוצאת, ‎:wq‎ (או ZZ) שומרת ויוצאת, ו־‎:q!‎ יוצאת בלי לשמור.', 'In command mode, : opens a command line at the bottom. :w saves, :q quits, :wq (or ZZ) saves and quits, and :q! quits without saving.') },
+      { type: 'scenario', prompt: T('ערכתם קובץ ב־vi, ואתם במצב פקודות. מה מקלידים כדי לשמור ולצאת?', 'You edited a file in vi and you are in command mode. What do you type to save and quit?'), hint: T('נקודתיים, w, q', 'colon, w, q'), accept: [':wq', ':x', 'ZZ'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ יוצאת מ־vi בלי לשמור את השינויים.', 'The ___ command leaves vi without saving the changes.'), options: [':q!', ':wq', ':w'], answer: ':q!' },
+      { type: 'match', prompt: T('התאימו כל פקודה למה שהיא עושה', 'Match each command to what it does'), pairs: [[':w', T('שומרת', 'saves')], [':q', T('יוצאת', 'quits')], [':wq', T('שומרת ויוצאת', 'saves and quits')], [':q!', T('יוצאת בלי לשמור', 'quits without saving')]] },
+      { type: 'choice', prompt: T('הקלדתם ‎:q‎ וקיבלתם הודעה ‎No write since last change‎. מה זה אומר?', 'You typed :q and got "No write since last change". What does it mean?'), plain: true,
+        options: [T('יש שינויים שלא נשמרו. ‎:wq‎ שומרת, ‎:q!‎ זורקת אותם', 'There are unsaved changes. :wq saves them, :q! throws them away'), T('הקובץ נמחק', 'The file was deleted'), T('vi קרס', 'vi crashed'), T('אין הרשאה לקובץ', 'You have no permission for the file')],
+        why: [null, T('הקובץ במקומו, רק לא שמרתם.', 'The file is fine, you just did not save.'), T('זו הגנה רגילה, לא קריסה.', 'It is a normal safeguard, not a crash.'), T('הודעת הרשאות נראית אחרת.', 'A permission error looks different.')] },
+      { type: 'scenario', prompt: T('הרסתם את הקובץ בטעות ורוצים לצאת בלי לשמור כלום. מה מקלידים?', 'You messed up the file and want to quit without saving anything. What do you type?'), hint: T('q עם סימן קריאה', 'q with an exclamation mark'), accept: [':q!'] },
+    ] },
+    { title: T('תזוזה', 'Moving around'), exercises: [
+      { type: 'teach', cmd: 'h j k l', name: 'movement', text: T('במצב פקודות זזים עם h (שמאלה), j (למטה), k (למעלה), l (ימינה). w קופצת למילה הבאה, 0 לתחילת השורה ו־$ לסוף שלה. גם החצים עובדים.', 'In command mode you move with h (left), j (down), k (up), l (right). w jumps to the next word, 0 to the start of the line and $ to its end. The arrow keys work too.') },
+      { type: 'match', prompt: T('התאימו כל מקש לכיוון', 'Match each key to its direction'), pairs: [['h', T('שמאלה', 'left')], ['j', T('למטה', 'down')], ['k', T('למעלה', 'up')], ['l', T('ימינה', 'right')]] },
+      { type: 'sentence', prompt: READ, text: T('במצב פקודות של vi, המקש ___ מזיז את הסמן שורה אחת למטה.', 'In vi command mode, the ___ key moves the cursor one line down.'), options: ['j', 'k', 'h'], answer: 'j' },
+      { type: 'choice', prompt: T('איך קופצים לסוף השורה הנוכחית?', 'How do you jump to the end of the current line?'), options: ['$', '0', 'G', 'w'], answer: '$',
+        why: { 0: T('0 היא תחילת השורה.', '0 is the start of the line.'), G: T('G היא השורה האחרונה בקובץ.', 'G is the last line of the file.'), w: T('w היא המילה הבאה.', 'w is the next word.') } },
+      { type: 'match', prompt: T('התאימו כל מקש לאן הוא קופץ', 'Match each key to where it jumps'), pairs: [['w', T('המילה הבאה', 'the next word')], ['b', T('המילה הקודמת', 'the previous word')], ['0', T('תחילת השורה', 'start of the line')], ['$', T('סוף השורה', 'end of the line')]] },
+      { type: 'scenario', prompt: T('אתם במצב פקודות. איזה מקש מזיז את הסמן שורה אחת למעלה?', 'You are in command mode. Which key moves the cursor one line up?'), hint: T('בין j ל־l', 'Between j and l'), accept: ['k'] },
+    ] },
+    { title: T('תרגול', 'Practice'), exercises: [
+      { type: 'teach', cmd: 'vi file', name: 'open a file', text: T('vi notes.txt פותחת את הקובץ, ואם הוא לא קיים, יוצרת אותו כשתשמרו. vim הוא vi משופר, ו־nano עורך פשוט יותר שמציג את הקיצורים בתחתית.', 'vi notes.txt opens the file, and creates it when you save if it does not exist. vim is an improved vi, and nano is a simpler editor that lists its shortcuts at the bottom.') },
+      { type: 'scenario', prompt: T('פתחו את config.ini לעריכה ב־vi', 'Open config.ini for editing in vi'), hint: T('vi ואחריו שם הקובץ', 'vi, then the file name'), accept: ['vi config.ini', 'vim config.ini'] },
+      { type: 'sentence', prompt: READ, text: T('כדי לערוך את notes.txt בעורך שקיים בכל שרת, כותבים ___ notes.txt.', 'To edit notes.txt in the editor found on every server, type ___ notes.txt.'), options: ['vi', 'cat', 'less'], answer: 'vi' },
+      { type: 'choice', prompt: T('מה הסדר הנכון כדי להוסיף מילה לקובץ ב־vi ולשמור?', 'What is the right order to add a word to a file in vi and save?'), plain: true,
+        options: [T('i, להקליד, Esc, ‏:wq', 'i, type, Esc, :wq'), T('להקליד, ‏:wq', 'type, :wq'), T(':wq, ‏i, להקליד', ':wq, i, type'), T('Esc, להקליד, ‏:q!', 'Esc, type, :q!')],
+        why: [null, T('בלי i המקשים הם פקודות.', 'Without i, keys are commands.'), T(':wq בהתחלה יוצאת לפני שכתבתם.', ':wq first quits before you typed.'), T(':q! זורקת את מה שכתבתם.', ':q! throws away what you typed.')] },
+      { type: 'match', prompt: T('התאימו כל עורך לתיאור שלו', 'Match each editor to its description'), pairs: [['vi', T('קיים כמעט בכל שרת', 'on almost every server')], ['vim', T('vi משופר', 'an improved vi')], ['nano', T('פשוט, עם קיצורים בתחתית', 'simple, shortcuts at the bottom')], ['EDITOR', T('משתנה שבוחר עורך ברירת מחדל', 'a variable that picks the default editor')]] },
+      { type: 'scenario', prompt: T('סיימתם לכתוב והסמן במצב כתיבה. מה לוחצים לפני ‎:wq‎?', 'You finished typing and you are in insert mode. What do you press before :wq?'), hint: T('המקש שחוזר למצב פקודות', 'The key that goes back to command mode'), accept: ['Esc', 'esc', 'ESC'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('נכנסים ל־vi ויוצאים ממנו בשלום.', 'Getting into vi and out of it safely.'), exercises: [
+    { type: 'scenario', prompt: T('פתחו את הקובץ todo.txt ב־vi', 'Open the file todo.txt in vi'), hint: T('vi todo.txt', 'vi todo.txt'), accept: ['vi todo.txt', 'vim todo.txt'] },
+    { type: 'scenario', prompt: T('אתם במצב פקודות. עברו למצב כתיבה בשורה חדשה מתחת לשורה הנוכחית', 'You are in command mode. Switch to insert mode on a new line below the current one'), hint: T('האות o', 'The letter o'), accept: ['o'] },
+    { type: 'scenario', prompt: T('חזרתם למצב פקודות. שמרו וצאו', 'You are back in command mode. Save and quit'), hint: T(':wq', ':wq'), accept: [':wq', ':x', 'ZZ'] },
+  ] },
+};
+
+const UNIT_18 = {
+  section: 2, unit: 18, exams: ['L103.8'], title: T('vi: לערוך מהר', 'vi: edit fast'), subtitle: T('מחיקה, העתקה, חיפוש והחלפה', 'Deleting, copying, searching and replacing'), color: 'blue', fixture: textFixture,
+  lessons: [
+    { title: T('מחיקה ו־undo', 'Delete and undo'), exercises: [
+      { type: 'teach', cmd: 'dd', name: 'delete line', text: T('במצב פקודות: x מוחקת תו, dd מוחקת את כל השורה, dw מוחקת מילה, ו־u מבטלת את הפעולה האחרונה. מספר לפני פקודה חוזר עליה: 3dd מוחקת 3 שורות.', 'In command mode: x deletes a character, dd deletes the whole line, dw deletes a word, and u undoes the last action. A number before a command repeats it: 3dd deletes 3 lines.') },
+      { type: 'match', prompt: T('התאימו כל פקודה למה שהיא מוחקת', 'Match each command to what it deletes'), pairs: [['x', T('תו אחד', 'one character')], ['dw', T('מילה', 'a word')], ['dd', T('שורה', 'a line')], ['3dd', T('שלוש שורות', 'three lines')]] },
+      { type: 'sentence', prompt: READ, text: T('המקש ___ מבטל את הפעולה האחרונה ב־vi.', 'The ___ key undoes the last action in vi.'), options: ['u', 'z', 'r'], answer: 'u' },
+      { type: 'choice', prompt: T('מחקתם שורה חשובה עם dd בטעות. מה עושים?', 'You deleted an important line with dd by mistake. What do you do?'), options: ['u', ':q', 'dd', 'p'], answer: 'u',
+        why: { ':q': T('‎:q‎ לא תצא כשיש שינויים, וגם לא תחזיר את השורה.', ':q will not quit with changes, and will not bring the line back.'), dd: T('זה ימחק עוד שורה.', 'That deletes another line.'), p: T('p תדביק את השורה, אבל במקום אחר: מתחת לסמן.', 'p pastes the line, but below the cursor, not where it was.') } },
+      { type: 'scenario', prompt: T('מחקו את השורה שהסמן עומד עליה', 'Delete the line the cursor is on'), hint: T('d פעמיים', 'd twice'), accept: ['dd'] },
+      { type: 'scenario', prompt: T('מחקו 5 שורות, החל מהשורה הנוכחית', 'Delete 5 lines, starting from the current one'), hint: T('מספר ואז dd', 'A number, then dd'), accept: ['5dd'] },
+    ] },
+    { title: T('העתקה והדבקה', 'Copy and paste'), exercises: [
+      { type: 'teach', cmd: 'yy p', name: 'yank and put', text: T('yy מעתיקה (yank) את השורה, ו־p מדביקה מתחת לסמן (P מעל). dd גם שומרת את מה שמחקה, אז dd ואחריה p היא "גזירה והדבקה".', 'yy copies (yanks) the line, and p pastes below the cursor (P above). dd also keeps what it deleted, so dd then p is "cut and paste".') },
+      { type: 'match', prompt: T('התאימו כל פקודה למה שהיא עושה', 'Match each command to what it does'), pairs: [['yy', T('מעתיקה שורה', 'copies a line')], ['p', T('מדביקה מתחת', 'pastes below')], ['P', T('מדביקה מעל', 'pastes above')], ['yw', T('מעתיקה מילה', 'copies a word')]] },
+      { type: 'sentence', prompt: READ, text: T('ב־vi, הפקודה ___ מעתיקה את כל השורה.', 'In vi, the ___ command copies the whole line.'), options: ['yy', 'cc', 'pp'], answer: 'yy' },
+      { type: 'choice', prompt: T('איך מזיזים שורה אחת למטה בקובץ?', 'How do you move a line one place down in the file?'), options: ['dd ואז p', 'yy ואז P', 'p ואז dd', 'u ואז p'].map((o, i) => ['dd then p', 'yy then P', 'p then dd', 'u then p'][i]), answer: 'dd then p',
+        why: { 'yy then P': T('זה משכפל את השורה מעל, לא מזיז.', 'That duplicates the line above, it does not move it.'), 'p then dd': T('קודם צריך לגזור, אחר כך להדביק.', 'Cut first, then paste.'), 'u then p': T('u מבטלת, היא לא גוזרת.', 'u undoes, it does not cut.') } },
+      { type: 'scenario', prompt: T('העתיקו את השורה הנוכחית', 'Copy the current line'), hint: T('y פעמיים', 'y twice'), accept: ['yy', 'Y'] },
+      { type: 'scenario', prompt: T('הדביקו את מה שהעתקתם מתחת לשורה הנוכחית', 'Paste what you copied below the current line'), hint: T('האות של put', 'The letter for put'), accept: ['p'] },
+    ] },
+    { title: T('חיפוש', 'Search'), exercises: [
+      { type: 'teach', cmd: '/word', name: 'search', text: T('במצב פקודות, ‎/error‎ ואז Enter קופצת להופעה הבאה של error. n עוברת להופעה הבאה ו־N לקודמת. ‎?error‎ מחפשת אחורה.', 'In command mode, /error then Enter jumps to the next error. n goes to the next match and N to the previous one. ?error searches backwards.') },
+      { type: 'scenario', prompt: T('חפשו בקובץ את המילה port', 'Search the file for the word port'), hint: T('לוכסן ואז המילה', 'A slash, then the word'), accept: ['/port'] },
+      { type: 'sentence', prompt: READ, text: T('אחרי חיפוש, המקש ___ קופץ להופעה הבאה.', 'After a search, the ___ key jumps to the next match.'), options: ['n', 'j', 'w'], answer: 'n' },
+      { type: 'match', prompt: T('התאימו כל פקודה לכיוון החיפוש', 'Match each command to its search direction'), pairs: [['/x', T('חיפוש קדימה', 'search forward')], ['?x', T('חיפוש אחורה', 'search backward')], ['n', T('ההופעה הבאה', 'next match')], ['N', T('ההופעה הקודמת', 'previous match')]] },
+      { type: 'choice', prompt: T('איך קופצים לשורה הראשונה ולשורה האחרונה בקובץ?', 'How do you jump to the first and the last line of the file?'), options: ['gg and G', '0 and $', 'k and j', 'H and L'], answer: 'gg and G',
+        why: { '0 and $': T('אלה תחילת השורה וסוף השורה.', 'Those are the start and end of the line.'), 'k and j': T('אלה שורה אחת למעלה או למטה.', 'Those move one line up or down.'), 'H and L': T('אלה החלק העליון והתחתון של המסך, לא של הקובץ.', 'Those are the top and bottom of the screen, not the file.') } },
+      { type: 'scenario', prompt: T('קפצו לשורה האחרונה של הקובץ', 'Jump to the last line of the file'), hint: T('G גדולה', 'Capital G'), accept: ['G'] },
+    ] },
+    { title: T('החלפה', 'Replace'), exercises: [
+      { type: 'teach', cmd: ':%s', name: 'substitute', text: T('‎:s/old/new/‎ מחליפה בשורה הנוכחית, ו־‎:%s/old/new/g‎ מחליפה בכל הקובץ, בדיוק כמו sed. ‎:set number‎ מציגה מספרי שורות, ו־‎:10‎ קופצת לשורה 10.', ':s/old/new/ replaces on the current line, and :%s/old/new/g replaces in the whole file, just like sed. :set number shows line numbers, and :10 jumps to line 10.') },
+      { type: 'scenario', prompt: T('החליפו בכל הקובץ את localhost ב־127.0.0.1', 'Replace localhost with 127.0.0.1 in the whole file'), hint: T(':%s/localhost/127.0.0.1/g', ':%s/localhost/127.0.0.1/g'), accept: [':%s/localhost/127.0.0.1/g', ':%s/localhost/127.0.0.1/'] },
+      { type: 'sentence', prompt: READ, text: T('ב־‎:%s/a/b/g‎, הסימן ___ אומר "בכל השורות".', 'In :%s/a/b/g, the ___ sign means "on every line".'), options: ['%', 'g', 's'], answer: '%' },
+      { type: 'match', prompt: T('התאימו כל פקודה למה שהיא עושה', 'Match each command to what it does'), pairs: [[':%s/a/b/g', T('מחליפה בכל הקובץ', 'replaces in the whole file')], [':set number', T('מציגה מספרי שורות', 'shows line numbers')], [':10', T('קופצת לשורה 10', 'jumps to line 10')], [':w new.txt', T('שומרת לקובץ חדש', 'saves to a new file')]] },
+      { type: 'choice', prompt: T('מה ההבדל בין ‎:%s/a/b/‎ לבין ‎:%s/a/b/g‎?', 'What is the difference between :%s/a/b/ and :%s/a/b/g?'), plain: true,
+        options: [T('בלי g מוחלפת רק ההופעה הראשונה בכל שורה', 'Without g only the first match on each line is replaced'), T('בלי g מוחלפת רק השורה הראשונה', 'Without g only the first line is replaced'), T('אין הבדל', 'There is no difference'), T('g שומרת את הקובץ', 'g saves the file')],
+        why: [null, T('% כבר אומר "כל השורות".', '% already means "every line".'), T('g משנה כמה הופעות בכל שורה.', 'g changes how many matches per line.'), T('g היא global, לא שמירה.', 'g means global, not save.')] },
+      { type: 'scenario', prompt: T('הציגו מספרי שורות ב־vi', 'Show line numbers in vi'), hint: T(':set number', ':set number'), accept: [':set number', ':set nu'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('עורכים קובץ הגדרות ב־vi, בלי עכבר.', 'Editing a config file in vi, no mouse.'), exercises: [
+    { type: 'scenario', prompt: T('קפצו לשורה 3 של הקובץ', 'Jump to line 3 of the file'), hint: T('נקודתיים ומספר', 'A colon and a number'), accept: [':3', '3G'] },
+    { type: 'scenario', prompt: T('החליפו בכל הקובץ את true ב־false', 'Replace true with false in the whole file'), hint: T(':%s/true/false/g', ':%s/true/false/g'), accept: [':%s/true/false/g', ':%s/true/false/'] },
+    { type: 'scenario', prompt: T('שמרו את הקובץ בשם חדש, config.bak, בלי לצאת', 'Save the file under a new name, config.bak, without quitting'), hint: T(':w ושם הקובץ', ':w and the file name'), accept: [':w config.bak'] },
+  ] },
+};
+
+const UNIT_19 = {
+  section: 2, unit: 19, exams: ['L103.2'], title: T('עוד כלים לטקסט', 'More text tools'), subtitle: T('diff, comm, paste, nl ובדיקת שלמות', 'diff, comm, paste, nl and checksums'), color: 'green', fixture: textFixture,
+  lessons: [
+    { title: T('diff ו־cmp', 'diff and cmp'), exercises: [
+      { type: 'teach', cmd: 'diff', name: 'difference', text: T('משווה שני קבצים ומדפיסה מה השתנה. ‎2c2‎ אומר ששורה 2 השתנתה, < היא מהקובץ הראשון ו־> מהשני. ‎diff -u‎ מדפיסה בפורמט שבו - הוסר ו־+ נוסף. אם אין הבדל, אין פלט.', 'Compares two files and prints what changed. 2c2 means line 2 changed, < is from the first file and > from the second. diff -u prints a format where - was removed and + added. If nothing differs, there is no output.') },
+      { type: 'output', prompt: T('ב־a.txt כתוב apple, banana, cherry. ב־b.txt כתוב apple, blueberry, cherry. הפלט הוקלט על לינוקס אמיתי. מה הודפס?', 'a.txt says apple, banana, cherry. b.txt says apple, blueberry, cherry. This was recorded on real Linux. What was printed?'), rec: 'ubuntu-diff', wrongRec: ['ubuntu-diff-u', 'ubuntu-comm'] },
+      { type: 'sentence', prompt: READ, text: T('בפלט של diff, שורה שמתחילה ב־___ באה מהקובץ השני.', 'In diff output, a line starting with ___ comes from the second file.'), options: ['>', '<', '-'], answer: '>' },
+      { type: 'output', prompt: T('אותם a.txt ו־b.txt, הפעם עם ‎diff -u‎ (בלי שתי שורות הכותרת). מה הודפס?', 'The same a.txt and b.txt, this time with diff -u (without the two header lines). What was printed?'), rec: 'ubuntu-diff-u', wrongRec: ['ubuntu-diff', 'ubuntu-comm-12'] },
+      { type: 'teach', cmd: 'cmp', name: 'compare', text: T('cmp משווה בייט אחרי בייט ואומרת רק איפה ההבדל הראשון. טובה לקבצים בינאריים.', 'cmp compares byte by byte and only says where the first difference is. Good for binary files.') },
+      { type: 'output', prompt: T('אותם a.txt ו־b.txt. מה תדפיס ‎cmp a.txt b.txt‎?', 'The same a.txt and b.txt. What will cmp a.txt b.txt print?'), rec: 'ubuntu-cmp', wrongRec: ['ubuntu-diff'], wrongText: ['a.txt b.txt are identical'] },
+      { type: 'scenario', prompt: T('הציגו את ההבדלים בין old.conf ל־new.conf בפורמט המאוחד (עם + ו־-)', 'Show the differences between old.conf and new.conf in unified format (with + and -)'), hint: T('diff -u', 'diff -u'), accept: ['diff -u old.conf new.conf'] },
+    ] },
+    { title: T('comm ו־join', 'comm and join'), exercises: [
+      { type: 'teach', cmd: 'comm', name: 'common', text: T('comm משווה שני קבצים ממוינים ומדפיסה שלוש עמודות: רק בראשון, רק בשני, ובשניהם. ‎-12‎ מסתירה את עמודות 1 ו־2, ונשאר רק מה שמשותף.', 'comm compares two sorted files and prints three columns: only in the first, only in the second, and in both. -12 hides columns 1 and 2, leaving only what is shared.') },
+      { type: 'output', prompt: T('a.txt: apple, banana, cherry. ‏b.txt: apple, blueberry, cherry. מה הודפס על לינוקס אמיתי?', 'a.txt: apple, banana, cherry. b.txt: apple, blueberry, cherry. What was printed on real Linux?'), rec: 'ubuntu-comm-12', wrongRec: ['ubuntu-comm'], wrongText: ['banana\nblueberry'] },
+      { type: 'sentence', prompt: READ, text: T('comm ___ מדפיסה רק את השורות שיש בשני הקבצים.', 'comm ___ prints only the lines found in both files.'), options: ['-12', '-3', '-u'], answer: '-12' },
+      { type: 'teach', cmd: 'join', name: 'join', text: T('join מחברת שורות משני קבצים לפי עמודה משותפת, כמו טבלאות. כברירת מחדל לפי העמודה הראשונה, והקבצים צריכים להיות ממוינים לפיה.', 'join merges lines from two files on a shared field, like tables. By default it uses the first field, and both files must be sorted on it.') },
+      { type: 'output', prompt: T('ב־names.txt: ‏1 dana, ‏2 omer, ‏3 noa. ב־cities.txt: ‏1 haifa, ‏2 tel-aviv, ‏3 eilat. מה הודפס על לינוקס אמיתי?', 'names.txt: 1 dana, 2 omer, 3 noa. cities.txt: 1 haifa, 2 tel-aviv, 3 eilat. What was printed on real Linux?'), rec: 'ubuntu-join', wrongText: ['1 dana\n2 omer\n3 noa\n1 haifa\n2 tel-aviv\n3 eilat', 'dana haifa\nomer tel-aviv\nnoa eilat'] },
+      { type: 'match', prompt: T('התאימו כל פקודה למה שהיא עושה', 'Match each command to what it does'), pairs: [['diff', T('מה השתנה בין קבצים', 'what changed between files')], ['comm', T('מה משותף ומה לא', 'what is shared and what is not')], ['join', T('מחברת לפי עמודה', 'merges on a field')], ['cmp', T('ההבדל הראשון בבייטים', 'the first byte difference')]] },
+    ] },
+    { title: T('nl, paste ו־split', 'nl, paste and split'), exercises: [
+      { type: 'teach', cmd: 'nl', name: 'number lines', text: T('nl מוסיפה מספר לכל שורה, כמו cat -n, אבל בלי למספר שורות ריקות.', 'nl numbers each line, like cat -n, but skips empty lines.'), demo: [[], 'nl notes.txt'] },
+      { type: 'output', prompt: WHAT, cmd: 'paste -d , notes.txt contacts.txt', wrongCmds: ['paste -d , contacts.txt notes.txt', 'cat notes.txt contacts.txt'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מצמידה שורות משני קבצים זו לצד זו.', 'The ___ command puts lines from two files side by side.'), options: ['paste', 'cat', 'join'], answer: 'paste' },
+      { type: 'teach', cmd: 'paste', name: 'paste', text: T('paste מצמידה את שורה 1 של כל קובץ, אחר כך את שורה 2 וכן הלאה, עם טאב באמצע (או ‎-d‎ למפריד אחר). ‎paste -s‎ הופכת קובץ שלם לשורה אחת.', 'paste joins line 1 of each file, then line 2 and so on, with a tab in between (or -d for another separator). paste -s turns a whole file into one line.'), demo: [[], 'paste -s -d , fruits.txt'] },
+      { type: 'output', prompt: T('ב־nums.txt יש את המספרים 1 עד 10, שורה לכל מספר. ‎split -l 4‎ חותכת אותו לקבצים של 4 שורות. מה הודפס על לינוקס אמיתי?', 'nums.txt has the numbers 1 to 10, one per line. split -l 4 cuts it into files of 4 lines. What was printed on real Linux?'), rec: 'ubuntu-split', wrongText: ['part_aa\npart_ab\npart_ac\n9\n10\n11\n12', 'part_aa\npart_ab\n9\n10'] },
+      { type: 'terminal', prompt: T('הציגו את notes.txt כשמספר לפני כל שורה, עם nl', 'Show notes.txt with a number before each line, using nl'), hint: T('nl notes.txt', 'nl notes.txt'), goal: (sh, log) => shows(log, 'nl notes.txt'), solve: ['nl notes.txt'] },
+    ] },
+    { title: T('בדיקת שלמות ובינארי', 'Checksums and binary'), exercises: [
+      { type: 'teach', cmd: 'sha256sum', name: 'checksum', text: T('sha256sum (וגם md5sum) מחשבת "טביעת אצבע" לקובץ. אם שינו בו אפילו תו אחד, הטביעה שונה לגמרי. ‎sha256sum -c SUMS‎ בודקת קבצים מול רשימה שמורה, וכך מוודאים שהורדה לא נפגמה.', 'sha256sum (and md5sum) computes a "fingerprint" of a file. Change even one character and the fingerprint is completely different. sha256sum -c SUMS checks files against a saved list, which is how you verify a download.') },
+      { type: 'output', prompt: T('ב־hello.txt כתוב hello. מה תדפיס sha256sum על לינוקס אמיתי?', 'hello.txt says hello. What will sha256sum print on real Linux?'), rec: 'ubuntu-sha256', wrongRec: ['ubuntu-md5'], wrongText: ['hello.txt: OK'] },
+      { type: 'sentence', prompt: READ, text: T('‎sha256sum ___ SUMS‎ בודקת שהקבצים לא השתנו.', 'sha256sum ___ SUMS checks that the files did not change.'), options: ['-c', '-v', '-s'], answer: '-c' },
+      { type: 'output', prompt: T('שמרו את הטביעה של hello.txt בקובץ SUMS, ואחר כך שינו את התוכן ל־hello!. מה תדפיס ‎sha256sum -c SUMS‎?', 'The fingerprint of hello.txt was saved in SUMS, then its content was changed to hello!. What will sha256sum -c SUMS print?'), rec: 'ubuntu-sha256-check', wrongRec: ['ubuntu-sha256-ok', 'ubuntu-sha256'] },
+      { type: 'teach', cmd: 'xxd od', name: 'hex dump', text: T('xxd ו־od מציגות את הבייטים של קובץ, גם תווים שלא רואים. בפלט, ‎0a‎ (או ‎\\n‎ ב־od -c) הוא סוף שורה.', 'xxd and od show a file\'s bytes, including characters you cannot see. In the output, 0a (or \\n in od -c) is the end of a line.') },
+      { type: 'output', prompt: T('ב־hi.txt כתוב Hi! ואחריו סוף שורה. מה תדפיס xxd על לינוקס אמיתי?', 'hi.txt contains Hi! and an end of line. What will xxd print on real Linux?'), rec: 'ubuntu-xxd', wrongRec: ['ubuntu-od'], wrongText: ['Hi!'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('בודקים שקבצים הגיעו שלמים.', 'Checking that files arrived intact.'), exercises: [
+    { type: 'scenario', prompt: T('חשבו את טביעת ה־SHA-256 של הקובץ ubuntu.iso', 'Compute the SHA-256 fingerprint of ubuntu.iso'), hint: T('sha256sum', 'sha256sum'), accept: ['sha256sum ubuntu.iso'] },
+    { type: 'scenario', prompt: T('בדקו את כל הקבצים מול הרשימה SHA256SUMS', 'Check every file against the list SHA256SUMS'), rec: 'ubuntu-sha256-ok', hint: T('sha256sum -c', 'sha256sum -c'), accept: ['sha256sum -c SHA256SUMS'] },
+    { type: 'terminal', prompt: T('צרו מ־fruits.txt שורה אחת שבה הפירות מופרדים בפסיקים', 'Turn fruits.txt into one line with the fruits separated by commas'), hint: T('paste -s -d , fruits.txt', 'paste -s -d , fruits.txt'), goal: (sh, log) => shows(log, 'paste -s -d , fruits.txt'), solve: ['paste -s -d , fruits.txt'] },
+  ] },
+};
+
+const UNIT_20 = {
+  section: 2, unit: 20, exams: ['L103.3', 'R', 'F'], title: T('ארכיונים ודחיסה', 'Archives and compression'), subtitle: T('tar, gzip, bzip2, xz ו־zip', 'tar, gzip, bzip2, xz and zip'), color: 'purple', fixture: textFixture,
+  lessons: [
+    { title: T('tar', 'tar'), exercises: [
+      { type: 'teach', cmd: 'tar', name: 'tape archive', text: T('tar אורזת הרבה קבצים לקובץ אחד. ‎-c‎ יוצרת, ‎-t‎ מציגה מה בפנים, ‎-x‎ פורסת, ‎-f‎ היא שם הארכיון, ‎-v‎ מפרטת, ו־‎-z‎ דוחסת עם gzip. לכן ‎tar -czf a.tar.gz dir‎.', 'tar packs many files into one. -c creates, -t lists what is inside, -x extracts, -f names the archive, -v is verbose, and -z compresses with gzip. Hence tar -czf a.tar.gz dir.') },
+      { type: 'output', prompt: T('בתיקייה project יש README.md ותיקייה src עם app.py. מה הודפס על לינוקס אמיתי (ממוין)?', 'project has README.md and a src folder with app.py. What was printed on real Linux (sorted)?'), rec: 'ubuntu-tar-c', wrongText: ['project.tar.gz', 'README.md\napp.py'] },
+      { type: 'sentence', prompt: READ, text: T('ב־tar, האפשרות ___ פורסת את הארכיון.', 'In tar, the ___ option extracts the archive.'), options: ['-x', '-c', '-t'], answer: '-x' },
+      { type: 'match', prompt: T('התאימו כל אפשרות של tar למה שהיא עושה', 'Match each tar option to what it does'), pairs: [['-c', T('יוצרת ארכיון', 'creates an archive')], ['-t', T('מציגה מה בפנים', 'lists the contents')], ['-x', T('פורסת', 'extracts')], ['-z', T('דוחסת עם gzip', 'compresses with gzip')]] },
+      { type: 'choice', prompt: T('איזו פקודה אורזת ודוחסת את התיקייה logs לקובץ logs.tar.gz?', 'Which command packs and compresses the logs folder into logs.tar.gz?'), options: ['tar -czf logs.tar.gz logs', 'tar -xzf logs.tar.gz logs', 'tar -czf logs logs.tar.gz', 'gzip logs'], answer: 'tar -czf logs.tar.gz logs',
+        why: { 'tar -xzf logs.tar.gz logs': T('‎-x‎ פורסת, לא יוצרת.', '-x extracts, it does not create.'), 'tar -czf logs logs.tar.gz': T('אחרי ‎-f‎ בא שם הארכיון, אחר כך מה לארוז.', 'After -f comes the archive name, then what to pack.'), 'gzip logs': T('gzip דוחסת קובץ אחד, לא תיקייה.', 'gzip compresses one file, not a folder.') } },
+      { type: 'scenario', prompt: T('ארזו ודחסו את התיקייה docs לקובץ docs.tar.gz', 'Pack and compress the docs folder into docs.tar.gz'), hint: T('tar -czf ואז שם הארכיון', 'tar -czf, then the archive name'), accept: ['tar -czf docs.tar.gz docs', 'tar -czvf docs.tar.gz docs', 'tar czf docs.tar.gz docs', 'tar -zcf docs.tar.gz docs'] },
+    ] },
+    { title: T('להציג ולפרוס', 'List and extract'), exercises: [
+      { type: 'teach', cmd: 'tar -xzf', name: 'extract', text: T('‎tar -tzf a.tar.gz‎ מציגה מה יש בארכיון בלי לפרוס. ‎tar -xzf a.tar.gz‎ פורסת לתיקייה הנוכחית, ו־‎-C dir‎ פורסת לתיקייה אחרת.', 'tar -tzf a.tar.gz lists the archive without extracting. tar -xzf a.tar.gz extracts into the current folder, and -C dir extracts somewhere else.') },
+      { type: 'output', prompt: T('project.tar.gz נוצר מהתיקייה project (עם README.md ו־src/app.py). מה הודפס על לינוקס אמיתי (ממוין)?', 'project.tar.gz was made from project (with README.md and src/app.py). What was printed on real Linux (sorted)?'), rec: 'ubuntu-tar-t', wrongRec: ['ubuntu-tar-x'], wrongText: ['project.tar.gz'] },
+      { type: 'sentence', prompt: READ, text: T('כדי לפרוס ארכיון לתיקייה אחרת מוסיפים ___ ואת שם התיקייה.', 'To extract an archive into another folder, add ___ and the folder name.'), options: ['-C', '-d', '-o'], answer: '-C' },
+      { type: 'output', prompt: T('פורסים את project.tar.gz לתוך התיקייה הריקה restore. מה הודפס על לינוקס אמיתי?', 'project.tar.gz is extracted into the empty folder restore. What was printed on real Linux?'), rec: 'ubuntu-tar-x', wrongRec: ['ubuntu-tar-t'], wrongText: ['restore\nrestore/app.py'] },
+      { type: 'choice', prompt: T('קיבלתם קובץ backup.tar.gz ואתם לא בטוחים מה יש בו. מה הכי בטוח לעשות קודם?', 'You got backup.tar.gz and you are not sure what is inside. What is safest to do first?'), options: ['tar -tzf backup.tar.gz', 'tar -xzf backup.tar.gz', 'gunzip backup.tar.gz', 'rm backup.tar.gz'], answer: 'tar -tzf backup.tar.gz',
+        why: { 'tar -xzf backup.tar.gz': T('פריסה עלולה לדרוס קבצים קיימים.', 'Extracting could overwrite existing files.'), 'gunzip backup.tar.gz': T('זה רק מסיר את הדחיסה, עדיין לא רואים מה בפנים.', 'That only removes the compression, you still cannot see inside.'), 'rm backup.tar.gz': T('זה מוחק אותו.', 'That deletes it.') } },
+      { type: 'scenario', prompt: T('פרסו את site.tar.gz לתוך התיקייה ‎/var/www', 'Extract site.tar.gz into the /var/www folder'), hint: T('tar -xzf ואז ‎-C', 'tar -xzf, then -C'), accept: ['tar -xzf site.tar.gz -C /var/www', 'tar -xzvf site.tar.gz -C /var/www', 'tar xzf site.tar.gz -C /var/www', 'tar -zxf site.tar.gz -C /var/www'] },
+    ] },
+    { title: T('gzip, bzip2 ו־xz', 'gzip, bzip2 and xz'), exercises: [
+      { type: 'teach', cmd: 'gzip', name: 'compress', text: T('gzip דוחסת קובץ אחד ומחליפה אותו בקובץ ‎.gz. gunzip (או gzip -d) מחזירה. ‎-k‎ משאירה גם את המקור, ו־zcat מציגה קובץ דחוס בלי לפתוח אותו. bzip2 ו־xz עובדות אותו דבר, דוחסות יותר וקצת לאט יותר.', 'gzip compresses one file and replaces it with a .gz file. gunzip (or gzip -d) restores it. -k keeps the original too, and zcat shows a compressed file without unpacking it. bzip2 and xz work the same way, compress more and run a bit slower.') },
+      { type: 'output', prompt: T('בתיקייה יש רק nums.txt. מה תדפיס ls אחרי gzip על לינוקס אמיתי?', 'The folder has only nums.txt. What does ls print after gzip, on real Linux?'), rec: 'ubuntu-gzip', wrongRec: ['ubuntu-gzip-k', 'ubuntu-bzip2'] },
+      { type: 'sentence', prompt: READ, text: T('gzip ___ דוחסת ומשאירה גם את הקובץ המקורי.', 'gzip ___ compresses and keeps the original file too.'), options: ['-k', '-d', '-c'], answer: '-k' },
+      { type: 'output', prompt: T('ב־notes.txt.gz דחוסות השורות line one ו־line two. מה תדפיס zcat על לינוקס אמיתי?', 'notes.txt.gz holds the lines line one and line two. What will zcat print on real Linux?'), rec: 'ubuntu-zcat', wrongText: ['notes.txt', 'notes.txt.gz'] },
+      { type: 'match', prompt: T('התאימו כל סיומת לכלי שיצר אותה', 'Match each extension to the tool that made it'), pairs: [['.gz', 'gzip'], ['.bz2', 'bzip2'], ['.xz', 'xz'], ['.zip', 'zip']] },
+      { type: 'match', prompt: T('התאימו כל פקודה ל־tar לסוג הדחיסה', 'Match each tar flag to its compression'), pairs: [['-z', 'gzip'], ['-j', 'bzip2'], ['-J', 'xz'], ['-a', T('לפי הסיומת', 'by the extension')]] },
+    ] },
+    { title: T('zip, cpio ו־dd', 'zip, cpio and dd'), exercises: [
+      { type: 'teach', cmd: 'zip', name: 'zip', text: T('zip היא הפורמט של חלונות: ‎zip -r a.zip dir‎ אורזת תיקייה, ו־unzip פורסת. cpio היא ארכיון ישן שמקבל רשימת קבצים מהצינור, ו־dd מעתיקה בייטים גולמיים, למשל ליצירת קובץ דיסק או צריבת USB.', 'zip is the Windows format: zip -r a.zip dir packs a folder, and unzip extracts. cpio is an old archiver that takes a file list from a pipe, and dd copies raw bytes, for example to make a disk image or write a USB stick.') },
+      { type: 'output', prompt: T('בתיקייה docs יש a.txt ו־b.txt. מה הודפס על לינוקס אמיתי?', 'docs has a.txt and b.txt. What was printed on real Linux?'), rec: 'ubuntu-zip', wrongText: ['docs.zip', 'docs/a.txt\ndocs/b.txt'] },
+      { type: 'sentence', prompt: READ, text: T('כדי לארוז תיקייה שלמה ב־zip צריך את האפשרות ___.', 'To pack a whole folder with zip you need the ___ option.'), options: ['-r', '-z', '-a'], answer: '-r' },
+      { type: 'output', prompt: T('dd יוצרת קובץ של 4 בלוקים של מגה מאפסים. מה הודפס על לינוקס אמיתי?', 'dd creates a file of 4 one-megabyte blocks of zeros. What was printed on real Linux?'), rec: 'ubuntu-dd', wrongText: ['4194304 disk.img', '4+0 records in\n4+0 records out'] },
+      { type: 'choice', prompt: T('מה עושה ‎dd if=ubuntu.iso of=/dev/sdb bs=4M‎?', 'What does dd if=ubuntu.iso of=/dev/sdb bs=4M do?'), plain: true,
+        options: [T('כותבת את הקובץ ubuntu.iso ישירות על הדיסק sdb, ומוחקת את מה שהיה עליו', 'Writes ubuntu.iso straight onto the disk sdb, erasing what was on it'), T('מעתיקה את sdb לקובץ', 'Copies sdb into a file'), T('דוחסת את הקובץ', 'Compresses the file'), T('מציגה את גודל הקובץ', 'Shows the file size')],
+        why: [null, T('if הוא המקור ו־of היעד. כאן היעד הוא הדיסק.', 'if is the source and of the target. Here the target is the disk.'), T('dd לא דוחסת.', 'dd does not compress.'), T('היא מעתיקה, היא לא מציגה.', 'It copies, it does not show.')] },
+      { type: 'scenario', prompt: T('ארזו את התיקייה photos לקובץ photos.zip', 'Pack the photos folder into photos.zip'), hint: T('zip -r', 'zip -r'), accept: ['zip -r photos.zip photos'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('גיבוי אמיתי: לארוז, לבדוק, לשחזר.', 'A real backup: pack, check, restore.'), exercises: [
+    { type: 'scenario', prompt: T('ארזו ודחסו את ‎/etc לקובץ etc-backup.tar.gz', 'Pack and compress /etc into etc-backup.tar.gz'), hint: T('tar -czf', 'tar -czf'), accept: ['tar -czf etc-backup.tar.gz /etc', 'tar -czvf etc-backup.tar.gz /etc', 'tar czf etc-backup.tar.gz /etc', 'tar -zcf etc-backup.tar.gz /etc'] },
+    { type: 'scenario', prompt: T('הציגו מה יש בתוך etc-backup.tar.gz בלי לפרוס', 'List what is inside etc-backup.tar.gz without extracting'), hint: T('tar -tzf', 'tar -tzf'), accept: ['tar -tzf etc-backup.tar.gz', 'tar -tzvf etc-backup.tar.gz', 'tar tzf etc-backup.tar.gz', 'tar -ztf etc-backup.tar.gz', 'tar -tf etc-backup.tar.gz'] },
+    { type: 'scenario', prompt: T('פרסו את etc-backup.tar.gz לתוך ‎/tmp/restore', 'Extract etc-backup.tar.gz into /tmp/restore'), hint: T('tar -xzf ואז ‎-C', 'tar -xzf, then -C'), accept: ['tar -xzf etc-backup.tar.gz -C /tmp/restore', 'tar -xzvf etc-backup.tar.gz -C /tmp/restore', 'tar xzf etc-backup.tar.gz -C /tmp/restore', 'tar -zxf etc-backup.tar.gz -C /tmp/restore', 'tar -xf etc-backup.tar.gz -C /tmp/restore'] },
+  ] },
+};
+
+COURSE.push(UNIT_11, UNIT_12, UNIT_13, UNIT_14, UNIT_15, UNIT_16, UNIT_17, UNIT_18, UNIT_19, UNIT_20);

@@ -2,7 +2,7 @@
 # The Docker image strips man pages; the setup line brings them back.
 # setup: rm -f /etc/dpkg/dpkg.cfg.d/excludes;
 # after: rm -f /usr/bin/man; dpkg-divert --quiet --remove --rename /usr/bin/man;
-# packages: procps iproute2 man-db manpages less && apt-get install -y -qq --reinstall coreutils grep passwd cron
+# packages: procps iproute2 man-db manpages less xxd zip unzip bzip2 xz-utils cpio && apt-get install -y -qq --reinstall coreutils grep passwd cron
 ubuntu-uname	uname -s
 ubuntu-uname-m	uname -m
 ubuntu-whatis-ls	whatis ls
@@ -19,3 +19,31 @@ ubuntu-type-a-echo	type -a echo
 ubuntu-man-ls	MANWIDTH=60 man ls 2>/dev/null | head -n 8
 ubuntu-man-sections	ls /usr/share/man | grep -E "^man[1-8]$"
 ubuntu-doc-grep	ls /usr/share/doc/grep
+ubuntu-diff	printf 'apple\nbanana\ncherry\n' > a.txt; printf 'apple\nblueberry\ncherry\n' > b.txt	diff a.txt b.txt
+ubuntu-diff-u	printf 'apple\nbanana\ncherry\n' > a.txt; printf 'apple\nblueberry\ncherry\n' > b.txt	diff -u a.txt b.txt | tail -n +3
+ubuntu-diff-same	printf 'apple\n' > a.txt; cp a.txt b.txt	diff a.txt b.txt; echo "exit: $?"
+ubuntu-cmp	printf 'apple\nbanana\ncherry\n' > a.txt; printf 'apple\nblueberry\ncherry\n' > b.txt	cmp a.txt b.txt
+ubuntu-comm	printf 'apple\nbanana\ncherry\n' > a.txt; printf 'apple\nblueberry\ncherry\n' > b.txt	comm a.txt b.txt
+ubuntu-comm-12	printf 'apple\nbanana\ncherry\n' > a.txt; printf 'apple\nblueberry\ncherry\n' > b.txt	comm -12 a.txt b.txt
+ubuntu-join	printf '1 dana\n2 omer\n3 noa\n' > names.txt; printf '1 haifa\n2 tel-aviv\n3 eilat\n' > cities.txt	join names.txt cities.txt
+ubuntu-md5	printf 'hello\n' > hello.txt	md5sum hello.txt
+ubuntu-sha256	printf 'hello\n' > hello.txt	sha256sum hello.txt
+ubuntu-sha256-check	printf 'hello\n' > hello.txt; sha256sum hello.txt > SUMS; printf 'hello!\n' > hello.txt	sha256sum -c SUMS
+ubuntu-sha256-ok	printf 'hello\n' > hello.txt; sha256sum hello.txt > SUMS	sha256sum -c SUMS
+ubuntu-xxd	printf 'Hi!\n' > hi.txt	xxd hi.txt
+ubuntu-od	printf 'Hi!\n' > hi.txt	od -c hi.txt
+ubuntu-split	seq 1 10 > nums.txt	split -l 4 nums.txt part_ && ls part_* && cat part_ac
+ubuntu-tar-c	mkdir -p project/src; echo 'print(1)' > project/src/app.py; echo '# Project' > project/README.md	tar -czvf project.tar.gz project | sort
+ubuntu-tar-t	mkdir -p project/src; echo 'print(1)' > project/src/app.py; echo '# Project' > project/README.md; tar -czf project.tar.gz project	tar -tzf project.tar.gz | sort
+ubuntu-tar-x	mkdir -p project/src; echo 'print(1)' > project/src/app.py; tar -czf project.tar.gz project; rm -r project; mkdir restore	tar -xzf project.tar.gz -C restore && find restore | sort
+ubuntu-gzip	seq 1 1000 > nums.txt	gzip nums.txt && ls
+ubuntu-gunzip	seq 1 1000 > nums.txt; gzip nums.txt	gunzip nums.txt.gz && ls && wc -l nums.txt
+ubuntu-gzip-k	seq 1 1000 > nums.txt	gzip -k nums.txt && ls
+ubuntu-zcat	printf 'line one\nline two\n' > notes.txt; gzip notes.txt	zcat notes.txt.gz
+ubuntu-bzip2	seq 1 1000 > nums.txt	bzip2 nums.txt && ls
+ubuntu-xz	seq 1 1000 > nums.txt	xz nums.txt && ls
+ubuntu-tar-j	mkdir docs; echo hi > docs/a.txt	tar -cjf docs.tar.bz2 docs && tar -tjf docs.tar.bz2
+ubuntu-zip	mkdir docs; echo hi > docs/a.txt; echo yo > docs/b.txt	zip -r docs.zip docs
+ubuntu-unzip-l	mkdir docs; echo hi > docs/a.txt; zip -qr docs.zip docs; rm -r docs	unzip -l docs.zip | awk 'NR>3 && /docs/ {print $4}'
+ubuntu-cpio	mkdir docs; echo hi > docs/a.txt; echo yo > docs/b.txt	find docs | sort | cpio -o > docs.cpio && ls
+ubuntu-dd	true	dd if=/dev/zero of=disk.img bs=1M count=4 && ls -l disk.img | awk '{print $5, $9}'
