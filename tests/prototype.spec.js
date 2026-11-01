@@ -437,7 +437,8 @@ test('a mock exam reveals nothing until the end, then shows the score and what t
   await page.goto('./prototype/');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
   await page.reload();
-  await page.evaluate(() => startExam(COURSE.find(u => u.unit === 80), 'u80-exam', 3));
+  // Matching exercises check themselves as you pair them, so this test uses questions with a check button.
+  await page.evaluate(() => { const u = COURSE.find(x => x.unit === 80); startLesson('u80-exam', buildExam('F', 20).filter(q => q.type !== 'match').slice(0, 3), { exam: u.exam, results: [] }); });
   // Answer the first question wrongly on purpose (an empty scenario or the first option), the rest right.
   for (let i = 0; i < 3; i++) {
     if (i === 0) await page.evaluate(() => { L.value = '__wrong__'; L.ex.solution = L.ex.solution ?? '__right__'; onFootButton(); });
