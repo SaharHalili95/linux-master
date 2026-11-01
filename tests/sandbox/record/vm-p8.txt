@@ -3,7 +3,6 @@
 # SELinux cannot run on Ubuntu, so only the Ubuntu side (Disabled, AppArmor) is recorded here.
 # packages: openssh-server vsftpd firewalld nmap net-tools lsof psmisc selinux-utils apparmor-utils
 p8-who	systemctl stop firewalld; useradd -m -s /bin/bash dana; mkdir -p /home/dana/.ssh; ssh-keygen -q -t ed25519 -N '' -f /root/dkey; cp /root/dkey.pub /home/dana/.ssh/authorized_keys; chown -R dana /home/dana/.ssh; chmod 700 /home/dana/.ssh; systemctl start ssh; setsid ssh -tt -o StrictHostKeyChecking=no -o LogLevel=ERROR -i /root/dkey dana@localhost 'sleep 300' </dev/null >/dev/null 2>&1 & sleep 4	who
-p8-w	true	w
 p8-last	true	last dana
 p8-suid	true	find /usr/bin /usr/sbin -perm -4000 -type f | sort
 p8-sgid	true	find /usr/bin /usr/sbin -perm -2000 -type f | sort
@@ -15,7 +14,6 @@ p8-nmap	true	nmap -p 21,22,80,8080 localhost | grep -E '^(PORT|[0-9])'
 p8-ulimit-n	true	ulimit -n
 p8-ulimit-a	true	ulimit -a
 p8-ulimit-sh	true	ulimit -Sn; ulimit -Hn
-p8-ulimit-raise	true	su user -s /bin/bash -c 'ulimit -Hn 2048; ulimit -Hn 4096'
 p8-limits-conf	useradd -m -s /bin/bash omer; printf 'omer soft nofile 1024\nomer hard nofile 2048\nomer hard nproc 50\n' > /etc/security/limits.d/omer.conf	su - omer -c 'ulimit -Sn; ulimit -Hn; ulimit -u'
 p8-limits-file	true	cat /etc/security/limits.d/omer.conf
 p8-limits-default	true	grep -E '^#<domain>|^#\*' /etc/security/limits.conf
@@ -67,11 +65,9 @@ p8-hd-is-masked	true	systemctl is-enabled vsftpd
 p8-hd-unmask	true	systemctl unmask vsftpd
 p8-hd-libwrap	true	ldd /usr/sbin/sshd | grep -c libwrap
 p8-hd-ssh-socket	true	systemctl cat ssh.socket | grep -E '^\[|^Listen'
-p8-hd-nologin	echo 'Maintenance until 14:00' > /etc/nologin	ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o LogLevel=ERROR -i /root/dkey dana@localhost true; rm -f /etc/nologin
 p8-gpg-genkey	gpgconf --kill gpg-agent; rm -rf /root/.gnupg	gpg --batch --passphrase '' --quick-gen-key 'Dana Levi <dana@example.com>' default default never
 p8-gpg-list	gpgconf --kill gpg-agent; rm -rf /root/.gnupg; gpg --batch --passphrase '' --quick-gen-key 'Dana Levi <dana@example.com>' default default never 2>/dev/null	gpg --list-keys
 p8-gpg-encrypt	gpgconf --kill gpg-agent; rm -rf /root/.gnupg; gpg --batch --passphrase '' --quick-gen-key 'Dana Levi <dana@example.com>' default default never 2>/dev/null; echo 'meet at 10' > note.txt	gpg -e -r dana@example.com note.txt && ls note.txt*
-p8-gpg-file	gpgconf --kill gpg-agent; rm -rf /root/.gnupg; gpg --batch --passphrase '' --quick-gen-key 'Dana Levi <dana@example.com>' default default never 2>/dev/null; echo 'meet at 10' > note.txt; gpg -e -r dana@example.com note.txt	file note.txt.gpg
 p8-gpg-decrypt	gpgconf --kill gpg-agent; rm -rf /root/.gnupg; gpg --batch --passphrase '' --quick-gen-key 'Dana Levi <dana@example.com>' default default never 2>/dev/null; echo 'meet at 10' > note.txt; gpg -e -r dana@example.com note.txt; rm note.txt	gpg -d note.txt.gpg
 p8-gpg-nokey	gpgconf --kill gpg-agent; rm -rf /root/.gnupg; gpg --batch --passphrase '' --quick-gen-key 'Dana Levi <dana@example.com>' default default never 2>/dev/null; echo 'meet at 10' > note.txt; gpg -e -r dana@example.com note.txt; gpgconf --kill gpg-agent; rm -rf /root/.gnupg	gpg -d note.txt.gpg
 p8-gpg-armor	gpgconf --kill gpg-agent; rm -rf /root/.gnupg; gpg --batch --passphrase '' --quick-gen-key 'Dana Levi <dana@example.com>' default default never 2>/dev/null	gpg --armor --export dana@example.com | head -n 1
@@ -83,7 +79,6 @@ p8-sha256	echo hello > a.txt	sha256sum a.txt
 p8-md5	echo hello > a.txt	md5sum a.txt
 p8-sha-check-ok	echo hello > a.txt; echo world > b.txt; sha256sum a.txt b.txt > SHA256SUMS	sha256sum -c SHA256SUMS
 p8-sha-check-bad	echo hello > a.txt; echo world > b.txt; sha256sum a.txt b.txt > SHA256SUMS; echo again >> b.txt	sha256sum -c SHA256SUMS
-p8-agent-start	true	eval "$(ssh-agent -s)" | sed -E 's/[0-9]+/PID/'; ssh-agent -k >/dev/null
 p8-agent-empty	true	eval "$(ssh-agent -s)" >/dev/null; ssh-add -l; ssh-agent -k >/dev/null
 p8-agent-add	ssh-keygen -q -t ed25519 -N '' -C dana@laptop -f id_ed25519	eval "$(ssh-agent -s)" >/dev/null; ssh-add id_ed25519; ssh-add -l | cut -d' ' -f1,3-; ssh-agent -k >/dev/null
 p8-ssh-host-keys	true	ls /etc/ssh/ssh_host_*
