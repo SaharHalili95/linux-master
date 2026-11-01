@@ -87,6 +87,8 @@ class Shell {
   read(p) { const f = this.files.get(p); if (!f) throw new ShellError(this.dirs.has(p) ? 'Is a directory' : 'No such file or directory'); if (f.link !== undefined && !this.resolve(p)) throw new ShellError('No such file or directory'); return f.content; }
   meta(p) { return this.dirs.has(p) ? this.dirInfo(p) : this.files.get(p); }
   exists(p) { return this.files.has(p) || this.dirs.has(p); }
+  // Read permission by owner, group and others; root reads everything.
+  canRead(p) { const m = this.meta(this.resolve(p) ?? p); if (this.asRoot || !m) return true; return !!(m.mode & (m.owner === this.env.USER ? 0o400 : m.group === this.env.USER ? 0o040 : 0o004)); }
   blocks(p) { const f = this.files.get(p); return this.dirs.has(p) ? 4 : !f || f.link !== undefined ? 0 : Math.ceil(f.content.length / 4096) * 4; }
   // ls -l: GNU column layout. Every file shows the same fixed time, since the simulation has no clock.
   longList(entries, o) {
@@ -229,7 +231,7 @@ function inputs(shell, files, stdin, name) {
     if (shell.keyboard && shell.interactive) throw new ShellError('waiting for keyboard input (nothing was piped in)', 130);
     return [{ name: '-', text: stdin }];
   }
-  return files.map(f => { const p = shell.abs(f); if (shell.dirs.has(p)) return { name: f, error: `${name}: ${f}: Is a directory\n` }; if (!shell.files.has(p) || !shell.resolve(p)) return { name: f, error: `${name}: ${f}: No such file or directory\n` }; return { name: f, text: shell.read(p) }; });
+  return files.map(f => { const p = shell.abs(f); if (shell.dirs.has(p)) return { name: f, error: `${name}: ${f}: Is a directory\n` }; if (!shell.files.has(p) || !shell.resolve(p)) return { name: f, error: `${name}: ${f}: No such file or directory\n` }; if (!shell.canRead(p)) return { name: f, error: `${name}: ${f}: Permission denied\n` }; return { name: f, text: shell.read(p) }; });
 }
 const isBinary = text => text.includes('\u0000');
 function modeString(mode, type) {

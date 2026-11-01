@@ -63,18 +63,18 @@ Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a u
 
 | # | Unit | Commands and ideas | Exams | Sim | Status |
 | --- | --- | --- | --- | --- | --- |
-| 33 | Users and groups | `whoami`, `id`, `groups`, `/etc/passwd`, `/etc/shadow`, `/etc/group` | L107.1 R F | 🟡 | |
-| 34 | Managing users | `useradd -m`, `usermod -aG`, `userdel -r`, `passwd`, `groupadd`, `chage`, LDAP accounts with `sssd` | L107.1 R F | 🎞 | |
-| 35 | sudo and su | `sudo`, `su -`, `visudo`, `/etc/sudoers`, wheel/sudo group | L110.1 R F | 🎞 | |
-| 36 | Processes | `ps aux`, `top`, `pgrep`, `pkill`, `kill -9 -15`, signals | L103.5 R F | 🎞 | |
-| 37 | Jobs and priority | `&`, `jobs`, `bg`, `fg`, `nohup`, `nice`, `renice`, `screen`/`tmux` | L103.5 L103.6 R | 🎞 | |
-| 38 | systemd services | `systemctl start stop restart status enable disable is-active` | L101.3 R F | 🎞 | |
-| 39 | systemd deeper | unit files, `daemon-reload`, targets, `get-default`, `set-default`, `isolate` | L101.3 R F | 🎞 | |
-| 40 | Logs | `journalctl -u -b -p -f`, persistent journal, `/var/log`, `rsyslog`, `logrotate`, `logger` | L108.2 R F | 🎞 | |
-| 41 | Boot | BIOS/UEFI, GRUB2, kernel arguments, initramfs, rescue/emergency, reset root password | L101.2 L102.2 R | 🎞 | |
-| 42 | Kernel and hardware | `uname`, `lsmod`, `modprobe`, `lspci`, `lsusb`, `/proc`, `/sys`, `dmesg`, udev, `sysctl` | L101.1 R F | 🎞 | |
-| 43 | Time | `date`, `timedatectl`, `chronyc`, NTP, `hwclock`, time zones | L108.1 R F | 🎞 | |
-| 44 | Health and tuning | `uptime`, load average, `free -h`, `vmstat`, `tuned-adm`, `/proc/meminfo`, service limits | R F | 🎞 | |
+| 33 | Users and groups | `whoami`, `id`, `groups`, `/etc/passwd`, `/etc/shadow`, `/etc/group` | L107.1 R F | 🟡 | live |
+| 34 | Managing users | `useradd -m`, `usermod -aG`, `userdel -r`, `passwd`, `groupadd`, `chage`, LDAP accounts with `sssd` | L107.1 R F | 🎞 | live |
+| 35 | sudo and su | `sudo`, `su -`, `visudo`, `/etc/sudoers`, wheel/sudo group | L110.1 R F | 🎞 | live |
+| 36 | Processes | `ps aux`, `top`, `pgrep`, `pkill`, `kill -9 -15`, signals | L103.5 R F | 🎞 | live |
+| 37 | Jobs and priority | `&`, `jobs`, `bg`, `fg`, `nohup`, `nice`, `renice`, `screen`/`tmux` | L103.5 L103.6 R | 🎞 | live |
+| 38 | systemd services | `systemctl start stop restart status enable disable is-active` | L101.3 R F | 🎞 | live |
+| 39 | systemd deeper | unit files, `daemon-reload`, targets, `get-default`, `set-default`, `isolate` | L101.3 R F | 🎞 | live |
+| 40 | Logs | `journalctl -u -b -p -f`, persistent journal, `/var/log`, `rsyslog`, `logrotate`, `logger` | L108.2 R F | 🎞 | live |
+| 41 | Boot | BIOS/UEFI, GRUB2, kernel arguments, initramfs, rescue/emergency, reset root password | L101.2 L102.2 R | 🎞 | live |
+| 42 | Kernel and hardware | `uname`, `lsmod`, `modprobe`, `lspci`, `lsusb`, `/proc`, `/sys`, `dmesg`, udev, `sysctl` | L101.1 R F | 🎞 | live |
+| 43 | Time | `date`, `timedatectl`, `chronyc`, NTP, `hwclock`, time zones | L108.1 R F | 🎞 | live |
+| 44 | Health and tuning | `uptime`, load average, `free -h`, `vmstat`, `tuned-adm`, `/proc/meminfo`, service limits | R F | 🎞 | live |
 
 ## Part 5: Installing software (units 45-50)
 
