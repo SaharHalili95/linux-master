@@ -363,7 +363,7 @@ test('every exercise in every unit is answerable and fully translated @content',
       if (ex.type === 'fill') expect(ex.options, id).toContain(ex.answer);
       if (ex.type === 'sentence') { expect(ex.options, id).toContain(ex.answer); for (const l of ['he', 'en']) expect(ex.text[l].split('___'), id).toHaveLength(2); }
       if (ex.type === 'tiles') { const bank = [...ex.tiles]; for (const w of ex.answer.split(' ')) { expect(bank, `${id}: ${w}`).toContain(w); bank.splice(bank.indexOf(w), 1); } }
-      if (ex.type === 'match') expect(new Set(ex.pairs.map(p => p[0])).size, id).toBe(ex.pairs.length);
+      if (ex.type === 'match') { expect(new Set(ex.pairs.map(p => p[0])).size, id).toBe(ex.pairs.length); for (const [k] of ex.pairs) expect(k, `${id}: match keys go in a CSS selector`).not.toMatch(/[\\"\n]/); }
       if (ex.type === 'terminal') {
         const sh = new Shell(fx()); for (const c of ex.setup || []) sh.run(c);
         expect(ex.goal(sh, []), `${id} is solved before typing anything`).toBe(false);
