@@ -1,0 +1,61 @@
+# Part 9 (units 73-77): locale, printing, mail, X, git and web servers, recorded on a GitHub Actions Ubuntu 24.04 VM.
+# Same line format as vm.txt. Lines run in order and share the VM, so later lines reuse printers, users and sites made earlier.
+# packages: locales cups cups-client cups-bsd postfix mailutils git nginx xvfb x11-utils x11-xserver-utils
+p9-locale	locale-gen en_US.UTF-8 he_IL.UTF-8 >/dev/null 2>&1	LANG=en_US.UTF-8 LC_TIME=he_IL.UTF-8 locale
+p9-locale-a	true	locale -a | grep -E '^(C|C.utf8|POSIX|en_US.utf8|he_IL.utf8)$'
+p9-date-he	true	LC_ALL=he_IL.UTF-8 TZ=UTC date -d '2026-11-01 10:30' '+%A %d %B %Y'
+p9-date-c	true	LC_ALL=C TZ=UTC date -d '2026-11-01 10:30' '+%A %d %B %Y'
+p9-lcall-wins	true	LANG=he_IL.UTF-8 LC_ALL=C TZ=UTC date -d '2026-11-01 10:30' '+%A'
+p9-localectl	true	localectl status
+p9-localectl-set	true	localectl set-locale LANG=he_IL.UTF-8 && cat /etc/default/locale; localectl set-locale LANG=C.UTF-8
+p9-bytes	true	printf 'shalom' | wc -c; printf 'שלום' | wc -c; printf 'שלום' | LC_ALL=en_US.UTF-8 wc -m
+p9-iconv	printf 'caf\xe9 au lait\n' > menu.txt	file menu.txt; iconv -f ISO-8859-1 -t UTF-8 menu.txt -o menu-utf8.txt; file menu-utf8.txt; cat menu-utf8.txt
+p9-iconv-ascii	true	echo 'café' | LC_ALL=en_US.UTF-8 iconv -f UTF-8 -t ASCII//TRANSLIT; echo 'café' | iconv -f UTF-8 -t ASCII
+p9-tz-env	true	for z in UTC Asia/Jerusalem America/New_York Asia/Tokyo; do printf '%s ' $z; TZ=$z date -d '2026-11-01 10:30 UTC' '+%H:%M %Z'; done
+p9-tz-files	timedatectl set-timezone Asia/Jerusalem	ls -l /etc/localtime | awk '{print $9, $10, $11}'; cat /etc/timezone; timedatectl set-timezone Etc/UTC
+p9-zoneinfo	true	ls /usr/share/zoneinfo/Asia | grep -E '^(Jerusalem|Tel_Aviv|Tokyo)$'
+p9-lpstat	grep -q '^FileDevice Yes' /etc/cups/cups-files.conf || echo 'FileDevice Yes' >> /etc/cups/cups-files.conf; systemctl restart cups; sleep 2; lpadmin -p office -E -v file:///dev/null; lpadmin -d office; cupsdisable office	lpstat -p -d | sed -E 's/since .* -/since <date> -/'
+p9-lpq	echo 'Quarterly report: sales up 8%' > report.txt; echo 'Lunch menu' > menu.txt	lpr -P office report.txt; lpr -P office menu.txt; lpq -P office
+p9-lprm	true	lprm -P office 1; lpq -P office
+p9-lp	echo 'Lunch menu' > menu.txt	lp -d office menu.txt
+p9-cancel	true	cancel -a office; lpq -P office
+p9-lpstat-v	lpadmin -p lab -E -v file:///dev/null	lpstat -v
+p9-cups-dir	true	ls /etc/cups
+p9-mail-send	[ -f /etc/postfix/main.cf ] || cp /usr/share/postfix/main.cf.debian /etc/postfix/main.cf; postconf -e myhostname=server.example.com myorigin=server.example.com 'mydestination=server.example.com, localhost' inet_interfaces=loopback-only relayhost= defer_transports=smtp; echo server.example.com > /etc/mailname; newaliases; systemctl restart postfix; useradd -m dana; sleep 2	echo 'Backup finished at 02:00' | mail -s 'Backup report' dana; sleep 3; grep -E '^(From|To|Subject):|^Backup' /var/mail/dana
+p9-aliases	useradd -m omer; echo 'admin: omer' >> /etc/aliases	cat /etc/aliases; newaliases; echo 'Disk almost full' | mail -s 'Disk alert' admin; sleep 3; grep '^Subject:' /var/mail/omer
+p9-forward	useradd -m noa; echo 'dana' > /home/noa/.forward; chown noa: /home/noa/.forward; chmod 644 /home/noa/.forward	echo 'See you at 10' | mail -s 'For Noa' noa; sleep 3; grep '^Subject:' /var/mail/dana; ls /var/mail
+p9-sendmail	true	printf 'Subject: Hello\n\nSent with the sendmail command\n' | sendmail omer; sleep 3; grep -E '^Subject: Hello|^Sent with' /var/mail/omer
+p9-mailq	echo 'Weekly numbers' | mail -s 'Report' boss@example.org; sleep 2	mailq | sed -E 's/^[0-9A-F]{6,}[*!]?/<id>/; s/[A-Z][a-z]{2} [A-Z][a-z]{2} +[0-9]+ [0-9:]{8}/<time>/'
+p9-sendmail-links	true	ls -l /usr/bin/mailq /usr/bin/newaliases | awk '{print $9, $10, $11}'
+p9-xdpyinfo	(setsid Xvfb :1 -screen 0 1280x800x24 >/dev/null 2>&1 &); sleep 3	DISPLAY=:1 xdpyinfo | grep -E 'name of display|dimensions'
+p9-display-missing	true	DISPLAY=:7 xdpyinfo; echo "exit: $?"
+p9-xhost	true	DISPLAY=:1 xhost; DISPLAY=:1 xhost +local:
+p9-git-config	git config --global user.name 'Dana Levi'; git config --global user.email dana@example.com; git config --global init.defaultBranch main; git config --global --add safe.directory '*'	git config user.name; git config user.email
+p9-git-init	rm -rf /home/user/shop	cd /home/user && git init shop
+p9-git-status	git init -q .; printf 'Shop app\n' > README.md; printf 'print("shop")\n' > app.py	git status
+p9-git-status-short	git init -q .; printf 'Shop app\n' > README.md; printf 'print("shop")\n' > app.py; git add README.md	git status --short
+p9-git-commit	git init -q .; printf 'Shop app\n' > README.md; printf 'print("shop")\n' > app.py; git add README.md app.py	git commit -m 'First version'
+p9-git-log	git init -q .; c() { GIT_AUTHOR_DATE="2026-11-01T$1:00Z" GIT_COMMITTER_DATE="2026-11-01T$1:00Z" git commit -qm "$2"; }; printf 'Shop app\n' > README.md; git add README.md; c 09:00 'Add README'; printf 'print("shop")\n' > app.py; git add app.py; c 10:00 'Add the app'; printf 'apple 5\nbread 8\n' > prices.txt; git add prices.txt; c 11:00 'Add prices'	git log --oneline
+p9-git-log-full	git init -q .; c() { GIT_AUTHOR_DATE="2026-11-01T$1:00Z" GIT_COMMITTER_DATE="2026-11-01T$1:00Z" git commit -qm "$2"; }; printf 'Shop app\n' > README.md; git add README.md; c 09:00 'Add README'; printf 'apple 5\nbread 8\n' > prices.txt; git add prices.txt; c 11:00 'Add prices'	git log -n 1
+p9-git-diff	git init -q .; c() { GIT_AUTHOR_DATE="2026-11-01T$1:00Z" GIT_COMMITTER_DATE="2026-11-01T$1:00Z" git commit -qm "$2"; }; printf 'apple 5\nbread 8\n' > prices.txt; git add prices.txt; c 11:00 'Add prices'; sed -i 's/bread 8/bread 9/' prices.txt	git diff
+p9-git-ignore	git init -q .; printf 'Shop app\n' > README.md; printf '*.log\n' > .gitignore; echo 'error at 10:00' > debug.log	git status --short
+p9-git-branch	git init -q .; c() { GIT_AUTHOR_DATE="2026-11-01T$1:00Z" GIT_COMMITTER_DATE="2026-11-01T$1:00Z" git commit -qm "$2"; }; printf 'apple 5\nbread 8\n' > prices.txt; git add prices.txt; c 11:00 'Add prices'; git branch sale; git branch hotfix	git branch
+p9-git-switch	git init -q .; c() { GIT_AUTHOR_DATE="2026-11-01T$1:00Z" GIT_COMMITTER_DATE="2026-11-01T$1:00Z" git commit -qm "$2"; }; printf 'apple 5\nbread 8\n' > prices.txt; git add prices.txt; c 11:00 'Add prices'	git switch -c sale && git branch
+p9-git-merge	git init -q .; c() { GIT_AUTHOR_DATE="2026-11-01T$1:00Z" GIT_COMMITTER_DATE="2026-11-01T$1:00Z" git commit -qm "$2"; }; printf 'apple 5\nbread 8\n' > prices.txt; git add prices.txt; c 11:00 'Add prices'; git switch -q -c sale; echo 'milk 7' >> prices.txt; git add prices.txt; c 12:00 'Add milk'; git switch -q main	git merge sale
+p9-git-conflict	git init -q .; c() { GIT_AUTHOR_DATE="2026-11-01T$1:00Z" GIT_COMMITTER_DATE="2026-11-01T$1:00Z" git commit -qm "$2"; }; printf 'apple 5\nbread 8\n' > prices.txt; git add prices.txt; c 11:00 'Add prices'; git switch -q -c sale; sed -i 's/apple 5/apple 4/' prices.txt; git add prices.txt; c 12:00 'Apple sale'; git switch -q main; sed -i 's/apple 5/apple 6/' prices.txt; git add prices.txt; c 13:00 'Apple price up'	git merge sale; cat prices.txt
+p9-git-clone	rm -rf /srv/shop; git init -q /srv/shop; printf 'Shop app\n' > /srv/shop/README.md; git -C /srv/shop add README.md; GIT_AUTHOR_DATE=2026-11-01T09:00:00Z GIT_COMMITTER_DATE=2026-11-01T09:00:00Z git -C /srv/shop commit -qm 'Add README'	git clone /srv/shop && cd shop && git remote -v && git log --oneline
+p9-git-push	rm -rf /srv/shop.git; git init -q --bare /srv/shop.git; git clone -q /srv/shop.git work 2>/dev/null; printf 'Shop app\n' > work/README.md; git -C work add README.md; GIT_AUTHOR_DATE=2026-11-01T09:00:00Z GIT_COMMITTER_DATE=2026-11-01T09:00:00Z git -C work commit -qm 'Add README'	cd work && git push origin main
+p9-nginx-t	systemctl enable --now nginx >/dev/null 2>&1	nginx -t
+p9-nginx-t-bad	printf 'server {\n    listen 8080\n}\n' > /etc/nginx/conf.d/bad.conf	nginx -t; rm /etc/nginx/conf.d/bad.conf
+p9-curl-i	true	curl -sI http://localhost | grep -E '^(HTTP|Server|Content-Type)' | tr -d '\r'
+p9-vhost	mkdir -p /var/www/shop; echo 'Welcome to the shop' > /var/www/shop/index.html; printf 'server {\n    listen 80;\n    server_name shop.example.com;\n    root /var/www/shop;\n}\n' > /etc/nginx/sites-available/shop; ln -sf /etc/nginx/sites-available/shop /etc/nginx/sites-enabled/shop; nginx -t && systemctl reload nginx; sleep 1	curl -s -H 'Host: shop.example.com' http://localhost; curl -s http://localhost | grep -o '<title>.*</title>'
+p9-sites-enabled	true	ls -l /etc/nginx/sites-enabled | awk 'NR>1 {print $9, $10, $11}'
+p9-proxy	mkdir -p /srv/api; echo 'hello from the app on port 8000' > /srv/api/index.html; (cd /srv/api && setsid nohup python3 -m http.server 8000 --bind 127.0.0.1 >/dev/null 2>&1 &); printf 'server {\n    listen 80;\n    server_name api.example.com;\n    location / {\n        proxy_pass http://127.0.0.1:8000;\n    }\n}\n' > /etc/nginx/sites-available/api; ln -sf /etc/nginx/sites-available/api /etc/nginx/sites-enabled/api; nginx -t && systemctl reload nginx; sleep 2	curl -s -H 'Host: api.example.com' http://localhost; curl -sI -H 'Host: api.example.com' http://localhost | grep '^Server' | tr -d '\r'; curl -sI http://127.0.0.1:8000 | grep '^Server' | tr -d '\r'
+p9-proxy-down	pkill -f 'http.server 8000'; sleep 1	curl -s -H 'Host: api.example.com' http://localhost | grep -o '<title>.*</title>'
+p9-upstream	for n in 1 2; do mkdir -p /srv/app$n; echo "app $n answered" > /srv/app$n/index.html; (cd /srv/app$n && setsid nohup python3 -m http.server 800$n --bind 127.0.0.1 >/dev/null 2>&1 &); done; printf 'upstream shop_apps {\n    server 127.0.0.1:8001;\n    server 127.0.0.1:8002;\n}\nserver {\n    listen 80;\n    server_name lb.example.com;\n    location / {\n        proxy_pass http://shop_apps;\n    }\n}\n' > /etc/nginx/sites-available/lb; ln -sf /etc/nginx/sites-available/lb /etc/nginx/sites-enabled/lb; nginx -t && systemctl reload nginx; sleep 2	for i in 1 2 3 4; do curl -s -H 'Host: lb.example.com' http://localhost; done
+p9-openssl-req	true	openssl req -x509 -newkey rsa:2048 -nodes -keyout shop.key -out shop.crt -days 365 -subj '/CN=shop.example.com' 2>/dev/null && ls
+p9-x509	openssl req -x509 -newkey rsa:2048 -nodes -keyout shop.key -out shop.crt -days 365 -subj '/CN=shop.example.com' 2>/dev/null	openssl x509 -in shop.crt -noout -subject -issuer -dates | sed -E 's/=[A-Z][a-z]{2} +[0-9]+ [0-9:]+ /=<month day time> /'
+p9-checkend	openssl req -x509 -newkey rsa:2048 -nodes -keyout a.key -out year.crt -days 365 -subj '/CN=a.example.com' 2>/dev/null; openssl req -x509 -newkey rsa:2048 -nodes -keyout b.key -out week.crt -days 7 -subj '/CN=b.example.com' 2>/dev/null	openssl x509 -in year.crt -noout -checkend 2592000; echo "exit: $?"; openssl x509 -in week.crt -noout -checkend 2592000; echo "exit: $?"
+p9-csr	true	openssl req -new -newkey rsa:2048 -nodes -keyout web.key -out web.csr -subj '/C=IL/O=Shop Ltd/CN=www.example.com' 2>/dev/null && head -n 1 web.csr && openssl req -in web.csr -noout -subject
+p9-nginx-tls	openssl req -x509 -newkey rsa:2048 -nodes -keyout /etc/ssl/private/shop.key -out /etc/ssl/certs/shop.crt -days 365 -subj '/CN=shop.example.com' -addext 'subjectAltName=DNS:shop.example.com' 2>/dev/null; printf 'server {\n    listen 443 ssl;\n    server_name shop.example.com;\n    ssl_certificate /etc/ssl/certs/shop.crt;\n    ssl_certificate_key /etc/ssl/private/shop.key;\n    root /var/www/shop;\n}\n' > /etc/nginx/sites-available/shop-tls; ln -sf /etc/nginx/sites-available/shop-tls /etc/nginx/sites-enabled/shop-tls; nginx -t && systemctl reload nginx; sleep 1	curl -s --resolve shop.example.com:443:127.0.0.1 https://shop.example.com; echo "exit: $?"; curl -s --cacert /etc/ssl/certs/shop.crt --resolve shop.example.com:443:127.0.0.1 https://shop.example.com
+p9-s-client	true	openssl s_client -connect 127.0.0.1:443 -servername shop.example.com </dev/null 2>/dev/null | openssl x509 -noout -subject
