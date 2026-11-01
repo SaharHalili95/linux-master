@@ -53,28 +53,28 @@ Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a u
 | 25 | The filesystem tree | FHS: `/etc` `/var` `/usr` `/opt` `/home` `/proc` `/dev` `/boot` `/tmp` | L104.7 | ✅ | |
 | 26 | Finding anything | `find -perm -user -size -mtime -exec`, `locate`, `updatedb`, `whereis`, `which` | L104.7 R | 🟡 | |
 | 27 | Disks and partitions | `lsblk`, `blkid`, `fdisk`, `gdisk`, `parted`, MBR vs GPT, partition layout | L102.1 L104.1 R F | 🎞 | |
-| 28 | Filesystems | `mkfs.ext4`, `mkfs.xfs`, `fsck`, `e2fsck`, `xfs_repair`, `tune2fs` | L104.1 L104.2 R F | 🎞 | |
+| 28 | Filesystems | `mkfs.ext4`, `mkfs.xfs`, `mkfs.vfat`, `fsck`, `e2fsck`, `xfs_repair`, `tune2fs` | L104.1 L104.2 R F | 🎞 | |
 | 29 | Mounting | `mount`, `umount`, `/etc/fstab`, UUID, `findmnt`, `mount -a` | L104.3 R F | 🎞 | |
-| 30 | Space and quotas | `df -h`, `du -sh`, `du --max-depth`, quotas | L104.2 | 🟡 | |
+| 30 | Space and quotas | `df -h`, `du -sh`, `du --max-depth`, quotas, `iostat`, full-disk troubleshooting | L104.2 | 🟡 | |
 | 31 | LVM | PV, VG, LV, `pvcreate`, `vgcreate`, `lvcreate`, `lvextend -r` | R F | 🎞 | |
-| 32 | Swap and network storage | `mkswap`, `swapon`, NFS mounts, `autofs` | L104.1 R F | 🎞 | |
+| 32 | Swap and network storage | `mkswap`, `swapon`, NFS mounts, `autofs`, network block devices (iSCSI/NBD) | L104.1 R F | 🎞 | |
 
 ## Part 4: Users, processes, services and boot (units 33-44)
 
 | # | Unit | Commands and ideas | Exams | Sim | Status |
 | --- | --- | --- | --- | --- | --- |
 | 33 | Users and groups | `whoami`, `id`, `groups`, `/etc/passwd`, `/etc/shadow`, `/etc/group` | L107.1 R F | 🟡 | |
-| 34 | Managing users | `useradd -m`, `usermod -aG`, `userdel -r`, `passwd`, `groupadd`, `chage` | L107.1 R F | 🎞 | |
+| 34 | Managing users | `useradd -m`, `usermod -aG`, `userdel -r`, `passwd`, `groupadd`, `chage`, LDAP accounts with `sssd` | L107.1 R F | 🎞 | |
 | 35 | sudo and su | `sudo`, `su -`, `visudo`, `/etc/sudoers`, wheel/sudo group | L110.1 R F | 🎞 | |
 | 36 | Processes | `ps aux`, `top`, `pgrep`, `pkill`, `kill -9 -15`, signals | L103.5 R F | 🎞 | |
 | 37 | Jobs and priority | `&`, `jobs`, `bg`, `fg`, `nohup`, `nice`, `renice`, `screen`/`tmux` | L103.5 L103.6 R | 🎞 | |
 | 38 | systemd services | `systemctl start stop restart status enable disable is-active` | L101.3 R F | 🎞 | |
 | 39 | systemd deeper | unit files, `daemon-reload`, targets, `get-default`, `set-default`, `isolate` | L101.3 R F | 🎞 | |
-| 40 | Logs | `journalctl -u -b -p -f`, `/var/log`, `rsyslog`, `logrotate`, `logger` | L108.2 R F | 🎞 | |
+| 40 | Logs | `journalctl -u -b -p -f`, persistent journal, `/var/log`, `rsyslog`, `logrotate`, `logger` | L108.2 R F | 🎞 | |
 | 41 | Boot | BIOS/UEFI, GRUB2, kernel arguments, initramfs, rescue/emergency, reset root password | L101.2 L102.2 R | 🎞 | |
 | 42 | Kernel and hardware | `uname`, `lsmod`, `modprobe`, `lspci`, `lsusb`, `/proc`, `/sys`, `dmesg`, udev, `sysctl` | L101.1 R F | 🎞 | |
 | 43 | Time | `date`, `timedatectl`, `chronyc`, NTP, `hwclock`, time zones | L108.1 R F | 🎞 | |
-| 44 | Health and tuning | `uptime`, load average, `free -h`, `vmstat`, `tuned-adm`, `/proc/meminfo` | R F | 🎞 | |
+| 44 | Health and tuning | `uptime`, load average, `free -h`, `vmstat`, `tuned-adm`, `/proc/meminfo`, service limits | R F | 🎞 | |
 
 ## Part 5: Installing software (units 45-50)
 
@@ -85,15 +85,15 @@ Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a u
 | 47 | dnf | `dnf install remove search info provides`, repos, `dnf history` | L102.5 R | 🎞 | |
 | 48 | rpm | `rpm -qa -qi -ql -qf -ivh -e`, `rpm2cpio` | L102.5 R | 🎞 | |
 | 49 | Libraries | `ldd`, `ldconfig`, `/etc/ld.so.conf`, `LD_LIBRARY_PATH` | L102.3 | 🎞 | |
-| 50 | Flatpak, VMs and containers | `flatpak install`, VM vs container, cloud-init, `podman run` basics | L102.6 R | 🎞 | |
+| 50 | Flatpak, VMs and containers | `flatpak install`, VM vs container, cloud-init, libvirt `virsh`, `podman`/`docker` containers | L102.6 R | 🎞 | |
 
 ## Part 6: Networking and SSH (units 51-58)
 
 | # | Unit | Commands and ideas | Exams | Sim | Status |
 | --- | --- | --- | --- | --- | --- |
 | 51 | Network fundamentals | IPv4, IPv6, netmasks/CIDR, ports, TCP vs UDP, private ranges | L109.1 | concept | |
-| 52 | ip | `ip addr`, `ip link`, `ip route`, default gateway | L109.2 L109.3 R F | 🎞 | |
-| 53 | Persistent network config | `nmcli`, NetworkManager, `hostnamectl`, `/etc/hosts`, `/etc/resolv.conf`, `/etc/nsswitch.conf` | L109.2 L109.4 R F | 🎞 | |
+| 52 | ip | `ip addr`, `ip link`, `ip route`, default gateway, static routes | L109.2 L109.3 R F | 🎞 | |
+| 53 | Persistent network config | `nmcli`, NetworkManager, `hostnamectl`, `/etc/hosts`, `/etc/resolv.conf`, `/etc/nsswitch.conf`, bridges and bonding | L109.2 L109.4 R F | 🎞 | |
 | 54 | DNS | `host`, `dig`, `getent hosts`, resolution order | L109.4 F | 🎞 | |
 | 55 | Network troubleshooting | `ping`, `traceroute`, `tracepath`, `ss -tulpn`, `nc`, `curl` | L109.3 F | 🎞 | |
 | 56 | SSH | `ssh user@host -p`, `scp`, `~/.ssh/config`, `known_hosts` | L110.3 R F | 🎞 | |
@@ -117,9 +117,9 @@ Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a u
 
 | # | Unit | Commands and ideas | Exams | Sim | Status |
 | --- | --- | --- | --- | --- | --- |
-| 67 | Security checks | `who`, `w`, `last`, `find -perm -4000`, `ss -tlnp`, `ulimit` | L110.1 | 🎞 | |
+| 67 | Security checks | `who`, `w`, `last`, `find -perm -4000`, `ss -tlnp`, `ulimit`, `/etc/security/limits.conf` | L110.1 | 🎞 | |
 | 68 | Passwords and policies | `/etc/shadow` fields, `chage`, `/etc/login.defs`, locking accounts | L110.1 R F | 🎞 | |
-| 69 | Firewalls | `firewall-cmd --add-service --permanent --reload`, zones, `ufw` | R F | 🎞 | |
+| 69 | Firewalls | `firewall-cmd --add-service --permanent --reload`, zones, port forwarding and NAT, `nft`, `ufw` | R F | 🎞 | |
 | 70 | SELinux | modes, `getenforce`, `setenforce`, `ls -Z`, `restorecon`, `semanage port`, booleans | R | 🎞 | |
 | 71 | Hardening services | disabling services, `systemctl mask`, `ss`, TCP wrappers history | L110.2 F | 🎞 | |
 | 72 | Encryption | `gpg --gen-key -e -d --verify`, checksums, SSH agent | L110.3 | 🎞 | |
@@ -142,7 +142,7 @@ Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a u
 | 79 | RHCSA mock exam | 20 task-style questions on the R-tagged bank, no hints | R |
 | 80 | LFCS mock exam | 20 task-style questions on the F-tagged bank, weighted by the 6 domains | F |
 
-Every LPIC-1 v5.0 objective (101.1 to 110.3; v5.0 has no 104.4 and no SQL objective) appears in at least one unit above; `tests/prototype.spec.js` checks that every objective tag is covered.
+The official objectives of all three exams, mapped to these units, are in [objectives/](objectives/). Every LPIC-1 v5.0 objective (101.1 to 110.3; v5.0 has no 104.4 and no SQL objective) appears in at least one unit above; `tests/prototype.spec.js` checks that every objective tag is covered.
 
 ## Sources
 
