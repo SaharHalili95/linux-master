@@ -87,6 +87,7 @@ button { cursor: pointer; }
 .node.boss.locked { background: var(--locked); color: var(--locked-dark); box-shadow: 0 7px 0 var(--locked-dark); }
 .node.current:not(.chest) { outline: 6px solid var(--green-soft); outline-offset: 5px; }
 .node.boss.current { outline-color: #9be46d55; }
+.node.exam { width: 86px; height: 78px; border-radius: 26px; font-size: 34px; }
 .start-tip { position: absolute; bottom: calc(100% + 12px); background: var(--surface); border: 2px solid var(--line); color: var(--green-ink); font-weight: 800; font-size: 15px; text-transform: uppercase; padding: 8px 14px; border-radius: 12px; white-space: nowrap; animation: bob 1.2s ease-in-out infinite; z-index: 2; }
 .start-tip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 8px solid transparent; border-top-color: var(--line); }
 @keyframes bob { 50% { transform: translateY(-6px); } }
@@ -198,6 +199,7 @@ button { cursor: pointer; }
 .lesson-foot { border-top: 2px solid var(--line); padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); transition: background .15s; }
 .foot-inner { max-width: 640px; margin: 0 auto; display: grid; gap: 14px; }
 .lesson-foot.good { background: var(--green-soft); border-top-color: transparent; }
+.lesson-foot.saved { background: var(--soft); border-top-color: transparent; }
 .lesson-foot.bad { background: var(--red-soft); border-top-color: transparent; }
 .lesson-foot.bad .btn.primary { background: var(--red); box-shadow: 0 4px 0 var(--red-dark); }
 .fb { display: flex; gap: 12px; align-items: flex-start; animation: rise .18s ease; }
