@@ -10,7 +10,7 @@ grep -v '^#' record/vm.txt | grep . > "$out/cmds.tsv"
 while IFS=$'\t' read -r id setup cmd; do
   [ -z "$cmd" ] && { cmd=$setup; setup=; }
   d=$(mktemp -d); sudo chown user "$d"
-  (cd "$d" && sudo timeout 60 bash -c "$setup" > "$out/$id.setup" 2>&1; sudo timeout 60 bash -c "$cmd" > "$out/$id.out" 2>&1) || true
+  sudo timeout 60 bash -c "cd $d && $setup" > "$out/$id.setup" 2>&1; sudo timeout 60 bash -c "cd $d && $cmd" > "$out/$id.out" 2>&1 || true
 done < "$out/cmds.tsv"
 mkdir -p "$out/setup" && mv "$out"/*.setup "$out/setup/" 2>/dev/null
 ls "$out" | wc -l

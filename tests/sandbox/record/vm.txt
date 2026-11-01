@@ -12,7 +12,7 @@ fs-mkfs-vfat	truncate -s 64M usb.img	mkfs.vfat -n USB usb.img
 fs-blkid	truncate -s 64M a.img; mkfs.ext4 -q -F -L data -U 3f1c0a2e-6c1d-4a51-9b3e-2b7f1d9c8e41 a.img	blkid a.img | sed 's/ BLOCK_SIZE="[0-9]*"//'
 fs-tune2fs	truncate -s 64M a.img; mkfs.ext4 -q -F -L data a.img	tune2fs -l a.img | grep -E '^(Filesystem volume name|Block size|Mount count|Maximum mount count):'
 fs-tune2fs-c	truncate -s 64M a.img; mkfs.ext4 -q -F a.img	tune2fs -c 30 a.img
-fs-e2fsck	truncate -s 64M a.img; mkfs.ext4 -q -F a.img	e2fsck -f a.img
+fs-e2fsck	truncate -s 64M a.img; mkfs.ext4 -q -F a.img	e2fsck -fn a.img
 fs-xfs-repair	truncate -s 512M x.img; mkfs.xfs -q -f x.img	xfs_repair -n x.img 2>&1 | head -n 4
 mnt-mount	truncate -s 64M a.img; mkfs.ext4 -q -F -L data a.img; mkdir -p /mnt/data	mount -o loop a.img /mnt/data && df -h /mnt/data | awk '{print $2, $3, $4, $6}'
 mnt-findmnt	truncate -s 64M b.img; mkfs.ext4 -q -F b.img; mkdir -p /mnt/disk2; mount -o loop b.img /mnt/disk2	findmnt -n -o TARGET,FSTYPE,OPTIONS /mnt/disk2
