@@ -65,3 +65,32 @@ sort missing.txt
 ls missing
 cd logs && ls
 cd logs && pwd
+echo {a,b}.txt
+echo file{1..3}
+echo x{c..a}
+echo '{a,b}' "{1..2}"
+mkdir -p bk/{x,y} && ls bk
+touch new.txt && ls
+touch app.log && cat names.txt
+mkdir e && rmdir e && ls
+rmdir logs
+rmdir nothing
+rmdir names.txt
+type cd ls echo
+type nope
+which ls cat
+which cd
+echo *.txt
+echo [ab]*
+echo ?????.txt
+echo "*.txt"
+echo \*.txt
+grep -E "ERROR|WARN" app.log
+grep "^2026-10-0[12] 10:0" app.log
+grep -c "ssh$" notes.txt
+grep "[0-9][0-9][0-9]" scores.txt
+grep -v "^b" names.txt
+grep -E "^(Dana|Avi)$" names.txt
+grep -E "o{2}" report.txt
+grep -E "^[A-Z]" names.txt
+grep "\.log" app.log

@@ -1,4 +1,21 @@
 # Commands recorded on Ubuntu 24.04 for "what will it print?" questions. One per line: id<TAB>command.
-# packages: procps iproute2
+# The Docker image strips man pages; the setup line brings them back.
+# setup: rm -f /etc/dpkg/dpkg.cfg.d/excludes;
+# after: rm -f /usr/bin/man; dpkg-divert --quiet --remove --rename /usr/bin/man;
+# packages: procps iproute2 man-db manpages less && apt-get install -y -qq --reinstall coreutils grep passwd cron
 ubuntu-uname	uname -s
 ubuntu-uname-m	uname -m
+ubuntu-whatis-ls	whatis ls
+ubuntu-whatis-passwd	whatis passwd
+ubuntu-whatis-crontab	whatis crontab
+ubuntu-apropos-copy	apropos -s 1 copy | grep -E "^(cp|scp|install|dd) "
+ubuntu-man-k-dir	man -k "^mkdir"
+ubuntu-ls-help	ls --help | head -n 3
+ubuntu-cp-help	cp --help | head -n 2
+ubuntu-type-cd	type cd
+ubuntu-type-ls	type ls
+ubuntu-which-ls	which ls
+ubuntu-type-a-echo	type -a echo
+ubuntu-man-ls	MANWIDTH=60 man ls 2>/dev/null | head -n 8
+ubuntu-man-sections	ls /usr/share/man | grep -E "^man[1-8]$"
+ubuntu-doc-grep	ls /usr/share/doc/grep

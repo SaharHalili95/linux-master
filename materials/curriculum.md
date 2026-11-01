@@ -22,10 +22,10 @@ Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a u
 | 4 | Searching | `grep -i -c -v -n`, `find -name -type` | L103.7 L104.7 | ✅ | live |
 | 5 | Pipes and redirection | `\|`, `>`, `>>`, `2>`, `/dev/null` | L103.4 R | ✅ | live |
 | 6 | Sort, count, cut | `sort`, `uniq -c`, `wc`, `cut`, `tr` | L103.2 | ✅ | live |
-| 7 | Patterns | regex `.` `[ ]` `*` `^` `$`, `grep -E`, `egrep` | L103.7 R | ✅ | locked placeholder today |
-| 8 | Getting help | `man` sections, `--help`, `info`, `whatis`, `apropos`, `type`, `which`, `/usr/share/doc` | L103.1 R | 🎞 | |
-| 9 | Globs and quoting | `*` `?` `[ ]` `{a,b}`, `'single'` vs `"double"`, `\` escaping, `touch`, `rmdir` | L103.3 | 🟡 | |
-| 10 | Your shell | `history`, `!!`, `alias`, `echo $SHELL`, `type`, `~/.bashrc`, tab completion | L103.1 | 🟡 | |
+| 7 | Patterns | regex `.` `[ ]` `*` `^` `$`, `grep -E`, `egrep` | L103.7 R | ✅ | live |
+| 8 | Getting help | `man` sections, `--help`, `info`, `whatis`, `apropos`, `type`, `which`, `/usr/share/doc` | L103.1 R | 🎞 | live |
+| 9 | Globs and quoting | `*` `?` `[ ]` `{a,b}`, `'single'` vs `"double"`, `\` escaping, `touch`, `rmdir` | L103.3 | 🟡 | live |
+| 10 | Your shell | `history`, `!!`, `alias`, `echo $SHELL`, `type`, `~/.bashrc`, tab completion | L103.1 | 🟡 | live |
 
 ## Part 2: Text power (units 11-20)
 

@@ -250,7 +250,7 @@ const RENDER = {
   },
   scenario(root, ex) {
     if (ex.rec) { const rec = RECORDED[ex.rec]; root.append(el('div', 'rec-label', t('recordedOn', rec.distro)), termBlock([[promptFor('/home/user'), rec.cmd, rec.out.replace(/\n$/, '')]])); }
-    const row = el('div', 'code-row'); const lab = el('label', '', t('typeCmd')); lab.htmlFor = 'scenarioCmd';
+    const row = el('div', 'code-row stack'); const lab = el('label', '', t('typeCmd')); lab.htmlFor = 'scenarioCmd';
     const input = el('input'); input.id = 'scenarioCmd'; input.dir = 'ltr'; input.autocomplete = 'off'; input.autocapitalize = 'off'; input.spellcheck = false;
     input.oninput = () => { L.value = input.value; setCan(!!input.value.trim()); };
     input.onkeydown = e => { if (e.key === 'Enter' && input.value.trim()) { e.preventDefault(); onFootButton(); } };

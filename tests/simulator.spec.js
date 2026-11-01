@@ -111,3 +111,24 @@ test.describe('typing with output checking', () => {
     expect(r).toEqual({ dashViaPath: true, rot13Lower: true, chmodSymbolic: true, chmodWrong: false });
   });
 });
+
+// Commands added for Learn mode part 1; outputs checked against Ubuntu 24.04 with `npm run diff`.
+test('braces, touch, rmdir, alias, type and which behave like bash', () => {
+  const fs = require('fs'), vm = require('vm'), path = require('path');
+  const ctx = vm.createContext({});
+  vm.runInContext(`${fs.readFileSync(path.join(__dirname, '../shell.js'), 'utf8')}\nthis.Shell = Shell;`, ctx);
+  const sh = new ctx.Shell({ cwd: '/home/user', dirs: ['/home/user', '/home/user/docs', '/home/user/empty'], files: [['/home/user/docs/a.txt', { content: 'a\n' }]] });
+  const run = c => { const r = sh.run(c); return r.out + (r.err ? `!${r.err}` : ''); };
+  expect(run('echo {a,b}.txt file{1..3} x{c..a}')).toBe('a.txt b.txt file1 file2 file3 xc xb xa\n');
+  expect(run(`echo '{a,b}' "{1..2}"`)).toBe('{a,b} {1..2}\n');
+  run('mkdir -p bk/{x,y}'); expect(run('ls bk')).toBe('x\ny\n');
+  run('touch new.txt docs/a.txt'); expect(run('cat new.txt docs/a.txt')).toBe('a\n');
+  expect(run('rmdir docs')).toBe("!rmdir: failed to remove 'docs': Directory not empty\n");
+  expect(run('rmdir empty && ls')).toBe('bk\ndocs\nnew.txt\n');
+  run('alias ll="ls -a"');
+  expect(run('alias')).toBe("alias ll='ls -a'\n");
+  expect(run('ll bk')).toBe('.\n..\nx\ny\n');
+  expect(run('type ll cd ls')).toBe("ll is aliased to `ls -a'\ncd is a shell builtin\nls is /usr/bin/ls\n");
+  expect(run('which ls cd')).toBe('/usr/bin/ls\n');
+  expect(run('echo $SHELL')).toBe('/bin/bash\n');
+});
