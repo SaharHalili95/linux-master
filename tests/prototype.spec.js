@@ -328,7 +328,8 @@ test('every exercise in every unit is answerable and fully translated @content',
   const vm = require('vm');
   const root = path.join(__dirname, '..');
   const parts = fs.readdirSync(path.join(root, 'prototype/parts')).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1))).map(f => `prototype/parts/${f}`);
-  const src = ['shell.js', 'prototype/i18n.js', 'prototype/units.js', 'prototype/lessons.js', 'prototype/recorded.js', ...parts].map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
+  const recs = fs.readdirSync(path.join(root, 'prototype/recorded')).sort().map(f => `prototype/recorded/${f}`);
+  const src = ['shell.js', 'prototype/i18n.js', 'prototype/units.js', 'prototype/lessons.js', 'prototype/recorded.js', ...recs, ...parts].map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
   const ctx = vm.createContext({ localStorage: { getItem: () => null } });
   vm.runInContext(`${src}\nthis.out = { COURSE, Shell, RECORDED };`, ctx);
   const { COURSE, Shell, RECORDED } = ctx.out;
@@ -411,5 +412,5 @@ test('Pages deploys every file Learn mode loads', () => {
   const local = [...html.matchAll(/(?:src|href)="([^"#:]+?)(?:\?[^"]*)?"/g)].map(m => m[1]).filter(f => !f.startsWith('..') && f !== './');
   const deploy = fs.readFileSync(path.join(root, '.github/workflows/pages.yml'), 'utf8').match(/cp (?:-r )?(prototype\/.*) _site\/prototype\//)[1].split(/\s+/);
   expect(local.length).toBeGreaterThan(3);
-  for (const file of local) expect(deploy, file).toContain(file.startsWith('parts/') ? 'prototype/parts' : `prototype/${file}`);
+  for (const file of local) expect(deploy, file).toContain(/^(parts|recorded)\//.test(file) ? `prototype/${file.split('/')[0]}` : `prototype/${file}`);
 });
