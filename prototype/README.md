@@ -2,6 +2,8 @@
 
 Six units of the planned course ([materials/curriculum.md](../materials/curriculum.md)): Where am I?, Reading files, Making and moving, Searching, Pipes and redirection, and Sort, count, cut. A locked Patterns unit comes next.
 
+Roadmap: the course grows to 80 units that prepare for LPIC-1, RHCSA and LFCS. Unit list: [materials/curriculum.md](../materials/curriculum.md). Design: [docs/superpowers/specs/2026-11-01-80-units-design.md](../docs/superpowers/specs/2026-11-01-80-units-design.md). Phased plan: [docs/superpowers/plans/2026-11-01-80-units-plan.md](../docs/superpowers/plans/2026-11-01-80-units-plan.md).
+
 ```bash
 node tests/serve.js 8791
 ```
