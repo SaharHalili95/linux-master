@@ -270,3 +270,5 @@ button { cursor: pointer; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 @media (max-width: 380px) { .course-mark, .chip.xp { display: none; } }
+/* Long paths and commands (/etc/systemd/system/x.service) must wrap on a phone instead of pushing the page sideways. */
+.ex-prompt, .opt, .tile, .pair, .sentence, .fb-detail, .teach-text { overflow-wrap: anywhere; }
