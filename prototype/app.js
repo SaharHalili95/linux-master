@@ -77,9 +77,13 @@ function renderPath() {
   const root = $('path'); root.innerHTML = '';
   const order = COURSE.filter(u => !u.locked).flatMap(unitNodes);
   const current = order.find(n => !S.done.includes(n.key))?.key;
+  let part;
   for (const unit of COURSE) {
+    if (unit.section !== part) { part = unit.section; const h = el('h2', 'part-header', t('partN', part, tr(PARTS[part]))); h.dataset.part = part; root.append(h); }
     const banner = el('div', `unit-banner ${unit.color}${unit.locked ? ' locked' : ''}`);
     const txt = el('div'); txt.append(el('div', 'unit-kicker', t('kicker', unit.section, unit.unit)), el('h2', '', tr(unit.title)), el('div', 'unit-sub', tr(unit.subtitle)));
+    const exams = [['L', 'LPIC-1'], ['R', 'RHCSA'], ['F', 'LFCS']].filter(([k]) => unit.exams?.some(e => e.startsWith(k)));
+    if (exams.length) { const chips = el('div', 'exam-chips'); for (const [, name] of exams) chips.append(el('span', 'exam-chip', name)); txt.append(chips); }
     banner.append(txt, el('div', 'unit-book', unit.locked ? '🔒' : '📘')); root.append(banner);
     const list = el('ol', 'nodes');
     const nodes = unit.locked ? NODE_PLAN.map(([id, kind]) => ({ key: unitKey(unit, id), kind: kind === 'boss' ? 'boss' : 'lesson', unit, lockedUnit: true })).filter(n => n.key !== unitKey(unit, 'c1')) : unitNodes(unit);
@@ -180,7 +184,7 @@ function answer(ok, solution = '', why = '') {
     L.mistakes++; L.combo = 0; SFX.bad();
     L.queue.push({ ...L.ex, retry: true });
     if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss) S.mistakes.push(L.ex.uid);
-    setFoot('bad', t('correctAnswer'), L.ex.type === 'terminal' ? { sol: solution } : L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
+    setFoot('bad', t('correctAnswer'), ['terminal', 'scenario'].includes(L.ex.type) ? { sol: solution } : L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
     $('lessonMain').classList.remove('shake'); void $('lessonMain').offsetWidth; $('lessonMain').classList.add('shake');
   }
   if (ok && L.ex.retry) S.mistakes = S.mistakes.filter(id => id !== L.ex.uid);
@@ -198,6 +202,13 @@ function optionButton(label, value, mono, onPick, index) {
   b.append(k, t); b.onclick = () => { SFX.tap(); onPick(b); }; return b;
 }
 function pickOne(root) { return b => { if (L.answered) return; root.querySelectorAll('.opt').forEach(o => o.classList.toggle('sel', o === b)); L.value = b.dataset.value; setCan(true); }; }
+const sameCmd = c => c.trim().replace(/\s+/g, ' ');
+function outputOptions(root, right, wrong) {
+  const options = shuffle([right, ...[...new Set(wrong.filter(w => w !== right))].slice(0, 3)]);
+  const list = el('div', 'opts outputs'); const pick = pickOne(list);
+  options.forEach((o, i) => { const b = optionButton('', o, false, pick, i); b.lastChild.replaceWith(Object.assign(el('pre', 'out-opt', o || t('noOutput')), { dir: 'ltr' })); list.append(b); });
+  root.append(list);
+}
 function termBlock(lines) {
   const t = el('div', 'term'); t.dir = 'ltr';
   for (const [prompt, cmd, out] of lines) { const row = el('div', 'term-line'); row.append(el('span', 'ps1', prompt), el('span', 'typed', cmd)); t.append(row); if (out) t.append(el('pre', 'term-out', out)); }
@@ -237,7 +248,21 @@ const RENDER = {
     shuffle(ex.options).forEach(o => { const c = el('button', 'tile', o); c.type = 'button'; c.dir = 'ltr'; c.onclick = () => { if (L.answered) return; SFX.tap(); chips.querySelectorAll('.tile').forEach(t => t.classList.toggle('sel', t === c)); slot.textContent = o; slot.classList.add('filled'); L.value = o; setCan(true); }; chips.append(c); });
     root.append(line, chips);
   },
+  scenario(root, ex) {
+    if (ex.rec) { const rec = RECORDED[ex.rec]; root.append(el('div', 'rec-label', t('recordedOn', rec.distro)), termBlock([[promptFor('/home/user'), rec.cmd, rec.out.replace(/\n$/, '')]])); }
+    const row = el('div', 'code-row'); const lab = el('label', '', t('typeCmd')); lab.htmlFor = 'scenarioCmd';
+    const input = el('input'); input.id = 'scenarioCmd'; input.dir = 'ltr'; input.autocomplete = 'off'; input.autocapitalize = 'off'; input.spellcheck = false;
+    input.oninput = () => { L.value = input.value; setCan(!!input.value.trim()); };
+    input.onkeydown = e => { if (e.key === 'Enter' && input.value.trim()) { e.preventDefault(); onFootButton(); } };
+    row.append(lab, input); root.append(row);
+  },
   output(root, ex) {
+    if (ex.rec) {
+      const rec = RECORDED[ex.rec];
+      root.append(el('div', 'rec-label', t('recordedOn', rec.distro)), termBlock([[promptFor('/home/user'), rec.cmd, '?']]));
+      ex.solution = rec.out;
+      return outputOptions(root, rec.out, [...(ex.wrongRec || []).map(id => RECORDED[id].out), ...(ex.wrongText || [])]);
+    }
     const fx = ex.fx, real = runIn(ex.setup, ex.cmd, fx());
     // Show every starting file the commands read, so the answer never depends on content the learner has not seen.
     const lines = [], start = new Shell(fx()), peek = new Map(); let sh = new Shell(fx());
@@ -247,12 +272,8 @@ const RENDER = {
     }
     for (const [name, content] of peek.values()) { const card = el('div', 'file-peek'); card.append(el('div', 'file-peek-h', t('fileHas', name)), Object.assign(el('pre', '', content.replace(/\n$/, '')), { dir: 'ltr' })); root.append(card); }
     root.append(termBlock(lines));
-    const wrong = [...(ex.wrongCmds || []).map(c => runIn(ex.setup, c, fx()).out), ...(ex.wrongText || [])].filter(w => w !== real.out);
-    const options = shuffle([real.out, ...[...new Set(wrong)].slice(0, 3)]);
     ex.solution = real.out;
-    const list = el('div', 'opts outputs'); const pick = pickOne(list);
-    options.forEach((o, i) => { const b = optionButton('', o, false, pick, i); b.lastChild.replaceWith(Object.assign(el('pre', 'out-opt', o || t('noOutput')), { dir: 'ltr' })); list.append(b); });
-    root.append(list);
+    outputOptions(root, real.out, [...(ex.wrongCmds || []).map(c => runIn(ex.setup, c, fx()).out), ...(ex.wrongText || [])]);
   },
   tiles(root, ex) {
     const answerRow = el('div', 'answer-row'); answerRow.dir = 'ltr';
@@ -344,6 +365,7 @@ const CHECK = {
   fill: (ex, v) => ({ ok: v === ex.answer, solution: `${ex.before}${ex.answer}${ex.after}` }),
   output: (ex, v) => ({ ok: v === ex.solution, solution: ex.solution || t('noOutput') }),
   tiles: (ex, v) => ({ ok: [ex.answer, ...(ex.accept || [])].includes(v), solution: ex.answer }),
+  scenario: (ex, v) => ({ ok: ex.accept.map(sameCmd).includes(sameCmd(v)), solution: ex.accept[0] }),
   terminal: ex => ({ ok: ex.goal(L.term.sh, L.term.log) && (!ex.ask || L.ask === L.expected), solution: ex.ask ? `${ex.solve.join('\n')}\n${tr(ex.ask)} ${L.expected}` : ex.solve.join('\n') }),
   boss: (ex, v) => ({ ok: v === ex.boss.word, solution: t('bossSolution', ex.boss.word, ex.boss.hideIn), why: t('bossWhy', ex.boss.hideIn) }),
 };
@@ -445,3 +467,5 @@ $('langBtn').onclick = () => {
 };
 applyLanguage();
 showTab('learn');
+history.scrollRestoration = 'manual';
+document.querySelector('.node.current')?.scrollIntoView({ block: 'center' });

@@ -1,0 +1,4 @@
+# Commands recorded on Ubuntu 24.04 for "what will it print?" questions. One per line: id<TAB>command.
+# packages: procps iproute2
+ubuntu-uname	uname -s
+ubuntu-uname-m	uname -m

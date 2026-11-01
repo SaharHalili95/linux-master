@@ -23,6 +23,7 @@ async function solve(page, lang = 'he') {
     for (const c of await page.evaluate(() => L.ex.solve)) { await page.fill('.term-input input', c); await page.press('.term-input input', 'Enter'); }
     if (await page.evaluate(() => !!L.ex.ask)) await page.fill('#askAnswer', await page.evaluate(() => L.expected));
   }
+  if (ex.type === 'scenario') await page.fill('#scenarioCmd', await page.evaluate(() => L.ex.accept[0]));
   if (ex.type === 'boss') {
     for (const c of [`ls -a ${ex.boss.dir}`, `cat ${ex.boss.dir}/.code`]) { await page.fill('.term-input input', c); await page.press('.term-input input', 'Enter'); }
     await expect(page.locator('.goals li.done')).toHaveCount(2);
@@ -254,15 +255,60 @@ test('the start bubble never covers the finished lesson above it', async ({ page
   expect(tip.y).toBeGreaterThanOrEqual(above.y + above.height);
 });
 
-test('the whole course can be played to the end, unit after unit @content', async ({ page }) => {
-  test.setTimeout(240_000);
+test('saved progress survives new units, and the path opens scrolled to the current lesson', async ({ page }) => {
+  await page.goto('./prototype/');
+  const keys = await page.evaluate(() => { const open = COURSE.filter(u => !u.locked); return open.slice(0, -1).flatMap(unitNodes).map(n => n.key); });
+  await page.evaluate(done => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ done })); }, keys);
+  await page.reload();
+  await expect(page.locator('.node.current')).toBeInViewport();
+  const state = await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')));
+  expect(state.done).toEqual(keys);
+});
+
+test('every part gets one header, in order, and units show their exams', async ({ page }) => {
+  await page.goto('./prototype/');
+  const parts = await page.evaluate(() => [...new Set(COURSE.map(u => u.section))]);
+  await expect(page.locator('.part-header')).toHaveCount(parts.length);
+  expect(await page.locator('.part-header').evaluateAll(els => els.map(e => Number(e.dataset.part)))).toEqual(parts);
+  await expect(page.locator('.unit-banner').first().locator('.exam-chip', { hasText: 'LPIC' })).toHaveCount(1);
+});
+
+test('a recorded output card shows the command, where it was recorded, and the real output as the answer', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => startLesson('rec-test', [{ type: 'output', prompt: WHAT, rec: 'ubuntu-uname-m', wrongText: ['arm64', 'i386'] }]));
+  await expect(page.locator('.rec-label')).toContainText('Ubuntu 24.04');
+  await expect(page.locator('.term')).toContainText('uname -m');
+  await page.locator('.opt', { hasText: 'x86_64' }).click();
+  await page.click('#checkBtn');
+  await expect(page.locator('#foot')).toHaveClass(/good/);
+});
+
+test('a scenario accepts any listed command, however it is spaced, and rejects others', async ({ page }) => {
+  await page.goto('./prototype/');
+  const ex = { type: 'scenario', prompt: { he: 'בדקו את nginx', en: 'Check nginx' }, rec: 'ubuntu-uname', accept: ['systemctl status nginx', 'systemctl status nginx.service'] };
+  await page.evaluate(ex => startLesson('scenario-test', [ex]), ex);
+  await expect(page.locator('.rec-label')).toBeVisible();
+  await page.fill('#scenarioCmd', '  systemctl   status nginx.service ');
+  await page.press('#scenarioCmd', 'Enter');
+  await expect(page.locator('#foot')).toHaveClass(/good/);
+  await page.evaluate(ex => startLesson('scenario-test', [ex]), ex);
+  await page.fill('#scenarioCmd', 'systemctl start nginx');
+  await page.click('#checkBtn');
+  await expect(page.locator('#foot')).toHaveClass(/bad/);
+  await expect(page.locator('#fbDetail')).toContainText('systemctl status nginx');
+});
+
+// One test per part, each starting where the earlier parts end, so CI can play the parts side by side.
+for (let part = 1; part <= 10; part++) test(`part ${part} can be played to the end, unit after unit @content @part${part}`, async ({ page }) => {
+  test.setTimeout(600_000);
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./prototype/');
-  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
+  const [before, units] = await page.evaluate(p => { const open = COURSE.filter(u => !u.locked); return [open.filter(u => u.section < p).flatMap(unitNodes).map(n => n.key), open.filter(u => u.section === p).length]; }, part);
+  test.skip(!units, `part ${part} has no units yet`);
+  await page.evaluate(done => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, done })); }, before);
   await page.reload();
-  const units = await page.evaluate(() => COURSE.filter(u => !u.locked).length);
   for (let n = 0; n < units * 6; n++) {
     await page.locator('.node.current').click();
     await page.locator('#pop .btn').click();
@@ -271,9 +317,8 @@ test('the whole course can be played to the end, unit after unit @content', asyn
     await page.click('#endBtn');
     if (await page.locator('#streakScreen').isVisible()) await page.click('#streakBtn');
   }
-  await expect(page.locator('.node.current')).toHaveCount(0);
   const state = await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')));
-  expect(state.done).toHaveLength(units * 6);
+  expect(state.done).toHaveLength(before.length + units * 6);
   expect(state.mistakes).toEqual([]);
   expect(errors).toEqual([]);
 });
@@ -282,10 +327,12 @@ test('the whole course can be played to the end, unit after unit @content', asyn
 test('every exercise in every unit is answerable and fully translated @content', () => {
   const vm = require('vm');
   const root = path.join(__dirname, '..');
-  const src = ['shell.js', 'prototype/i18n.js', 'prototype/units.js', 'prototype/lessons.js'].map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
+  const parts = fs.readdirSync(path.join(root, 'prototype/parts')).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1))).map(f => `prototype/parts/${f}`);
+  const src = ['shell.js', 'prototype/i18n.js', 'prototype/units.js', 'prototype/lessons.js', 'prototype/recorded.js', ...parts].map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
   const ctx = vm.createContext({ localStorage: { getItem: () => null } });
-  vm.runInContext(`${src}\nthis.out = { COURSE, Shell };`, ctx);
-  const { COURSE, Shell } = ctx.out;
+  vm.runInContext(`${src}\nthis.out = { COURSE, Shell, RECORDED };`, ctx);
+  const { COURSE, Shell, RECORDED } = ctx.out;
+  for (const [id, r] of Object.entries(RECORDED)) expect(r.out.trim(), `recording ${id} is empty`).toBeTruthy();
   const run = (fx, setup, cmd) => { const sh = new Shell(fx()); for (const c of setup || []) sh.run(c); const r = sh.run(cmd); return (r.out + r.err).replace(/\n$/, ''); };
   const texts = [];
   const walk = v => { if (v && typeof v === 'object') { if ('he' in v && 'en' in v) texts.push(v); else Object.values(v).forEach(walk); } };
@@ -298,7 +345,15 @@ test('every exercise in every unit is answerable and fully translated @content',
     for (const [id, ex] of exercises) {
       count++;
       if (ex.demo) run(fx, ex.demo[0], ex.demo[1]);
-      if (ex.type === 'output') {
+      if (ex.type === 'scenario') {
+        expect(ex.accept?.length, `${id} needs accepted commands`).toBeGreaterThan(0);
+        if (ex.rec) { expect(RECORDED[ex.rec], `${id}: recording ${ex.rec}`).toBeTruthy(); expect(ex.accept, `${id} shows its own answer`).not.toContain(RECORDED[ex.rec].cmd); }
+      }
+      if (ex.type === 'output' && ex.rec) {
+        for (const r of [ex.rec, ...(ex.wrongRec || [])]) expect(RECORDED[r], `${id}: recording ${r}`).toBeTruthy();
+        const real = RECORDED[ex.rec].out;
+        expect(new Set([...(ex.wrongRec || []).map(r => RECORDED[r].out), ...(ex.wrongText || [])].filter(w => w !== real)).size, `${id} needs wrong options`).toBeGreaterThanOrEqual(2);
+      } else if (ex.type === 'output') {
         const real = run(fx, ex.setup, ex.cmd);
         const wrong = new Set([...(ex.wrongCmds || []).map(c => run(fx, ex.setup, c)), ...(ex.wrongText || [])].filter(w => w !== real));
         expect(wrong.size, `${id} needs wrong options`).toBeGreaterThanOrEqual(2);
@@ -341,7 +396,7 @@ test('Pages deploys every file Learn mode loads', () => {
   const root = path.join(__dirname, '..');
   const html = fs.readFileSync(path.join(root, 'prototype/index.html'), 'utf8');
   const local = [...html.matchAll(/(?:src|href)="([^"#:]+?)(?:\?[^"]*)?"/g)].map(m => m[1]).filter(f => !f.startsWith('..') && f !== './');
-  const deploy = fs.readFileSync(path.join(root, '.github/workflows/pages.yml'), 'utf8').match(/cp (prototype\/.*) _site\/prototype\//)[1].split(/\s+/);
+  const deploy = fs.readFileSync(path.join(root, '.github/workflows/pages.yml'), 'utf8').match(/cp (?:-r )?(prototype\/.*) _site\/prototype\//)[1].split(/\s+/);
   expect(local.length).toBeGreaterThan(3);
-  for (const file of local) expect(deploy, file).toContain(`prototype/${file}`);
+  for (const file of local) expect(deploy, file).toContain(file.startsWith('parts/') ? 'prototype/parts' : `prototype/${file}`);
 });

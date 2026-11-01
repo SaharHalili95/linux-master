@@ -25,7 +25,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm ci
-      - run: npx playwright test
+      - run: npx playwright test --grep-invert @part
+
+  # Plays the course part by part, in parallel, so adding units does not slow the browser job.
+  course:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    env:
+      HOME: /root
+    defaults:
+      run:
+        working-directory: tests
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci
+      - run: npx playwright test prototype.spec.js --project=chromium --grep "@part${{ matrix.part }}\\b"
 
   ubuntu-answers:
     runs-on: ubuntu-24.04
