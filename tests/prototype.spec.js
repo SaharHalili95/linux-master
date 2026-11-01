@@ -254,6 +254,24 @@ test('the start bubble never covers the finished lesson above it', async ({ page
   expect(tip.y).toBeGreaterThanOrEqual(above.y + above.height);
 });
 
+test('saved progress survives new units, and the path opens scrolled to the current lesson', async ({ page }) => {
+  await page.goto('./prototype/');
+  const keys = await page.evaluate(() => { const open = COURSE.filter(u => !u.locked); return open.slice(0, -1).flatMap(unitNodes).map(n => n.key); });
+  await page.evaluate(done => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ done })); }, keys);
+  await page.reload();
+  await expect(page.locator('.node.current')).toBeInViewport();
+  const state = await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')));
+  expect(state.done).toEqual(keys);
+});
+
+test('every part gets one header, in order, and units show their exams', async ({ page }) => {
+  await page.goto('./prototype/');
+  const parts = await page.evaluate(() => [...new Set(COURSE.map(u => u.section))]);
+  await expect(page.locator('.part-header')).toHaveCount(parts.length);
+  expect(await page.locator('.part-header').evaluateAll(els => els.map(e => Number(e.dataset.part)))).toEqual(parts);
+  await expect(page.locator('.unit-banner').first().locator('.exam-chip', { hasText: 'LPIC' })).toHaveCount(1);
+});
+
 test('the whole course can be played to the end, unit after unit @content', async ({ page }) => {
   test.setTimeout(240_000);
   const errors = [];
@@ -341,7 +359,7 @@ test('Pages deploys every file Learn mode loads', () => {
   const root = path.join(__dirname, '..');
   const html = fs.readFileSync(path.join(root, 'prototype/index.html'), 'utf8');
   const local = [...html.matchAll(/(?:src|href)="([^"#:]+?)(?:\?[^"]*)?"/g)].map(m => m[1]).filter(f => !f.startsWith('..') && f !== './');
-  const deploy = fs.readFileSync(path.join(root, '.github/workflows/pages.yml'), 'utf8').match(/cp (prototype\/.*) _site\/prototype\//)[1].split(/\s+/);
+  const deploy = fs.readFileSync(path.join(root, '.github/workflows/pages.yml'), 'utf8').match(/cp (?:-r )?(prototype\/.*) _site\/prototype\//)[1].split(/\s+/);
   expect(local.length).toBeGreaterThan(3);
-  for (const file of local) expect(deploy, file).toContain(`prototype/${file}`);
+  for (const file of local) expect(deploy, file).toContain(file.startsWith('parts/') ? 'prototype/parts' : `prototype/${file}`);
 });

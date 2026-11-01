@@ -36,7 +36,7 @@ jobs:
           mkdir _site
           cp index.html styles.css shell.js app.js manifest.webmanifest sw.js icon-180.png icon-192.png icon-512.png _site/
           cp -r data _site/
-          mkdir _site/prototype && cp prototype/index.html prototype/styles.css prototype/i18n.js prototype/units.js prototype/lessons.js prototype/app.js _site/prototype/
+          mkdir _site/prototype && cp -r prototype/index.html prototype/styles.css prototype/i18n.js prototype/units.js prototype/lessons.js prototype/app.js prototype/parts _site/prototype/
           touch _site/.nojekyll
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v4

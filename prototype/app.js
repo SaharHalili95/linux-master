@@ -77,9 +77,13 @@ function renderPath() {
   const root = $('path'); root.innerHTML = '';
   const order = COURSE.filter(u => !u.locked).flatMap(unitNodes);
   const current = order.find(n => !S.done.includes(n.key))?.key;
+  let part;
   for (const unit of COURSE) {
+    if (unit.section !== part) { part = unit.section; const h = el('h2', 'part-header', t('partN', part, tr(PARTS[part]))); h.dataset.part = part; root.append(h); }
     const banner = el('div', `unit-banner ${unit.color}${unit.locked ? ' locked' : ''}`);
     const txt = el('div'); txt.append(el('div', 'unit-kicker', t('kicker', unit.section, unit.unit)), el('h2', '', tr(unit.title)), el('div', 'unit-sub', tr(unit.subtitle)));
+    const exams = [['L', 'LPIC-1'], ['R', 'RHCSA'], ['F', 'LFCS']].filter(([k]) => unit.exams?.some(e => e.startsWith(k)));
+    if (exams.length) { const chips = el('div', 'exam-chips'); for (const [, name] of exams) chips.append(el('span', 'exam-chip', name)); txt.append(chips); }
     banner.append(txt, el('div', 'unit-book', unit.locked ? '🔒' : '📘')); root.append(banner);
     const list = el('ol', 'nodes');
     const nodes = unit.locked ? NODE_PLAN.map(([id, kind]) => ({ key: unitKey(unit, id), kind: kind === 'boss' ? 'boss' : 'lesson', unit, lockedUnit: true })).filter(n => n.key !== unitKey(unit, 'c1')) : unitNodes(unit);
@@ -445,3 +449,5 @@ $('langBtn').onclick = () => {
 };
 applyLanguage();
 showTab('learn');
+history.scrollRestoration = 'manual';
+document.querySelector('.node.current')?.scrollIntoView({ block: 'center' });

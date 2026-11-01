@@ -31,7 +31,7 @@ const READ = T('קראו והשלימו את המשפט', 'Read and complete the
 const CHALLENGE = T('אתגר היחידה', 'Unit challenge');
 
 const UNIT_2 = {
-  section: 1, unit: 2, title: T('קריאת קבצים', 'Reading files'), subtitle: T('קוראים קבצים מההתחלה ומהסוף', 'Reading files from the start and the end'), color: 'purple', fixture: homeFixture,
+  section: 1, unit: 2, exams: ['L103.1'], title: T('קריאת קבצים', 'Reading files'), subtitle: T('קוראים קבצים מההתחלה ומהסוף', 'Reading files from the start and the end'), color: 'purple', fixture: homeFixture,
   lessons: [
     { title: T('cat', 'cat'), exercises: [
       { type: 'teach', known: true, cmd: 'cat', name: 'concatenate', text: T('כבר השתמשתם בה באתגר. היא מדפיסה את כל התוכן של קובץ למסך.', 'You already used it in the challenge. It prints the whole content of a file to the screen.'), demo: [[], 'cat notes.txt'] },
@@ -83,7 +83,7 @@ const UNIT_2 = {
 };
 
 const UNIT_3 = {
-  section: 1, unit: 3, title: T('יוצרים ומזיזים', 'Making and moving'), subtitle: T('תיקיות, העתקה, העברה ומחיקה', 'Folders, copying, moving and deleting'), color: 'blue', fixture: homeFixture,
+  section: 1, unit: 3, exams: ['L103.3', 'R', 'F'], title: T('יוצרים ומזיזים', 'Making and moving'), subtitle: T('תיקיות, העתקה, העברה ומחיקה', 'Folders, copying, moving and deleting'), color: 'blue', fixture: homeFixture,
   lessons: [
     { title: T('mkdir', 'mkdir'), exercises: [
       { type: 'teach', cmd: 'mkdir', name: 'make directory', text: T('יוצרת תיקייה חדשה. אין פלט, אבל ls תראה אותה.', 'Creates a new folder. No output, but ls will show it.'), demo: [['mkdir music'], 'ls'] },
@@ -138,7 +138,7 @@ const UNIT_3 = {
 };
 
 const UNIT_4 = {
-  section: 2, unit: 4, title: T('מחפשים', 'Searching'), subtitle: T('מוצאים מילים בקבצים וקבצים בתיקיות', 'Finding words in files and files in folders'), color: 'green', fixture: homeFixture,
+  section: 1, unit: 4, exams: ['L103.7', 'L104.7'], title: T('מחפשים', 'Searching'), subtitle: T('מוצאים מילים בקבצים וקבצים בתיקיות', 'Finding words in files and files in folders'), color: 'green', fixture: homeFixture,
   lessons: [
     { title: T('grep', 'grep'), exercises: [
       { type: 'teach', cmd: 'grep', name: 'global regular expression print', text: T('מחפשת מילה בקובץ ומדפיסה רק את השורות שבהן היא מופיעה.', 'Searches a file for a word and prints only the lines that contain it.'), demo: [[], 'grep ERROR logs/app.log'] },
@@ -189,7 +189,7 @@ const UNIT_4 = {
 };
 
 const UNIT_5 = {
-  section: 2, unit: 5, title: T('צינורות והפניות', 'Pipes and redirection'), subtitle: T('מחברים פקודות ושומרים פלט לקבצים', 'Chaining commands and saving output to files'), color: 'purple', fixture: homeFixture,
+  section: 1, unit: 5, exams: ['L103.4', 'R'], title: T('צינורות והפניות', 'Pipes and redirection'), subtitle: T('מחברים פקודות ושומרים פלט לקבצים', 'Chaining commands and saving output to files'), color: 'purple', fixture: homeFixture,
   lessons: [
     { title: T('הצינור |', 'The pipe |'), exercises: [
       { type: 'teach', cmd: '|', name: 'pipe', text: T('הצינור מעביר את הפלט של פקודה אחת לפקודה הבאה.', "The pipe sends one command's output into the next command."), demo: [[], 'cat notes.txt | grep call'] },
@@ -247,7 +247,7 @@ const UNIT_5 = {
 };
 
 const UNIT_6 = {
-  section: 2, unit: 6, title: T('ממיינים, סופרים, חותכים', 'Sort, count, cut'), subtitle: T('הופכים טקסט לנתונים', 'Turning text into data'), color: 'blue', fixture: homeFixture,
+  section: 1, unit: 6, exams: ['L103.2'], title: T('ממיינים, סופרים, חותכים', 'Sort, count, cut'), subtitle: T('הופכים טקסט לנתונים', 'Turning text into data'), color: 'blue', fixture: homeFixture,
   lessons: [
     { title: T('sort', 'sort'), exercises: [
       { type: 'teach', cmd: 'sort', name: 'sort', text: T('ממיינת שורות לפי סדר האלפבית.', 'Sorts lines into alphabetical order.'), demo: [[], 'sort fruits.txt'] },
