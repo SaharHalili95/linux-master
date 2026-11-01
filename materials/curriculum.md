@@ -52,12 +52,12 @@ Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a u
 | 24 | Special bits and ACLs | SUID, SGID, sticky, `chmod 4755`, `getfacl`, `setfacl` | L104.5 R F | 🎞 | live |
 | 25 | The filesystem tree | FHS: `/etc` `/var` `/usr` `/opt` `/home` `/proc` `/dev` `/boot` `/tmp` | L104.7 | ✅ | live |
 | 26 | Finding anything | `find -perm -user -size -mtime -exec`, `locate`, `updatedb`, `whereis`, `which` | L104.7 R | 🟡 | live |
-| 27 | Disks and partitions | `lsblk`, `blkid`, `fdisk`, `gdisk`, `parted`, MBR vs GPT, partition layout | L102.1 L104.1 R F | 🎞 | |
-| 28 | Filesystems | `mkfs.ext4`, `mkfs.xfs`, `mkfs.vfat`, `fsck`, `e2fsck`, `xfs_repair`, `tune2fs` | L104.1 L104.2 R F | 🎞 | |
-| 29 | Mounting | `mount`, `umount`, `/etc/fstab`, UUID, `findmnt`, `mount -a` | L104.3 R F | 🎞 | |
-| 30 | Space and quotas | `df -h`, `du -sh`, `du --max-depth`, quotas, `iostat`, full-disk troubleshooting | L104.2 | 🟡 | |
-| 31 | LVM | PV, VG, LV, `pvcreate`, `vgcreate`, `lvcreate`, `lvextend -r` | R F | 🎞 | |
-| 32 | Swap and network storage | `mkswap`, `swapon`, NFS mounts, `autofs`, network block devices (iSCSI/NBD) | L104.1 R F | 🎞 | |
+| 27 | Disks and partitions | `lsblk`, `blkid`, `fdisk`, `gdisk`, `parted`, MBR vs GPT, partition layout | L102.1 L104.1 R F | 🎞 | live |
+| 28 | Filesystems | `mkfs.ext4`, `mkfs.xfs`, `mkfs.vfat`, `fsck`, `e2fsck`, `xfs_repair`, `tune2fs` | L104.1 L104.2 R F | 🎞 | live |
+| 29 | Mounting | `mount`, `umount`, `/etc/fstab`, UUID, `findmnt`, `mount -a` | L104.3 R F | 🎞 | live |
+| 30 | Space and quotas | `df -h`, `du -sh`, `du --max-depth`, quotas, `iostat`, full-disk troubleshooting | L104.2 | 🟡 | live |
+| 31 | LVM | PV, VG, LV, `pvcreate`, `vgcreate`, `lvcreate`, `lvextend -r` | R F | 🎞 | live |
+| 32 | Swap and network storage | `mkswap`, `swapon`, NFS mounts, `autofs`, network block devices (iSCSI/NBD) | L104.1 R F | 🎞 | live |
 
 ## Part 4: Users, processes, services and boot (units 33-44)
 
