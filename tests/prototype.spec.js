@@ -33,7 +33,7 @@ async function solve(page, lang = 'he') {
   }
   if (SHOTS && ex.type !== 'match') await page.screenshot({ path: `${SHOTS}/ex-${ex.uid}-${ex.type}.png` });
   if (ex.type !== 'match') await page.click('#checkBtn');
-  await expect(page.locator('#foot')).toHaveClass(/good/);
+  await expect(page.locator('#foot')).toHaveClass(/good|saved/);
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/ex-${ex.uid}-${ex.type}-good.png` });
   await page.click('#checkBtn');
   return ex;
@@ -221,7 +221,7 @@ for (const lang of ['he', 'en']) test(`match tiles form an even grid on a phone 
 
 test('"what will it print?" shows the files the command reads, and nothing for made-up files', async ({ page }) => {
   await page.goto('./prototype/');
-  const seen = await page.evaluate(() => COURSE.filter(u => !u.locked).flatMap(unit => withFixture(unit, unit.lessons.flatMap(l => l.exercises))).filter(ex => ex.type === 'output').map(ex => {
+  const seen = await page.evaluate(() => COURSE.filter(u => !u.locked && !u.exam).flatMap(unit => withFixture(unit, unit.lessons.flatMap(l => l.exercises))).filter(ex => ex.type === 'output').map(ex => {
     startLesson('peek', [ex]);
     return { cmd: ex.cmd, files: [...document.querySelectorAll('.file-peek-h')].map(h => h.textContent) };
   }));
@@ -237,7 +237,7 @@ test('every exercise fits the screen width, with no sideways scrolling', async (
   await page.goto('./prototype/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  const wide = await page.evaluate(() => COURSE.filter(u => !u.locked).flatMap(unit => withFixture(unit, [...unit.lessons.flatMap(l => l.exercises), ...(unit.boss.exercises || [])])).flatMap(ex => {
+  const wide = await page.evaluate(() => COURSE.filter(u => !u.locked && !u.exam).flatMap(unit => withFixture(unit, [...unit.lessons.flatMap(l => l.exercises), ...(unit.boss.exercises || [])])).flatMap(ex => {
     startLesson('layout', [ex]);
     if (ex.type === 'teach') $('checkBtn').click();
     const main = $('lessonMain');
@@ -305,11 +305,11 @@ for (let part = 1; part <= 10; part++) test(`part ${part} can be played to the e
   page.on('pageerror', e => errors.push(String(e)));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./prototype/');
-  const [before, units] = await page.evaluate(p => { const open = COURSE.filter(u => !u.locked); return [open.filter(u => u.section < p).flatMap(unitNodes).map(n => n.key), open.filter(u => u.section === p).length]; }, part);
-  test.skip(!units, `part ${part} has no units yet`);
+  const [before, nodes] = await page.evaluate(p => { const open = COURSE.filter(u => !u.locked); return [open.filter(u => u.section < p).flatMap(unitNodes).map(n => n.key), open.filter(u => u.section === p).flatMap(unitNodes).length]; }, part);
+  test.skip(!nodes, `part ${part} has no units yet`);
   await page.evaluate(done => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, done })); }, before);
   await page.reload();
-  for (let n = 0; n < units * 6; n++) {
+  for (let n = 0; n < nodes; n++) {
     await page.locator('.node.current').click();
     await page.locator('#pop .btn').click();
     if (!(await page.locator('#lesson').isVisible())) continue;
@@ -318,7 +318,7 @@ for (let part = 1; part <= 10; part++) test(`part ${part} can be played to the e
     if (await page.locator('#streakScreen').isVisible()) await page.click('#streakBtn');
   }
   const state = await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')));
-  expect(state.done).toHaveLength(before.length + units * 6);
+  expect(state.done).toHaveLength(before.length + nodes);
   expect(state.mistakes).toEqual([]);
   expect(errors).toEqual([]);
 });
@@ -338,7 +338,12 @@ test('every exercise in every unit is answerable and fully translated @content',
   const texts = [];
   const walk = v => { if (v && typeof v === 'object') { if ('he' in v && 'en' in v) texts.push(v); else Object.values(v).forEach(walk); } };
   let count = 0;
-  for (const unit of COURSE.filter(u => !u.locked)) {
+  for (const unit of COURSE.filter(u => u.exam)) {
+    expect(['L', 'R', 'F'], `unit ${unit.unit}`).toContain(unit.exam.tag);
+    expect(COURSE.filter(u => !u.locked && !u.exam && u.exams?.some(e => e.startsWith(unit.exam.tag))).length, `unit ${unit.unit} has units to draw from`).toBeGreaterThan(0);
+    walk(unit);
+  }
+  for (const unit of COURSE.filter(u => !u.locked && !u.exam)) {
     const fx = unit.fixture || ctx.unitFixture || (() => vm.runInContext('unitFixture()', ctx));
     const exercises = [...unit.lessons.flatMap((l, li) => l.exercises.map((ex, i) => [`${unit.unit}/L${li}.${i}`, ex])), ...(unit.boss.exercises || []).map((ex, i) => [`${unit.unit}/boss.${i}`, ex])];
     expect(unit.lessons, `unit ${unit.unit}`).toHaveLength(4);
@@ -404,6 +409,44 @@ test('every official exam objective maps to a real unit, and every unit teaches 
   const mapped = new Set();
   for (const o of [...lpic, ...rhcsa, ...lfcs]) { expect(o.units.length, o.id).toBeGreaterThan(0); for (const u of o.units) { expect(units, o.id).toContain(u); mapped.add(u); } }
   for (let u = 1; u <= 77; u++) expect(mapped.has(u), `unit ${u} teaches no objective`).toBe(true);
+});
+
+test('a mock exam draws its questions only from tagged units, with no teach cards or live terminals', async ({ page }) => {
+  await page.goto('./prototype/');
+  const r = await page.evaluate(() => { const qs = buildExam('L', 60); const tagged = new Set(COURSE.filter(u => u.exams?.some(e => e.startsWith('L'))).map(u => tr(u.title))); return { n: qs.length, types: [...new Set(qs.map(q => q.type))], foreign: qs.filter(q => !tagged.has(tr(q.topic))).length }; });
+  expect(r.n).toBe(60);
+  expect(r.types).not.toContain('teach');
+  expect(r.types).not.toContain('terminal');
+  expect(r.foreign).toBe(0);
+});
+
+test('quitting a mock exam halfway leaves progress and mistakes untouched', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
+  await page.reload();
+  await page.evaluate(() => startExam(COURSE.find(u => u.unit === 79), 'u79-exam', 5));
+  await expect(page.locator('#exTag')).toContainText('1');
+  page.on('dialog', d => d.accept());
+  await page.click('#quitBtn');
+  const state = await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')));
+  expect(state.done || []).not.toContain('u79-exam');
+  expect(state.mistakes || []).toEqual([]);
+});
+
+test('a mock exam reveals nothing until the end, then shows the score and what to review', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
+  await page.reload();
+  await page.evaluate(() => startExam(COURSE.find(u => u.unit === 80), 'u80-exam', 3));
+  // Answer the first question wrongly on purpose (an empty scenario or the first option), the rest right.
+  for (let i = 0; i < 3; i++) {
+    if (i === 0) await page.evaluate(() => { L.value = '__wrong__'; L.ex.solution = L.ex.solution ?? '__right__'; onFootButton(); });
+    else await solve(page);
+    if (i === 0) { await expect(page.locator('#foot')).toHaveClass(/saved/); await expect(page.locator('#fbDetail')).toBeEmpty(); await page.click('#checkBtn'); }
+  }
+  await expect(page.locator('#end')).toBeVisible();
+  await expect(page.locator('#endAcc')).toHaveText('67%');
+  await expect(page.locator('#endQuests')).not.toBeEmpty();
 });
 
 test('Pages deploys every file Learn mode loads', () => {

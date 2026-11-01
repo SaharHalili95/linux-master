@@ -69,10 +69,10 @@ function showTab(name) {
 // Unit 1 keeps its original keys (L0, c1, boss) so progress saved before more units existed still counts.
 const unitKey = (unit, id) => (unit.unit === 1 ? id : `u${unit.unit}-${id}`);
 const NODE_PLAN = [['L0', 'lesson', 0], ['L1', 'lesson', 1], ['c1', 'chest'], ['L2', 'lesson', 2], ['L3', 'lesson', 3], ['boss', 'boss']];
-const unitNodes = unit => NODE_PLAN.map(([id, kind, i]) => ({ key: unitKey(unit, id), kind, i, unit }));
+const unitNodes = unit => unit.exam ? [{ key: unitKey(unit, 'exam'), kind: 'exam', unit }] : NODE_PLAN.map(([id, kind, i]) => ({ key: unitKey(unit, id), kind, i, unit }));
 const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: unit.fixture || unitFixture }));
 const OFFSETS = [0, 52, 78, 52, 0, -52, -78, -52];
-const ICONS = { lesson: '★', chest: '🎁', boss: '$_', done: '✓', lock: '🔒' };
+const ICONS = { lesson: '★', chest: '🎁', boss: '$_', exam: '📝', done: '✓', lock: '🔒' };
 function renderPath() {
   const root = $('path'); root.innerHTML = '';
   const order = COURSE.filter(u => !u.locked).flatMap(unitNodes);
@@ -95,7 +95,7 @@ function renderPath() {
       b.textContent = state === 'done' && n.kind !== 'chest' ? ICONS.done : state === 'locked' && n.kind === 'lesson' ? ICONS.lock : ICONS[n.kind];
       if (n.kind === 'boss') b.dir = 'ltr';
       if (n.kind === 'lesson') b.append(el('span', 'node-num', String(++lessonNo)));
-      b.setAttribute('aria-label', n.lockedUnit ? (n.kind === 'lesson' ? `${lessonNo} · ${t('locked')}` : t('locked')) : n.kind === 'lesson' ? t('lessonN', n.i + 1, tr(unit.lessons[n.i].title)) : n.kind === 'chest' ? t('chest') : tr(unit.boss.title));
+      b.setAttribute('aria-label', n.lockedUnit ? (n.kind === 'lesson' ? `${lessonNo} · ${t('locked')}` : t('locked')) : n.kind === 'lesson' ? t('lessonN', n.i + 1, tr(unit.lessons[n.i].title)) : n.kind === 'chest' ? t('chest') : n.kind === 'exam' ? tr(unit.title) : tr(unit.boss.title));
       b.onclick = () => openPop(b, n, state);
       if (state === 'current') { const tip = el('div', 'start-tip', n.kind === 'chest' ? t('open') : t('start')); li.append(tip); li.classList.add('tipped'); }
       li.append(b);
@@ -113,6 +113,12 @@ function openPop(anchor, n, state) {
   else if (n.kind === 'chest') {
     pop.append(el('h3', '', state === 'done' ? t('chestOpened') : t('chest')), el('p', '', state === 'done' ? t('chestDone') : t('chestText')));
     if (state === 'current') { const go = el('button', 'btn primary', t('chestBtn')); go.onclick = () => openChest(n.key); pop.append(go); }
+  } else if (n.kind === 'exam') {
+    const x = unit.exam;
+    pop.append(el('h3', '', tr(unit.title)), el('p', '', t('examInfo', x.count, x.minutes, Math.round(x.pass * 100))));
+    const go = el('button', 'btn primary', state === 'done' ? t('examAgain') : t('startExam'));
+    go.onclick = () => { closePop(); startExam(unit, n.key); };
+    pop.append(go);
   } else {
     const title = tr(n.kind === 'boss' ? unit.boss.title : unit.lessons[n.i].title);
     pop.append(el('h3', '', title), el('p', '', n.kind === 'boss' ? tr(unit.boss.intro || unit.boss.text) : t('lessonOf', n.i + 1, unit.lessons.length)));
@@ -140,12 +146,30 @@ function startBoss(unit, key) {
   const boss = bossFixture();
   startLesson(key, [{ type: 'boss', prompt: unit.boss.text(boss.hideIn), boss }], { boss: true });
 }
+// A mock exam draws questions from every unit tagged for the exam (L, R or F). For LPIC it first takes one question
+// per objective so every objective is asked, then fills up at random. No teach cards and no live terminals.
+function buildExam(tag, count) {
+  const units = COURSE.filter(u => !u.locked && !u.exam && u.exams?.some(e => e.startsWith(tag)));
+  const pool = units.flatMap(u => withFixture(u, [...u.lessons.flatMap(l => l.exercises), ...(u.boss.exercises || [])]).filter(ex => !['teach', 'terminal', 'boss'].includes(ex.type)).map(ex => ({ ...ex, topic: u.title, objs: u.exams.filter(e => e.startsWith(tag)) })));
+  const picked = new Set();
+  if (tag === 'L') for (const obj of [...new Set(pool.flatMap(ex => ex.objs))]) { const options = shuffle(pool.filter(ex => ex.objs.includes(obj) && !picked.has(ex))); if (options.length) picked.add(options[0]); }
+  for (const ex of shuffle(pool)) { if (picked.size >= count) break; picked.add(ex); }
+  return shuffle([...picked]).slice(0, count);
+}
+function startExam(unit, key, count = unit.exam.count) {
+  startLesson(key, buildExam(unit.exam.tag, count), { exam: unit.exam, results: [] });
+  if (unit.exam.minutes) {
+    const end = Date.now() + unit.exam.minutes * 60000;
+    const tick = () => { if (!L?.opts.exam) return clearInterval(L?.timer); const left = Math.max(0, Math.round((end - Date.now()) / 1000)); $('comboTag').textContent = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; if (!left) finishLesson(); };
+    L.timer = setInterval(tick, 1000); tick();
+  }
+}
 function next() {
   if (!L.queue.length) return finishLesson();
   L.ex = L.queue.shift(); L.answered = false; L.value = null;
   const ex = L.ex;
-  $('bar').style.width = `${(L.correct / Math.max(1, L.total)) * 100}%`;
-  $('exTag').textContent = ex.type === 'teach' ? t(ex.known ? 'knownCmd' : 'newCmd') : ex.retry ? t('retry') : '';
+  $('bar').style.width = `${((L.opts.exam ? L.correct + L.mistakes : L.correct) / Math.max(1, L.total)) * 100}%`;
+  $('exTag').textContent = L.opts.exam ? t('examQ', L.total - L.queue.length, L.total) : ex.type === 'teach' ? t(ex.known ? 'knownCmd' : 'newCmd') : ex.retry ? t('retry') : '';
   $('exTag').className = `ex-tag${ex.type === 'teach' ? ' new' : ex.retry ? ' retry' : ''}`;
   $('exPrompt').textContent = ex.type === 'teach' ? '' : tr(ex.prompt);
   $('exPrompt').hidden = ex.type === 'teach';
@@ -176,6 +200,13 @@ function onFootButton() {
 }
 function answer(ok, solution = '', why = '') {
   L.answered = true;
+  // In an exam nothing is revealed until the end, and wrong answers do not come back or go to practice.
+  if (L.opts.exam) {
+    if (ok) L.correct++; else L.mistakes++;
+    L.opts.results.push({ ok, topic: L.ex.topic });
+    setFoot('saved', t('examSaved')); setCan(true); $('checkBtn').focus({ preventScroll: true });
+    return;
+  }
   if (ok) {
     L.correct++; L.combo++; L.best = Math.max(L.best, L.combo); SFX.good();
     const praise = t('praise');
@@ -193,7 +224,7 @@ function answer(ok, solution = '', why = '') {
   setCan(true); $('checkBtn').focus({ preventScroll: true }); save();
 }
 function quitLesson() { if (L && (L.correct || L.mistakes) && !confirm(t('quitConfirm'))) return; closeOverlays(); }
-function closeOverlays() { ['lesson', 'end', 'streakScreen'].forEach(id => { $(id).hidden = true; }); document.body.classList.remove('in-lesson'); L = null; showTab('learn'); }
+function closeOverlays() { clearInterval(L?.timer); ['lesson', 'end', 'streakScreen'].forEach(id => { $(id).hidden = true; }); document.body.classList.remove('in-lesson'); $('comboTag').textContent = ''; L = null; showTab('learn'); }
 
 // ---------- Exercise renderers ----------
 function optionButton(label, value, mono, onPick, index) {
@@ -371,7 +402,25 @@ const CHECK = {
 };
 
 // ---------- End of lesson ----------
+function finishExam() {
+  clearInterval(L.timer);
+  const x = L.opts.exam, score = L.correct / Math.max(1, L.total), passed = score >= x.pass, secs = Math.round((Date.now() - L.start) / 1000);
+  const misses = {}; for (const r of L.opts.results) if (!r.ok) misses[tr(r.topic)] = (misses[tr(r.topic)] || 0) + 1;
+  const weakest = Object.entries(misses).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name);
+  if (passed) { S.xp += 50; if (!S.done.includes(L.key)) S.done.push(L.key); }
+  save();
+  $('lesson').hidden = true; $('end').hidden = false; $('comboTag').textContent = '';
+  $('endMascot').innerHTML = mascot(passed ? 'party' : 'idle');
+  $('endTitle').textContent = passed ? t('examPassed') : t('examFailed');
+  $('endXp').textContent = passed ? 50 : 0; $('endAcc').textContent = `${Math.round(score * 100)}%`;
+  $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+  $('endQuests').textContent = weakest.length ? t('examReview', weakest.join(', ')) : '';
+  $('endBtn').onclick = closeOverlays;
+  if (passed) { SFX.win(); confetti(); }
+  $('endBtn').focus();
+}
 function finishLesson() {
+  if (L.opts.exam) return finishExam();
   const perfect = L.mistakes === 0 && !L.matchMiss, secs = Math.round((Date.now() - L.start) / 1000);
   const xp = L.opts.boss ? 25 : L.opts.replay || L.opts.practice ? 5 : 10 + (perfect ? 5 : 0);
   const firstToday = S.lastDay !== dayKey();
@@ -400,7 +449,7 @@ function showStreak() {
 }
 
 // ---------- Other tabs ----------
-function allExercises() { return COURSE.filter(u => !u.locked).flatMap(u => u.lessons.flatMap((ls, li) => withFixture(u, ls.exercises).map((ex, i) => ({ ...ex, uid: `${unitKey(u, `L${li}`)}.${i}` })))).filter(e => e.type !== 'teach'); }
+function allExercises() { return COURSE.filter(u => !u.locked && !u.exam).flatMap(u => u.lessons.flatMap((ls, li) => withFixture(u, ls.exercises).map((ex, i) => ({ ...ex, uid: `${unitKey(u, `L${li}`)}.${i}` })))).filter(e => e.type !== 'teach'); }
 function renderPractice() {
   const n = S.mistakes.length; $('mistakesCount').textContent = n ? t('mistakesN', n) : t('noMistakes');
   $('practiceMistakes').disabled = !n;
