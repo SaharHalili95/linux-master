@@ -272,6 +272,16 @@ test('every part gets one header, in order, and units show their exams', async (
   await expect(page.locator('.unit-banner').first().locator('.exam-chip', { hasText: 'LPIC' })).toHaveCount(1);
 });
 
+test('a recorded output card shows the command, where it was recorded, and the real output as the answer', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => startLesson('rec-test', [{ type: 'output', prompt: WHAT, rec: 'ubuntu-uname-m', wrongText: ['arm64', 'i386'] }]));
+  await expect(page.locator('.rec-label')).toContainText('Ubuntu 24.04');
+  await expect(page.locator('.term')).toContainText('uname -m');
+  await page.locator('.opt', { hasText: 'x86_64' }).click();
+  await page.click('#checkBtn');
+  await expect(page.locator('#foot')).toHaveClass(/good/);
+});
+
 test('the whole course can be played to the end, unit after unit @content', async ({ page }) => {
   test.setTimeout(240_000);
   const errors = [];
@@ -300,10 +310,12 @@ test('the whole course can be played to the end, unit after unit @content', asyn
 test('every exercise in every unit is answerable and fully translated @content', () => {
   const vm = require('vm');
   const root = path.join(__dirname, '..');
-  const src = ['shell.js', 'prototype/i18n.js', 'prototype/units.js', 'prototype/lessons.js'].map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
+  const parts = fs.readdirSync(path.join(root, 'prototype/parts')).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1))).map(f => `prototype/parts/${f}`);
+  const src = ['shell.js', 'prototype/i18n.js', 'prototype/units.js', 'prototype/lessons.js', 'prototype/recorded.js', ...parts].map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
   const ctx = vm.createContext({ localStorage: { getItem: () => null } });
-  vm.runInContext(`${src}\nthis.out = { COURSE, Shell };`, ctx);
-  const { COURSE, Shell } = ctx.out;
+  vm.runInContext(`${src}\nthis.out = { COURSE, Shell, RECORDED };`, ctx);
+  const { COURSE, Shell, RECORDED } = ctx.out;
+  for (const [id, r] of Object.entries(RECORDED)) expect(r.out.trim(), `recording ${id} is empty`).toBeTruthy();
   const run = (fx, setup, cmd) => { const sh = new Shell(fx()); for (const c of setup || []) sh.run(c); const r = sh.run(cmd); return (r.out + r.err).replace(/\n$/, ''); };
   const texts = [];
   const walk = v => { if (v && typeof v === 'object') { if ('he' in v && 'en' in v) texts.push(v); else Object.values(v).forEach(walk); } };
@@ -316,7 +328,11 @@ test('every exercise in every unit is answerable and fully translated @content',
     for (const [id, ex] of exercises) {
       count++;
       if (ex.demo) run(fx, ex.demo[0], ex.demo[1]);
-      if (ex.type === 'output') {
+      if (ex.type === 'output' && ex.rec) {
+        for (const r of [ex.rec, ...(ex.wrongRec || [])]) expect(RECORDED[r], `${id}: recording ${r}`).toBeTruthy();
+        const real = RECORDED[ex.rec].out;
+        expect(new Set([...(ex.wrongRec || []).map(r => RECORDED[r].out), ...(ex.wrongText || [])].filter(w => w !== real)).size, `${id} needs wrong options`).toBeGreaterThanOrEqual(2);
+      } else if (ex.type === 'output') {
         const real = run(fx, ex.setup, ex.cmd);
         const wrong = new Set([...(ex.wrongCmds || []).map(c => run(fx, ex.setup, c)), ...(ex.wrongText || [])].filter(w => w !== real));
         expect(wrong.size, `${id} needs wrong options`).toBeGreaterThanOrEqual(2);

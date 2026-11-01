@@ -202,6 +202,12 @@ function optionButton(label, value, mono, onPick, index) {
   b.append(k, t); b.onclick = () => { SFX.tap(); onPick(b); }; return b;
 }
 function pickOne(root) { return b => { if (L.answered) return; root.querySelectorAll('.opt').forEach(o => o.classList.toggle('sel', o === b)); L.value = b.dataset.value; setCan(true); }; }
+function outputOptions(root, right, wrong) {
+  const options = shuffle([right, ...[...new Set(wrong.filter(w => w !== right))].slice(0, 3)]);
+  const list = el('div', 'opts outputs'); const pick = pickOne(list);
+  options.forEach((o, i) => { const b = optionButton('', o, false, pick, i); b.lastChild.replaceWith(Object.assign(el('pre', 'out-opt', o || t('noOutput')), { dir: 'ltr' })); list.append(b); });
+  root.append(list);
+}
 function termBlock(lines) {
   const t = el('div', 'term'); t.dir = 'ltr';
   for (const [prompt, cmd, out] of lines) { const row = el('div', 'term-line'); row.append(el('span', 'ps1', prompt), el('span', 'typed', cmd)); t.append(row); if (out) t.append(el('pre', 'term-out', out)); }
@@ -242,6 +248,12 @@ const RENDER = {
     root.append(line, chips);
   },
   output(root, ex) {
+    if (ex.rec) {
+      const rec = RECORDED[ex.rec];
+      root.append(el('div', 'rec-label', t('recordedOn', rec.distro)), termBlock([[promptFor('/home/user'), rec.cmd, '?']]));
+      ex.solution = rec.out;
+      return outputOptions(root, rec.out, [...(ex.wrongRec || []).map(id => RECORDED[id].out), ...(ex.wrongText || [])]);
+    }
     const fx = ex.fx, real = runIn(ex.setup, ex.cmd, fx());
     // Show every starting file the commands read, so the answer never depends on content the learner has not seen.
     const lines = [], start = new Shell(fx()), peek = new Map(); let sh = new Shell(fx());
@@ -251,12 +263,8 @@ const RENDER = {
     }
     for (const [name, content] of peek.values()) { const card = el('div', 'file-peek'); card.append(el('div', 'file-peek-h', t('fileHas', name)), Object.assign(el('pre', '', content.replace(/\n$/, '')), { dir: 'ltr' })); root.append(card); }
     root.append(termBlock(lines));
-    const wrong = [...(ex.wrongCmds || []).map(c => runIn(ex.setup, c, fx()).out), ...(ex.wrongText || [])].filter(w => w !== real.out);
-    const options = shuffle([real.out, ...[...new Set(wrong)].slice(0, 3)]);
     ex.solution = real.out;
-    const list = el('div', 'opts outputs'); const pick = pickOne(list);
-    options.forEach((o, i) => { const b = optionButton('', o, false, pick, i); b.lastChild.replaceWith(Object.assign(el('pre', 'out-opt', o || t('noOutput')), { dir: 'ltr' })); list.append(b); });
-    root.append(list);
+    outputOptions(root, real.out, [...(ex.wrongCmds || []).map(c => runIn(ex.setup, c, fx()).out), ...(ex.wrongText || [])]);
   },
   tiles(root, ex) {
     const answerRow = el('div', 'answer-row'); answerRow.dir = 'ltr';

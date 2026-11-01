@@ -1,0 +1,3 @@
+# Commands recorded on AlmaLinux 10 (standing in for RHEL 10). One per line: id<TAB>command.
+# packages: procps-ng iproute
+alma-uname	uname -s

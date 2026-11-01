@@ -6,7 +6,7 @@ const globals = require('globals');
 const content = Object.fromEntries(['commands', 'introNames', 'abbreviations', 'fullName', 'pipeScenarios', 'pipeFlagScenarios', 'professionalScenarios',
   'pipeTwoFlagScenarios', 'workflowScenarios', 'banditScenarios', 'BANDIT_MAP', 'guideUses', 'CONTENT',
   'Shell', 'ShellUnsupported', 'sameOutput', 'previewOutput', 'lessonFixture', 'banditFixture', 'MISSIONS', 'missionPassword',
-  'COURSE', 'unitFixture', 'bossFixture', 'T', 'tr', 't', 'I18N', 'UNIT_2', 'UNIT_3', 'UNIT_4', 'UNIT_5', 'UNIT_6', 'READ', 'PARTS'].map(name => [name, 'readonly']));
+  'COURSE', 'unitFixture', 'bossFixture', 'T', 'tr', 't', 'I18N', 'UNIT_2', 'UNIT_3', 'UNIT_4', 'UNIT_5', 'UNIT_6', 'READ', 'PARTS', 'RECORDED', 'WHAT'].map(name => [name, 'readonly']));
 // The prototype's i18n.js declares LANG and its app.js switches it.
 content.LANG = 'writable';
 
