@@ -184,7 +184,7 @@ function answer(ok, solution = '', why = '') {
     L.mistakes++; L.combo = 0; SFX.bad();
     L.queue.push({ ...L.ex, retry: true });
     if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss) S.mistakes.push(L.ex.uid);
-    setFoot('bad', t('correctAnswer'), L.ex.type === 'terminal' ? { sol: solution } : L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
+    setFoot('bad', t('correctAnswer'), ['terminal', 'scenario'].includes(L.ex.type) ? { sol: solution } : L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
     $('lessonMain').classList.remove('shake'); void $('lessonMain').offsetWidth; $('lessonMain').classList.add('shake');
   }
   if (ok && L.ex.retry) S.mistakes = S.mistakes.filter(id => id !== L.ex.uid);
@@ -202,6 +202,7 @@ function optionButton(label, value, mono, onPick, index) {
   b.append(k, t); b.onclick = () => { SFX.tap(); onPick(b); }; return b;
 }
 function pickOne(root) { return b => { if (L.answered) return; root.querySelectorAll('.opt').forEach(o => o.classList.toggle('sel', o === b)); L.value = b.dataset.value; setCan(true); }; }
+const sameCmd = c => c.trim().replace(/\s+/g, ' ');
 function outputOptions(root, right, wrong) {
   const options = shuffle([right, ...[...new Set(wrong.filter(w => w !== right))].slice(0, 3)]);
   const list = el('div', 'opts outputs'); const pick = pickOne(list);
@@ -246,6 +247,14 @@ const RENDER = {
     const chips = el('div', 'chips');
     shuffle(ex.options).forEach(o => { const c = el('button', 'tile', o); c.type = 'button'; c.dir = 'ltr'; c.onclick = () => { if (L.answered) return; SFX.tap(); chips.querySelectorAll('.tile').forEach(t => t.classList.toggle('sel', t === c)); slot.textContent = o; slot.classList.add('filled'); L.value = o; setCan(true); }; chips.append(c); });
     root.append(line, chips);
+  },
+  scenario(root, ex) {
+    if (ex.rec) { const rec = RECORDED[ex.rec]; root.append(el('div', 'rec-label', t('recordedOn', rec.distro)), termBlock([[promptFor('/home/user'), rec.cmd, rec.out.replace(/\n$/, '')]])); }
+    const row = el('div', 'code-row'); const lab = el('label', '', t('typeCmd')); lab.htmlFor = 'scenarioCmd';
+    const input = el('input'); input.id = 'scenarioCmd'; input.dir = 'ltr'; input.autocomplete = 'off'; input.autocapitalize = 'off'; input.spellcheck = false;
+    input.oninput = () => { L.value = input.value; setCan(!!input.value.trim()); };
+    input.onkeydown = e => { if (e.key === 'Enter' && input.value.trim()) { e.preventDefault(); onFootButton(); } };
+    row.append(lab, input); root.append(row);
   },
   output(root, ex) {
     if (ex.rec) {
@@ -356,6 +365,7 @@ const CHECK = {
   fill: (ex, v) => ({ ok: v === ex.answer, solution: `${ex.before}${ex.answer}${ex.after}` }),
   output: (ex, v) => ({ ok: v === ex.solution, solution: ex.solution || t('noOutput') }),
   tiles: (ex, v) => ({ ok: [ex.answer, ...(ex.accept || [])].includes(v), solution: ex.answer }),
+  scenario: (ex, v) => ({ ok: ex.accept.map(sameCmd).includes(sameCmd(v)), solution: ex.accept[0] }),
   terminal: ex => ({ ok: ex.goal(L.term.sh, L.term.log) && (!ex.ask || L.ask === L.expected), solution: ex.ask ? `${ex.solve.join('\n')}\n${tr(ex.ask)} ${L.expected}` : ex.solve.join('\n') }),
   boss: (ex, v) => ({ ok: v === ex.boss.word, solution: t('bossSolution', ex.boss.word, ex.boss.hideIn), why: t('bossWhy', ex.boss.hideIn) }),
 };

@@ -23,6 +23,7 @@ async function solve(page, lang = 'he') {
     for (const c of await page.evaluate(() => L.ex.solve)) { await page.fill('.term-input input', c); await page.press('.term-input input', 'Enter'); }
     if (await page.evaluate(() => !!L.ex.ask)) await page.fill('#askAnswer', await page.evaluate(() => L.expected));
   }
+  if (ex.type === 'scenario') await page.fill('#scenarioCmd', await page.evaluate(() => L.ex.accept[0]));
   if (ex.type === 'boss') {
     for (const c of [`ls -a ${ex.boss.dir}`, `cat ${ex.boss.dir}/.code`]) { await page.fill('.term-input input', c); await page.press('.term-input input', 'Enter'); }
     await expect(page.locator('.goals li.done')).toHaveCount(2);
@@ -282,6 +283,21 @@ test('a recorded output card shows the command, where it was recorded, and the r
   await expect(page.locator('#foot')).toHaveClass(/good/);
 });
 
+test('a scenario accepts any listed command, however it is spaced, and rejects others', async ({ page }) => {
+  await page.goto('./prototype/');
+  const ex = { type: 'scenario', prompt: { he: 'בדקו את nginx', en: 'Check nginx' }, rec: 'ubuntu-uname', accept: ['systemctl status nginx', 'systemctl status nginx.service'] };
+  await page.evaluate(ex => startLesson('scenario-test', [ex]), ex);
+  await expect(page.locator('.rec-label')).toBeVisible();
+  await page.fill('#scenarioCmd', '  systemctl   status nginx.service ');
+  await page.press('#scenarioCmd', 'Enter');
+  await expect(page.locator('#foot')).toHaveClass(/good/);
+  await page.evaluate(ex => startLesson('scenario-test', [ex]), ex);
+  await page.fill('#scenarioCmd', 'systemctl start nginx');
+  await page.click('#checkBtn');
+  await expect(page.locator('#foot')).toHaveClass(/bad/);
+  await expect(page.locator('#fbDetail')).toContainText('systemctl status nginx');
+});
+
 test('the whole course can be played to the end, unit after unit @content', async ({ page }) => {
   test.setTimeout(240_000);
   const errors = [];
@@ -328,6 +344,10 @@ test('every exercise in every unit is answerable and fully translated @content',
     for (const [id, ex] of exercises) {
       count++;
       if (ex.demo) run(fx, ex.demo[0], ex.demo[1]);
+      if (ex.type === 'scenario') {
+        expect(ex.accept?.length, `${id} needs accepted commands`).toBeGreaterThan(0);
+        if (ex.rec) { expect(RECORDED[ex.rec], `${id}: recording ${ex.rec}`).toBeTruthy(); expect(ex.accept, `${id} shows its own answer`).not.toContain(RECORDED[ex.rec].cmd); }
+      }
       if (ex.type === 'output' && ex.rec) {
         for (const r of [ex.rec, ...(ex.wrongRec || [])]) expect(RECORDED[r], `${id}: recording ${r}`).toBeTruthy();
         const real = RECORDED[ex.rec].out;
