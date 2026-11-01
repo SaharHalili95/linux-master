@@ -392,6 +392,19 @@ test('corrupted saved progress does not break Learn mode', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('every official exam objective maps to a real unit, and every unit teaches some objective', () => {
+  const root = path.join(__dirname, '..');
+  const load = f => JSON.parse(fs.readFileSync(path.join(root, 'materials/objectives', f), 'utf8'));
+  const [lpic, rhcsa, lfcs] = ['lpic1.json', 'rhcsa.json', 'lfcs.json'].map(load);
+  const units = [...fs.readFileSync(path.join(root, 'materials/curriculum.md'), 'utf8').matchAll(/^\| (\d+) \|/gm)].map(m => Number(m[1]));
+  expect(units).toEqual(Array.from({ length: 80 }, (_, i) => i + 1));
+  expect(lpic).toHaveLength(42);
+  for (const exam of ['101-500', '102-500']) expect(lpic.filter(o => o.exam === exam).reduce((s, o) => s + o.weight, 0), exam).toBe(60);
+  const mapped = new Set();
+  for (const o of [...lpic, ...rhcsa, ...lfcs]) { expect(o.units.length, o.id).toBeGreaterThan(0); for (const u of o.units) { expect(units, o.id).toContain(u); mapped.add(u); } }
+  for (let u = 1; u <= 77; u++) expect(mapped.has(u), `unit ${u} teaches no objective`).toBe(true);
+});
+
 test('Pages deploys every file Learn mode loads', () => {
   const root = path.join(__dirname, '..');
   const html = fs.readFileSync(path.join(root, 'prototype/index.html'), 'utf8');
