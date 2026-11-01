@@ -37,7 +37,9 @@ const diffs = [];
 sim.forEach((s, i) => {
   const r = real.get(i);
   if (!r) { diffs.push(`#${i} no result for ${s.cmd}`); return; }
-  const norm = t => unordered(s.cmd) ? t.split('\n').sort().join('\n') : t;
+  // The container runs as root at the current time, and its '..' is the overlay root; the simulation uses user, a fixed time and /home.
+  const longList = t => /\bls\b.*-[a-z]*l/.test(s.cmd) ? t.split('\n').filter(l => !/ \.\.$/.test(l)).map(l => l.replace(/^([-dlrwxsStT]{10}\+?\s+\d+\s+)\S+\s+\S+(\s+\S+\s+)\w{3}\s+\d+\s+\d\d:\d\d/, '$1OWNER GROUP$2DATE')).join('\n') : t;
+  const norm = t => { t = longList(t); return unordered(s.cmd) ? t.split('\n').sort().join('\n') : t; };
   if (norm(r.out) !== norm(s.out) || r.code !== s.code || r.err !== s.err) diffs.push(`v${s.variant} ${s.cmd}\n   sim  code=${s.code} err=${s.err} ${JSON.stringify(s.out.slice(0, 160))}\n   real code=${r.code} err=${r.err} ${JSON.stringify(r.out.slice(0, 160))}`);
 });
 console.log(`${sim.length} command runs compared (${commands.length} distinct commands, 2 file sets)`);
