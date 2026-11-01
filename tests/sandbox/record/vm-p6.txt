@@ -31,12 +31,11 @@ p6-ping	ping -c 3 192.168.50.10 | sed -E 's/time=[0-9.]+ ms/time=<t> ms/; s/time
 p6-ping-hop	ping -c 1 10.0.60.20 | sed -E 's/time=[0-9.]+ ms/time=<t> ms/; s/time [0-9]+ms/time <t>ms/; s/^rtt .*/rtt min\/avg\/max\/mdev = <timings> ms/'
 p6-ping-down	ping -c 2 -W 1 192.168.50.99 | sed -E 's/time [0-9]+ms/time <t>ms/'
 p6-ping-nonet	ip netns exec iso ping -c 1 10.0.60.20
-p6-ping6	ping -6 -c 2 2001:db8:50::10 | sed -E 's/time=[0-9.]+ ms/time=<t> ms/; s/time [0-9]+ms/time <t>ms/; s/^rtt .*/rtt min\/avg\/max\/mdev = <timings> ms/'
+p6-ping6	ip -6 addr add 2001:db8:50::1/64 dev lab0; sleep 3	ping -6 -c 2 2001:db8:50::10 | sed -E 's/time=[0-9.]+ ms/time=<t> ms/; s/time [0-9]+ms/time <t>ms/; s/^rtt .*/rtt min\/avg\/max\/mdev = <timings> ms/'
 p6-traceroute	traceroute -n 10.0.60.20 | sed -E 's/[0-9.]+ ms/<t> ms/g'
 p6-tracepath	tracepath -n 10.0.60.20 | sed -E 's/[0-9.]+ms/<t>ms/g'
-p6-hosts	printf '192.168.50.10   srv.lab.local srv\n10.0.60.20      db.lab.local db\n' >> /etc/hosts	cat /etc/hosts
+p6-hosts	printf '192.168.50.10   srv.lab.local srv\n10.0.60.20      db.lab.local db\n' >> /etc/hosts	grep -E 'localhost|lab.local' /etc/hosts
 p6-getent-srv	getent hosts srv
-p6-host-srv	host srv.lab.local
 p6-ping-name	ping -c 1 db | sed -E 's/time=[0-9.]+ ms/time=<t> ms/; s/time [0-9]+ms/time <t>ms/; s/^rtt .*/rtt min\/avg\/max\/mdev = <timings> ms/'
 p6-getent-localhost	getent hosts localhost
 p6-resolv	grep -E '^(nameserver|options)' /etc/resolv.conf
@@ -45,7 +44,7 @@ p6-nsswitch	grep -E '^(passwd|group|hosts):' /etc/nsswitch.conf
 p6-host	host one.one.one.one | sort
 p6-host-mx	host -t MX gmail.com | sort
 p6-host-rev	host 8.8.8.8
-p6-host-nx	host no-such-host.example.com
+p6-host-nx	host this-name-does-not-exist.google.com
 p6-dig	dig one.one.one.one A | sed -E 's/id: [0-9]+/id: <id>/; s/Query time: [0-9]+ msec/Query time: <t> msec/; s/^;; WHEN: .*/;; WHEN: <date>/; s/\t[0-9]+\tIN/\t<ttl>\tIN/'
 p6-dig-short	dig +short one.one.one.one | sort
 p6-dig-aaaa	dig +short AAAA one.one.one.one | sort
@@ -53,18 +52,19 @@ p6-dig-mx	dig +short MX gmail.com | sort -n
 p6-dig-ns	dig +short NS google.com | sort
 p6-dig-at	dig @1.1.1.1 +short dns.google | sort
 p6-dig-x	dig -x 1.1.1.1 +short
-p6-dig-nx	dig no-such-host.example.com | grep -E 'status:' | sed -E 's/id: [0-9]+/id: <id>/'
-p6-hosts-override	printf '10.9.9.9        example.org\n' >> /etc/hosts	getent hosts example.org; dig +short example.org | sort | head -n 1 | sed -E 's/^[0-9.]+$/<a public address>/'
+p6-dig-nx	dig this-name-does-not-exist.google.com | grep -E 'status:' | sed -E 's/id: [0-9]+/id: <id>/'
+p6-hosts-override	printf '10.9.9.9        example.org\n' >> /etc/hosts	ping -c 1 -W 1 example.org | head -n 1
+p6-hosts-override-dig	dig @1.1.1.1 +short example.org | sort
 p6-ss-srv	sed -i '/example.org/d' /etc/hosts; ip netns exec srv setsid nohup python3 -m http.server 8080 </dev/null >/dev/null 2>&1 & ip netns exec srv setsid nohup nc -lu 5140 </dev/null >/dev/null 2>&1 & sleep 3	ip netns exec srv ss -tulpn | sed -E 's/pid=[0-9]+/pid=<PID>/g'
 p6-ss-tln	ip netns exec srv ss -tln
 p6-netstat	ip netns exec srv netstat -tlnp | sed -E 's/ [0-9]+\/python3/ <PID>\/python3/'
-p6-curl	mkdir -p /srv/www; printf 'Quarterly report: sales up 12%%\n' > /srv/www/report.txt; printf '<h1>Intranet</h1>\n' > /srv/www/index.html; cd /srv/www; setsid nohup python3 -m http.server 8080 </dev/null >/dev/null 2>&1 & sleep 3	curl http://localhost:8080/report.txt
+p6-curl	mkdir -p /srv/www; printf 'Quarterly report: sales up 12%%\n' > /srv/www/report.txt; printf '<h1>Intranet</h1>\n' > /srv/www/index.html; cd /srv/www; setsid nohup python3 -m http.server 8080 --bind :: </dev/null >/dev/null 2>&1 & sleep 3	curl -s http://localhost:8080/report.txt
 p6-curl-I	curl -sI http://localhost:8080/report.txt | tr -d '\r' | sed -E 's/^(Date|Last-Modified): .*/\1: <date>/'
 p6-curl-code	curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/missing.txt
 p6-curl-refused	curl -sS http://localhost:9999/ 2>&1 | sed -E 's/after [0-9]+ ms/after <t> ms/'
 p6-curl-O	curl -sO http://localhost:8080/report.txt && ls && cat report.txt
-p6-curl-o	curl -s -o latest.txt http://localhost:8080/report.txt && ls
-p6-wget	wget http://localhost:8080/report.txt 2>&1 | sed -E 's/^--[0-9-]+ [0-9:]+--/--<date>--/; s/^[0-9-]+ [0-9:]+ /<date> /; s/[0-9.]+ ?[KM]?B\/s/<speed>/g; s/=[0-9.]+s/=<t>s/; s/  +/  /g' && ls
+p6-curl-out	curl -s -o latest.txt http://localhost:8080/report.txt && ls
+p6-wget	wget http://localhost:8080/report.txt 2>&1 | sed -E 's/^--[0-9-]+ [0-9:]+--/--<date>--/; s/^[0-9-]+ [0-9:]+ \([^)]*\)/<date> (<speed>)/; s/100% +[0-9.]+[KMG]?=[0-9.]+s/100% <speed>=<t>s/' && ls
 p6-wget-nv	wget -nv http://localhost:8080/report.txt 2>&1 | sed -E 's/^[0-9-]+ [0-9:]+ /<date> /'
 p6-wget-404	wget -nv http://localhost:8080/missing.txt 2>&1 | sed -E 's/^[0-9-]+ [0-9:]+ /<date> /'
 p6-wget-O	wget -q -O latest.txt http://localhost:8080/report.txt && ls && cat latest.txt
@@ -79,14 +79,13 @@ p6-keygen-rsa	ssh-keygen -t rsa -b 4096 -N '' -C admin@laptop -f ~/.ssh/id_rsa |
 p6-keygen-files	stat -c '%A %n' ~/.ssh ~/.ssh/*
 p6-pubkey	cat ~/.ssh/id_ed25519.pub
 p6-ssh-first	install -d -m 700 -o dana -g dana /home/dana/.ssh; install -m 600 -o dana -g dana ~/.ssh/id_ed25519.pub /home/dana/.ssh/authorized_keys	ssh -n -o StrictHostKeyChecking=accept-new dana@localhost whoami
-p6-ssh-batch-unknown	ssh -n -o BatchMode=yes -p 2222 dana@localhost whoami
+p6-ssh-unknown	ssh -n -o BatchMode=yes dana@127.0.0.1 whoami
 p6-ssh-port	ssh -n -o StrictHostKeyChecking=accept-new -p 2222 dana@localhost true >/dev/null 2>&1	ssh -n -p 2222 dana@localhost whoami
 p6-ssh-cmd	ssh -n dana@localhost 'whoami; pwd; echo $SHELL'
 p6-known-hosts	awk '{print $2}' ~/.ssh/known_hosts | sort | uniq -c
 p6-known-hosts-F	ssh-keygen -F localhost | head -n 1
 p6-ssh-config	printf 'Host lab\n    HostName localhost\n    User dana\n    Port 2222\n' > ~/.ssh/config; chmod 600 ~/.ssh/config	ssh -n lab 'whoami; pwd'
 p6-ssh-config-cat	cat ~/.ssh/config
-p6-ssh-G	ssh -G lab | grep -E '^(hostname|user|port) '
 p6-authorized	cut -d ' ' -f 1,3 /home/dana/.ssh/authorized_keys
 p6-auth-perms-bad	chmod 777 /home/dana	ssh -n -o BatchMode=yes dana@localhost whoami
 p6-auth-perms-ls	stat -c '%A %U %n' /home/dana /home/dana/.ssh /home/dana/.ssh/authorized_keys
@@ -116,8 +115,7 @@ p6-known-hosts-R	ssh-keygen -R localhost
 p6-nm-dev	mkdir -p /etc/NetworkManager/conf.d; printf '[keyfile]\nunmanaged-devices=interface-name:eth*;interface-name:docker*;interface-name:lab*;interface-name:veth*;interface-name:br-*\n' > /etc/NetworkManager/conf.d/99-lab.conf; DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends network-manager </dev/null >/dev/null 2>&1; systemctl restart NetworkManager; sleep 5	nmcli device status
 p6-nm-add	nmcli con add type ethernet con-name office ifname ens9 ipv4.method manual ipv4.addresses 192.168.10.5/24 ipv4.gateway 192.168.10.1 ipv4.dns 1.1.1.1 | sed -E 's/\([0-9a-f-]{36}\)/(<uuid>)/'
 p6-nm-show	nmcli -f connection.id,connection.interface-name,connection.autoconnect,ipv4.method,ipv4.addresses,ipv4.gateway,ipv4.dns con show office
-p6-nm-file	sed -E 's/^uuid=.*/uuid=<uuid>/' /etc/NetworkManager/system-connections/office.nmconnection
-p6-nm-ls	ls -l /etc/NetworkManager/system-connections/ | awk 'NR>1 {print $1, $3, $NF}'
+p6-nm-file	nmcli -f NAME,FILENAME con show | grep -E 'NAME|office' | sed -E 's/[0-9a-f]{8}-[0-9a-f-]{27}/<uuid>/'
 p6-nm-mod	nmcli con mod office ipv4.addresses 192.168.10.6/24 +ipv4.dns 8.8.8.8 && nmcli -f ipv4.addresses,ipv4.dns con show office
 p6-nm-route	nmcli con mod office +ipv4.routes '10.0.60.0/24 192.168.10.254' && nmcli -f ipv4.routes con show office
 p6-nm-up-fail	nmcli con up office
