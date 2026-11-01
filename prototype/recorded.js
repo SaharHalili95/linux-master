@@ -1,6 +1,20 @@
 // Real output recorded by tests/sandbox/record.sh. Do not edit by hand.
 const RECORDED = {
   "alma-uname": {"distro":"AlmaLinux 10","cmd":"uname -s","out":"Linux\n"},
+  "ubuntu-apropos-copy": {"distro":"Ubuntu 24.04","cmd":"apropos -s 1 copy | grep -E \"^(cp|scp|install|dd) \"","out":"cp (1)               - copy files and directories\ndd (1)               - convert and copy a file\ninstall (1)          - copy files and set attributes\n"},
+  "ubuntu-cp-help": {"distro":"Ubuntu 24.04","cmd":"cp --help | head -n 2","out":"Usage: cp [OPTION]... [-T] SOURCE DEST\n  or:  cp [OPTION]... SOURCE... DIRECTORY\n"},
+  "ubuntu-doc-grep": {"distro":"Ubuntu 24.04","cmd":"ls /usr/share/doc/grep","out":"AUTHORS\nNEWS.Debian.gz\nNEWS.gz\nREADME\nTHANKS.gz\nTODO.gz\nchangelog.Debian.gz\ncopyright\n"},
+  "ubuntu-ls-help": {"distro":"Ubuntu 24.04","cmd":"ls --help | head -n 3","out":"Usage: ls [OPTION]... [FILE]...\nList information about the FILEs (the current directory by default).\nSort entries alphabetically if none of -cftuvSUX nor --sort is specified.\n"},
+  "ubuntu-man-k-dir": {"distro":"Ubuntu 24.04","cmd":"man -k \"^mkdir\"","out":"mkdir (1)            - make directories\n"},
+  "ubuntu-man-ls": {"distro":"Ubuntu 24.04","cmd":"MANWIDTH=60 man ls 2>/dev/null | head -n 8","out":"LS(1)                  User Commands                 LS(1)\n\nNAME\n       ls - list directory contents\n\nSYNOPSIS\n       ls [OPTION]... [FILE]...\n\n"},
+  "ubuntu-man-sections": {"distro":"Ubuntu 24.04","cmd":"ls /usr/share/man | grep -E \"^man[1-8]$\"","out":"man1\nman2\nman3\nman4\nman5\nman6\nman7\nman8\n"},
+  "ubuntu-type-a-echo": {"distro":"Ubuntu 24.04","cmd":"type -a echo","out":"echo is a shell builtin\necho is /usr/bin/echo\necho is /bin/echo\n"},
+  "ubuntu-type-cd": {"distro":"Ubuntu 24.04","cmd":"type cd","out":"cd is a shell builtin\n"},
+  "ubuntu-type-ls": {"distro":"Ubuntu 24.04","cmd":"type ls","out":"ls is /usr/bin/ls\n"},
   "ubuntu-uname": {"distro":"Ubuntu 24.04","cmd":"uname -s","out":"Linux\n"},
   "ubuntu-uname-m": {"distro":"Ubuntu 24.04","cmd":"uname -m","out":"x86_64\n"},
+  "ubuntu-whatis-crontab": {"distro":"Ubuntu 24.04","cmd":"whatis crontab","out":"crontab (1)          - maintain crontab files for individual users (Vixie Cron)\ncrontab (5)          - tables for driving cron\n"},
+  "ubuntu-whatis-ls": {"distro":"Ubuntu 24.04","cmd":"whatis ls","out":"ls (1)               - list directory contents\n"},
+  "ubuntu-whatis-passwd": {"distro":"Ubuntu 24.04","cmd":"whatis passwd","out":"passwd (1)           - change user password\npasswd (1ssl)        - OpenSSL application commands\npasswd (5)           - the password file\n"},
+  "ubuntu-which-ls": {"distro":"Ubuntu 24.04","cmd":"which ls","out":"/usr/bin/ls\n"},
 };

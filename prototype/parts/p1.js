@@ -1,4 +1,210 @@
-// Part 1: Foundations, units 7-10. See materials/curriculum.md.
-COURSE.push(
-  { section: 1, unit: 7, exams: ['L103.7', 'R'], title: T('תבניות', 'Patterns'), subtitle: T('ביטויים רגולריים עם grep', 'Regular expressions with grep'), color: 'green', locked: true },
-);
+// Part 1: Foundations, units 7-10. See materials/curriculum.md and materials/objectives/.
+const RECORDED_ON = T('הפלט הזה הוקלט על לינוקס אמיתי. מה תדפיס הפקודה?', 'This output was recorded on real Linux. What will the command print?');
+
+const UNIT_7 = {
+  section: 1, unit: 7, exams: ['L103.7', 'R'], title: T('תבניות', 'Patterns'), subtitle: T('ביטויים רגולריים עם grep', 'Regular expressions with grep'), color: 'green', fixture: homeFixture,
+  lessons: [
+    { title: T('התחלה וסוף: ^ ו־$', 'Start and end: ^ and $'), exercises: [
+      { type: 'teach', cmd: '^', name: 'start of line', text: T('בתבנית של grep, ^ אומר "בתחילת השורה". ‎^08:1 מוצאת רק שורות שמתחילות ב־08:1.', 'In a grep pattern, ^ means "at the start of the line". ^08:1 finds only lines that start with 08:1.'), demo: [[], 'grep "^08:1" logs/app.log'] },
+      { type: 'output', prompt: WHAT, cmd: 'grep "^b" fruits.txt', wrongCmds: ['grep b fruits.txt', 'grep "^a" fruits.txt'], wrongText: ['banana'] },
+      { type: 'sentence', prompt: READ, text: T('בתבנית, הסימן ___ אומר "בתחילת השורה".', 'In a pattern, the ___ sign means "at the start of the line".'), options: ['^', '$', '*'], answer: '^' },
+      { type: 'teach', cmd: '$', name: 'end of line', text: T('$ אומר "בסוף השורה". ‎full$ מוצאת שורות שהמילה האחרונה בהן היא full.', '$ means "at the end of the line". full$ finds lines whose last word is full.'), demo: [[], 'grep "full$" logs/app.log'] },
+      { type: 'choice', prompt: T('איזו פקודה מוצאת ב־people.csv רק את השורות שנגמרות ב־5?', 'Which command finds only the lines in people.csv that end in 5?'), options: ['grep "5$" people.csv', 'grep "^5" people.csv', 'grep "$5" people.csv', 'grep 5 people.csv'], answer: 'grep "5$" people.csv',
+        why: { 'grep "^5" people.csv': T('^ זה תחילת השורה, ושום שורה לא מתחילה ב־5.', '^ is the start of the line, and no line starts with 5.'), 'grep "$5" people.csv': T('$ צריך לבוא אחרי מה שמחפשים, בסוף.', '$ goes after what you look for, at the end.'), 'grep 5 people.csv': T('זו תמצא 5 בכל מקום בשורה, לא רק בסוף.', 'This finds 5 anywhere in the line, not only at the end.') } },
+      { type: 'fill', prompt: T('השלימו כדי למצוא ב־logs/app.log את השורות שמתחילות ב־08:3', 'Fill in to find the lines in logs/app.log that start with 08:3'), before: 'grep "', after: '08:3" logs/app.log', options: ['^', '$', '*', '.'], answer: '^' },
+      { type: 'terminal', prompt: T('הציגו מ־logs/app.log את השורות שנגמרות במילה started', 'Show the lines in logs/app.log that end with the word started'), hint: T('grep "started$" logs/app.log', 'grep "started$" logs/app.log'), goal: (sh, log) => printed(log, 'grep "started$" logs/app.log'), solve: ['grep "started$" logs/app.log'] },
+    ] },
+    { title: T('כל תו: . ו־*', 'Any character: . and *'), exercises: [
+      { type: 'teach', cmd: '.', name: 'any character', text: T('נקודה בתבנית מחליפה תו אחד, כל תו. a.a מוצאת a, תו כלשהו, ושוב a: למשל ana בתוך banana.', 'A dot in a pattern stands for one character, any character. a.a finds a, any character, then a: like ana inside banana.'), demo: [[], 'grep "a.a" fruits.txt'] },
+      { type: 'output', prompt: WHAT, cmd: 'grep "ch.rry" fruits.txt', wrongCmds: ['grep "a.a" fruits.txt', 'grep "^a" fruits.txt'] },
+      { type: 'sentence', prompt: READ, text: T('בתבנית של grep, ___ מחליפה תו אחד, כל תו.', 'In a grep pattern, ___ stands for exactly one character, any character.'), options: ['.', '^', '$'], answer: '.' },
+      { type: 'teach', cmd: '*', name: 'zero or more', text: T('בתבנית, * אומרת "התו שלפניי, אפס פעמים או יותר". ‎ap*le מוצאת ale, aple ו־apple. שימו לב: זה לא כמו * בשמות קבצים.', 'In a pattern, * means "the character before me, zero or more times". ap*le finds ale, aple and apple. Note: this is not the * of file names.'), demo: [[], 'grep "ap*le" fruits.txt'] },
+      { type: 'choice', prompt: T('מה מוצאת התבנית ‎.*‎ (נקודה וכוכבית)?', 'What does the pattern .* (dot, star) match?'), plain: true,
+        options: [T('כל רצף של תווים, גם ריק', 'Any run of characters, even an empty one'), T('נקודה אחת וכוכבית אחת', 'One dot and one star'), T('רק שורות ריקות', 'Only empty lines'), T('שמות של קבצים', 'File names')],
+        why: [null, T('בלי \\ לפניהן, . ו־* הן תווים מיוחדים.', 'Without a \\ before them, . and * are special.'), T('.* מתאימה גם לשורה ריקה, אבל לא רק לה.', '.* matches an empty line too, but not only that.'), T('grep מחפשת בתוך טקסט, לא בשמות קבצים.', 'grep searches inside text, not file names.')] },
+      { type: 'tiles', prompt: T('מצאו ב־logs/app.log שורות עם user, תו כלשהו, ואז o (כמו user login)', 'Find lines in logs/app.log with user, any character, then o (like user login)'), answer: 'grep "user.lo" logs/app.log', tiles: ['grep', '"user.lo"', 'logs/app.log', '"user*lo"', 'find'] },
+      { type: 'terminal', prompt: T('מצאו ב־logs/app.log את השורות שיש בהן disk ואחר כך full, עם כל דבר באמצע', 'Find the lines in logs/app.log with disk and then full, with anything in between'), hint: T('grep "disk.*full" logs/app.log', 'grep "disk.*full" logs/app.log'), goal: (sh, log) => printed(log, 'grep "disk.*full" logs/app.log'), solve: ['grep "disk.*full" logs/app.log'] },
+    ] },
+    { title: T('קבוצות: [ ]', 'Sets: [ ]'), exercises: [
+      { type: 'teach', cmd: '[abc]', name: 'one of', text: T('סוגריים מרובעים מתאימים לתו אחד מתוך הרשימה. ‎^[dn]‎ מוצאת שורות שמתחילות ב־d או ב־n.', 'Square brackets match one character from the list. ^[dn] finds lines that start with d or n.'), demo: [[], 'grep "^[dn]" people.csv'] },
+      { type: 'output', prompt: WHAT, cmd: 'grep "^[ab]" fruits.txt', wrongCmds: ['grep "^[c]" fruits.txt', 'grep "^a" fruits.txt'] },
+      { type: 'sentence', prompt: READ, text: T('התבנית ___ מתאימה לספרה אחת, מ־0 עד 9.', 'The pattern ___ matches one digit, from 0 to 9.'), options: ['[0-9]', '{0-9}', '(0-9)'], answer: '[0-9]' },
+      { type: 'teach', cmd: '[0-9]', name: 'range', text: T('מקף בתוך הסוגריים הוא טווח: ‎[0-9]‎ ספרה, ‎[a-z]‎ אות קטנה. ‎^‎ בתחילת הסוגריים הופך: ‎[^0-9]‎ הוא כל תו שאינו ספרה.', 'A dash inside brackets is a range: [0-9] a digit, [a-z] a lowercase letter. A ^ at the start flips it: [^0-9] is any character that is not a digit.'), demo: [[], 'grep "[0-9]$" people.csv'] },
+      { type: 'match', prompt: T('התאימו כל תבנית למה שהיא מוצאת', 'Match each pattern to what it finds'), pairs: [['^a', T('שורות שמתחילות ב־a', 'lines starting with a')], ['a$', T('שורות שנגמרות ב־a', 'lines ending in a')], ['[0-9]', T('ספרה אחת', 'one digit')], ['a.c', T('a, תו כלשהו, c', 'a, any character, c')]] },
+      { type: 'output', prompt: WHAT, cmd: 'grep -c "[0-9]" people.csv', wrongCmds: ['grep -c "a" people.csv'], wrongText: ['5', '0'] },
+      { type: 'terminal', ask: T('כמה שורות כאלה יש?', 'How many such lines are there?'), prompt: T('בכמה שורות ב־people.csv יש גיל שמתחיל ב־2? (הגיל הוא העמודה האחרונה). ספרו עם grep -c', 'How many lines in people.csv have an age that starts with 2? (Age is the last column.) Count with grep -c'), hint: T('grep -c ",2[0-9]$" people.csv', 'grep -c ",2[0-9]$" people.csv'), goal: (sh, log) => printed(log, 'grep -c ",2[0-9]$" people.csv'), solve: ['grep -c ",2[0-9]$" people.csv'] },
+    ] },
+    { title: T('grep -E', 'grep -E'), exercises: [
+      { type: 'teach', cmd: 'grep -E', name: 'extended', text: T('עם ‎-E אפשר להשתמש ב־| שאומר "או". ‎"ERROR|WARN"‎ מוצאת שורות עם אחת המילים.', 'With -E you can use |, which means "or". "ERROR|WARN" finds lines with either word.'), demo: [[], 'grep -E "ERROR|WARN" logs/app.log'] },
+      { type: 'output', prompt: WHAT, cmd: 'grep -E "milk|mom" notes.txt', wrongCmds: ['grep milk notes.txt', 'grep -v mom notes.txt'] },
+      { type: 'sentence', prompt: READ, text: T('עם grep ___ הסימן | אומר "או".', 'With grep ___ the | sign means "or".'), options: ['-E', '-v', '-c'], answer: '-E' },
+      { type: 'teach', cmd: '+', name: 'one or more', text: T('ב־grep -E, הסימן + אומר "פעם אחת או יותר", ו־? אומר "אפס או פעם אחת". ‎ap+le‎ מוצאת aple ו־apple, אבל לא ale.', 'In grep -E, + means "one or more times", and ? means "zero or one time". ap+le finds aple and apple, but not ale.'), demo: [[], 'grep -E "ap+le" fruits.txt'] },
+      { type: 'choice', prompt: T('איזו פקודה מוצאת ב־people.csv את השורות של haifa או של eilat?', 'Which command finds the haifa or eilat lines in people.csv?'), options: ['grep -E "haifa|eilat" people.csv', 'grep "haifa eilat" people.csv', 'grep -v "haifa|eilat" people.csv', 'grep -c "haifa|eilat" people.csv'], answer: 'grep -E "haifa|eilat" people.csv',
+        why: { 'grep "haifa eilat" people.csv': T('זה מחפש את שתי המילים צמודות, עם רווח.', 'This looks for both words side by side, with a space.'), 'grep -v "haifa|eilat" people.csv': T('‎-v הופכת את החיפוש, ובלי ‎-E ה־| הוא סתם תו.', '-v inverts the search, and without -E the | is just a character.'), 'grep -c "haifa|eilat" people.csv': T('‎-c סופרת, ובלי ‎-E ה־| הוא סתם תו.', '-c counts, and without -E the | is just a character.') } },
+      { type: 'fill', prompt: T('השלימו כדי למצוא שורות עם login או logout', 'Fill in to find lines with login or logout'), before: 'grep ', after: ' "login|logout" logs/app.log', options: ['-E', '-v', '-n', '-c'], answer: '-E' },
+      { type: 'tiles', prompt: T('מצאו ב־logs/app.log את השורות עם ERROR או WARN', 'Find the ERROR or WARN lines in logs/app.log'), answer: 'grep -E "ERROR|WARN" logs/app.log', tiles: ['grep', '-E', '"ERROR|WARN"', 'logs/app.log', '-v', 'cat'] },
+      { type: 'terminal', prompt: T('הציגו מ־people.csv רק את מי שגר ב־tel-aviv או ב־eilat', 'Show only the people in people.csv who live in tel-aviv or eilat'), hint: T('grep -E "tel-aviv|eilat" people.csv', 'grep -E "tel-aviv|eilat" people.csv'), goal: (sh, log) => printed(log, 'grep -E "tel-aviv|eilat" people.csv'), solve: ['grep -E "tel-aviv|eilat" people.csv'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('חוקרים את הלוג עם תבניות.', 'Investigating the log with patterns.'), exercises: [
+    { type: 'terminal', ask: T('כמה שורות כאלה יש?', 'How many such lines?'), prompt: T('כמה שורות ב־logs/app.log נכתבו בין 08:00 ל־08:09? ספרו עם grep -c ותבנית שמתחילה ב־^', 'How many lines in logs/app.log were written between 08:00 and 08:09? Count with grep -c and a pattern that starts with ^'), hint: T('grep -c "^08:0" logs/app.log', 'grep -c "^08:0" logs/app.log'), goal: (sh, log) => printed(log, 'grep -c "^08:0" logs/app.log'), solve: ['grep -c "^08:0" logs/app.log'] },
+    { type: 'terminal', prompt: T('הציגו את השורות ב־logs/app.log שנגמרות ב־full או ב־timeout', 'Show the lines in logs/app.log that end in full or timeout'), hint: T('grep -E "(full|timeout)$" logs/app.log', 'grep -E "(full|timeout)$" logs/app.log'), goal: (sh, log) => printed(log, 'grep -E "(full|timeout)$" logs/app.log'), solve: ['grep -E "(full|timeout)$" logs/app.log'] },
+    { type: 'terminal', prompt: T('הציגו מ־people.csv את האנשים בני 30 ומעלה, בעזרת תבנית לגיל בסוף השורה', 'Show the people in people.csv aged 30 or more, with a pattern for the age at the end of the line'), hint: T('grep ",[3-9][0-9]$" people.csv', 'grep ",[3-9][0-9]$" people.csv'), goal: (sh, log) => printed(log, 'grep ",[3-9][0-9]$" people.csv'), solve: ['grep ",[3-9][0-9]$" people.csv'] },
+  ] },
+};
+
+const UNIT_8 = {
+  section: 1, unit: 8, exams: ['L103.1', 'R'], title: T('מוצאים עזרה', 'Getting help'), subtitle: T('man, --help, whatis ו־type', 'man, --help, whatis and type'), color: 'purple', fixture: homeFixture,
+  lessons: [
+    { title: T('man', 'man'), exercises: [
+      { type: 'teach', cmd: 'man', name: 'manual', text: T('פותחת את המדריך של פקודה: מה היא עושה ואילו אפשרויות יש לה. גוללים עם החצים, מחפשים עם / ויוצאים עם q.', 'Opens the manual of a command: what it does and which options it has. Scroll with the arrows, search with / and quit with q.') },
+      { type: 'output', prompt: RECORDED_ON, rec: 'ubuntu-man-ls', wrongText: ['Usage: ls [OPTION]... [FILE]...', 'ls (1)               - list directory contents', 'ls is /usr/bin/ls'] },
+      { type: 'sentence', prompt: READ, text: T('כדי לצאת מ־man לוחצים על המקש ___.', 'To leave man, press the ___ key.'), options: ['q', 'x', 'e'], answer: 'q' },
+      { type: 'teach', cmd: 'man 5 passwd', name: 'sections', text: T('המדריך מחולק לפרקים: 1 פקודות של משתמשים, 5 מבנה של קבצי הגדרות, 8 פקודות של מנהל המערכת. man 5 passwd פותחת את הקובץ ‎/etc/passwd ולא את הפקודה passwd.', 'The manual has sections: 1 user commands, 5 config file formats, 8 admin commands. man 5 passwd opens the /etc/passwd file, not the passwd command.') },
+      { type: 'match', prompt: T('התאימו כל פרק במדריך למה שיש בו', 'Match each manual section to what it holds'), pairs: [['1', T('פקודות של משתמשים', 'user commands')], ['5', T('מבנה של קבצים', 'file formats')], ['8', T('פקודות ניהול', 'admin commands')], ['q', T('יציאה מ־man', 'quit man')]] },
+      { type: 'choice', prompt: T('איך קוראים על מבנה הקובץ ‎/etc/passwd (ולא על הפקודה passwd)?', 'How do you read about the format of /etc/passwd (not the passwd command)?'), options: ['man 5 passwd', 'man passwd', 'man 1 passwd', 'passwd --help'], answer: 'man 5 passwd',
+        why: { 'man passwd': T('בלי מספר מקבלים את הפרק הראשון שנמצא: הפקודה.', 'Without a number you get the first section found: the command.'), 'man 1 passwd': T('פרק 1 הוא הפקודה, לא הקובץ.', 'Section 1 is the command, not the file.'), 'passwd --help': T('זו עזרה על הפקודה, לא על הקובץ.', 'That is help for the command, not the file.') } },
+      { type: 'scenario', prompt: T('פתחו את המדריך של הפקודה grep', 'Open the manual of the grep command'), hint: T('man ואחריה שם הפקודה', 'man, then the command name'), accept: ['man grep', 'man 1 grep'] },
+    ] },
+    { title: T('whatis ו־apropos', 'whatis and apropos'), exercises: [
+      { type: 'teach', cmd: 'whatis', name: 'what is', text: T('מדפיסה שורה אחת מהמדריך: מה הפקודה עושה ובאיזה פרק. כמו man -f.', 'Prints one line from the manual: what the command does and in which section. Same as man -f.') },
+      { type: 'output', prompt: RECORDED_ON, rec: 'ubuntu-whatis-ls', wrongRec: ['ubuntu-type-ls', 'ubuntu-ls-help'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מחפשת מילה בתיאורים של כל דפי המדריך.', 'The ___ command searches for a word in the descriptions of every manual page.'), options: ['apropos', 'whatis', 'which'], answer: 'apropos' },
+      { type: 'teach', cmd: 'apropos', name: 'apropos', text: T('שכחתם את שם הפקודה? apropos מחפשת מילה בתיאורים של כל הדפים. כמו man -k.', 'Forgot a command name? apropos searches every page description for a word. Same as man -k.') },
+      { type: 'output', prompt: T('על אובונטו הריצו apropos על המילה copy, וסיננו לכמה פקודות. מה הודפס?', 'On Ubuntu, apropos was run on the word copy and filtered to a few commands. What was printed?'), rec: 'ubuntu-apropos-copy', wrongRec: ['ubuntu-whatis-ls'], wrongText: ['cp (1)               - copy files and directories'] },
+      { type: 'choice', prompt: T('whatis passwd מדפיסה שלוש שורות. למה?', 'whatis passwd prints three lines. Why?'), plain: true,
+        options: [T('יש כמה דפים בשם passwd, בפרקים שונים', 'There are several pages named passwd, in different sections'), T('יש שלוש פקודות passwd מותקנות', 'There are three passwd commands installed'), T('whatis תמיד מדפיסה שלוש שורות', 'whatis always prints three lines'), T('זו שגיאה', 'It is an error')],
+        why: [null, T('זה אותו שם בפרקים שונים: פקודה (1) וקובץ (5).', 'It is one name in different sections: a command (1) and a file (5).'), T('whatis ls, למשל, מדפיסה שורה אחת.', 'whatis ls, for example, prints one line.'), T('אין כאן שגיאה, רק כמה דפים.', 'There is no error, just several pages.')] },
+      { type: 'scenario', prompt: T('אתם מחפשים פקודה שיוצרת תיקיות ולא זוכרים את השם. הקלידו פקודה שמחפשת את המילה directories בתיאורים של דפי המדריך', 'You want a command that makes folders and cannot remember its name. Type a command that searches the manual page descriptions for the word directories'), hint: T('apropos, או man -k', 'apropos, or man -k'), accept: ['apropos directories', 'man -k directories', 'apropos directory', 'man -k directory'] },
+    ] },
+    { title: T('‎--help ו־‎/usr/share/doc', '--help and /usr/share/doc'), exercises: [
+      { type: 'teach', cmd: '--help', name: 'help', text: T('רוב הפקודות מדפיסות עזרה קצרה עם ‎--help: איך כותבים אותן ואילו אפשרויות יש. מהיר יותר מ־man.', 'Most commands print short help with --help: how to write them and which options they take. Quicker than man.') },
+      { type: 'output', prompt: RECORDED_ON, rec: 'ubuntu-ls-help', wrongRec: ['ubuntu-cp-help', 'ubuntu-whatis-ls'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ls ___ מדפיסה עזרה קצרה, ישר לטרמינל.', 'ls ___ prints short help, straight to the terminal.'), options: ['--help', '-h', '/?'], answer: '--help' },
+      { type: 'teach', cmd: '/usr/share/doc', name: 'docs', text: T('לכל חבילה יש תיקייה ב־‎/usr/share/doc עם README, היסטוריית שינויים ורישיון. יש גם info, מדריך ארוך יותר עם קישורים, למשל info ls.', 'Every package has a folder in /usr/share/doc with a README, a change history and a license. There is also info, a longer manual with links, like info ls.') },
+      { type: 'output', prompt: RECORDED_ON, rec: 'ubuntu-doc-grep', wrongRec: ['ubuntu-man-sections'], wrongText: ['grep (1)             - print lines that match patterns'] },
+      { type: 'match', prompt: T('התאימו כל מקור עזרה למה שהוא נותן', 'Match each help source to what it gives'), pairs: [['man', T('המדריך המלא', 'the full manual')], ['--help', T('עזרה קצרה', 'short help')], ['whatis', T('שורה אחת', 'one line')], ['info', T('מדריך עם קישורים', 'a manual with links')]] },
+      { type: 'choice', prompt: T('איפה נמצאים קבצי ה־README של החבילות המותקנות?', 'Where are the README files of installed packages?'), options: ['/usr/share/doc', '/etc/doc', '/home/doc', '/var/readme'], answer: '/usr/share/doc',
+        why: { '/etc/doc': T('‎/etc שומרת הגדרות, לא תיעוד.', '/etc holds settings, not docs.'), '/home/doc': T('‎/home שומרת את הקבצים של המשתמשים.', '/home holds users\' files.'), '/var/readme': T('אין תיקייה כזו. ‎/var שומרת נתונים שמשתנים, כמו לוגים.', 'There is no such folder. /var holds changing data, like logs.') } },
+    ] },
+    { title: T('type ו־which', 'type and which'), exercises: [
+      { type: 'teach', cmd: 'type', name: 'type', text: T('אומרת מה זו פקודה: חלק מה־shell עצמו (builtin), alias, או קובץ בדיסק ואיפה הוא.', 'Tells you what a command is: part of the shell itself (builtin), an alias, or a file on disk and where it is.'), demo: [[], 'type cd ls'] },
+      { type: 'output', prompt: WHAT, cmd: 'type pwd', wrongCmds: ['type ls'], wrongText: ['/usr/bin/pwd', 'pwd is aliased to `pwd\''] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מדפיסה את המיקום של פקודה בדיסק, למשל ‎/usr/bin/ls.', 'The ___ command prints where a command is on disk, like /usr/bin/ls.'), options: ['which', 'whatis', 'man'], answer: 'which' },
+      { type: 'teach', cmd: 'which', name: 'which', text: T('מחפשת פקודה בתיקיות של PATH ומדפיסה את הנתיב שלה. על פקודה שהיא רק builtin, כמו cd, היא לא מדפיסה כלום.', 'Looks for a command in the PATH folders and prints its path. For a command that is only a builtin, like cd, it prints nothing.'), demo: [[], 'which ls grep'] },
+      { type: 'output', prompt: RECORDED_ON, rec: 'ubuntu-type-a-echo', wrongRec: ['ubuntu-type-cd', 'ubuntu-which-ls'] },
+      { type: 'choice', prompt: T('למה which cd לא מדפיסה כלום?', 'Why does which cd print nothing?'), plain: true,
+        options: [T('cd היא חלק מה־shell, אין לה קובץ בדיסק', 'cd is part of the shell, it has no file on disk'), T('cd לא מותקנת', 'cd is not installed'), T('צריך sudo', 'You need sudo'), T('which עובדת רק על קבצים', 'which only works on files')],
+        why: [null, T('cd עובדת, היא פשוט builtin. type cd תראה את זה.', 'cd works, it is just a builtin. type cd shows that.'), T('אין קשר להרשאות.', 'It has nothing to do with permissions.'), T('which מחפשת פקודות ב־PATH, לא קבצים רגילים.', 'which looks for commands in PATH, not regular files.')] },
+      { type: 'terminal', prompt: T('בדקו מה זו הפקודה history: builtin או קובץ בדיסק?', 'Check what history is: a builtin or a file on disk?'), hint: T('type history', 'type history'), goal: (sh, log) => printed(log, 'type history'), solve: ['type history'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('נתקעתם? מוצאים תשובה לבד.', 'Stuck? Find the answer yourself.'), exercises: [
+    { type: 'scenario', prompt: T('פתחו את פרק 5 של המדריך על הקובץ crontab', 'Open section 5 of the manual for the crontab file'), rec: 'ubuntu-whatis-crontab', hint: T('man ואז מספר הפרק', 'man, then the section number'), accept: ['man 5 crontab'] },
+    { type: 'scenario', prompt: T('הציגו את העזרה הקצרה של הפקודה cp, בלי לפתוח את man', 'Show the short help of the cp command, without opening man'), hint: T('האפשרות עם שני מקפים', 'The option with two dashes'), accept: ['cp --help'] },
+    { type: 'terminal', prompt: T('מצאו באיזה נתיב בדיסק נמצאת הפקודה grep', 'Find the path on disk of the grep command'), hint: T('which grep', 'which grep'), goal: (sh, log) => printed(log, 'which grep'), solve: ['which grep'] },
+  ] },
+};
+
+const UNIT_9 = {
+  section: 1, unit: 9, exams: ['L103.3', 'L103.1'], title: T('תווים כלליים ומרכאות', 'Globs and quoting'), subtitle: T('*, ?, [ ], { } ומרכאות', '*, ?, [ ], { } and quotes'), color: 'blue', fixture: homeFixture,
+  lessons: [
+    { title: T('* ו־?', '* and ?'), exercises: [
+      { type: 'teach', cmd: '*', name: 'wildcard', known: true, text: T('כבר פגשתם את *: היא מחליפה כל רצף של תווים בשם קובץ. ה־shell מחליף אותה בשמות לפני שהפקודה רצה.', 'You met * already: it stands for any run of characters in a file name. The shell swaps it for the names before the command runs.'), demo: [[], 'echo *.txt'] },
+      { type: 'teach', cmd: '?', name: 'one character', text: T('סימן שאלה מחליף תו אחד בדיוק. ‎?????.txt‎ הם שמות של חמש אותיות ואז ‎.txt.', 'A question mark stands for exactly one character. ?????.txt is any five-letter name, then .txt.'), demo: [[], 'echo ?????.txt'] },
+      { type: 'output', prompt: T('בתיקייה הנוכחית יש fruits.txt, notes.txt ו־readme.txt. מה תדפיס הפקודה?', 'This folder has fruits.txt, notes.txt and readme.txt. What will this print?'), cmd: 'echo ??????.txt', wrongCmds: ['echo *.txt', 'echo ?????.txt'] },
+      { type: 'sentence', prompt: READ, text: T('בשם של קובץ, ___ מחליף תו אחד בדיוק.', 'In a file name, ___ stands for exactly one character.'), options: ['?', '*', '.'], answer: '?' },
+      { type: 'choice', prompt: T('בתיקייה photos יש cat.jpg ו־dog.jpg. מה ימצא ls photos/???.jpg?', 'photos has cat.jpg and dog.jpg. What will ls photos/???.jpg find?'), plain: true,
+        options: [T('את שניהם', 'Both'), T('רק את cat.jpg', 'Only cat.jpg'), T('כלום', 'Nothing'), T('קובץ בשם ???.jpg', 'A file named ???.jpg')],
+        why: [null, T('גם dog הוא שלוש אותיות.', 'dog is three letters too.'), T('לשניהם יש שם של שלוש אותיות.', 'Both names have three letters.'), T('ה־shell מחליף את ה־? בשמות שמתאימים.', 'The shell replaces the ? with matching names.')] },
+      { type: 'tiles', prompt: T('הציגו את כל הקבצים שנגמרים ב־.csv', 'List every file that ends in .csv'), answer: 'ls *.csv', tiles: ['ls', '*.csv', '?.csv', 'grep', 'csv'] },
+      { type: 'terminal', prompt: T('הדפיסו עם echo את כל שמות הקבצים בתיקייה הנוכחית שיש להם 5 אותיות ואחר כך ‎.txt', 'Use echo to print every file name here that has 5 letters and then .txt'), hint: T('echo ?????.txt', 'echo ?????.txt'), goal: (sh, log) => printed(log, 'echo ?????.txt'), solve: ['echo ?????.txt'] },
+    ] },
+    { title: T('[ ] ו־{ }', '[ ] and { }'), exercises: [
+      { type: 'teach', cmd: '[nr]*', name: 'one of', text: T('גם בשמות קבצים, סוגריים מרובעים הם תו אחד מתוך רשימה. ‎[nr]*‎ הם שמות שמתחילים ב־n או ב־r.', 'In file names too, square brackets are one character from a list. [nr]* is names starting with n or r.'), demo: [[], 'echo [nr]*'] },
+      { type: 'teach', cmd: '{a,b}', name: 'braces', text: T('סוגריים מסולסלים יוצרים כמה מילים, גם אם אין קבצים כאלה. ‎{2025,2026}‎ נהיה 2025 2026, ו־‎{1..3}‎ נהיה 1 2 3.', 'Curly braces make several words, even if no such files exist. {2025,2026} becomes 2025 2026, and {1..3} becomes 1 2 3.'), demo: [['mkdir -p backup/{2025,2026}'], 'ls backup'] },
+      { type: 'output', prompt: WHAT, cmd: 'echo file{1..3}.txt', wrongText: ['file{1..3}.txt', 'file1.txt', 'file1.txt file3.txt'] },
+      { type: 'sentence', prompt: READ, text: T('הסוגריים ___ יוצרים כמה מילים גם כשאין קבצים כאלה.', 'The ___ braces make several words even when no such files exist.'), options: ['{ }', '[ ]', '( )'], answer: '{ }' },
+      { type: 'match', prompt: T('התאימו כל תבנית למה שה־shell עושה איתה', 'Match each pattern to what the shell does with it'), pairs: [['*', T('כל רצף של תווים', 'any run of characters')], ['?', T('תו אחד', 'one character')], ['[ab]', T('a או b', 'a or b')], ['{x,y}', T('המילים x ו־y', 'the words x and y')]] },
+      { type: 'fill', prompt: T('השלימו כדי ליצור את התיקיות jan, feb ו־mar בפקודה אחת', 'Fill in to create jan, feb and mar in one command'), before: 'mkdir ', after: '', options: ['{jan,feb,mar}', '[jan,feb,mar]', '*jan*feb*mar', '?jan?'], answer: '{jan,feb,mar}' },
+      { type: 'terminal', prompt: T('צרו בתוך projects שלוש תיקיות: v1, v2 ו־v3, בפקודה אחת', 'Create three folders inside projects: v1, v2 and v3, in one command'), hint: T('mkdir projects/v{1..3}', 'mkdir projects/v{1..3}'), goal: sh => ['v1', 'v2', 'v3'].every(v => sh.dirs.has(`/home/user/projects/${v}`)), solve: ['mkdir projects/v{1..3}'] },
+    ] },
+    { title: T('מרכאות', 'Quotes'), exercises: [
+      { type: 'teach', cmd: "'...'", name: 'single quotes', text: T('בתוך גרשיים בודדים שום דבר לא מיוחד: לא $, לא * ולא רווחים. מה שכתוב, זה מה שיודפס.', 'Inside single quotes nothing is special: not $, not *, not spaces. What you write is what you get.'), demo: [[], "echo '$HOME *.txt'"] },
+      { type: 'teach', cmd: '"..."', name: 'double quotes', text: T('בתוך מרכאות כפולות $ עדיין עובד, אבל * ורווחים לא. ‎"$HOME"‎ נהיה ‎/home/user.', 'Inside double quotes $ still works, but * and spaces do not. "$HOME" becomes /home/user.'), demo: [[], 'echo "$HOME *.txt"'] },
+      { type: 'output', prompt: WHAT, cmd: "echo 'I am $USER'", wrongCmds: ['echo "I am $USER"'], wrongText: ['I am'] },
+      { type: 'sentence', prompt: READ, text: T('בתוך גרשיים ___ גם $ מודפס כמו שהוא.', 'Inside ___ quotes even $ is printed as it is.'), options: ['single', 'double', 'back'], answer: 'single' },
+      { type: 'output', prompt: WHAT, cmd: 'echo "*.txt"', wrongCmds: ['echo *.txt'], wrongText: ['"*.txt"'] },
+      { type: 'choice', prompt: T('איך מדפיסים בדיוק את הטקסט: Price: $5', 'How do you print exactly: Price: $5'), options: ["echo 'Price: $5'", 'echo "Price: $5"', 'echo Price: $5', 'echo Price: 5'], answer: "echo 'Price: $5'",
+        why: { 'echo "Price: $5"': T('במרכאות כפולות ‎$5‎ הוא משתנה, והוא ריק.', 'Inside double quotes $5 is a variable, and it is empty.'), 'echo Price: $5': T('בלי מרכאות ‎$5‎ הוא משתנה, והוא ריק.', 'Without quotes $5 is a variable, and it is empty.'), 'echo Price: 5': T('חסר הסימן $.', 'The $ sign is missing.') } },
+      { type: 'terminal', prompt: T('הדפיסו את הטקסט ‎$HOME is my home‎ בדיוק כמו שהוא, עם הסימן $', 'Print the text $HOME is my home exactly as it is, with the $ sign'), hint: T("echo '$HOME is my home'", "echo '$HOME is my home'"), goal: (sh, log) => log.some(l => l.out === '$HOME is my home'), solve: ["echo '$HOME is my home'"] },
+    ] },
+    { title: T('touch ו־rmdir', 'touch and rmdir'), exercises: [
+      { type: 'teach', cmd: 'touch', name: 'touch', text: T('יוצרת קובץ ריק אם הוא לא קיים. אם הוא קיים, היא רק מעדכנת לו את השעה ולא נוגעת בתוכן.', 'Creates an empty file if it does not exist. If it does, it only updates its time and leaves the content alone.'), demo: [['touch empty.txt'], 'ls'] },
+      { type: 'output', prompt: T('ב־notes.txt כתובות 3 שורות. מה תדפיס cat notes.txt אחרי touch?', 'notes.txt has 3 lines. What will cat notes.txt print after touch?'), setup: ['touch notes.txt'], cmd: 'cat notes.txt', wrongText: ['', 'touch: notes.txt: File exists'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מוחקת תיקייה, אבל רק אם היא ריקה.', 'The ___ command deletes a folder, but only if it is empty.'), options: ['rmdir', 'rm', 'touch'], answer: 'rmdir' },
+      { type: 'teach', cmd: 'rmdir', name: 'remove directory', text: T('מוחקת תיקייה ריקה. אם יש בה משהו, היא מסרבת. זה בטוח יותר מ־rm, שמוחקת בלי לשאול.', 'Deletes an empty folder. If anything is inside, it refuses. That is safer than rm, which deletes without asking.'), demo: [['mkdir old', 'rmdir old'], 'ls'] },
+      { type: 'output', prompt: T('בתיקייה docs יש cv.pdf ו־todo.txt. מה תדפיס הפקודה?', 'The docs folder has cv.pdf and todo.txt. What will this print?'), cmd: 'rmdir docs', wrongText: ['', 'rmdir: removed directory \'docs\'', 'cv.pdf\ntodo.txt'] },
+      { type: 'tiles', prompt: T('צרו קובץ ריק בשם list.txt', 'Create an empty file named list.txt'), answer: 'touch list.txt', tiles: ['touch', 'list.txt', 'mkdir', 'rmdir', 'cat'] },
+      { type: 'terminal', prompt: T('צרו תיקייה בשם tmpdir ומחקו אותה עם rmdir', 'Create a folder named tmpdir and delete it with rmdir'), hint: T('mkdir tmpdir ואז rmdir tmpdir', 'mkdir tmpdir, then rmdir tmpdir'), goal: (sh, log) => log.some(l => /^rmdir\s+tmpdir\b/.test(l.cmd)) && !sh.dirs.has('/home/user/tmpdir'), solve: ['mkdir tmpdir', 'rmdir tmpdir'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('מסדרים פרויקט חדש בכמה פקודות קצרות.', 'Setting up a new project in a few short commands.'), exercises: [
+    { type: 'terminal', prompt: T('צרו את התיקיות site/css, site/js ו־site/img בפקודה אחת', 'Create site/css, site/js and site/img in one command'), hint: T('mkdir -p site/{css,js,img}', 'mkdir -p site/{css,js,img}'), goal: sh => ['css', 'js', 'img'].every(d => sh.dirs.has(`/home/user/site/${d}`)), solve: ['mkdir -p site/{css,js,img}'] },
+    { type: 'terminal', prompt: T('צרו שלושה קבצים ריקים: page1.html, page2.html ו־page3.html', 'Create three empty files: page1.html, page2.html and page3.html'), hint: T('touch page{1..3}.html', 'touch page{1..3}.html'), goal: sh => [1, 2, 3].every(n => fileIs(sh, `/home/user/page${n}.html`, '')), solve: ['touch page{1..3}.html'] },
+    { type: 'terminal', prompt: T('הדפיסו את המשפט ‎*.html files are ready‎ כמו שהוא, בלי שה־* תהפוך לשמות קבצים', 'Print the sentence *.html files are ready as it is, without the * turning into file names'), hint: T("echo '*.html files are ready'", "echo '*.html files are ready'"), goal: (sh, log) => log.some(l => l.out === '*.html files are ready'), solve: ["echo '*.html files are ready'"] },
+  ] },
+};
+
+const UNIT_10 = {
+  section: 1, unit: 10, exams: ['L103.1', 'L105.1'], title: T('ה־shell שלכם', 'Your shell'), subtitle: T('היסטוריה, alias, משתנים ו־‎.bashrc', 'History, aliases, variables and .bashrc'), color: 'green', fixture: homeFixture,
+  lessons: [
+    { title: T('היסטוריה וקיצורים', 'History and shortcuts'), exercises: [
+      { type: 'teach', cmd: 'history', name: 'history', text: T('מדפיסה את הפקודות האחרונות שהקלדתם, עם מספר לכל אחת. ‎!!‎ מריצה שוב את הפקודה האחרונה, ו־‎!5‎ את פקודה מספר 5. ההיסטוריה נשמרת בקובץ ‎~/.bash_history.', 'Prints the commands you typed lately, each with a number. !! runs the last command again, and !5 runs command number 5. History is saved in ~/.bash_history.') },
+      { type: 'match', prompt: T('התאימו כל מקש למה שהוא עושה בטרמינל', 'Match each key to what it does in the terminal'), pairs: [['Tab', T('משלים שם של פקודה או קובץ', 'completes a command or file name')], ['↑', T('הפקודה הקודמת', 'the previous command')], ['Ctrl+C', T('עוצר פקודה שרצה', 'stops a running command')], ['Ctrl+R', T('חיפוש בהיסטוריה', 'searches history')]] },
+      { type: 'sentence', prompt: READ, text: T('הקיצור ___ מריץ שוב את הפקודה האחרונה.', 'The ___ shortcut runs the last command again.'), options: ['!!', '~~', '..'], answer: '!!' },
+      { type: 'choice', prompt: T('הקלדתם פקודה ארוכה ושכחתם sudo בהתחלה. מה הדרך הכי מהירה להריץ אותה שוב עם sudo?', 'You typed a long command and forgot sudo at the start. What is the quickest way to run it again with sudo?'), options: ['sudo !!', '!! sudo', 'history sudo', 'sudo history'], answer: 'sudo !!',
+        why: { '!! sudo': T('זה מריץ את הפקודה הקודמת עם המילה sudo בסוף.', 'That runs the previous command with the word sudo at the end.'), 'history sudo': T('history לא מריצה פקודות.', 'history does not run commands.'), 'sudo history': T('זה רק מדפיס את ההיסטוריה.', 'That only prints the history.') } },
+      { type: 'choice', prompt: T('באיזה קובץ bash שומרת את היסטוריית הפקודות?', 'Which file does bash keep the command history in?'), options: ['~/.bash_history', '~/.bashrc', '/etc/history', '~/.profile'], answer: '~/.bash_history',
+        why: { '~/.bashrc': T('‎.bashrc הוא קובץ ההגדרות שרץ כשנפתח shell.', '.bashrc is the settings file that runs when a shell opens.'), '/etc/history': T('אין קובץ כזה. ההיסטוריה אישית, בתיקיית הבית.', 'There is no such file. History is personal, in your home folder.'), '~/.profile': T('‎.profile רץ כשנכנסים למערכת, הוא לא שומר היסטוריה.', '.profile runs when you log in, it does not keep history.') } },
+      { type: 'fill', prompt: T('השלימו כדי להריץ שוב את פקודה מספר 42 מההיסטוריה', 'Fill in to run command number 42 from history again'), before: '', after: '42', options: ['!', '$', '#', '~'], answer: '!' },
+    ] },
+    { title: T('alias', 'alias'), exercises: [
+      { type: 'teach', cmd: 'alias', name: 'alias', text: T('נותנת שם קצר לפקודה ארוכה. אחרי alias ll="ls -a"‎ אפשר לכתוב ll במקום ls -a. alias בלי כלום מציגה את כולם, ו־unalias מוחקת אחת.', 'Gives a short name to a long command. After alias ll="ls -a" you can type ll instead of ls -a. alias alone lists them all, and unalias removes one.'), demo: [['alias ll="ls -a"'], 'll docs'] },
+      { type: 'output', prompt: T('בתיקייה docs יש cv.pdf ו־todo.txt. מה תדפיס la docs?', 'The docs folder has cv.pdf and todo.txt. What will la docs print?'), setup: ['alias la="ls -a"'], cmd: 'la docs', wrongCmds: ['ls docs'], wrongText: ['la: command not found'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ נותנת שם קצר לפקודה ארוכה.', 'The ___ command gives a short name to a long command.'), options: ['alias', 'type', 'echo'], answer: 'alias' },
+      { type: 'output', prompt: WHAT, setup: ['alias ll="ls -a"'], cmd: 'type ll', wrongCmds: ['type ls'], wrongText: ['ll is /usr/bin/ll'] },
+      { type: 'choice', prompt: T('הגדרתם alias בטרמינל, סגרתם אותו ופתחתם חדש. ה־alias נעלם. למה?', 'You set an alias, closed the terminal and opened a new one. The alias is gone. Why?'), plain: true,
+        options: [T('alias חיה רק ב־shell שבו הוגדרה. כדי לשמור אותה כותבים אותה ב־‎~/.bashrc', 'An alias lives only in the shell it was made in. To keep it, write it in ~/.bashrc'), T('צריך להריץ alias עם sudo', 'You have to run alias with sudo'), T('aliases נמחקות כל יום', 'Aliases are deleted every day'), T('הייתה שגיאה בכתיב', 'There was a typo')],
+        why: [null, T('אין קשר להרשאות.', 'It has nothing to do with permissions.'), T('אין מחיקה יומית, הן פשוט לא נשמרו.', 'Nothing is deleted daily, they were just never saved.'), T('גם alias בלי טעויות נעלמת.', 'A correct alias disappears too.')] },
+      { type: 'tiles', prompt: T('מחקו את ה־alias בשם ll', 'Remove the alias named ll'), answer: 'unalias ll', tiles: ['unalias', 'll', 'alias', 'rm', 'type'] },
+      { type: 'terminal', prompt: T('צרו alias בשם logs שמציג את 3 השורות האחרונות של logs/app.log, ואז הריצו אותו', 'Make an alias named logs that shows the last 3 lines of logs/app.log, then run it'), hint: T('alias logs="tail -n 3 logs/app.log" ואז logs', 'alias logs="tail -n 3 logs/app.log", then logs'), goal: (sh, log) => sh.aliases.logs !== undefined && printed(log, 'tail -n 3 logs/app.log'), solve: ['alias logs="tail -n 3 logs/app.log"', 'logs'] },
+    ] },
+    { title: T('משתנים של ה־shell', 'Shell variables'), exercises: [
+      { type: 'teach', cmd: '$HOME', name: 'variables', text: T('ה־shell שומר ערכים במשתנים. ‎$HOME‎ היא תיקיית הבית, ‎$USER‎ שם המשתמש ו־‎$SHELL‎ ה־shell שלכם. echo מדפיסה אותם.', 'The shell keeps values in variables. $HOME is your home folder, $USER your user name and $SHELL your shell. echo prints them.'), demo: [[], 'echo $HOME $USER $SHELL'] },
+      { type: 'output', prompt: WHAT, cmd: 'echo $USER', wrongCmds: ['echo $HOME'], wrongText: ['$USER', 'USER'] },
+      { type: 'sentence', prompt: READ, text: T('המשתנה ___ מכיל את הנתיב של תיקיית הבית.', 'The ___ variable holds the path of the home folder.'), options: ['$HOME', '$USER', '$PATH'], answer: '$HOME' },
+      { type: 'teach', cmd: '$PATH', name: 'path', text: T('‎$PATH‎ היא רשימת תיקיות, מופרדות ב־:, שבהן ה־shell מחפש פקודות. ככה הוא יודע ש־ls היא ‎/usr/bin/ls.', '$PATH is a list of folders, separated by :, where the shell looks for commands. That is how it knows ls is /usr/bin/ls.'), demo: [[], 'echo $PATH'] },
+      { type: 'output', prompt: RECORDED_ON, rec: 'ubuntu-uname', wrongRec: ['ubuntu-uname-m'], wrongText: ['Ubuntu'] },
+      { type: 'match', prompt: T('התאימו כל משתנה למה שיש בו', 'Match each variable to what it holds'), pairs: [['$HOME', T('תיקיית הבית', 'the home folder')], ['$USER', T('שם המשתמש', 'the user name')], ['$PATH', T('איפה מחפשים פקודות', 'where to look for commands')], ['$SHELL', T('ה־shell שלכם', 'your shell')]] },
+      { type: 'terminal', prompt: T('הדפיסו באיזה shell אתם משתמשים', 'Print which shell you are using'), hint: T('echo $SHELL', 'echo $SHELL'), goal: (sh, log) => printed(log, 'echo $SHELL'), solve: ['echo $SHELL'] },
+    ] },
+    { title: T('‎~/.bashrc', '~/.bashrc'), exercises: [
+      { type: 'teach', cmd: '~/.bashrc', name: 'bash settings', text: T('קובץ מוסתר בתיקיית הבית שרץ בכל פעם שנפתח shell. שמים בו aliases והגדרות כדי שיישארו.', 'A hidden file in your home folder that runs every time a shell opens. Put aliases and settings there so they stay.'), demo: [[], 'cat .bashrc'] },
+      { type: 'output', prompt: WHAT, setup: ['echo \'alias c="clear"\' >> .bashrc'], cmd: 'cat .bashrc', wrongCmds: ['cat readme.txt'], wrongText: ['alias c="clear"'] },
+      { type: 'sentence', prompt: READ, text: T('כדי ש־alias תישאר גם מחר, כותבים אותה בקובץ ___.', 'To keep an alias for tomorrow too, write it in the ___ file.'), options: ['~/.bashrc', '~/.bash_history', '/tmp/alias'], answer: '~/.bashrc' },
+      { type: 'choice', prompt: T('למה ls לא מראה את ‎.bashrc?', 'Why does ls not show .bashrc?'), plain: true,
+        options: [T('השם מתחיל בנקודה, ולכן הוא מוסתר. ls -a מראה אותו', 'Its name starts with a dot, so it is hidden. ls -a shows it'), T('הוא נמצא ב־‎/etc', 'It is in /etc'), T('צריך הרשאות מיוחדות', 'You need special permissions'), T('הוא קיים רק כשה־shell פתוח', 'It only exists while the shell is open')],
+        why: [null, T('הוא בתיקיית הבית שלכם.', 'It is in your home folder.'), T('הוא שלכם, ואפשר לקרוא אותו.', 'It is yours, and you can read it.'), T('זה קובץ רגיל בדיסק.', 'It is a regular file on disk.')] },
+      { type: 'tiles', prompt: T('הציגו רק את השורה האחרונה של ‎.bashrc', 'Show only the last line of .bashrc'), answer: 'tail -n 1 .bashrc', tiles: ['tail', '-n', '1', '.bashrc', 'head', 'cat'] },
+      { type: 'terminal', prompt: T('הציגו את כל הקבצים בתיקיית הבית, כולל המוסתרים, כדי לראות את ‎.bashrc', 'List every file in your home folder, hidden ones too, to see .bashrc'), hint: T('ls -a', 'ls -a'), goal: (sh, log) => printed(log, 'ls -a'), solve: ['ls -a'] },
+    ] },
+  ],
+  boss: { title: CHALLENGE, text: T('מתאימים את ה־shell לעצמכם.', 'Making the shell your own.'), exercises: [
+    { type: 'terminal', prompt: T('הוסיפו לסוף ‎.bashrc את השורה alias up="cd .."‎ (בלי למחוק את מה שכבר כתוב בו)', 'Add the line alias up="cd .." to the end of .bashrc (without erasing what is already in it)'), hint: T('echo \'alias up="cd .."\' >> .bashrc', 'echo \'alias up="cd .."\' >> .bashrc'), goal: sh => fileIs(sh, '/home/user/.bashrc', 'alias ll="ls -l"\nalias up="cd .."\n'), solve: ['echo \'alias up="cd .."\' >> .bashrc'] },
+    { type: 'terminal', prompt: T('הגדירו את ה־alias הזה גם ב־shell הנוכחי, היכנסו ל־docs והשתמשו ב־up כדי לחזור לבית', 'Set that alias in this shell too, go into docs and use up to get back home'), hint: T('alias up="cd .."‎, ‏cd docs, ‏up', 'alias up="cd ..", cd docs, up'), goal: (sh, log) => sh.cwd === '/home/user' && log.some(l => l.cmd.trim() === 'up'), solve: ['alias up="cd .."', 'cd docs', 'up'] },
+    { type: 'terminal', prompt: T('בדקו מה זה up עכשיו', 'Check what up is now'), setup: ['alias up="cd .."'], hint: T('type up', 'type up'), goal: (sh, log) => log.some(l => /^type\s+up\s*$/.test(l.cmd) && l.out.includes('aliased')), solve: ['type up'] },
+  ] },
+};
+
+COURSE.push(UNIT_7, UNIT_8, UNIT_9, UNIT_10);

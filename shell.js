@@ -31,7 +31,8 @@ class Shell {
   constructor(fixture, { interactive = true } = {}) {
     this.interactive = interactive;
     this.files = new Map(); this.dirs = new Set(['/']); this.order = []; this.cwd = fixture.cwd || '/home/user';
-    this.env = { HOME: '/home/user', USER: 'user', PATH: '/usr/local/bin:/usr/bin:/bin', ...fixture.env };
+    this.env = { HOME: '/home/user', USER: 'user', SHELL: '/bin/bash', PATH: '/usr/local/bin:/usr/bin:/bin', ...fixture.env };
+    this.aliases = { ...fixture.aliases };
     this.locked = new Set(fixture.locked || []);
     this.history = fixture.history || []; this.processes = fixture.processes || []; this.who = fixture.who || [];
     for (const d of fixture.dirs || []) this.mkdirp(this.abs(d));
@@ -71,11 +72,13 @@ class Shell {
         if (/\$\(|`/.test(t)) throw new ShellUnsupported('command substitution');
         t = t.replace(/\$\{?([A-Za-z_][A-Za-z0-9_]*)\}?/g, (_, name) => this.env[name] ?? '').replace(/\$([0-9?#@*!])/g, () => { throw new ShellUnsupported('special variable'); });
       }
-      if (!part.quoted) { quotedAll = false; if (/[*?]/.test(t)) hasGlob = true; if (/[{}]/.test(t) && /\.\.|,/.test(t)) throw new ShellUnsupported('brace expansion'); }
-      text += part.quoted ? t.replace(/[*?]/g, m => '\uE000' + m) : t;
+      if (!part.quoted) { quotedAll = false; if (/[*?]/.test(t)) hasGlob = true; }
+      text += part.quoted ? t.replace(/[*?{}]/g, m => '\uE000' + m) : t;
     }
-    if (hasGlob && !quotedAll) { const matches = this.glob(text.replace(/\uE000/g, '')); if (matches.length) return matches; }
-    return [text.replace(/\uE000/g, '')];
+    return braces(text).flatMap(word => {
+      if (hasGlob && !quotedAll) { const matches = this.glob(word.replace(/\uE000/g, '')); if (matches.length) return matches; }
+      return [word.replace(/\uE000/g, '')];
+    });
   }
   parse(text) {
     const tokens = shellTokens(text), list = []; let pipeline = [], cmd = { words: [], redirects: [] };
@@ -123,10 +126,25 @@ class Shell {
     return { out, err, code };
   }
   exec(words, stdin) {
+    if (this.aliases[words[0]] !== undefined) words = [...this.aliases[words[0]].split(/\s+/).filter(Boolean), ...words.slice(1)];
     const [name, ...args] = words, fn = COMMANDS[name];
     if (!fn) throw new ShellUnsupported(`command ${name}`);
     return fn.call(this, args, stdin);
   }
+}
+
+// {a,b} and {1..3}, left to right, like bash. Quoted braces arrive marked with \uE000 and stay as they are.
+function braces(word) {
+  const m = word.match(/^(.*?)(?<!\uE000)\{([^{}]*)(?<!\uE000)\}(.*)$/s);
+  if (!m) return [word];
+  const [, pre, body, post] = m, range = body.match(/^(-?\d+)\.\.(-?\d+)$/) || body.match(/^([a-z])\.\.([a-z])$/i);
+  let items;
+  if (range) {
+    const num = /\d/.test(range[1]), a = num ? +range[1] : range[1].charCodeAt(0), b = num ? +range[2] : range[2].charCodeAt(0), step = a <= b ? 1 : -1;
+    items = []; for (let i = a; step > 0 ? i <= b : i >= b; i += step) items.push(num ? String(i) : String.fromCharCode(i));
+  } else if (body.includes(',')) items = body.split(',');
+  else return [word];
+  return items.flatMap(i => braces(pre + i + post));
 }
 
 class ShellError extends Error { constructor(message, code = 1) { super(message); this.code = code; } }
@@ -430,12 +448,58 @@ const COMMANDS = {
     if (o.d) { try { return { out: atob(src.text.replace(/\s+/g, '')) }; } catch { throw new ShellError('invalid input'); } }
     const enc = btoa(src.text); return { out: join(enc.match(/.{1,76}/g) || []) };
   },
+  touch(args) {
+    if (!args.length) throw new ShellError('missing file operand');
+    for (const f of args) { const p = this.abs(f); if (!this.exists(p)) { if (!this.dirs.has(this.parent(p))) throw new ShellError(`cannot touch '${f}': No such file or directory`); this.write(p, ''); } }
+    return { out: '' };
+  },
+  rmdir(args) {
+    const [o, dirs] = opts(args, 'p'); if (o.p) throw new ShellUnsupported('rmdir -p');
+    if (!dirs.length) throw new ShellError('missing operand');
+    for (const d of dirs) {
+      const p = this.abs(d);
+      if (this.files.has(p)) throw new ShellError(`failed to remove '${d}': Not a directory`);
+      if (!this.dirs.has(p)) throw new ShellError(`failed to remove '${d}': No such file or directory`);
+      if (this.children(p).length) throw new ShellError(`failed to remove '${d}': Directory not empty`);
+      this.dirs.delete(p);
+    }
+    return { out: '' };
+  },
+  alias(args) {
+    if (!args.length) return { out: join(Object.keys(this.aliases).sort(cmpC).map(n => `alias ${n}='${this.aliases[n]}'`)) };
+    let out = '', err = '';
+    for (const a of args) {
+      const eq = a.indexOf('=');
+      if (eq > 0) this.aliases[a.slice(0, eq)] = a.slice(eq + 1);
+      else if (this.aliases[a] !== undefined) out += `alias ${a}='${this.aliases[a]}'\n`;
+      else err += `alias: ${a}: not found\n`;
+    }
+    return { out, err, code: err ? 1 : 0 };
+  },
+  unalias(args) { for (const a of args) { if (this.aliases[a] === undefined) throw new ShellError(`${a}: not found`); delete this.aliases[a]; } return { out: '' }; },
+  type(args) {
+    let out = '', err = '';
+    for (const n of args) {
+      if (this.aliases[n] !== undefined) out += `${n} is aliased to \`${this.aliases[n]}'\n`;
+      else if (BUILTINS.includes(n)) out += `${n} is a shell builtin\n`;
+      else if (COMMANDS[n]) out += `${n} is /usr/bin/${n}\n`;
+      else err += `type: ${n}: not found\n`;
+    }
+    return { out, err, code: err ? 1 : 0 };
+  },
+  which(args) {
+    const found = args.filter(n => COMMANDS[n] && !BUILTIN_ONLY.includes(n));
+    return { out: join(found.map(n => `/usr/bin/${n}`)), code: found.length === args.length ? 0 : 1 };
+  },
   who() { return { out: join(this.who) }; },
   whoami() { return { out: this.env.USER + '\n' }; },
   history() { return { out: join(this.history.map((h, i) => `${String(i + 1).padStart(5)}  ${h}`)) }; },
   ps(args) { const [o] = opts(args, 'ef'); const rows = o.f ? this.processes.full : this.processes.short; return { out: join(o.e ? rows : [rows[0], ...rows.slice(1).filter(r => /pts\/0/.test(r))]) }; },
   getent(args) { if (args[0] !== 'passwd') throw new ShellUnsupported('getent'); return { out: this.read('/etc/passwd') }; },
 };
+// What bash's type reports as builtins, and which of those have no /usr/bin twin for which to find.
+const BUILTINS = ['alias', 'cd', 'echo', 'history', 'pwd', 'type', 'unalias'];
+const BUILTIN_ONLY = ['alias', 'cd', 'history', 'type', 'unalias'];
 function headTail(args, stdin, which) {
   const [o, files] = opts(args, 'qv', 'nc', { numericFlag: true });
   const sources = inputs(this, files, stdin, which), many = sources.length > 1;
