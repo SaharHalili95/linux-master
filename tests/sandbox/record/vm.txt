@@ -1,0 +1,31 @@
+# Commands that need real disks (loop devices, mount, LVM, swap). They run on a GitHub Actions Ubuntu 24.04
+# virtual machine through .github/workflows/record.yml, never on a developer's Docker, where they can crash its VM.
+# Same line format as ubuntu.txt.
+# packages: parted fdisk e2fsprogs xfsprogs dosfstools lvm2 sysstat
+disk-fdisk-l	truncate -s 1G disk.img; parted -s disk.img mklabel gpt mkpart data ext4 1MiB 600MiB mkpart logs xfs 600MiB 900MiB mkpart swap linux-swap 900MiB 100%	fdisk -l disk.img | sed -n '1p;6,$p'
+disk-parted-print	truncate -s 1G disk.img; parted -s disk.img mklabel gpt mkpart data ext4 1MiB 600MiB mkpart logs xfs 600MiB 900MiB	parted -s disk.img print | grep -v '^Model'
+disk-mbr-print	truncate -s 1G disk.img; parted -s disk.img mklabel msdos mkpart primary ext4 1MiB 500MiB mkpart primary ext4 500MiB 100%	fdisk -l disk.img | grep -E 'Disklabel|^disk'
+disk-parted-mklabel	truncate -s 1G disk.img	parted -s disk.img mklabel gpt && parted -s disk.img print | grep 'Partition Table'
+fs-mkfs-ext4	truncate -s 512M part.img	mkfs.ext4 -F part.img 2>&1 | grep -vE '^mke2fs [0-9]|UUID|^$'
+fs-mkfs-xfs	truncate -s 512M part.img	mkfs.xfs -f part.img | head -n 2
+fs-mkfs-vfat	truncate -s 64M usb.img	mkfs.vfat -n USB usb.img
+fs-blkid	truncate -s 64M a.img; mkfs.ext4 -q -F -L data -U 3f1c0a2e-6c1d-4a51-9b3e-2b7f1d9c8e41 a.img	blkid a.img | sed 's/ BLOCK_SIZE="[0-9]*"//'
+fs-tune2fs	truncate -s 64M a.img; mkfs.ext4 -q -F -L data a.img	tune2fs -l a.img | grep -E '^(Filesystem volume name|Block size|Mount count|Maximum mount count):'
+fs-tune2fs-c	truncate -s 64M a.img; mkfs.ext4 -q -F a.img	tune2fs -c 30 a.img
+fs-e2fsck	truncate -s 64M a.img; mkfs.ext4 -q -F a.img	e2fsck -f a.img
+fs-xfs-repair	truncate -s 512M x.img; mkfs.xfs -q -f x.img	xfs_repair -n x.img 2>&1 | head -n 4
+mnt-mount	truncate -s 64M a.img; mkfs.ext4 -q -F -L data a.img; mkdir -p /mnt/data	mount -o loop a.img /mnt/data && df -h /mnt/data | awk '{print $2, $3, $4, $6}'
+mnt-findmnt	truncate -s 64M b.img; mkfs.ext4 -q -F b.img; mkdir -p /mnt/disk2; mount -o loop b.img /mnt/disk2	findmnt -n -o TARGET,FSTYPE,OPTIONS /mnt/disk2
+mnt-umount-busy	truncate -s 64M c.img; mkfs.ext4 -q -F c.img; mkdir -p /mnt/c; mount -o loop c.img /mnt/c	cd /mnt/c && umount /mnt/c
+mnt-fstab	truncate -s 64M d.img; mkfs.ext4 -q -F -U 9a8b7c6d-1111-4222-8333-444455556666 d.img; L=$(losetup -f --show d.img); mkdir -p /mnt/backup; echo "UUID=9a8b7c6d-1111-4222-8333-444455556666 /mnt/backup ext4 defaults 0 2" >> /etc/fstab	mount -a && findmnt -n -o TARGET,FSTYPE /mnt/backup
+mnt-df	truncate -s 64M e.img; mkfs.ext4 -q -F e.img; mkdir -p /mnt/e; mount -o loop e.img /mnt/e; dd if=/dev/zero of=/mnt/e/big bs=1M count=20 status=none	df -h /mnt/e | awk '{print $2, $3, $4, $5, $6}'
+du-sh	mkdir -p site/img site/css; head -c 300000 /dev/zero > site/img/a.png; head -c 100000 /dev/zero > site/css/s.css	du -sh site/* | sort -k2
+du-max	mkdir -p site/img site/css; head -c 300000 /dev/zero > site/img/a.png; head -c 100000 /dev/zero > site/css/s.css	du -h --max-depth=1 site | sort -k2
+lvm-pvcreate	truncate -s 300M p1.img p2.img; losetup /dev/loop30 p1.img 2>/dev/null || (mknod /dev/loop30 b 7 30 && losetup /dev/loop30 p1.img); losetup /dev/loop31 p2.img 2>/dev/null || (mknod /dev/loop31 b 7 31 && losetup /dev/loop31 p2.img)	pvcreate /dev/loop30 /dev/loop31 2>&1 | grep -v WARNING
+lvm-vgcreate	true	vgcreate data /dev/loop30 /dev/loop31 2>&1 | grep -v WARNING
+lvm-lvcreate	true	lvcreate -n web -L 200M data 2>&1 | grep -v WARNING
+lvm-lvs	true	lvs 2>/dev/null; vgs 2>/dev/null
+lvm-extend	true	lvextend -L +100M data/web 2>&1 | grep -v WARNING; lvs data 2>/dev/null
+swap-mkswap	truncate -s 256M swap.img; chmod 600 swap.img	mkswap swap.img | sed 's/UUID=.*/UUID=.../'
+swap-on	dd if=/dev/zero of=/swapfile2 bs=1M count=128 status=none; chmod 600 /swapfile2; mkswap /swapfile2 >/dev/null	swapon /swapfile2 && swapon --show | grep -E 'NAME|swapfile2'
+iostat-d	true	iostat -d -h | head -n 3

@@ -1,0 +1,23 @@
+name: Record disk output
+
+# Records tests/sandbox/record/vm.txt on a real Ubuntu VM. Push a branch named record/<anything> to run it,
+# then merge the artifact locally with: node tests/sandbox/record-merge.js "Ubuntu 24.04" <folder>
+on:
+  push:
+    branches: ['record/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash tests/sandbox/record-vm.sh /tmp/rec
+      - uses: actions/upload-artifact@v4
+        with:
+          name: recordings
+          path: /tmp/rec

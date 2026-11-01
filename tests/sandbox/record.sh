@@ -13,6 +13,7 @@ list="record/$1.txt"
 packages=$(sed -n 's/^# packages: //p' "$list")
 setup=$(sed -n 's/^# setup: //p' "$list")
 after=$(sed -n 's/^# after: //p' "$list")
+finally=$(sed -n 's/^# finally: //p' "$list")
 out=$(mktemp -d)
 trap 'rm -rf "$out"' EXIT
 grep -v '^#' "$list" | grep . > "$out/cmds.tsv"
@@ -21,10 +22,11 @@ docker run --rm --privileged --platform linux/amd64 -v "$out":/var/tmp/rec "$ima
   $install $packages >/dev/null 2>&1
   $after
   mandb -q 2>/dev/null || true
-  useradd -m user 2>/dev/null; cd /home/user
+  useradd -m user 2>/dev/null; cd /home/user; export LVM_SUPPRESS_FD_WARNINGS=1
   while IFS=\$'\t' read -r id setup cmd; do
     [ -z \"\$cmd\" ] && { cmd=\$setup; setup=; }
     d=\$(mktemp -d); chown user \$d; cd \$d
-    bash -c \"\$setup\" >/dev/null 2>&1; bash -c \"\$cmd\" >/var/tmp/rec/\$id.out 2>&1 || true
-  done </var/tmp/rec/cmds.tsv"
+    timeout 60 bash -c \"\$setup\" >/dev/null 2>&1; timeout 60 bash -c \"\$cmd\" >/var/tmp/rec/\$id.out 2>&1 || true
+  done </var/tmp/rec/cmds.tsv
+  $finally"
 node record-merge.js "$distro" "$out"
