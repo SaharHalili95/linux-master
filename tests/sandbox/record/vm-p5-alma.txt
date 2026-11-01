@@ -1,0 +1,25 @@
+# Part 5 dnf and rpm output from AlmaLinux 10 (standing in for RHEL 10). The GitHub VM runs Ubuntu, so these run in an
+# almalinux:10 container on it: the first setup puts dnf, rpm and rpm2cpio wrappers in /usr/local/bin that docker exec into it.
+# Merge with distro "AlmaLinux 10". Lines run in order on one container.
+p5-alma-release	docker run -d --name alma almalinux:10 sleep infinity >/dev/null 2>&1; for c in dnf rpm rpm2cpio; do printf '#!/bin/sh\nexec docker exec -w /root alma %s "$@"\n' $c > /usr/local/bin/$c; chmod +x /usr/local/bin/$c; done	rpm -q almalinux-release
+p5-dnf-repolist	dnf -q makecache >/dev/null 2>&1	dnf repolist
+p5-dnf-search	dnf -q search tmux
+p5-dnf-info	dnf -q info tmux | grep -E '^(Name|Version|Release|Architecture|Size|Repository|Summary)' | tr -s ' '
+p5-dnf-provides	dnf -q provides /usr/sbin/semanage | head -n 4 | tr -s ' '
+p5-dnf-install	dnf -y install tmux 2>&1 | grep -E '^(Installing|Install |Installed|Complete)| tmux' | tr -s ' '
+p5-rpm-ql-tmux	rpm -ql tmux | grep bin
+p5-dnf-remove	dnf -y remove tmux 2>&1 | grep -E '^(Removing|Remove |Removed|Complete)| tmux' | tr -s ' '
+p5-dnf-history	dnf history | tr -s ' '
+p5-repo-file	mkdir -p /etc/yum.repos.d /etc/dnf; docker cp alma:/etc/yum.repos.d/almalinux-baseos.repo /etc/yum.repos.d/; docker cp alma:/etc/dnf/dnf.conf /etc/dnf/	grep -v '^#' /etc/yum.repos.d/almalinux-baseos.repo | head -n 8
+p5-dnf-conf	true	cat /etc/dnf/dnf.conf
+p5-rpm-qa	rpm -qa | wc -l; rpm -qa | grep '^bash-'
+p5-rpm-qi	rpm -qi bash | grep -E '^(Name|Version|Release|Architecture|Summary)' | tr -s ' '
+p5-rpm-ql	rpm -ql grep | grep bin
+p5-rpm-qf	rpm -qf /usr/bin/grep /etc/passwd
+p5-rpm-qc	rpm -qc setup | head -n 5
+p5-rpm-K	dnf -q -y install --downloadonly --downloaddir=/root tree >/dev/null 2>&1; docker exec alma sh -c 'mv /root/tree-*.rpm /root/tree.rpm'	rpm -K tree.rpm
+p5-rpm-ivh	true	rpm -ivh tree.rpm; rpm -q tree
+p5-rpm2cpio	true	rpm2cpio tree.rpm | cpio -t 2>/dev/null | head -n 3
+p5-rpm-e	true	rpm -e tree; rpm -q tree
+p5-rpm-deps	dnf -q -y install --downloadonly --downloaddir=/root tmux >/dev/null 2>&1; docker exec alma sh -c 'mv /root/tmux-*.rpm /root/tmux.rpm'	rpm -ivh tmux.rpm
+p5-rpm-V	docker exec alma sh -c 'echo "# local change" >> /etc/profile'	rpm -V setup | grep profile

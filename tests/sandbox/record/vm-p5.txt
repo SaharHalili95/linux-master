@@ -1,0 +1,52 @@
+# Part 5 (installing software) on a real Ubuntu 24.04 VM: apt, dpkg, shared libraries, libvirt, podman, flatpak and cloud-init.
+# Lines share one VM and run in order, so later lines rely on packages earlier lines installed.
+# packages: flatpak libvirt-daemon-system libvirt-clients qemu-system-x86 qemu-utils podman
+p5-apt-update	apt update 2>/dev/null | grep -E '^(Hit|Get):[0-9]+ http://[a-z.]*ubuntu.com/ubuntu noble(-updates)? InRelease|can be upgraded|up to date'
+p5-apt-search	apt search --names-only '^hello$' 2>/dev/null
+p5-apt-show	apt show hello 2>/dev/null | grep -E '^(Package|Version|Installed-Size|Depends|Description):'
+p5-apt-install	apt-get install -y hello 2>&1 | grep -E '^(The following|  |[0-9]+ upgraded|Setting up)'; hello
+p5-apt-install-deps	apt-get install -y lynx 2>&1 | sed -n '/additional packages/,/upgraded/p'
+p5-apt-upgradable	apt list --upgradable 2>/dev/null | head -n 4 | cut -c1-60
+p5-apt-remove	apt-get install -y -qq vsftpd >/dev/null 2>&1	apt-get remove -y vsftpd 2>&1 | grep '^Removing'; dpkg -l vsftpd | tail -n 1 | awk '{print $1, $2, $3}'; ls /etc/vsftpd.conf
+p5-apt-purge	true	apt-get purge -y vsftpd 2>&1 | grep '^Purging'; ls /etc/vsftpd.conf
+p5-dpkg-l	dpkg -l bash hello | tail -n 2 | awk '{print $1, $2, $3}'
+p5-dpkg-L	dpkg -L hello | grep -E 'bin|man1'
+p5-dpkg-S	dpkg -S /usr/bin/passwd /usr/bin/ssh
+p5-dpkg-i	apt-get download sl >/dev/null 2>&1	ls; dpkg -i sl_*.deb | grep -E '^(Unpacking|Setting up)'
+p5-dpkg-r	true	dpkg -r sl | grep ^Removing
+p5-dpkg-deps	apt-get purge -y -qq lynx lynx-common >/dev/null 2>&1; apt-get download lynx >/dev/null 2>&1	dpkg -i lynx_*.deb 2>&1 | grep -E 'depends on|not installed|^Errors|^ lynx'
+p5-apt-fix	true	apt-get install -f -y 2>&1 | grep -E '^(Correcting|The following|  lynx|Setting up)'
+p5-sources	grep -v '^#' /etc/apt/sources.list.d/ubuntu.sources | head -n 5
+p5-apt-cache-policy	apt-cache policy hello | head -n 3
+p5-apt-cache-depends	apt-cache depends hello
+p5-apt-cache-search	apt-cache search --names-only '^cowsay'
+p5-ldd	ldd /usr/bin/ls | sed 's/ (0x[0-9a-f]*)//'
+p5-lib-missing	mkdir -p /opt/greet/lib /opt/greet/bin; printf 'const char *greet(void) { return "hello from libgreet"; }\n' > greet.c; gcc -shared -fPIC -Wl,-soname,libgreet.so.1 -o /opt/greet/lib/libgreet.so.1 greet.c; ln -sf libgreet.so.1 /opt/greet/lib/libgreet.so; printf '#include <stdio.h>\nconst char *greet(void);\nint main(void) { puts(greet()); return 0; }\n' > main.c; gcc -o /opt/greet/bin/greet main.c -L/opt/greet/lib -lgreet	/opt/greet/bin/greet
+p5-ldd-notfound	true	ldd /opt/greet/bin/greet | grep greet
+p5-ld-library-path	true	LD_LIBRARY_PATH=/opt/greet/lib /opt/greet/bin/greet
+p5-ld-so-conf	cat /etc/ld.so.conf; ls /etc/ld.so.conf.d/
+p5-ldconfig	echo /opt/greet/lib > /etc/ld.so.conf.d/greet.conf	cat /etc/ld.so.conf.d/greet.conf; ldconfig; ldconfig -p | grep greet; /opt/greet/bin/greet
+p5-ldconfig-p	ldconfig -p | head -n 1; ldconfig -p | grep 'libc.so.6 '
+p5-virt-detect	systemd-detect-virt; ls /sys/bus/vmbus/drivers/
+p5-machine-id	cat /etc/machine-id | wc -c; ls /etc/ssh/ssh_host_*_key.pub
+p5-cloud-init	cloud-init status
+p5-qemu-img	qemu-img create -f qcow2 web1.qcow2 10G; qemu-img info web1.qcow2 | grep -E 'format|size'
+p5-virsh-define	printf '<domain type="qemu">\n  <name>web1</name>\n  <memory unit="MiB">256</memory>\n  <vcpu>1</vcpu>\n  <os><type arch="x86_64">hvm</type></os>\n</domain>\n' > web1.xml	virsh define web1.xml; virsh list --all
+p5-virsh-start	true	virsh start web1; virsh list
+p5-virsh-dominfo	true	virsh dominfo web1 | grep -E '^(Name|State|CPU\(s\)|Max memory|Autostart)'
+p5-virsh-autostart	true	virsh autostart web1
+p5-virsh-destroy	true	virsh destroy web1; virsh list --all
+p5-virsh-net	virsh net-list --all
+p5-virsh-undefine	true	virsh undefine web1
+p5-podman-kernel	podman pull -q docker.io/library/alpine:3.20 >/dev/null 2>&1	uname -r; podman run --rm docker.io/library/alpine:3.20 uname -r
+p5-podman-os	true	grep PRETTY /etc/os-release; podman run --rm docker.io/library/alpine:3.20 grep PRETTY /etc/os-release
+p5-podman-run-d	podman pull -q docker.io/library/nginx:alpine >/dev/null 2>&1; podman rm -f web >/dev/null 2>&1	podman run -d --name web -p 8080:80 docker.io/library/nginx:alpine
+p5-podman-ps	sleep 2	podman ps --format '{{.Names}}  {{.Image}}  {{.Status}}'
+p5-podman-images	podman images --format '{{.Repository}}:{{.Tag}}  {{.Size}}'
+p5-podman-curl	curl -s localhost:8080 | grep '<title>'
+p5-podman-exec	podman exec web nginx -v
+p5-podman-stop-rm	podman stop web; podman rm web
+p5-docker-run	docker pull -q alpine:3.20 >/dev/null 2>&1	docker run --rm alpine:3.20 echo hello from a container
+p5-flatpak-remotes	flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo; flatpak remotes
+p5-flatpak-info	true	flatpak remote-info flathub org.gnome.Calculator | grep -E 'ID:|Ref:|Version:|Download:|Installed:|Runtime:'
+p5-flatpak-search	true	flatpak search --columns=application,name gimp | head -n 3
