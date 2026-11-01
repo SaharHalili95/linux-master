@@ -29,3 +29,70 @@ lvm-extend	true	lvextend -L +100M data/web 2>&1 | grep -v WARNING; lvs data 2>/d
 swap-mkswap	truncate -s 256M swap.img; chmod 600 swap.img	mkswap swap.img | sed 's/UUID=.*/UUID=.../'
 swap-on	dd if=/dev/zero of=/swapfile2 bs=1M count=128 status=none; chmod 600 /swapfile2; mkswap /swapfile2 >/dev/null	swapon /swapfile2 && swapon --show | grep -E 'NAME|swapfile2'
 iostat-d	true	iostat -d -h | head -n 3
+user-passwd-line	useradd -m -s /bin/bash -c "Dana Levi" dana	grep '^dana:' /etc/passwd
+user-shadow-line	useradd -m dana; echo 'dana:S3cret!pass' | chpasswd	grep '^dana:' /etc/shadow | cut -d: -f1,3-9
+user-group-line	groupadd developers; useradd -m dana; usermod -aG developers dana	grep '^developers:' /etc/group
+user-id	useradd -m dana; groupadd developers; usermod -aG developers dana	id dana
+user-groups	useradd -m dana; groupadd developers; groupadd docker2; usermod -aG developers,docker2 dana	groups dana
+user-useradd	true	useradd -m -s /bin/bash omer && ls -ld /home/omer | awk '{print $1, $3, $4, $NF}' && grep '^omer:' /etc/passwd
+user-usermod-G	useradd -m dana; groupadd ops; groupadd web; usermod -aG ops dana	usermod -G web dana && id dana
+user-userdel	useradd -m tmpuser	userdel -r tmpuser 2>&1; ls /home
+user-passwd-S	useradd -m dana; echo 'dana:S3cret!pass' | chpasswd	passwd -S dana | awk '{print $1, $2}'
+user-chage-l	useradd -m dana; echo 'dana:S3cret!pass' | chpasswd; chage -M 90 -W 7 dana	chage -l dana | sed -E 's/: .*(20[0-9][0-9])$/: <date>/'
+user-lock	useradd -m dana; echo 'dana:S3cret!pass' | chpasswd	usermod -L dana && passwd -S dana | awk '{print $1, $2}'
+user-nologin	true	useradd -r -s /usr/sbin/nologin svc && grep '^svc:' /etc/passwd && su - svc -c whoami
+sudo-l	useradd -m dana; usermod -aG sudo dana	sudo -l -U dana | tail -n 3
+sudo-visudo-c	true	visudo -c
+sudo-group	true	grep -E '^%(sudo|admin)' /etc/sudoers
+sudo-dropin	true	echo 'dana ALL=(ALL) /usr/bin/systemctl restart nginx' > /etc/sudoers.d/dana && chmod 440 /etc/sudoers.d/dana && visudo -cf /etc/sudoers.d/dana
+su-whoami	useradd -m dana	su - dana -c 'whoami; pwd'
+proc-ps-sleep	sleep 300 & 	ps -o pid,ppid,stat,cmd -C sleep | head -n 2 | sed -E 's/^ *[0-9]+ +[0-9]+/  PID  PPID/; 1s/.*/  PID  PPID STAT CMD/'
+proc-ps-aux-head	true	ps aux | head -n 1
+proc-kill-l	true	kill -l | head -n 4
+proc-pgrep	sleep 301 & sleep 302 & 	pgrep -a sleep | awk '{print $2, $3}' | sort | grep -E '30[12]'
+proc-kill	true	sleep 400 & P=$!; kill $P; wait $P; echo "exit status: $?"
+proc-kill9	true	sleep 400 & P=$!; kill -9 $P; wait $P; echo "exit status: $?"
+proc-top	true	top -bn1 | head -n 5 | sed -E 's/[0-9]+:[0-9]+:[0-9]+/HH:MM:SS/'
+proc-nice	true	nice -n 10 sleep 30 & sleep 0.5; ps -o ni,cmd -C sleep | head -n 2
+proc-renice	true	sleep 31 & P=$!; renice -n 5 -p $P | sed "s/$P/PID/"
+proc-jobs	true	sleep 100 & sleep 200 & jobs
+proc-nohup	true	nohup sleep 1 >/dev/null 2>&1 & echo started; ls nohup.out 2>&1
+svc-status	apt-get install -y -qq nginx >/dev/null 2>&1	systemctl status nginx --no-pager | head -n 3 | sed -E 's/since .*/since .../'
+svc-is-active	apt-get install -y -qq nginx >/dev/null 2>&1	systemctl is-active nginx; systemctl is-enabled nginx
+svc-stop	apt-get install -y -qq nginx >/dev/null 2>&1	systemctl stop nginx && systemctl is-active nginx
+svc-disable	apt-get install -y -qq nginx >/dev/null 2>&1	systemctl disable nginx 2>&1; systemctl is-enabled nginx
+svc-enable-now	apt-get install -y -qq nginx >/dev/null 2>&1; systemctl disable --now nginx >/dev/null 2>&1	systemctl enable --now nginx 2>&1; systemctl is-active nginx
+svc-mask	apt-get install -y -qq nginx >/dev/null 2>&1	systemctl mask nginx 2>&1; systemctl start nginx 2>&1; systemctl unmask nginx >/dev/null 2>&1
+svc-failed	true	printf '[Unit]\nDescription=Broken demo\n[Service]\nExecStart=/bin/false\n' > /etc/systemd/system/broken.service; systemctl daemon-reload; systemctl start broken; sleep 1; systemctl is-failed broken
+svc-unit-cat	apt-get install -y -qq nginx >/dev/null 2>&1	systemctl cat nginx | grep -E '^\[|^(ExecStart|After|WantedBy|Type)='
+svc-get-default	true	systemctl get-default
+svc-list-units	true	systemctl list-units --type=target --no-pager | grep -E '^ *(multi-user|graphical|network|basic)\.target' | awk '{print $1, $2, $3, $4}'
+svc-custom	true	printf '[Unit]\nDescription=Hello demo\n[Service]\nExecStart=/bin/sh -c "echo hello from demo"\n[Install]\nWantedBy=multi-user.target\n' > /etc/systemd/system/hello.service; systemctl daemon-reload; systemctl start hello; sleep 1; journalctl -u hello --no-pager -o cat | tail -n 3
+journal-u	apt-get install -y -qq nginx >/dev/null 2>&1; systemctl restart nginx	journalctl -u nginx --no-pager -o cat | tail -n 2
+journal-p	logger -p user.err "disk almost full on /data"	journalctl -p err --no-pager -o cat --since "5 min ago" | grep 'disk almost full'
+journal-logger	true	logger -t backup "backup finished"; sleep 1; journalctl -t backup --no-pager -o cat | tail -n 1
+journal-disk	true	journalctl --disk-usage | sed -E 's/take up [0-9.]+[KMG]?B?/take up <size>/'
+log-varlog	true	ls /var/log | grep -E '^(syslog|auth\.log|kern\.log|dpkg\.log|apt|journal)$'
+log-logrotate	true	cat /etc/logrotate.d/rsyslog | head -n 12
+boot-ls	true	ls /boot | grep -E '^(vmlinuz|initrd\.img|grub|config-)' | sed -E 's/-[0-9].*//' | sort -u
+boot-grub-default	true	grep -E '^GRUB_(DEFAULT|TIMEOUT|CMDLINE_LINUX_DEFAULT)=' /etc/default/grub
+boot-cmdline	true	cat /proc/cmdline | tr ' ' '\n' | grep -E '^(BOOT_IMAGE|root|ro|console)' | sed -E 's/=.*vmlinuz-.*/=\/vmlinuz-.../; s/root=.*/root=UUID=.../'
+boot-dmesg	true	dmesg | head -n 3 | sed -E 's/^\[ *[0-9.]+\]/[   0.000000]/'
+kern-uname	true	uname -r; uname -m; uname -s
+kern-lsmod	true	lsmod | head -n 1; lsmod | grep -E '^(ext4|loop|overlay) ' | awk '{print $1}'
+kern-modinfo	true	modinfo loop | grep -E '^(filename|description|license):' | sed -E 's/[0-9]+\.[0-9]+\.[0-9]+-[0-9]+-azure/<version>/'
+kern-modprobe	true	modprobe dummy && lsmod | grep -E '^dummy' | awk '{print $1}'; modprobe -r dummy; lsmod | grep -c '^dummy'
+kern-sysctl	true	sysctl net.ipv4.ip_forward vm.swappiness
+kern-sysctl-w	true	sysctl -w net.ipv4.ip_forward=1; sysctl net.ipv4.ip_forward; sysctl -w net.ipv4.ip_forward=0 >/dev/null
+kern-lspci	true	lspci | head -n 3 | cut -c1-60
+time-date	true	TZ=Asia/Jerusalem date -d '2026-11-01 10:30:00 UTC' '+%Y-%m-%d %H:%M %Z'
+time-timedatectl	true	timedatectl | grep -E 'Time zone|NTP service|System clock synchronized' | sed -E 's/ +/ /g'
+time-set-tz	true	timedatectl set-timezone Asia/Jerusalem && timedatectl | grep 'Time zone' | sed -E 's/ \(.*//; s/ +/ /g'; timedatectl set-timezone Etc/UTC
+time-list-tz	true	timedatectl list-timezones | grep -E '^(Asia/Jerusalem|Europe/London|America/New_York)$'
+time-chrony	apt-get install -y -qq chrony >/dev/null 2>&1	grep -E '^(pool|server) ' /etc/chrony/chrony.conf | head -n 2
+health-uptime	true	uptime | sed -E 's/^ *[0-9:]+ up .*,  ([0-9]+) users?/ HH:MM:SS up ..., N users/; s/load average.*/load average: x.xx, x.xx, x.xx/'
+health-loadavg	true	cat /proc/loadavg | awk '{print NF " fields"}'; nproc
+health-free	true	free -h | head -n 1
+health-vmstat	true	vmstat 1 2 | head -n 2
+health-meminfo	true	grep -E '^(MemTotal|MemAvailable|SwapTotal):' /proc/meminfo | awk '{print $1, "<number>", $3}'
+health-tuned	apt-get install -y -qq tuned >/dev/null 2>&1; systemctl start tuned; sleep 2	tuned-adm list | grep -E '^- (balanced|throughput-performance|virtual-guest|powersave)' | awk '{print $2}'; tuned-adm active
