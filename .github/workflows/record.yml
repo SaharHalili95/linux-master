@@ -1,7 +1,8 @@
 name: Record disk output
 
-# Records tests/sandbox/record/vm.txt on a real Ubuntu VM. Push a branch named record/<anything> to run it,
-# then merge the artifact locally with: node tests/sandbox/record-merge.js "Ubuntu 24.04" <folder>
+# Records a list on a real Ubuntu VM. Push a branch named record/<name> to run tests/sandbox/record/<name>.txt
+# (or record/vm.txt if no such file), then merge the artifact locally with:
+# node tests/sandbox/record-merge.js "Ubuntu 24.04" <folder> [recorded/pN.js]
 on:
   push:
     branches: ['record/**']
@@ -16,7 +17,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - run: bash tests/sandbox/record-vm.sh /tmp/rec
+      - run: |
+          name=${GITHUB_REF_NAME#record/}
+          list=record/$name.txt; [ -f tests/sandbox/$list ] || list=record/vm.txt
+          bash tests/sandbox/record-vm.sh /tmp/rec $list
       - uses: actions/upload-artifact@v4
         with:
           name: recordings
