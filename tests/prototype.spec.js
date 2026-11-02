@@ -474,6 +474,29 @@ test('a mock exam reveals nothing until the end, then shows the score and what t
   await expect(page.locator('#endQuests')).not.toBeEmpty();
 });
 
+test('the owner can fix a question\'s spacing only, see it at once, and send it as a report', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
+  await page.reload();
+  await page.evaluate(() => { window.open = u => { window.opened = u; }; const ex = UNIT_5.lessons[0].exercises.find(e => e.type === 'choice'); startLesson('u5-L0', [{ ...ex, fx: homeFixture }]); });
+  await page.click('#editBtn');
+  const original = await page.inputValue('#edText');
+  await page.fill('#edText', original.replace(' ', '\n'));
+  await expect(page.locator('#edHint')).toBeHidden();
+  await page.fill('#edText', original.slice(1));
+  await expect(page.locator('#edHint')).toBeVisible();
+  expect(await page.inputValue('#edText')).toBe(original.replace(' ', '\n'));
+  await page.fill('#edNote', 'line breaks look wrong');
+  await page.click('#edSend');
+  await expect(page.locator('#editor')).toBeHidden();
+  expect(await page.locator('#exPrompt').innerText()).toContain('\n');
+  const url = await page.evaluate(() => window.opened);
+  expect(url).toContain('labels=question-report');
+  expect(decodeURIComponent(url.replace(/\+/g, ' '))).toContain('line breaks look wrong');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')).layout);
+  expect(Object.values(saved)[0]).toBe(original.replace(' ', '\n'));
+});
+
 test('Pages deploys every file Learn mode loads', () => {
   const root = path.join(__dirname, '..');
   const html = fs.readFileSync(path.join(root, 'prototype/index.html'), 'utf8');
