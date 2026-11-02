@@ -11,8 +11,11 @@ function bidi(text) {
   if (!/[\u0590-\u05FF]/.test(text)) { frag.append(text); return frag; }
   text = text.replace(/\u200E/g, ''); let last = 0;
   for (const m of text.matchAll(CODE_RUN)) {
-    frag.append(text.slice(last, m.index));
-    const b = document.createElement('bdi'); b.dir = 'ltr'; b.className = m[0].length <= 24 ? 'ltr-run keep' : 'ltr-run'; b.textContent = m[0]; frag.append(b);
+    // A Hebrew prefix glued with a maqaf (מ־, ב־, ל־) stays on the same line as its command.
+    const before = text.slice(last, m.index), glued = before.match(/[\u05D0-\u05EA]{1,3}\u05BE$/);
+    frag.append(glued ? before.slice(0, -glued[0].length) : before);
+    const b = document.createElement('bdi'); b.dir = 'ltr'; b.className = m[0].length <= 24 ? 'ltr-run keep' : 'ltr-run'; b.textContent = m[0];
+    if (glued) { const s = el('span', 'glued', glued[0]); s.append(b); frag.append(s); } else frag.append(b);
     last = m.index + m[0].length;
   }
   frag.append(text.slice(last)); return frag;
@@ -248,6 +251,15 @@ function optionButton(label, value, mono, onPick, index) {
 }
 function pickOne(root) { return b => { if (L.answered) return; root.querySelectorAll('.opt').forEach(o => o.classList.toggle('sel', o === b)); L.value = b.dataset.value; setCan(true); }; }
 const sameCmd = c => c.trim().replace(/\s+/g, ' ');
+// The starting files a list of commands reads, as cards: the "before" a learner needs to understand the output.
+function filePeeks(fx, cmds) {
+  const start = new Shell(fx()), sh = new Shell(fx()), peek = new Map();
+  for (const c of cmds) {
+    for (const word of c.split(/[\s|;&<>]+/)) { const p = word && sh.abs(word); if (p && start.files.has(p) && !peek.has(p) && start.files.get(p).link === undefined) peek.set(p, [word, start.files.get(p).content]); }
+    try { sh.run(c); } catch { /* unsupported commands only change what is shown */ }
+  }
+  return [...peek.values()].map(([name, content]) => { const card = el('div', 'file-peek'); card.append(el('div', 'file-peek-h', t('fileHas', name)), Object.assign(el('pre', '', content.replace(/\n$/, '') || t('emptyFile')), { dir: 'ltr' })); return card; });
+}
 function outputOptions(root, right, wrong) {
   const options = shuffle([right, ...[...new Set(wrong.filter(w => w !== right))].slice(0, 3)]);
   const list = el('div', 'opts outputs'); const pick = pickOne(list);
@@ -269,7 +281,9 @@ const RENDER = {
       const [setup, cmd] = ex.demo, sh = new Shell(ex.fx()), lines = [];
       for (const c of setup) { lines.push([promptFor(sh.cwd), c, '']); sh.run(c); }
       const ps1 = promptFor(sh.cwd), r = sh.run(cmd); lines.push([ps1, cmd, (r.out + r.err).replace(/\n$/, '')]);
-      card.append(el('div', 'demo-label', t('tryIt')), termBlock(lines));
+      const before = filePeeks(ex.fx, [...setup, cmd]);
+      if (before.length) card.append(el('div', 'demo-label', t('before')), ...before);
+      card.append(el('div', 'demo-label', before.length ? t('after') : t('tryIt')), termBlock(lines));
     } else if (ex.sample) card.append(el('div', 'demo-label', t('sampleLine')), termBlock([['user@linux:~$ ', ex.cmd, ex.sample]]));
     root.append(card);
   },
@@ -310,13 +324,9 @@ const RENDER = {
     }
     const fx = ex.fx, real = runIn(ex.setup, ex.cmd, fx());
     // Show every starting file the commands read, so the answer never depends on content the learner has not seen.
-    const lines = [], start = new Shell(fx()), peek = new Map(); let sh = new Shell(fx());
-    for (const c of [...(ex.setup || []), ex.cmd]) {
-      for (const word of c.split(/[\s|;&<>]+/)) { const p = word && sh.abs(word); if (p && start.files.has(p) && !peek.has(p)) peek.set(p, [word, start.files.get(p).content]); }
-      if (c === ex.cmd) lines.push([promptFor(sh.cwd), c, '?']); else { lines.push([promptFor(sh.cwd), c, '']); sh.run(c); }
-    }
-    for (const [name, content] of peek.values()) { const card = el('div', 'file-peek'); card.append(el('div', 'file-peek-h', t('fileHas', name)), Object.assign(el('pre', '', content.replace(/\n$/, '')), { dir: 'ltr' })); root.append(card); }
-    root.append(termBlock(lines));
+    const lines = [], sh = new Shell(fx());
+    for (const c of [...(ex.setup || []), ex.cmd]) { if (c === ex.cmd) lines.push([promptFor(sh.cwd), c, '?']); else { lines.push([promptFor(sh.cwd), c, '']); sh.run(c); } }
+    root.append(...filePeeks(fx, [...(ex.setup || []), ex.cmd]), termBlock(lines));
     ex.solution = real.out;
     outputOptions(root, real.out, [...(ex.wrongCmds || []).map(c => runIn(ex.setup, c, fx()).out), ...(ex.wrongText || [])]);
   },
