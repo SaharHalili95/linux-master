@@ -347,6 +347,7 @@ test('every exercise in every unit is answerable and fully translated @content',
     expect(COURSE.filter(u => !u.locked && !u.exam && u.exams?.some(e => e.startsWith(unit.exam.tag))).length, `unit ${unit.unit} has units to draw from`).toBeGreaterThan(0);
     walk(unit);
   }
+  const unnamed = [];
   for (const unit of COURSE.filter(u => !u.locked && !u.exam)) {
     const fx = unit.fixture || ctx.unitFixture || (() => vm.runInContext('unitFixture()', ctx));
     const exercises = [...unit.lessons.flatMap((l, li) => l.exercises.map((ex, i) => [`${unit.unit}/L${li}.${i}`, ex])), ...(unit.boss.exercises || []).map((ex, i) => [`${unit.unit}/boss.${i}`, ex])];
@@ -374,6 +375,12 @@ test('every exercise in every unit is answerable and fully translated @content',
       if (ex.type === 'sentence') { expect(ex.options, id).toContain(ex.answer); for (const l of ['he', 'en']) expect(ex.text[l].split('___'), id).toHaveLength(2); }
       if (ex.type === 'tiles') { const bank = [...ex.tiles]; for (const w of ex.answer.split(' ')) { expect(bank, `${id}: ${w}`).toContain(w); bank.splice(bank.indexOf(w), 1); } }
       if (ex.type === 'match') { expect(new Set(ex.pairs.map(p => p[0])).size, id).toBe(ex.pairs.length); for (const [k] of ex.pairs) expect(k, `${id}: match keys go in a CSS selector`).not.toMatch(/[\\"\n]/); }
+      // The owner's rule: a task names the data file its answer reads, so the learner never has to guess it.
+      if (['terminal', 'tiles', 'fill'].includes(ex.type)) {
+        const answer = ex.type === 'terminal' ? (ex.solve || []).join(' ') : ex.type === 'tiles' ? ex.answer : ex.before + ex.answer + ex.after;
+        const data = answer.split(/[\s|;&<>()"']+/).filter(w => /\.(txt|log|csv|ini)$/.test(w) || /^\/etc\/[\w.-]+$/.test(w)).filter(w => !w.startsWith('./') && !w.startsWith('/home/') && !/[*?{]/.test(w));
+        for (const f of data) if (!(ex.prompt?.he || '').includes(f.split('/').pop())) unnamed.push(`${id}: ${f} | ${ex.prompt?.he}`);
+      }
       if (ex.type === 'terminal') {
         const sh = new Shell(fx()); for (const c of ex.setup || []) sh.run(c);
         expect(ex.goal(sh, []), `${id} is solved before typing anything`).toBe(false);
@@ -383,6 +390,7 @@ test('every exercise in every unit is answerable and fully translated @content',
     }
   }
   expect(count).toBeGreaterThan(100);
+  expect(unnamed, 'tasks that do not say which file to use').toEqual([]);
   for (const v of texts) { expect(v.he, JSON.stringify(v)).toBeTruthy(); expect(v.en, JSON.stringify(v)).toBeTruthy(); expect(v.en, v.en).not.toMatch(/[\u0590-\u05ff]/); }
 });
 
