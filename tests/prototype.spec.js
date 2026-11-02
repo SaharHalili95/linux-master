@@ -342,6 +342,18 @@ test('every exercise in every unit is answerable and fully translated @content',
   const taught = new Set(COURSE.flatMap(u => u.exams || []));
   const lpic = JSON.parse(fs.readFileSync(path.join(root, 'materials/objectives/lpic1.json'), 'utf8'));
   expect(lpic.filter(o => !taught.has(`L${o.id}`)).map(o => o.id), 'LPIC-1 objectives no unit teaches').toEqual([]);
+  // Every file, term and utility LPI lists must appear somewhere in the course (an exercise, or a recording it shows).
+  // A few terms are taught under another spelling; the alias says what to look for.
+  const corpus = [];
+  const collect = v => { if (typeof v === 'string') { corpus.push(v); if (RECORDED[v]) corpus.push(RECORDED[v].cmd, RECORDED[v].out); } else if (v && typeof v === 'object') Object.values(v).forEach(collect); };
+  COURSE.forEach(u => { collect(u.lessons || []); collect(u.boss || {}); });
+  const text = corpus.join('\n').toLowerCase();
+  const ALIAS = { 'Quoting': 'quotes', 'bootloader': 'boot loader', 'regex(7)': 'man 7 regex', '/, ?': '/search', 'h,j,k,l': 'h j k l', 'i, o, a': 'i a o', '.': 'source', 'X': 'x11', 'Subnetting': 'cidr', '/usr/bin/locale': 'locale', 'Sticky/Repeat keys.': 'sticky', 'Slow/Bounce/Toggle keys.': 'bounce', 'Gestures.': 'gesture', 'SysVinit': 'sysvinit', 'systemd.socket': '.socket', '&': ' &' };
+  const missing = lpic.flatMap(o => o.terms.filter(term => {
+    const want = (ALIAS[term] || term).toLowerCase().replace(/\(.*?\)/g, '').split(/,| and /).map(s => s.trim().replace(/\*/g, '').replace(/\/$/, '')).filter(s => s.length > 0);
+    return !want.some(w => text.includes(w.split(' ')[0]) || text.includes(w));
+  }).map(term => `${o.id}: ${term}`));
+  expect(missing, 'LPIC-1 terms the course never mentions').toEqual([]);
   for (const unit of COURSE.filter(u => u.exam)) {
     expect(['L', 'R', 'F'], `unit ${unit.unit}`).toContain(unit.exam.tag);
     expect(COURSE.filter(u => !u.locked && !u.exam && u.exams?.some(e => e.startsWith(unit.exam.tag))).length, `unit ${unit.unit} has units to draw from`).toBeGreaterThan(0);
