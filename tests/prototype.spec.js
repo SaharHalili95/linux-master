@@ -338,6 +338,10 @@ test('every exercise in every unit is answerable and fully translated @content',
   const texts = [];
   const walk = v => { if (v && typeof v === 'object') { if ('he' in v && 'en' in v) texts.push(v); else Object.values(v).forEach(walk); } };
   let count = 0;
+  expect(COURSE.map(u => u.unit), 'units 1-80 in order').toEqual(Array.from({ length: 80 }, (_, i) => i + 1));
+  const taught = new Set(COURSE.flatMap(u => u.exams || []));
+  const lpic = JSON.parse(fs.readFileSync(path.join(root, 'materials/objectives/lpic1.json'), 'utf8'));
+  expect(lpic.filter(o => !taught.has(`L${o.id}`)).map(o => o.id), 'LPIC-1 objectives no unit teaches').toEqual([]);
   for (const unit of COURSE.filter(u => u.exam)) {
     expect(['L', 'R', 'F'], `unit ${unit.unit}`).toContain(unit.exam.tag);
     expect(COURSE.filter(u => !u.locked && !u.exam && u.exams?.some(e => e.startsWith(unit.exam.tag))).length, `unit ${unit.unit} has units to draw from`).toBeGreaterThan(0);
