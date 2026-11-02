@@ -5,7 +5,7 @@ const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 // Hebrew text with commands inside: each command run becomes a left-to-right island, so it stays in one
 // piece and the punctuation around it (like a final ?) stays on the Hebrew side.
-const CODE_RUN = /[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\-](?:[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\ .,:!()-]*[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\)-])?/g;
+const CODE_RUN = /[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\-](?:[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\ .,:!()-]*[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\-])?/g;
 function bidi(text) {
   const frag = document.createDocumentFragment(); text = String(text);
   if (!/[\u0590-\u05FF]/.test(text)) { frag.append(text); return frag; }
