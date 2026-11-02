@@ -22,16 +22,17 @@ function bidi(text) {
 }
 const code = text => { const c = el('code', 'cmd', text); c.dir = 'ltr'; return c; };
 
-const DEFAULTS = { xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {} };
+const DEFAULTS = { xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {} };
 // Saved state can be stale or hand-edited; keep only fields of the expected type.
 function loadState(raw) {
-  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {} };
+  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {}, layout: {} };
   let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
   if (!saved || typeof saved !== 'object') return S;
   for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
   for (const key of ['done', 'days', 'mistakes']) if (Array.isArray(saved[key])) S[key] = saved[key].filter(x => typeof x === 'string');
   if (typeof saved.lastDay === 'string') S.lastDay = saved.lastDay;
   if (typeof saved.sound === 'boolean') S.sound = saved.sound;
+  if (saved.layout && typeof saved.layout === 'object') for (const [k, v] of Object.entries(saved.layout)) if (typeof v === 'string') S.layout[k] = v;
   const q = saved.quests;
   if (q && typeof q === 'object' && typeof q.day === 'string' && Array.isArray(q.claimed)) S.quests = { day: q.day, xp: +q.xp || 0, perfect: +q.perfect || 0, combo: +q.combo || 0, claimed: q.claimed.filter(x => typeof x === 'string') };
   return S;
@@ -188,11 +189,38 @@ function next() {
   $('bar').style.width = `${((L.opts.exam ? L.correct + L.mistakes : L.correct) / Math.max(1, L.total)) * 100}%`;
   $('exTag').textContent = L.opts.exam ? t('examQ', L.total - L.queue.length, L.total) : ex.type === 'teach' ? t(ex.known ? 'knownCmd' : 'newCmd') : ex.retry ? t('retry') : '';
   $('exTag').className = `ex-tag${ex.type === 'teach' ? ' new' : ex.retry ? ' retry' : ''}`;
-  $('exPrompt').replaceChildren(ex.type === 'teach' ? '' : bidi(tr(ex.prompt)));
+  $('exPrompt').replaceChildren(ex.type === 'teach' ? '' : bidi(laidOut(ex, tr(ex.prompt))));
   $('exPrompt').hidden = ex.type === 'teach';
   const body = $('exBody'); body.innerHTML = ''; body.className = `ex-body ${ex.type}`;
   setFoot('idle'); RENDER[ex.type](body, ex);
   $('lessonMain').scrollTop = 0;
+}
+// The owner's layout fixes: only spaces and line breaks may differ from the text in the course, so a saved fix
+// that no longer matches (the text was rewritten since) is ignored.
+const bare = s => String(s).replace(/[\s\u200E]+/g, '');
+const editKey = ex => `${ex.uid}:${ex.type === 'teach' ? 'text' : 'prompt'}`;
+const editable = ex => tr(ex.type === 'teach' ? ex.text : ex.prompt);
+function laidOut(ex, text) { const fix = S.layout[editKey(ex)]; return fix && bare(fix) === bare(text) ? fix : text; }
+function openEditor() {
+  if (!L?.ex) return;
+  const ex = L.ex, original = editable(ex), box = $('edText'), note = $('edNote');
+  let good = laidOut(ex, original);
+  box.value = good; note.value = ''; $('edHint').hidden = true;
+  const preview = () => $('edPreview').replaceChildren(bidi(box.value));
+  box.oninput = () => { if (bare(box.value) === bare(original)) { good = box.value; $('edHint').hidden = true; } else { const at = box.selectionStart; box.value = good; box.selectionStart = box.selectionEnd = Math.min(at, good.length); $('edHint').hidden = false; } preview(); };
+  preview();
+  $('edCancel').onclick = () => { $('editor').hidden = true; };
+  $('edSend').onclick = () => {
+    if (good !== original) S.layout[editKey(ex)] = good; else delete S.layout[editKey(ex)];
+    save(); $('editor').hidden = true; showPrompt(ex);
+    const body = `**Exercise:** \`${ex.uid}\` (${ex.type}), language ${LANG}\n\n**Original:**\n\`\`\`\n${original}\n\`\`\`\n\n**Layout fix** (only spaces and line breaks changed; ⏎ marks a line break):\n\`\`\`\n${good === original ? '(no change)' : good.replace(/\n/g, '⏎\n')}\n\`\`\`\n\n**Note:**\n${note.value.trim() || '(none)'}\n`;
+    window.open(`https://github.com/SaharHalili95/linux-master/issues/new?${new URLSearchParams({ title: `Question fix: ${ex.uid}`, labels: 'question-report', body })}`, '_blank', 'noopener');
+  };
+  $('editor').hidden = false; box.focus({ preventScroll: true });
+}
+function showPrompt(ex) {
+  $('exPrompt').replaceChildren(ex.type === 'teach' ? '' : bidi(laidOut(ex, tr(ex.prompt))));
+  const teachText = document.querySelector('.bubble p'); if (ex.type === 'teach' && teachText) teachText.replaceChildren(bidi(laidOut(ex, tr(ex.text))));
 }
 function setCan(ok) { $('checkBtn').disabled = !ok; }
 function setFoot(mode, title = '', { label = '', sol = '', note = '' } = {}) {
@@ -241,7 +269,7 @@ function answer(ok, solution = '', why = '') {
   setCan(true); $('checkBtn').focus({ preventScroll: true }); save();
 }
 function quitLesson() { if (L && (L.correct || L.mistakes) && !confirm(t('quitConfirm'))) return; closeOverlays(); }
-function closeOverlays() { clearInterval(L?.timer); ['lesson', 'end', 'streakScreen'].forEach(id => { $(id).hidden = true; }); document.body.classList.remove('in-lesson'); $('comboTag').textContent = ''; L = null; showTab('learn'); }
+function closeOverlays() { clearInterval(L?.timer); ['lesson', 'end', 'streakScreen', 'editor'].forEach(id => { $(id).hidden = true; }); document.body.classList.remove('in-lesson'); $('comboTag').textContent = ''; L = null; showTab('learn'); }
 
 // ---------- Exercise renderers ----------
 function optionButton(label, value, mono, onPick, index) {
@@ -275,7 +303,7 @@ const RENDER = {
   teach(root, ex) {
     const card = el('div', 'teach-card');
     const head = el('div', 'teach-head'); const m = el('div', 'teach-mascot'); m.innerHTML = mascot('happy');
-    const bubble = el('div', 'bubble'); const para = el('p'); para.append(bidi(tr(ex.text))); bubble.append(code(ex.cmd), el('div', 'teach-name', ex.name), para);
+    const bubble = el('div', 'bubble'); const para = el('p'); para.append(bidi(laidOut(ex, tr(ex.text)))); bubble.append(code(ex.cmd), el('div', 'teach-name', ex.name), para);
     head.append(m, bubble); card.append(head);
     if (ex.demo) {
       const [setup, cmd] = ex.demo, sh = new Shell(ex.fx()), lines = [];
@@ -517,6 +545,7 @@ function confetti() {
 document.querySelectorAll('.tabbar button').forEach(b => { b.onclick = () => showTab(b.dataset.tab); });
 $('checkBtn').onclick = onFootButton;
 $('quitBtn').onclick = quitLesson;
+$('editBtn').onclick = openEditor;
 $('streakBtn').onclick = closeOverlays;
 $('practiceMistakes').onclick = () => practice('mistakes');
 $('practiceMix').onclick = () => practice('mix');

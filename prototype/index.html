@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
-  <link rel="stylesheet" href="styles.css?v=p53">
+  <link rel="stylesheet" href="styles.css?v=p54">
 </head>
 <body>
   <div class="app">
@@ -57,13 +57,27 @@
   </div>
 
   <div id="lesson" class="overlay lesson" hidden>
-    <div class="lesson-top"><button type="button" id="quitBtn" class="quit" aria-label="יציאה מהשיעור" data-i18n-aria="quit">✕</button><div class="bar" aria-hidden="true"><div id="bar"></div></div><span id="comboTag" class="combo-tag"></span></div>
+    <div class="lesson-top"><button type="button" id="quitBtn" class="quit" aria-label="יציאה מהשיעור" data-i18n-aria="quit">✕</button><button type="button" id="editBtn" class="quit" aria-label="עריכה ודיווח" data-i18n-aria="editQ">✏️</button><div class="bar" aria-hidden="true"><div id="bar"></div></div><span id="comboTag" class="combo-tag"></span></div>
     <div class="lesson-main" id="lessonMain"><div id="exTag" class="ex-tag"></div><!-- [html-validate-disable-next empty-heading -- filled with the exercise prompt when it renders] --><h2 id="exPrompt" class="ex-prompt"></h2><div id="exBody" class="ex-body"></div></div>
     <div id="foot" class="lesson-foot idle">
       <div class="foot-inner">
         <div id="fbBox" class="fb" aria-live="polite" hidden><div class="fb-icon" aria-hidden="true"></div><div><div id="fbTitle" class="fb-title"></div><div id="fbDetail" class="fb-detail"></div><a id="reportLink" class="report" href="https://github.com/SaharHalili95/linux-master/issues/new" target="_blank" rel="noopener" data-i18n="report" hidden>🚩 דיווח על תקלה</a></div></div>
         <button type="button" id="checkBtn" class="btn primary big" disabled>בדיקה</button>
       </div>
+    </div>
+  </div>
+
+  <div id="editor" class="overlay editor" hidden role="dialog" aria-labelledby="edTitle">
+    <div class="editor-inner">
+      <h2 id="edTitle" data-i18n="edTitle">עריכה ודיווח</h2>
+      <label for="edText" data-i18n="edTextLabel">טקסט השאלה: אפשר לשנות רק רווחים וירידות שורה</label>
+      <textarea id="edText" rows="4" dir="auto"></textarea>
+      <p id="edHint" class="ed-hint" data-i18n="edHint" hidden>אפשר לשנות רק רווחים וירידות שורה, לא אותיות.</p>
+      <div class="ed-preview-h" data-i18n="edPreview">ככה זה ייראה:</div>
+      <div id="edPreview" class="ed-preview ex-prompt"></div>
+      <label for="edNote" data-i18n="edNoteLabel">מה הבעיה? (לא חובה)</label>
+      <textarea id="edNote" rows="3" dir="auto"></textarea>
+      <div class="ed-buttons"><button type="button" id="edSend" class="btn primary" data-i18n="edSend">שמירה ושליחה</button><button type="button" id="edCancel" class="btn ghost" data-i18n="edCancel">ביטול</button></div>
     </div>
   </div>
 
@@ -95,27 +109,27 @@
   <canvas id="confetti" class="confetti" hidden></canvas>
   <div id="toast" class="toast" role="status"></div>
   <script src="../shell.js?v=28"></script>
-  <script src="i18n.js?v=p53"></script>
-  <script src="units.js?v=p53"></script>
-  <script src="lessons.js?v=p53"></script>
-  <script src="recorded.js?v=p53"></script>
-  <script src="parts/p1.js?v=p53"></script>
-  <script src="parts/p2.js?v=p53"></script>
-  <script src="parts/p3.js?v=p53"></script>
-  <script src="parts/p4.js?v=p53"></script>
-  <script src="recorded/p5.js?v=p53"></script>
-  <script src="recorded/p6.js?v=p53"></script>
-  <script src="recorded/p7.js?v=p53"></script>
-  <script src="recorded/p8.js?v=p53"></script>
-  <script src="recorded/p9.js?v=p53"></script>
-  <script src="parts/p5.js?v=p53"></script>
-  <script src="parts/p6.js?v=p53"></script>
-  <script src="parts/p7.js?v=p53"></script>
-  <script src="parts/p8.js?v=p53"></script>
-  <script src="parts/p9.js?v=p53"></script>
-  <script src="parts/p10.js?v=p53"></script>
-  <script src="recorded/coverage.js?v=p53"></script>
-  <script src="parts/p11.js?v=p53"></script>
-  <script src="app.js?v=p53"></script>
+  <script src="i18n.js?v=p54"></script>
+  <script src="units.js?v=p54"></script>
+  <script src="lessons.js?v=p54"></script>
+  <script src="recorded.js?v=p54"></script>
+  <script src="parts/p1.js?v=p54"></script>
+  <script src="parts/p2.js?v=p54"></script>
+  <script src="parts/p3.js?v=p54"></script>
+  <script src="parts/p4.js?v=p54"></script>
+  <script src="recorded/p5.js?v=p54"></script>
+  <script src="recorded/p6.js?v=p54"></script>
+  <script src="recorded/p7.js?v=p54"></script>
+  <script src="recorded/p8.js?v=p54"></script>
+  <script src="recorded/p9.js?v=p54"></script>
+  <script src="parts/p5.js?v=p54"></script>
+  <script src="parts/p6.js?v=p54"></script>
+  <script src="parts/p7.js?v=p54"></script>
+  <script src="parts/p8.js?v=p54"></script>
+  <script src="parts/p9.js?v=p54"></script>
+  <script src="parts/p10.js?v=p54"></script>
+  <script src="recorded/coverage.js?v=p54"></script>
+  <script src="parts/p11.js?v=p54"></script>
+  <script src="app.js?v=p54"></script>
 </body>
 </html>

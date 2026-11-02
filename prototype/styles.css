@@ -279,3 +279,13 @@ button { cursor: pointer; }
 .glued { white-space: nowrap; }
 /* Command tiles: compact on phones so a whole command fits on one line. */
 @media (max-width: 480px) { .answer-row, .bank { gap: 6px; } .answer-row .tile, .bank .tile { padding: 8px 10px; font-size: 15px; min-height: 42px; } }
+/* Owner's edit-and-report sheet. Prompts keep the line breaks a layout fix adds. */
+.ex-prompt, .bubble p { white-space: pre-line; }
+.overlay.editor { z-index: 60; background: #000000aa; display: flex; align-items: flex-end; }
+.editor-inner { width: 100%; max-width: 640px; margin: 0 auto; background: var(--surface); border-radius: 20px 20px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 8px; max-height: 92vh; overflow-y: auto; }
+.editor-inner h2 { margin: 0 0 4px; font-size: 20px; }
+.editor-inner label, .ed-preview-h { font-weight: 700; font-size: 14px; color: var(--muted); }
+.editor-inner textarea { width: 100%; border: 2px solid var(--line); border-radius: 12px; background: var(--soft); color: var(--ink); font: 500 17px var(--font); padding: 10px 12px; resize: vertical; }
+.ed-preview { border: 2px dashed var(--line); border-radius: 12px; padding: 10px 12px; margin: 0; font-size: 20px; }
+.ed-hint { color: var(--red); font-weight: 700; margin: 0; font-size: 14px; }
+.ed-buttons { display: flex; gap: 10px; margin-top: 6px; } .ed-buttons .btn { flex: 1; }
