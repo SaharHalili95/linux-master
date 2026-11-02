@@ -3,6 +3,20 @@ const STORE = 'linux-master-proto';
 const dayKey = (offset = 0) => { const d = new Date(); d.setDate(d.getDate() + offset); return d.toLocaleDateString('en-CA'); };
 const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+// Hebrew text with commands inside: each command run becomes a left-to-right island, so it stays in one
+// piece and the punctuation around it (like a final ?) stays on the Hebrew side.
+const CODE_RUN = /[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\-](?:[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\ .,:!()-]*[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\)-])?/g;
+function bidi(text) {
+  const frag = document.createDocumentFragment(); text = String(text);
+  if (!/[\u0590-\u05FF]/.test(text)) { frag.append(text); return frag; }
+  text = text.replace(/\u200E/g, ''); let last = 0;
+  for (const m of text.matchAll(CODE_RUN)) {
+    frag.append(text.slice(last, m.index));
+    const b = document.createElement('bdi'); b.dir = 'ltr'; b.className = m[0].length <= 24 ? 'ltr-run keep' : 'ltr-run'; b.textContent = m[0]; frag.append(b);
+    last = m.index + m[0].length;
+  }
+  frag.append(text.slice(last)); return frag;
+}
 const code = text => { const c = el('code', 'cmd', text); c.dir = 'ltr'; return c; };
 
 const DEFAULTS = { xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {} };
@@ -171,7 +185,7 @@ function next() {
   $('bar').style.width = `${((L.opts.exam ? L.correct + L.mistakes : L.correct) / Math.max(1, L.total)) * 100}%`;
   $('exTag').textContent = L.opts.exam ? t('examQ', L.total - L.queue.length, L.total) : ex.type === 'teach' ? t(ex.known ? 'knownCmd' : 'newCmd') : ex.retry ? t('retry') : '';
   $('exTag').className = `ex-tag${ex.type === 'teach' ? ' new' : ex.retry ? ' retry' : ''}`;
-  $('exPrompt').textContent = ex.type === 'teach' ? '' : tr(ex.prompt);
+  $('exPrompt').replaceChildren(ex.type === 'teach' ? '' : bidi(tr(ex.prompt)));
   $('exPrompt').hidden = ex.type === 'teach';
   const body = $('exBody'); body.innerHTML = ''; body.className = `ex-body ${ex.type}`;
   setFoot('idle'); RENDER[ex.type](body, ex);
@@ -183,7 +197,7 @@ function setFoot(mode, title = '', { label = '', sol = '', note = '' } = {}) {
   $('fbTitle').textContent = title; $('fbBox').hidden = mode === 'idle';
   const detail = $('fbDetail'); detail.innerHTML = '';
   if (sol) { const row = el('div', 'fb-sol', label); const c = el('pre', 'cmd', sol); c.dir = 'ltr'; row.append(c); detail.append(row); }
-  if (note) detail.append(el('div', 'fb-note', note));
+  if (note) { const n = el('div', 'fb-note'); n.append(bidi(note)); detail.append(n); }
   $('checkBtn').textContent = mode === 'idle' ? (L.ex?.type === 'teach' ? t('gotIt') : t('check')) : t('continue');
   $('reportLink').hidden = mode === 'idle';
   if (mode !== 'idle') $('reportLink').href = reportUrl();
@@ -229,7 +243,7 @@ function closeOverlays() { clearInterval(L?.timer); ['lesson', 'end', 'streakScr
 // ---------- Exercise renderers ----------
 function optionButton(label, value, mono, onPick, index) {
   const b = el('button', 'opt'); b.type = 'button'; b.dataset.value = value;
-  const k = el('span', 'key', String(index + 1)); const t = mono ? code(label) : el('span', '', label);
+  const k = el('span', 'key', String(index + 1)); const t = mono ? code(label) : el('span'); if (!mono) t.append(bidi(label));
   b.append(k, t); b.onclick = () => { SFX.tap(); onPick(b); }; return b;
 }
 function pickOne(root) { return b => { if (L.answered) return; root.querySelectorAll('.opt').forEach(o => o.classList.toggle('sel', o === b)); L.value = b.dataset.value; setCan(true); }; }
@@ -249,7 +263,7 @@ const RENDER = {
   teach(root, ex) {
     const card = el('div', 'teach-card');
     const head = el('div', 'teach-head'); const m = el('div', 'teach-mascot'); m.innerHTML = mascot('happy');
-    const bubble = el('div', 'bubble'); bubble.append(code(ex.cmd), el('div', 'teach-name', ex.name), el('p', '', tr(ex.text)));
+    const bubble = el('div', 'bubble'); const para = el('p'); para.append(bidi(tr(ex.text))); bubble.append(code(ex.cmd), el('div', 'teach-name', ex.name), para);
     head.append(m, bubble); card.append(head);
     if (ex.demo) {
       const [setup, cmd] = ex.demo, sh = new Shell(ex.fx()), lines = [];
@@ -274,7 +288,7 @@ const RENDER = {
   sentence(root, ex) {
     const [head, tail] = tr(ex.text).split('___');
     const line = el('p', 'sentence'); const slot = Object.assign(el('span', 'slot', '   '), { dir: 'ltr' });
-    line.append(head, slot, tail);
+    line.append(bidi(head), slot, bidi(tail));
     const chips = el('div', 'chips');
     shuffle(ex.options).forEach(o => { const c = el('button', 'tile', o); c.type = 'button'; c.dir = 'ltr'; c.onclick = () => { if (L.answered) return; SFX.tap(); chips.querySelectorAll('.tile').forEach(t => t.classList.toggle('sel', t === c)); slot.textContent = o; slot.classList.add('filled'); L.value = o; setCan(true); }; chips.append(c); });
     root.append(line, chips);
