@@ -1,0 +1,34 @@
+# Outputs for the topics added to reach full LPIC-1 coverage and deepen thin RHCSA/LFCS topics. Same format as vm.txt.
+# packages: xfsprogs sysstat bzip2 xz-utils plocate open-iscsi sssd-tools nbd-client
+cov-bzcat	printf 'line one\nline two\n' > notes.txt; bzip2 notes.txt	bzcat notes.txt.bz2
+cov-xzcat	printf 'alpha\nbeta\n' > list.txt; xz list.txt	xzcat list.txt.xz
+cov-bunzip2	seq 1 3 > n.txt; bzip2 n.txt	bunzip2 n.txt.bz2 && ls && cat n.txt
+cov-unxz	seq 1 3 > n.txt; xz n.txt	unxz n.txt.xz && ls && cat n.txt
+cov-xfs-db	truncate -s 512M x.img; mkfs.xfs -q -f -L data x.img	xfs_db -r -c 'sb 0' -c 'p blocksize label' x.img
+cov-xfs-fsr	truncate -s 512M x.img; mkfs.xfs -q -f x.img; mkdir -p /mnt/x; mount -o loop x.img /mnt/x; seq 1 1000 > /mnt/x/data.txt	xfs_fsr -v /mnt/x/data.txt 2>&1 | sed -E 's/[0-9]+ extents?/N extents/'; umount /mnt/x
+cov-updatedb-conf	true	grep -E '^PRUNE(FS|PATHS|NAMES)' /etc/updatedb.conf | cut -c1-80
+cov-man-regex	true	whatis regex
+cov-groupmod	groupadd tester	groupmod -n qa tester && grep -E '^(qa|tester):' /etc/group | cut -d: -f1,3
+cov-groupmod-g	groupadd ops2	groupmod -g 2500 ops2 && grep '^ops2:' /etc/group | cut -d: -f1,3
+cov-systemd-cat	true	echo "nightly sync done" | systemd-cat -t sync -p info; sleep 1; journalctl -t sync --no-pager -o cat | tail -n 1
+cov-rsyslog-conf	true	grep -vE '^\s*(#|$)' /etc/rsyslog.d/50-default.conf | head -n 4
+cov-runlevel	true	runlevel; systemctl get-default
+cov-telinit	true	ls -l /usr/sbin/telinit | awk '{print $9, $10, $11}'
+cov-grub-mkconfig	true	ls -l /usr/sbin/update-grub /usr/sbin/grub-mkconfig 2>&1 | awk '{print $1, $9, $10, $11}'; tail -n 2 /usr/sbin/update-grub
+cov-keygen-ecdsa	true	ssh-keygen -q -t ecdsa -N '' -f ./id_ecdsa && ls id_ecdsa* && head -c 19 id_ecdsa.pub; echo
+cov-keygen-ed25519	true	ssh-keygen -q -t ed25519 -N '' -f ./id_ed25519 && ls id_ed25519* && cut -c1-11 id_ed25519.pub
+cov-keygen-dsa	true	ssh-keygen -q -t dsa -N '' -f ./id_dsa 2>&1 | head -n 2
+cov-host-keys	true	ls /etc/ssh/ | grep '^ssh_host'
+cov-tmpfs	mkdir -p /mnt/ram	mount -t tmpfs -o size=64M tmpfs /mnt/ram && df -h /mnt/ram | awk '{print $1, $2, $6}' && findmnt -n -o FSTYPE /mnt/ram; umount /mnt/ram
+cov-proc-sys	true	cat /proc/sys/vm/swappiness; ls /sys/class/net | grep -E '^(lo|eth0)$'
+cov-memorymax	printf '[Unit]\nDescription=Limit demo\n[Service]\nExecStart=/bin/sleep 300\nMemoryMax=200M\nCPUQuota=50%%\n' > /etc/systemd/system/limited.service; systemctl daemon-reload; systemctl start limited	systemctl show limited -p MemoryMax -p CPUQuotaPerSecUSec
+cov-set-property	printf '[Unit]\nDescription=Limit demo 2\n[Service]\nExecStart=/bin/sleep 300\n' > /etc/systemd/system/limited2.service; systemctl daemon-reload; systemctl start limited2	systemctl set-property limited2 MemoryMax=100M && systemctl show limited2 -p MemoryMax
+cov-limits-conf	true	grep -E '^#?\s*(@student|\*|<domain>)' /etc/security/limits.conf | head -n 4
+cov-ulimit	true	bash -c 'ulimit -n; ulimit -n 512; ulimit -n'
+cov-iostat-x	true	iostat -dx 1 1 | awk 'NR>2 && NF {print $1, NF}' | head -n 3
+cov-iostat-hdr	true	iostat -dx 1 1 | sed -n 3p | tr -s ' ' | cut -d' ' -f1-8
+cov-iscsiadm	true	iscsiadm --version
+cov-iscsi-discover	true	iscsiadm -m discovery -t sendtargets -p 127.0.0.1 2>&1 | head -n 2
+cov-sssd-conf	true	ls /etc/sssd 2>&1; grep -E '^(passwd|group):' /etc/nsswitch.conf
+cov-getent-passwd	useradd -m ldapdemo	getent passwd ldapdemo | cut -d: -f1,6,7
+cov-nbd	true	modprobe nbd && ls /dev/nbd0 && cat /sys/block/nbd0/size
