@@ -277,3 +277,5 @@ button { cursor: pointer; }
 .ltr-run { unicode-bidi: isolate; direction: ltr; display: inline-block; max-width: calc(100% - 1.2em); vertical-align: bottom; }
 .ltr-run.keep { white-space: nowrap; }
 .glued { white-space: nowrap; }
+/* Command tiles: compact on phones so a whole command fits on one line. */
+@media (max-width: 480px) { .answer-row, .bank { gap: 6px; } .answer-row .tile, .bank .tile { padding: 8px 10px; font-size: 15px; min-height: 42px; } }
