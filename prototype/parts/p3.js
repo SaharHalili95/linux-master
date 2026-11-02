@@ -256,7 +256,7 @@ const UNIT_25 = {
     ] },
   ],
   boss: { title: CHALLENGE, text: T('מוצאים דברים במערכת לפי ההיגיון של העץ.', 'Finding things by the logic of the tree.'), exercises: [
-    { type: 'terminal', prompt: T('הציגו את שם המחשב מתוך הקובץ שלו ב־‎/etc', 'Show the computer name from its file in /etc'), hint: T('cat /etc/hostname', 'cat /etc/hostname'), goal: (sh, log) => log.some(l => l.out === 'linux'), solve: ['cat /etc/hostname'] },
+    { type: 'terminal', prompt: T('הציגו את שם המחשב מתוך הקובץ שלו ב־‎/etc (בקובץ ‎/etc/hostname)', 'Show the computer name from its file in /etc (in /etc/hostname)'), hint: T('cat /etc/hostname', 'cat /etc/hostname'), goal: (sh, log) => log.some(l => l.out === 'linux'), solve: ['cat /etc/hostname'] },
     { type: 'terminal', prompt: T('צרו קובץ זמני בשם scratch.txt בתיקייה של הקבצים הזמניים', 'Create a temporary file named scratch.txt in the folder for temporary files'), hint: T('touch /tmp/scratch.txt', 'touch /tmp/scratch.txt'), goal: sh => sh.files.has('/tmp/scratch.txt'), solve: ['touch /tmp/scratch.txt'] },
     { type: 'scenario', prompt: T('הציגו כמה זיכרון יש במחשב מתוך הקובץ שהקרנל מייצר', 'Show how much memory the computer has, from the file the kernel makes'), hint: T('‎/proc/meminfo', '/proc/meminfo'), accept: ['cat /proc/meminfo', 'less /proc/meminfo', 'head /proc/meminfo', 'grep MemTotal /proc/meminfo'] },
   ] },
