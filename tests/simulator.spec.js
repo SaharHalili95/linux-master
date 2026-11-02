@@ -149,3 +149,27 @@ test('ls -l, chmod, umask and links print exactly what Ubuntu printed', () => {
   expect(run(sh([['f.txt', 'hi\n']]), ['chmod 644 f.txt', 'chmod u+x,g+w,o-r f.txt', 'ls -l f.txt'])).toBe(ctx.R['check-chmod-sym'].out);
   expect(run(sh([['f.txt', 'hi\n']]), ['chmod 777 f.txt', 'chmod u=rwx,go=rx f.txt', 'chmod g-x+s f.txt', 'ls -l f.txt'])).toBe(ctx.R['check-chmod-eq'].out);
 });
+
+// Scripting for Learn mode part 7; the same commands run on Ubuntu from tests/sandbox/extra-commands.txt.
+test('variables, tests, loops, functions, case and scripts behave like bash', () => {
+  const fs = require('fs'), vm = require('vm'), path = require('path');
+  const ctx = vm.createContext({});
+  vm.runInContext(`${fs.readFileSync(path.join(__dirname, '../shell.js'), 'utf8')}\nthis.Shell = Shell;`, ctx);
+  const sh = new ctx.Shell({ cwd: '/home/user', dirs: ['/home/user', '/home/user/bin'], files: [['/home/user/names.txt', { content: 'dana\nomer\nnoa\n' }], ['/home/user/bin/hi', { content: '#!/bin/bash\necho "hi $1"\n', mode: 0o755 }]] }, { interactive: false });
+  const run = c => { const r = sh.run(c); return r.out + (r.err ? `!${r.err}` : '') + (r.code ? `[${r.code}]` : ''); };
+  expect(run("X=5; bash -c 'echo [$X]'; export X; bash -c 'echo [$X]'")).toBe('[]\n[5]\n');
+  expect(run('Y=7 bash -c \'echo $Y\'; echo "[$Y]"')).toBe('7\n[]\n');
+  expect(run('[ -f names.txt ]; echo $?; [ 10 -eq 010 ] && echo eq; [ 5 -eq x ]')).toBe('0\neq\n![: x: integer expression expected\n[2]');
+  expect(run('n=7; if [ $n -gt 10 ]; then echo big; elif [ $n -gt 5 ]; then echo mid; else echo small; fi')).toBe('mid\n');
+  expect(run('for i in $(seq 2 2 6); do echo $i; done; i=0; while [ $i -lt 2 ]; do i=$((i + 1)); done; echo $i')).toBe('2\n4\n6\n2\n');
+  expect(run('while read n; do [ $n = noa ] && break; echo "<$n>"; done < names.txt')).toBe('<dana>\n<omer>\n');
+  expect(run('echo a b | read x y; echo "[$x]"; read x y <<< "a b c"; echo "$x|$y"')).toBe('[]\na|b c\n');
+  expect(run('f() { local v=in; echo "$# $v"; return 3; }; v=out; f a b; echo "$? $v"')).toBe('2 in\n3 out\n');
+  expect(run('case photo.jpg in *.txt) echo text;; *.jpg|*.png) echo image;; esac')).toBe('image\n');
+  expect(run('s() { for a in "$@"; do echo "[$a]"; done; }; s "a b" c; f=a.tar.gz; echo ${f%.*} ${f%%.*} ${#f} ${NOPE:-dflt}')).toBe('[a b]\n[c]\na.tar a 8 dflt\n');
+  expect(run('echo $((7 / 2)) $((2 ** 5)) $((-7 % 3)); x=1; ((x += 4)); echo $x')).toBe('3 32 -1\n5\n');
+  expect(run("echo 'echo $0 $# \"$1\"; exit 4' > s.sh; ./s.sh; chmod +x s.sh; ./s.sh 'a b' c; echo $?")).toBe('./s.sh 2 a b\n4\n!bash: ./s.sh: Permission denied\n');
+  expect(run('hi Dana; PATH=$PATH:~/bin; hi Dana')).toBe('hi Dana\n!bash: hi: command not found\n');
+  expect(run('if [ -f x ] then echo; fi')).toBe("!bash: syntax error near unexpected token `fi'\n[2]");
+  expect(() => sh.run('while true; do :; done')).toThrow(/endless loop/);
+});

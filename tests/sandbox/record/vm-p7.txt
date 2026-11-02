@@ -1,14 +1,9 @@
-# Part 7 (scheduling and login shells), recorded on a GitHub Actions Ubuntu 24.04 VM by pushing record/vm-p7.
+# Part 7 (startup files and scheduling), recorded on a GitHub Actions Ubuntu 24.04 VM by pushing record/vm-p7.
 # packages: at cron anacron
 p7-skel-profile	grep -v '^ *#' /etc/skel/.profile | grep -v '^$'
-p7-login-shell	su - user -c 'shopt -q login_shell && echo login shell || echo not a login shell'
-p7-nonlogin-shell	su user -c 'shopt -q login_shell && echo login shell || echo not a login shell'
-p7-bashrc-interactive	grep -A3 'If not running interactively' /etc/skel/.bashrc
-p7-etc-profile-d	ls /etc/profile.d
 p7-crontab-none	crontab -r 2>/dev/null; true	crontab -l
 p7-crontab-install	echo '30 2 * * * /home/user/backup.sh' | crontab - && crontab -l
 p7-crontab-user	echo '*/15 * * * * /home/user/check.sh' | crontab -u user - && crontab -u user -l
-p7-crontab-r	crontab -r && crontab -l
 p7-crontab-bad	echo '61 * * * * date' | crontab -
 p7-spool	ls -l /var/spool/cron/crontabs/
 p7-etc-crontab	grep -v '^#' /etc/crontab | grep -v '^$'
@@ -16,14 +11,9 @@ p7-cron-dirs	ls -d /etc/cron.*
 p7-cron-allow	ls /etc/cron.allow /etc/cron.deny
 p7-anacrontab	grep -v '^#' /etc/anacrontab | grep -v '^$'
 p7-at	echo 'tar czf /tmp/home.tgz /home' | at 02:00 tomorrow
-p7-atq	echo 'echo hi' | at now + 2 hours 2>/dev/null	atq | wc -l
-p7-atrm	atq | cut -f1 | xargs atrm; echo 'echo one' | at now + 1 hour 2>/dev/null; echo 'echo two' | at now + 3 hours 2>/dev/null	atrm $(atq | sort -n | head -n 1 | cut -f1) && atq | wc -l
-p7-at-deny	head -n 4 /etc/at.deny
-p7-at-allow	ls /etc/at.allow
 p7-timer-enable	printf '[Unit]\nDescription=Nightly backup\n\n[Service]\nType=oneshot\nExecStart=/usr/bin/tar czf /var/backups/home.tgz /home\n' > /etc/systemd/system/backup.service; printf '[Unit]\nDescription=Run the backup every night\n\n[Timer]\nOnCalendar=*-*-* 02:00:00\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n' > /etc/systemd/system/backup.timer	systemctl daemon-reload && systemctl enable --now backup.timer
 p7-timer-cat	systemctl cat backup.timer --no-pager
 p7-timer-active	systemctl is-active backup.timer backup.service
-p7-timer-list	systemctl list-timers backup.timer --no-pager | sed -n '1p;2p' | sed 's/ \{2,\}/  /g' | cut -c1-200
 p7-timers-all	systemctl list-timers --all --no-pager | grep -oE '[a-z-]+\.timer +[a-z-]+\.service' | sort | head -n 6
 p7-cal-daily	systemd-analyze calendar daily | grep -E 'Original|Normalized'
 p7-cal-weekly	systemd-analyze calendar weekly | grep -E 'Original|Normalized'
