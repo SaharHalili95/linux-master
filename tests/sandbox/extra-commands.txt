@@ -196,7 +196,7 @@ grep -q Dana names.txt && echo found
 X=5; echo $X ${X}0 "$X"
 X=5; bash -c 'echo [$X]'; export X; bash -c 'echo [$X]'
 Y=7 bash -c 'echo $Y'; echo "[$Y]"
-export A=1 B="two words"; env | grep -E '^(A|B)='
+export A=1 B="two words"; env | grep -E '^(A|B)=' | sort
 A=1; unset A; echo "[$A]"
 printenv HOME; printenv NOPE; echo $?
 export -n A; A=1; bash -c 'echo [$A]'
