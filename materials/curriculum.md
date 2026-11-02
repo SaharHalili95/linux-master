@@ -80,59 +80,59 @@ Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a u
 
 | # | Unit | Commands and ideas | Exams | Sim | Status |
 | --- | --- | --- | --- | --- | --- |
-| 45 | apt | `apt update`, `install`, `remove`, `purge`, `search`, `show`, `upgrade` | L102.4 F | 🎞 | |
-| 46 | dpkg and repos | `dpkg -i -l -L -S -r`, `/etc/apt/sources.list.d`, `apt-cache` | L102.4 | 🎞 | |
-| 47 | dnf | `dnf install remove search info provides`, repos, `dnf history` | L102.5 R | 🎞 | |
-| 48 | rpm | `rpm -qa -qi -ql -qf -ivh -e`, `rpm2cpio` | L102.5 R | 🎞 | |
-| 49 | Libraries | `ldd`, `ldconfig`, `/etc/ld.so.conf`, `LD_LIBRARY_PATH` | L102.3 | 🎞 | |
-| 50 | Flatpak, VMs and containers | `flatpak install`, VM vs container, cloud-init, libvirt `virsh`, `podman`/`docker` containers | L102.6 R | 🎞 | |
+| 45 | apt | `apt update`, `install`, `remove`, `purge`, `search`, `show`, `upgrade` | L102.4 F | 🎞 | live |
+| 46 | dpkg and repos | `dpkg -i -l -L -S -r`, `/etc/apt/sources.list.d`, `apt-cache` | L102.4 | 🎞 | live |
+| 47 | dnf | `dnf install remove search info provides`, repos, `dnf history` | L102.5 R | 🎞 | live |
+| 48 | rpm | `rpm -qa -qi -ql -qf -ivh -e`, `rpm2cpio` | L102.5 R | 🎞 | live |
+| 49 | Libraries | `ldd`, `ldconfig`, `/etc/ld.so.conf`, `LD_LIBRARY_PATH` | L102.3 | 🎞 | live |
+| 50 | Flatpak, VMs and containers | `flatpak install`, VM vs container, cloud-init, libvirt `virsh`, `podman`/`docker` containers | L102.6 R | 🎞 | live |
 
 ## Part 6: Networking and SSH (units 51-58)
 
 | # | Unit | Commands and ideas | Exams | Sim | Status |
 | --- | --- | --- | --- | --- | --- |
-| 51 | Network fundamentals | IPv4, IPv6, netmasks/CIDR, ports, TCP vs UDP, private ranges | L109.1 | concept | |
-| 52 | ip | `ip addr`, `ip link`, `ip route`, default gateway, static routes | L109.2 L109.3 R F | 🎞 | |
-| 53 | Persistent network config | `nmcli`, NetworkManager, `hostnamectl`, `/etc/hosts`, `/etc/resolv.conf`, `/etc/nsswitch.conf`, bridges and bonding | L109.2 L109.4 R F | 🎞 | |
-| 54 | DNS | `host`, `dig`, `getent hosts`, resolution order | L109.4 F | 🎞 | |
-| 55 | Network troubleshooting | `ping`, `traceroute`, `tracepath`, `ss -tulpn`, `nc`, `curl` | L109.3 F | 🎞 | |
-| 56 | SSH | `ssh user@host -p`, `scp`, `~/.ssh/config`, `known_hosts` | L110.3 R F | 🎞 | |
-| 57 | SSH keys | `ssh-keygen`, `ssh-copy-id`, `authorized_keys`, `sshd_config` hardening | L110.3 R F | 🎞 | |
-| 58 | Moving files around | `rsync -av`, `sftp`, `wget`, `curl -O` | F | 🎞 | |
+| 51 | Network fundamentals | IPv4, IPv6, netmasks/CIDR, ports, TCP vs UDP, private ranges | L109.1 | concept | live |
+| 52 | ip | `ip addr`, `ip link`, `ip route`, default gateway, static routes | L109.2 L109.3 R F | 🎞 | live |
+| 53 | Persistent network config | `nmcli`, NetworkManager, `hostnamectl`, `/etc/hosts`, `/etc/resolv.conf`, `/etc/nsswitch.conf`, bridges and bonding | L109.2 L109.4 R F | 🎞 | live |
+| 54 | DNS | `host`, `dig`, `getent hosts`, resolution order | L109.4 F | 🎞 | live |
+| 55 | Network troubleshooting | `ping`, `traceroute`, `tracepath`, `ss -tulpn`, `nc`, `curl` | L109.3 F | 🎞 | live |
+| 56 | SSH | `ssh user@host -p`, `scp`, `~/.ssh/config`, `known_hosts` | L110.3 R F | 🎞 | live |
+| 57 | SSH keys | `ssh-keygen`, `ssh-copy-id`, `authorized_keys`, `sshd_config` hardening | L110.3 R F | 🎞 | live |
+| 58 | Moving files around | `rsync -av`, `sftp`, `wget`, `curl -O` | F | 🎞 | live |
 
 ## Part 7: Scripting and scheduling (units 59-66)
 
 | # | Unit | Commands and ideas | Exams | Sim | Status |
 | --- | --- | --- | --- | --- | --- |
-| 59 | Variables and environment | `VAR=x`, `export`, `env`, `$PATH`, `~/.bashrc` vs `~/.profile`, login shells | L105.1 R | 🟡 | |
-| 60 | Conditions | `test`, `[ -f ]`, `[ "$a" = "$b" ]`, `-eq -lt`, `if/elif/else`, `$?` | L105.2 R | 🟡 | |
-| 61 | Loops | `for`, `while`, `read`, `seq`, `break` | L105.2 R | 🟡 | |
-| 62 | Your first script | `#!/bin/bash`, `$1` `$#` `$@`, `chmod +x`, `./run.sh`, `exit 1` | L105.2 R | 🟡 | |
-| 63 | Functions and case | functions, `local`, `case`, `$(( ))` arithmetic | L105.2 | 🟡 | |
-| 64 | Real scripts | backup script, log report, user report: putting it together | L105.2 R F | 🟡 | |
-| 65 | cron and at | `crontab -e -l`, the 5 fields, `/etc/crontab`, `/etc/cron.d`, `anacron`, `at` | L107.2 R F | 🎞 | |
-| 66 | systemd timers | `.timer` units, `OnCalendar`, `systemctl list-timers` | L107.2 R | 🎞 | |
+| 59 | Variables and environment | `VAR=x`, `export`, `env`, `$PATH`, `~/.bashrc` vs `~/.profile`, login shells | L105.1 R | 🟡 | live |
+| 60 | Conditions | `test`, `[ -f ]`, `[ "$a" = "$b" ]`, `-eq -lt`, `if/elif/else`, `$?` | L105.2 R | 🟡 | live |
+| 61 | Loops | `for`, `while`, `read`, `seq`, `break` | L105.2 R | 🟡 | live |
+| 62 | Your first script | `#!/bin/bash`, `$1` `$#` `$@`, `chmod +x`, `./run.sh`, `exit 1` | L105.2 R | 🟡 | live |
+| 63 | Functions and case | functions, `local`, `case`, `$(( ))` arithmetic | L105.2 | 🟡 | live |
+| 64 | Real scripts | backup script, log report, user report: putting it together | L105.2 R F | 🟡 | live |
+| 65 | cron and at | `crontab -e -l`, the 5 fields, `/etc/crontab`, `/etc/cron.d`, `anacron`, `at` | L107.2 R F | 🎞 | live |
+| 66 | systemd timers | `.timer` units, `OnCalendar`, `systemctl list-timers` | L107.2 R | 🎞 | live |
 
 ## Part 8: Security (units 67-72)
 
 | # | Unit | Commands and ideas | Exams | Sim | Status |
 | --- | --- | --- | --- | --- | --- |
-| 67 | Security checks | `who`, `w`, `last`, `find -perm -4000`, `ss -tlnp`, `ulimit`, `/etc/security/limits.conf` | L110.1 | 🎞 | |
-| 68 | Passwords and policies | `/etc/shadow` fields, `chage`, `/etc/login.defs`, locking accounts | L110.1 R F | 🎞 | |
-| 69 | Firewalls | `firewall-cmd --add-service --permanent --reload`, zones, port forwarding and NAT, `nft`, `ufw` | R F | 🎞 | |
-| 70 | SELinux | modes, `getenforce`, `setenforce`, `ls -Z`, `restorecon`, `semanage port`, booleans | R | 🎞 | |
-| 71 | Hardening services | disabling services, `systemctl mask`, `ss`, TCP wrappers history | L110.2 F | 🎞 | |
-| 72 | Encryption | `gpg --gen-key -e -d --verify`, checksums, SSH agent | L110.3 | 🎞 | |
+| 67 | Security checks | `who`, `w`, `last`, `find -perm -4000`, `ss -tlnp`, `ulimit`, `/etc/security/limits.conf` | L110.1 | 🎞 | live |
+| 68 | Passwords and policies | `/etc/shadow` fields, `chage`, `/etc/login.defs`, locking accounts | L110.1 R F | 🎞 | live |
+| 69 | Firewalls | `firewall-cmd --add-service --permanent --reload`, zones, port forwarding and NAT, `nft`, `ufw` | R F | 🎞 | live |
+| 70 | SELinux | modes, `getenforce`, `setenforce`, `ls -Z`, `restorecon`, `semanage port`, booleans | R | 🎞 | live |
+| 71 | Hardening services | disabling services, `systemctl mask`, `ss`, TCP wrappers history | L110.2 F | 🎞 | live |
+| 72 | Encryption | `gpg --gen-key -e -d --verify`, checksums, SSH agent | L110.3 | 🎞 | live |
 
 ## Part 9: More exam topics (units 73-77)
 
 | # | Unit | Commands and ideas | Exams | Sim | Status |
 | --- | --- | --- | --- | --- | --- |
-| 73 | Language and time zones | `locale`, `LANG`, `LC_ALL`, `iconv`, `tzselect`, `/etc/timezone` | L107.3 | 🎞 | |
-| 74 | Printing and mail | CUPS, `lpr`, `lpq`, `lprm`, MTA, `mail`, `/etc/aliases`, `newaliases`, `~/.forward`, `mailq` | L108.3 L108.4 | 🎞 | |
-| 75 | Desktop and accessibility | X11, Wayland, display managers, `DISPLAY`, remote desktop, accessibility tools | L106.1 L106.2 L106.3 | concept | |
-| 76 | Git basics | `git clone`, `status`, `add`, `commit`, `log`, `diff`, `branch`, `checkout`, `push` | F | 🎞 | |
-| 77 | Web servers and proxies | nginx/Apache basics, virtual hosts, reverse proxy, `curl -I`, TLS certificates with `openssl` | F | 🎞 | |
+| 73 | Language and time zones | `locale`, `LANG`, `LC_ALL`, `iconv`, `tzselect`, `/etc/timezone` | L107.3 | 🎞 | live |
+| 74 | Printing and mail | CUPS, `lpr`, `lpq`, `lprm`, MTA, `mail`, `/etc/aliases`, `newaliases`, `~/.forward`, `mailq` | L108.3 L108.4 | 🎞 | live |
+| 75 | Desktop and accessibility | X11, Wayland, display managers, `DISPLAY`, remote desktop, accessibility tools | L106.1 L106.2 L106.3 | concept | live |
+| 76 | Git basics | `git clone`, `status`, `add`, `commit`, `log`, `diff`, `branch`, `checkout`, `push` | F | 🎞 | live |
+| 77 | Web servers and proxies | nginx/Apache basics, virtual hosts, reverse proxy, `curl -I`, TLS certificates with `openssl` | F | 🎞 | live |
 
 ## Part 10: Mock exams (units 78-80)
 
