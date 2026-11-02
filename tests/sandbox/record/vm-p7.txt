@@ -1,0 +1,23 @@
+# Part 7 (startup files and scheduling), recorded on a GitHub Actions Ubuntu 24.04 VM by pushing record/vm-p7.
+# packages: at cron anacron
+p7-skel-profile	grep -v '^ *#' /etc/skel/.profile | grep -v '^$'
+p7-crontab-none	crontab -r 2>/dev/null; true	crontab -l
+p7-crontab-install	echo '30 2 * * * /home/user/backup.sh' | crontab - && crontab -l
+p7-crontab-user	echo '*/15 * * * * /home/user/check.sh' | crontab -u user - && crontab -u user -l
+p7-crontab-bad	echo '61 * * * * date' | crontab -
+p7-spool	ls -l /var/spool/cron/crontabs/
+p7-etc-crontab	grep -v '^#' /etc/crontab | grep -v '^$'
+p7-cron-dirs	ls -d /etc/cron.*
+p7-cron-allow	ls /etc/cron.allow /etc/cron.deny
+p7-anacrontab	grep -v '^#' /etc/anacrontab | grep -v '^$'
+p7-at	echo 'tar czf /tmp/home.tgz /home' | at 02:00 tomorrow
+p7-timer-enable	printf '[Unit]\nDescription=Nightly backup\n\n[Service]\nType=oneshot\nExecStart=/usr/bin/tar czf /var/backups/home.tgz /home\n' > /etc/systemd/system/backup.service; printf '[Unit]\nDescription=Run the backup every night\n\n[Timer]\nOnCalendar=*-*-* 02:00:00\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n' > /etc/systemd/system/backup.timer	systemctl daemon-reload && systemctl enable --now backup.timer
+p7-timer-cat	systemctl cat backup.timer --no-pager
+p7-timer-active	systemctl is-active backup.timer backup.service
+p7-timers-all	systemctl list-timers --all --no-pager | grep -oE '[a-z-]+\.timer +[a-z-]+\.service' | sort | head -n 6
+p7-cal-daily	systemd-analyze calendar daily | grep -E 'Original|Normalized'
+p7-cal-weekly	systemd-analyze calendar weekly | grep -E 'Original|Normalized'
+p7-cal-15min	systemd-analyze calendar '*:0/15' | grep -E 'Original|Normalized'
+p7-cal-mon	systemd-analyze calendar 'Mon..Fri 09:00' | grep -E 'Original|Normalized'
+p7-systemd-run	systemd-run --on-active=5min /usr/bin/touch /tmp/done 2>&1 | sed 's/run-[a-z0-9]*/run-XXXX/g'
+p7-apt-timer	systemctl cat apt-daily.timer --no-pager | grep -E '^(OnCalendar|RandomizedDelaySec|Persistent)='

@@ -1,0 +1,5 @@
+# Part 7, second run: the timer list and atq.
+# packages: at
+p7-timer-list	printf '[Unit]\nDescription=Nightly backup\n\n[Service]\nType=oneshot\nExecStart=/usr/bin/tar czf /var/backups/home.tgz /home\n' > /etc/systemd/system/backup.service; printf '[Unit]\nDescription=Run the backup every night\n\n[Timer]\nOnCalendar=*-*-* 02:00:00\nPersistent=true\n\n[Install]\nWantedBy=timers.target\n' > /etc/systemd/system/backup.timer; systemctl daemon-reload; systemctl enable --now backup.timer	systemctl list-timers backup.timer --no-pager
+p7-atq	echo 'tar czf /tmp/home.tgz /home' | at 02:00 tomorrow 2>/dev/null; echo 'echo bye' | at 23:30 2>/dev/null	atq
+p7-atrm	atrm 1 && atq
