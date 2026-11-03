@@ -51,4 +51,5 @@ jobs:
           gh workflow run pages.yml --ref main
       - name: Leave it for a person
         if: steps.fix.outputs.ok != 'true'
-        run: gh issue comment "$ISSUE" -b "Could not apply this automatically: $(cat "$RUNNER_TEMP/why.txt"). Left open for a manual fix."
+        run: |
+          gh issue comment "$ISSUE" -b "Could not apply this automatically: $(cat "$RUNNER_TEMP/why.txt"). Left open for a manual fix."
