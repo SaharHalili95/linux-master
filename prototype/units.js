@@ -293,7 +293,8 @@ const UNIT_6 = {
   ],
   boss: { title: CHALLENGE, text: T('בלשי נתונים: מה אפשר ללמוד מ־people.csv ומהלוג?', 'Data detective: what can you learn from people.csv and the log?'), exercises: [
     { type: 'terminal', prompt: T('הציגו רק את השמות מ־people.csv, ממוינים', 'Show only the names from people.csv, sorted'), hint: T('cut -d , -f 1 people.csv | sort', 'cut -d , -f 1 people.csv | sort'), goal: (sh, log) => printed(log, 'cut -d , -f 1 people.csv | sort'), solve: ['cut -d , -f 1 people.csv | sort'] },
-    { type: 'terminal', prompt: T('ספרו כמה שורות יש ב־logs/app.log מכל סוג: INFO, ERROR ו־WARN', 'Count how many lines of logs/app.log there are of each kind: INFO, ERROR and WARN'), hint: T('הסוג הוא העמודה השנייה, והמפריד הוא רווח: cut -d " " -f 2', 'The kind is the second column, split by spaces: cut -d " " -f 2'),
+    { type: 'terminal', peek: true, prompt: T('בכל שורה ב־logs/app.log המילה השנייה היא סוג ההודעה: INFO, ERROR או WARN.\nהדפיסו כמה שורות יש מכל סוג.', 'In every line of logs/app.log the second word is the message kind: INFO, ERROR or WARN.\nPrint how many lines there are of each kind.'),
+      hint: T('צינור של שלושה שלבים: cut -d " " -f 2 לוקחת את המילה השנייה, sort מסדרת, ו־uniq -c סופרת כל סוג.', 'A pipe of three steps: cut -d " " -f 2 takes the second word, sort orders them, and uniq -c counts each kind.'),
       goal: (sh, log) => printed(log, 'cut -d " " -f 2 logs/app.log | sort | uniq -c'), solve: ['cut -d " " -f 2 logs/app.log | sort | uniq -c'] },
     { type: 'terminal', prompt: T('הדפיסו את 2 השורות האחרונות של logs/app.log, באותיות גדולות', 'Print the last 2 lines of logs/app.log in capital letters'), hint: T('tail ואז tr, עם צינור', 'tail, then tr, with a pipe'), goal: (sh, log) => printed(log, 'tail -n 2 logs/app.log | tr a-z A-Z'), solve: ['tail -n 2 logs/app.log | tr a-z A-Z'] },
   ] },

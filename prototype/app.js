@@ -410,6 +410,7 @@ const RENDER = {
     root.append(grid); $('checkBtn').disabled = true;
   },
   terminal(root, ex) {
+    if (ex.peek) root.append(...filePeeks(ex.fx, [...(ex.setup || []), ...ex.solve]));
     mountTerminal(root, ex, new Shell(ex.fx()));
     if (!ex.ask) return;
     // Counting tasks end with typing the number, so a learner has to read the result, not only run a command.
