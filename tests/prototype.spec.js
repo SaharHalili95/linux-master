@@ -474,7 +474,7 @@ test('a mock exam reveals nothing until the end, then shows the score and what t
   await expect(page.locator('#endQuests')).not.toBeEmpty();
 });
 
-test('the owner can fix a question\'s spacing only, see it at once, and send it as a report', async ({ page }) => {
+test('the owner can fix a question\'s spacing only, see it at once, send it to be applied, and keep notes as reports', async ({ page }) => {
   await page.goto('./prototype/');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
   await page.reload();
@@ -487,14 +487,23 @@ test('the owner can fix a question\'s spacing only, see it at once, and send it 
   await expect(page.locator('#edHint')).toBeVisible();
   expect(await page.inputValue('#edText')).toBe(original.replace(' ', '\n'));
   await page.fill('#edNote', 'line breaks look wrong');
-  await page.click('#edSend');
+  await page.click('#edSave');
   await expect(page.locator('#editor')).toBeHidden();
   expect(await page.locator('#exPrompt').innerText()).toContain('\n');
   const url = await page.evaluate(() => window.opened);
   expect(url).toContain('labels=question-report');
-  expect(decodeURIComponent(url.replace(/\+/g, ' '))).toContain('line breaks look wrong');
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')).layout);
-  expect(Object.values(saved)[0]).toBe(original.replace(' ', '\n'));
+  const body = new URL(url).searchParams.get('body');
+  expect(body).toContain('<!-- layout-fix -->');
+  expect(body).not.toContain('line breaks look wrong');
+  expect(JSON.parse(body.match(/```json\n([\s\S]*?)\n```/)[1])).toMatchObject({ original, layout: original.replace(' ', '\n') });
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')));
+  expect(Object.values(saved.layout)[0]).toBe(original.replace(' ', '\n'));
+  expect(saved.reports).toEqual([expect.objectContaining({ note: 'line breaks look wrong' })]);
+  await page.evaluate(() => { window.opened = null; });
+  await page.click('#editBtn');
+  await expect(page.locator('#edShare')).toContainText('(1)');
+  await page.click('#edSave');
+  expect(await page.evaluate(() => window.opened)).toBeNull();
 });
 
 test('Pages deploys every file Learn mode loads', () => {

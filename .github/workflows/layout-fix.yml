@@ -1,0 +1,54 @@
+name: Apply layout fix
+
+# The owner's ✏️ editor opens an issue with a whitespace-only fix. This bakes it into the course and publishes it.
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: layout-fix
+
+jobs:
+  apply:
+    if: github.event.issue.user.login == github.repository_owner && contains(github.event.issue.body, '<!-- layout-fix -->')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: ${{ github.event.issue.number }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install tools
+        working-directory: tests
+        run: npm ci --ignore-scripts
+      - name: Apply the fix
+        id: fix
+        env:
+          BODY: ${{ github.event.issue.body }}
+        run: |
+          printf '%s' "$BODY" > "$RUNNER_TEMP/body.md"
+          if node tests/layout-fix.js "$RUNNER_TEMP/body.md" 2> "$RUNNER_TEMP/why.txt"; then
+            for f in $(git diff --name-only); do node --check "$f"; done
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Commit and publish
+        if: steps.fix.outputs.ok == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -qam "Apply layout fix from issue #$ISSUE"
+          git pull -q --rebase origin main
+          git push -q origin HEAD:main
+          gh issue close "$ISSUE" -c "Applied to the course in $(git rev-parse --short HEAD). It reaches every device in a few minutes."
+          gh workflow run tests.yml --ref main
+          gh workflow run pages.yml --ref main
+      - name: Leave it for a person
+        if: steps.fix.outputs.ok != 'true'
+        run: gh issue comment "$ISSUE" -b "Could not apply this automatically: $(cat "$RUNNER_TEMP/why.txt"). Left open for a manual fix."

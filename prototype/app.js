@@ -22,10 +22,10 @@ function bidi(text) {
 }
 const code = text => { const c = el('code', 'cmd', text); c.dir = 'ltr'; return c; };
 
-const DEFAULTS = { xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {} };
+const DEFAULTS = { xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {}, reports: [] };
 // Saved state can be stale or hand-edited; keep only fields of the expected type.
 function loadState(raw) {
-  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {}, layout: {} };
+  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {}, layout: {}, reports: [] };
   let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
   if (!saved || typeof saved !== 'object') return S;
   for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
@@ -33,6 +33,7 @@ function loadState(raw) {
   if (typeof saved.lastDay === 'string') S.lastDay = saved.lastDay;
   if (typeof saved.sound === 'boolean') S.sound = saved.sound;
   if (saved.layout && typeof saved.layout === 'object') for (const [k, v] of Object.entries(saved.layout)) if (typeof v === 'string') S.layout[k] = v;
+  if (Array.isArray(saved.reports)) S.reports = saved.reports.filter(r => r && typeof r.uid === 'string' && typeof r.note === 'string');
   const q = saved.quests;
   if (q && typeof q === 'object' && typeof q.day === 'string' && Array.isArray(q.claimed)) S.quests = { day: q.day, xp: +q.xp || 0, perfect: +q.perfect || 0, combo: +q.combo || 0, claimed: q.claimed.filter(x => typeof x === 'string') };
   return S;
@@ -210,13 +211,30 @@ function openEditor() {
   box.oninput = () => { if (bare(box.value) === bare(original)) { good = box.value; $('edHint').hidden = true; } else { const at = box.selectionStart; box.value = good; box.selectionStart = box.selectionEnd = Math.min(at, good.length); $('edHint').hidden = false; } preview(); };
   preview();
   $('edCancel').onclick = () => { $('editor').hidden = true; };
-  $('edSend').onclick = () => {
+  $('edSave').onclick = () => {
+    const saved = laidOut(ex, original);
     if (good !== original) S.layout[editKey(ex)] = good; else delete S.layout[editKey(ex)];
+    if (note.value.trim()) S.reports.push({ uid: ex.uid, type: ex.type, lang: LANG, text: good, note: note.value.trim() });
     save(); $('editor').hidden = true; showPrompt(ex);
-    const body = `**Exercise:** \`${ex.uid}\` (${ex.type}), language ${LANG}\n\n**Original:**\n\`\`\`\n${original}\n\`\`\`\n\n**Layout fix** (only spaces and line breaks changed; ⏎ marks a line break):\n\`\`\`\n${good === original ? '(no change)' : good.replace(/\n/g, '⏎\n')}\n\`\`\`\n\n**Note:**\n${note.value.trim() || '(none)'}\n`;
-    window.open(`https://github.com/SaharHalili95/linux-master/issues/new?${new URLSearchParams({ title: `Question fix: ${ex.uid}`, labels: 'question-report', body })}`, '_blank', 'noopener');
+    if (note.value.trim()) toast(t('edReported'));
+    if (good === saved || good === original) return;
+    const body = `<!-- layout-fix -->\n**Exercise:** \`${ex.uid}\` (${ex.type}), language ${LANG}\n\nOnly spaces and line breaks changed. Submitting this applies it to the course automatically.\n\n**Before:**\n\`\`\`\n${original}\n\`\`\`\n\n**After** (⏎ marks a line break):\n\`\`\`\n${good.replace(/\n/g, '⏎\n')}\n\`\`\`\n\n\`\`\`json\n${JSON.stringify({ uid: ex.uid, lang: LANG, original, layout: good })}\n\`\`\`\n`;
+    window.open(`https://github.com/SaharHalili95/linux-master/issues/new?${new URLSearchParams({ title: `Layout fix: ${ex.uid}`, labels: 'question-report', body })}`, '_blank', 'noopener');
   };
+  showReports();
   $('editor').hidden = false; box.focus({ preventScroll: true });
+}
+// Problem notes stay on this device until the owner shares them all at once, so reporting needs no account.
+function showReports() {
+  const n = S.reports.length;
+  $('edReports').hidden = !n; $('edShare').textContent = t('edShare', n);
+}
+async function shareReports() {
+  const text = `Linux Master question reports (${S.reports.length})\n\n${S.reports.map((r, i) => `${i + 1}. ${r.uid} (${r.type}, ${r.lang})\nText: ${r.text}\nNote: ${r.note}\n`).join('\n')}`;
+  try {
+    if (navigator.share) await navigator.share({ title: 'Linux Master question reports', text });
+    else { await navigator.clipboard.writeText(text); toast(t('edCopied')); }
+  } catch { /* the share sheet was closed */ }
 }
 function showPrompt(ex) {
   $('exPrompt').replaceChildren(ex.type === 'teach' ? '' : bidi(laidOut(ex, tr(ex.prompt))));
@@ -546,6 +564,8 @@ document.querySelectorAll('.tabbar button').forEach(b => { b.onclick = () => sho
 $('checkBtn').onclick = onFootButton;
 $('quitBtn').onclick = quitLesson;
 $('editBtn').onclick = openEditor;
+$('edShare').onclick = shareReports;
+$('edClear').onclick = () => { if (confirm(t('edClearConfirm'))) { S.reports = []; save(); showReports(); } };
 $('streakBtn').onclick = closeOverlays;
 $('practiceMistakes').onclick = () => practice('mistakes');
 $('practiceMix').onclick = () => practice('mix');
