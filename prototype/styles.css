@@ -147,6 +147,10 @@ button { cursor: pointer; }
 .term.live { min-height: 96px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; }
 .term-input { display: flex; align-items: center; gap: 2px; }
 .term-input input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #fff; font: 700 16px var(--mono); padding: 4px 0; caret-color: var(--term-green); }
+.term-keys { display: flex; gap: 8px; margin-top: 8px; }
+.term-key { background: #ffffff14; color: #fff; border: 1px solid #ffffff2a; border-radius: 8px; font: 700 14px var(--mono); padding: 6px 12px; min-height: 34px; cursor: pointer; }
+.term-key:first-child { margin-inline-end: auto; }
+.term-key:active { background: #ffffff30; }
 .term-input input::placeholder { color: #ffffff55; text-align: left; font-family: var(--font); font-weight: 500; }
 .hint-link { border: 0; background: none; color: var(--blue-ink); font-weight: 800; padding: 4px 0; }
 .hint { color: var(--muted); border: 2px dashed var(--line); border-radius: 12px; padding: 10px 12px; }
