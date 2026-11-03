@@ -506,6 +506,30 @@ test('the owner can fix a question\'s spacing only, see it at once, send it to b
   expect(await page.evaluate(() => window.opened)).toBeNull();
 });
 
+test('the terminal completes names with Tab and brings commands back with the arrow keys', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
+  await page.reload();
+  await page.evaluate(() => { startLesson('u6-boss', [{ ...UNIT_6.boss.exercises[1], fx: homeFixture }]); });
+  const input = page.locator('.term-input input');
+  await input.fill('cat lo');
+  await page.click('.term-key >> nth=0');
+  await expect(input).toHaveValue('cat logs/');
+  await input.press('Tab');
+  await expect(input).toHaveValue('cat logs/app.log ');
+  await input.fill('cat p');
+  await input.press('Tab');
+  await expect(input).toHaveValue('cat p');
+  await input.fill('cut -d" " -f 2 logs/app.log');
+  await input.press('Enter');
+  await expect(input).toHaveValue('');
+  await page.click('.term-key >> nth=1');
+  await expect(input).toHaveValue('cut -d" " -f 2 logs/app.log');
+  await expect(input).toBeFocused();
+  await input.press('ArrowDown');
+  await expect(input).toHaveValue('');
+});
+
 test('Pages deploys every file Learn mode loads', () => {
   const root = path.join(__dirname, '..');
   const html = fs.readFileSync(path.join(root, 'prototype/index.html'), 'utf8');

@@ -441,6 +441,23 @@ const RENDER = {
     row.append(lab, input); root.append(row);
   },
 };
+// Commands typed in any terminal this visit, so ↑ can bring back one from an earlier task too.
+const TERM_HISTORY = [];
+// Completes the last word as a file or folder name, like Tab in bash. Several matches are filled up to what they
+// share, and listed.
+function completeWord(sh, value) {
+  const word = value.match(/[^\s|;&<>]*$/)[0], cut = word.lastIndexOf('/') + 1, base = word.slice(cut);
+  const dir = sh.abs(word.slice(0, cut) || '.');
+  if (!sh.dirs.has(dir)) return { value, list: [] };
+  const names = [...sh.dirs, ...sh.files.keys()].filter(p => p !== dir && sh.parent(p) === dir).map(p => p.slice(p.lastIndexOf('/') + 1))
+    .filter(n => n.startsWith(base) && (base.startsWith('.') || !n.startsWith('.'))).sort();
+  if (!names.length) return { value, list: [] };
+  const isDir = n => sh.dirs.has(dir === '/' ? `/${n}` : `${dir}/${n}`);
+  let common = names[0];
+  for (const n of names) while (!n.startsWith(common)) common = common.slice(0, -1);
+  const done = names.length === 1 ? names[0] + (isDir(names[0]) ? '/' : ' ') : common;
+  return { value: value.slice(0, value.length - base.length) + done, list: names.length > 1 ? names.map(n => n + (isDir(n) ? '/' : '')) : [] };
+}
 function mountTerminal(root, ex, sh, onRun = () => {}) {
   for (const c of ex.setup || []) sh.run(c);
   const log = []; L.term = { sh, log };
@@ -448,13 +465,36 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
   const form = el('form', 'term-input'); const ps = el('span', 'ps1', promptFor(sh.cwd));
   const input = el('input'); input.setAttribute('aria-label', t('command')); input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off'); input.enterKeyHint = 'send'; input.placeholder = t('command');
   form.append(ps, input); box.append(out, form);
+  let back = TERM_HISTORY.length;
+  const recall = step => {
+    back = Math.min(TERM_HISTORY.length, Math.max(0, back + step));
+    input.value = TERM_HISTORY[back] ?? ''; input.setSelectionRange(input.value.length, input.value.length);
+  };
+  const tab = () => {
+    const { value, list } = completeWord(sh, input.value);
+    input.value = value; input.setSelectionRange(value.length, value.length);
+    if (list.length > 1) { out.append(el('pre', 'term-out', list.join('  '))); box.scrollTop = box.scrollHeight; }
+  };
+  input.onkeydown = e => {
+    const act = { Tab: tab, ArrowUp: () => recall(-1), ArrowDown: () => recall(1) }[e.key];
+    if (act) { e.preventDefault(); act(); }
+  };
+  // Phone keyboards have no Tab or arrow keys. pointerdown is cancelled so the keyboard stays open.
+  const keys = el('div', 'term-keys');
+  for (const [label, act, name] of [['⇥ Tab', tab, 'keyTab'], ['↑', () => recall(-1), 'keyUp'], ['↓', () => recall(1), 'keyDown']]) {
+    const b = el('button', 'term-key', label); b.type = 'button'; b.setAttribute('aria-label', t(name));
+    b.onpointerdown = e => e.preventDefault(); b.onclick = () => { act(); input.focus({ preventScroll: true }); };
+    keys.append(b);
+  }
+  box.append(keys);
   form.onsubmit = e => {
     e.preventDefault(); const cmd = input.value.trim(); input.value = ''; if (!cmd || L.answered) return;
     const row = el('div', 'term-line'); row.append(el('span', 'ps1', promptFor(sh.cwd)), el('span', 'typed', cmd)); out.append(row);
     let text;
     try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { text = err instanceof ShellUnsupported ? t('unsupported', cmd.split(/\s+/)[0]) : String(err.message); }
     if (text) out.append(el('pre', 'term-out', text));
-    log.push({ cmd, out: text }); ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
+    log.push({ cmd, out: text }); if (TERM_HISTORY.at(-1) !== cmd) TERM_HISTORY.push(cmd); back = TERM_HISTORY.length;
+    ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
     L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal' && !ex.ask) setCan(true); onRun(log);
   };
   if (ex.hint) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(box, h); } else root.append(box);
