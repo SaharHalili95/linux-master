@@ -288,4 +288,5 @@ button { cursor: pointer; }
 .editor-inner textarea { width: 100%; border: 2px solid var(--line); border-radius: 12px; background: var(--soft); color: var(--ink); font: 500 17px var(--font); padding: 10px 12px; resize: vertical; }
 .ed-preview { border: 2px dashed var(--line); border-radius: 12px; padding: 10px 12px; margin: 0; font-size: 20px; }
 .ed-hint { color: var(--red); font-weight: 700; margin: 0; font-size: 14px; }
-.ed-buttons { display: flex; gap: 10px; margin-top: 6px; } .ed-buttons .btn { flex: 1; }
+.ed-buttons, .ed-reports { display: flex; gap: 10px; margin-top: 6px; } .ed-buttons .btn, .ed-reports .btn { flex: 1; }
+.ed-reports { border-top: 2px solid var(--line); padding-top: 12px; } .ed-reports #edShare { flex: 2; }
