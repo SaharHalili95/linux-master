@@ -632,3 +632,11 @@ applyLanguage();
 showTab('learn');
 history.scrollRestoration = 'manual';
 document.querySelector('.node.current')?.scrollIntoView({ block: 'center' });
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register('../sw.js').catch(() => {});
+  // The first visit loads before the worker controls the page, so its files are fetched once more through the
+  // worker to be kept for offline use.
+  if (!navigator.serviceWorker.controller) navigator.serviceWorker.addEventListener('controllerchange', () => {
+    for (const u of [location.href, ...performance.getEntriesByType('resource').map(e => e.name)]) if (new URL(u).pathname.includes('/prototype/')) fetch(u).catch(() => {});
+  }, { once: true });
+}
