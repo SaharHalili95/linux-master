@@ -1,0 +1,21 @@
+[
+  {"id": "011.1", "exam": "010-200", "title": "Linux Distributions", "weight": 2, "units": [45, 47, 81], "terms": ["Debian", "Ubuntu", "Red Hat", "Fedora", "SUSE", "openSUSE", "Alpine", "LTS", "rolling"]},
+  {"id": "011.2", "exam": "010-200", "title": "Major Open Source Applications", "weight": 2, "units": [45, 77, 81], "terms": ["dpkg", "apt", "rpm", "dnf", "zypper", "apk", "nginx"]},
+  {"id": "011.3", "exam": "010-200", "title": "Open Source Software and Licensing", "weight": 1, "units": [81], "terms": ["copyleft", "GPL", "BSD", "Creative Commons", "FSF", "OSI"]},
+  {"id": "011.4", "exam": "010-200", "title": "Linux Usage", "weight": 2, "units": [17, 50, 72, 82], "terms": ["vi", "nano", "password manager", "MFA", "passkey", "HTTPS"]},
+  {"id": "012.1", "exam": "010-200", "title": "Command Line Usage", "weight": 3, "units": [1, 10, 59], "terms": ["echo", "history", "export", "type", "PATH", "/usr/bin", "/sbin"]},
+  {"id": "012.2", "exam": "010-200", "title": "Documentation, Man Pages and Usage Information", "weight": 2, "units": [8], "terms": ["man", "--help", "/usr/share/doc/"]},
+  {"id": "012.3", "exam": "010-200", "title": "Files, Directories and Paths", "weight": 2, "units": [1, 25, 26], "terms": ["ls", "cd", "~", "/home", "find"]},
+  {"id": "012.4", "exam": "010-200", "title": "File and Directory Management", "weight": 2, "units": [3, 9], "terms": ["cp", "mv", "rm", "touch", "mkdir", "rmdir"]},
+  {"id": "013.1", "exam": "010-200", "title": "File Archives and Compression", "weight": 2, "units": [20], "terms": ["tar", "gzip", "bzip2", "xz", "zip", "unzip"]},
+  {"id": "013.2", "exam": "010-200", "title": "Redirections and String Processing", "weight": 3, "units": [2, 4, 5, 6, 7], "terms": ["grep", "grep -E", "less", "cat", "head", "tail", "sort", "uniq", "cut", "wc"]},
+  {"id": "013.3", "exam": "010-200", "title": "Shell Scripting Basics", "weight": 4, "units": [60, 61, 62], "terms": ["#!", "/bin/bash", "if", "for", "echo", "exit"]},
+  {"id": "014.1", "exam": "010-200", "title": "Linux Installation and Provisioning", "weight": 1, "units": [82], "terms": ["ISO", "dual boot", "WSL"]},
+  {"id": "014.2", "exam": "010-200", "title": "Computer Hardware and Device Access", "weight": 2, "units": [27, 42, 82], "terms": ["ARM", "Raspberry Pi", "/dev/nvme", "/dev/null", "/dev/zero", "/dev/urandom", "/sys", "/boot"]},
+  {"id": "014.3", "exam": "010-200", "title": "Processes and Log Messages", "weight": 3, "units": [36, 38, 40, 44], "terms": ["ps", "top", "free", "systemctl", "journalctl", "dmesg", "/var/log"]},
+  {"id": "014.4", "exam": "010-200", "title": "Network Configuration", "weight": 2, "units": [51, 52, 53, 54, 55], "terms": ["ip route", "ip addr", "ss", "/etc/resolv.conf", "/etc/hosts", "resolvectl", "SLAAC", "DHCPv6", "ping", "host"]},
+  {"id": "015.1", "exam": "010-200", "title": "Remote Logins, File Transfers and Elevated Permissions", "weight": 2, "units": [35, 56, 57], "terms": ["sudo", "su", "ssh", "scp", "ssh-keygen", "authorized_keys"]},
+  {"id": "015.2", "exam": "010-200", "title": "User and Group Management", "weight": 2, "units": [33, 34, 67], "terms": ["/etc/passwd", "/etc/shadow", "/etc/group", "/etc/skel", "id", "last", "wtmpdb", "useradd", "groupadd", "passwd"]},
+  {"id": "015.3", "exam": "010-200", "title": "File System Permissions and Ownership", "weight": 2, "units": [22, 23], "terms": ["ls -l", "chmod", "chown"]},
+  {"id": "015.4", "exam": "010-200", "title": "Special Directories and Files", "weight": 1, "units": [21, 24, 25], "terms": ["/tmp", "/var/tmp", "sticky", "ls -d", "ln -s"]}
+]

@@ -32,12 +32,12 @@ function bossFixture() {
 const PARTS = {
   1: T('יסודות', 'Foundations'), 2: T('כוח הטקסט', 'Text power'), 3: T('קבצים, הרשאות ודיסקים', 'Files, permissions and disks'),
   4: T('משתמשים, תהליכים, שירותים ואתחול', 'Users, processes, services and boot'), 5: T('התקנת תוכנה', 'Installing software'), 6: T('רשת ו־SSH', 'Networking and SSH'),
-  7: T('סקריפטים ותזמון', 'Scripting and scheduling'), 8: T('אבטחה', 'Security'), 9: T('עוד נושאי מבחן', 'More exam topics'), 10: T('מבחני דמה', 'Mock exams'),
+  7: T('סקריפטים ותזמון', 'Scripting and scheduling'), 8: T('אבטחה', 'Security'), 9: T('עוד נושאי מבחן', 'More exam topics'), 10: T('עוד הסמכות', 'More certifications'), 11: T('מבחני דמה', 'Mock exams'),
 };
 
 const COURSE = [
   {
-    section: 1, unit: 1, exams: ['L103.1', 'R', 'F'], title: T('איפה אני?', 'Where am I?'), subtitle: T('מיקום, רשימת קבצים ומעבר בין תיקיות', 'Location, listing files and moving between folders'), color: 'green',
+    section: 1, unit: 1, exams: ['L103.1', 'R', 'F', 'E012.1', 'E012.3', 'S2', 'S3', 'C2.1'], title: T('איפה אני?', 'Where am I?'), subtitle: T('מיקום, רשימת קבצים ומעבר בין תיקיות', 'Location, listing files and moving between folders'), color: 'green',
     lessons: [
       { title: T('pwd ו־ls', 'pwd and ls'), exercises: [
         { type: 'teach', cmd: 'pwd', name: 'print working directory', text: T('מדפיסה את התיקייה שבה אתם נמצאים עכשיו.', 'Prints the folder you are in right now.'), demo: [[], 'pwd'] },

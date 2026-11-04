@@ -7,7 +7,7 @@ const p8sudo = (cmd, extra = []) => [cmd, `sudo ${cmd}`, ...extra];
 const P8_SUID_SETUP = ['touch tool backup.sh', 'chmod 4755 tool', 'chmod 2755 backup.sh'];
 
 const UNIT_67 = {
-  section: 8, unit: 67, exams: ['L110.1', 'F'], title: T('בדיקות אבטחה', 'Security checks'), subtitle: T('מי מחובר, קבצי SUID, פורטים פתוחים ומגבלות', 'Who is logged in, SUID files, open ports and limits'), color: 'green', fixture: sysFixture,
+  section: 8, unit: 67, exams: ['L110.1', 'F', 'E015.2'], title: T('בדיקות אבטחה', 'Security checks'), subtitle: T('מי מחובר, קבצי SUID, פורטים פתוחים ומגבלות', 'Who is logged in, SUID files, open ports and limits'), color: 'green', fixture: sysFixture,
   lessons: [
     { title: T('מי מחובר?', 'Who is logged in?'), exercises: [
       { type: 'teach', cmd: 'who', name: 'logins', text: T('who מציגה מי מחובר עכשיו: שם, מסוף (tty או pts), שעה ומאיפה. ‏w מוסיפה את העומס ומה כל אחד מריץ. ‏last קוראת את ‎/var/log/wtmp‎ ומציגה את כל הכניסות האחרונות, ו־lastb קוראת את ‎/var/log/btmp‎: ניסיונות כניסה שנכשלו.', 'who shows who is logged in now: name, terminal (tty or pts), time and where from. w adds the load and what each person is running. last reads /var/log/wtmp and lists recent logins, and lastb reads /var/log/btmp: failed login attempts.') },
@@ -57,7 +57,7 @@ const UNIT_67 = {
 };
 
 const UNIT_68 = {
-  section: 8, unit: 68, exams: ['L110.1', 'R', 'F'], title: T('סיסמאות ומדיניות', 'Passwords and policies'), subtitle: T('השדות של shadow, ‏chage, ‏login.defs ונעילה', 'shadow fields, chage, login.defs and locking'), color: 'purple', fixture: sysFixture,
+  section: 8, unit: 68, exams: ['L110.1', 'R', 'F', 'C2.2', 'C3.4'], title: T('סיסמאות ומדיניות', 'Passwords and policies'), subtitle: T('השדות של shadow, ‏chage, ‏login.defs ונעילה', 'shadow fields, chage, login.defs and locking'), color: 'purple', fixture: sysFixture,
   lessons: [
     { title: T('השדות של shadow', 'The shadow fields'), exercises: [
       { type: 'teach', cmd: '/etc/shadow', name: 'shadow fields', text: T('לכל שורה ב־‎/etc/shadow‎ יש 9 שדות: שם, hash, יום השינוי האחרון (ימים מ־1.1.1970), מינימום ימים בין שינויים, מקסימום ימים עד שחייבים להחליף, ימי אזהרה, ימי חסד אחרי שהסיסמה פגה (inactive), תאריך סגירת החשבון, ושדה שמור.', 'Each line of /etc/shadow has 9 fields: name, hash, day of last change (days since 1 Jan 1970), minimum days between changes, maximum days until a change is required, warning days, grace days after the password expires (inactive), account close date, and a reserved field.') },
@@ -107,7 +107,7 @@ const UNIT_68 = {
 };
 
 const UNIT_69 = {
-  section: 8, unit: 69, exams: ['R', 'F'], title: T('חומות אש', 'Firewalls'), subtitle: T('firewalld, ‏ufw, ‏nftables, העברת פורטים ו־NAT', 'firewalld, ufw, nftables, port forwarding and NAT'), color: 'blue', fixture: sysFixture,
+  section: 8, unit: 69, exams: ['R', 'F', 'S14', 'C3.2'], title: T('חומות אש', 'Firewalls'), subtitle: T('firewalld, ‏ufw, ‏nftables, העברת פורטים ו־NAT', 'firewalld, ufw, nftables, port forwarding and NAT'), color: 'blue', fixture: sysFixture,
   lessons: [
     { title: T('firewalld', 'firewalld'), exercises: [
       { type: 'teach', cmd: 'firewall-cmd', name: 'firewalld', text: T('ב־Red Hat חומת האש היא השירות firewalld, ושולטים בה עם firewall-cmd. כל ממשק רשת שייך לאזור (zone) עם רמת אמון: public (ברירת המחדל), ‏trusted (הכול מותר), ‏drop (הכול נזרק בשקט), ‏block, ‏dmz ועוד. ‎--state‎ בודקת שהיא רצה, ו־‎--list-all‎ מציגה את האזור.', 'On Red Hat the firewall is the firewalld service, controlled with firewall-cmd. Each network interface belongs to a zone with a trust level: public (the default), trusted (everything allowed), drop (everything silently dropped), block, dmz and more. --state checks it runs, and --list-all shows the zone.') },
@@ -157,7 +157,7 @@ const UNIT_69 = {
 };
 
 const UNIT_70 = {
-  section: 8, unit: 70, exams: ['R', 'F'], title: T('SELinux', 'SELinux'), subtitle: T('מצבים, תוויות, restorecon, פורטים ו־booleans', 'Modes, labels, restorecon, ports and booleans'), color: 'green', fixture: sysFixture,
+  section: 8, unit: 70, exams: ['R', 'F', 'S15', 'C3.3', 'C5.4'], title: T('SELinux', 'SELinux'), subtitle: T('מצבים, תוויות, restorecon, פורטים ו־booleans', 'Modes, labels, restorecon, ports and booleans'), color: 'green', fixture: sysFixture,
   lessons: [
     { title: T('מצבים', 'Modes'), exercises: [
       { type: 'teach', cmd: 'getenforce', name: 'SELinux modes', text: T('הרשאות רגילות (rwx) הן DAC: הבעלים מחליט. ‏SELinux מוסיף MAC: מדיניות של המערכת שאפילו root לא עוקף. יש לו שלושה מצבים: Enforcing (חוסם ורושם), ‏Permissive (רק רושם) ו־Disabled. ‏getenforce מציגה את המצב, ‏‎setenforce 0‎ או ‎1‎ מחליפה עד האתחול, והמצב הקבוע נקבע ב־‎/etc/selinux/config‎ (‏SELINUX=enforcing).', 'Regular permissions (rwx) are DAC: the owner decides. SELinux adds MAC: a system policy that even root cannot bypass. It has three modes: Enforcing (blocks and logs), Permissive (only logs) and Disabled. getenforce shows the mode, setenforce 0 or 1 switches until reboot, and the lasting mode is set in /etc/selinux/config (SELINUX=enforcing).') },
@@ -209,7 +209,7 @@ const UNIT_70 = {
 };
 
 const UNIT_71 = {
-  section: 8, unit: 71, exams: ['L110.2', 'F'], title: T('הקשחת שירותים', 'Hardening services'), subtitle: T('פחות שירותים, systemctl mask, ‏TCP wrappers ו־nologin', 'Fewer services, systemctl mask, TCP wrappers and nologin'), color: 'purple', fixture: sysFixture,
+  section: 8, unit: 71, exams: ['L110.2', 'F', 'C3.3'], title: T('הקשחת שירותים', 'Hardening services'), subtitle: T('פחות שירותים, systemctl mask, ‏TCP wrappers ו־nologin', 'Fewer services, systemctl mask, TCP wrappers and nologin'), color: 'purple', fixture: sysFixture,
   lessons: [
     { title: T('פחות שירותים', 'Fewer services'), exercises: [
       { type: 'teach', cmd: 'systemctl disable --now', name: 'disable services', text: T('כל שירות שרץ הוא עוד דלת לתוקף. העיקרון: להריץ רק מה שצריך. מוצאים מה מאזין עם ‎ss -tlnp, ומכבים שירות מיותר עם ‎systemctl disable --now‎: ‏disable מבטלת את ההפעלה באתחול, ו־‎--now‎ גם עוצרת אותו עכשיו. שירותים ישנים ולא מוצפנים כמו telnet ו־ftp מחליפים ב־ssh וב־sftp.', 'Every running service is one more door for an attacker. The rule: run only what you need. Find what listens with ss -tlnp, and turn off an unneeded service with systemctl disable --now: disable stops it starting at boot, and --now also stops it right away. Old unencrypted services like telnet and ftp are replaced by ssh and sftp.') },
@@ -261,7 +261,7 @@ const UNIT_71 = {
 };
 
 const UNIT_72 = {
-  section: 8, unit: 72, exams: ['L110.3'], title: T('הצפנה', 'Encryption'), subtitle: T('checksums, ‏gpg וה־ssh-agent', 'Checksums, gpg and ssh-agent'), color: 'blue', fixture: sysFixture,
+  section: 8, unit: 72, exams: ['L110.3', 'E011.4', 'C3.5'], title: T('הצפנה', 'Encryption'), subtitle: T('checksums, ‏gpg וה־ssh-agent', 'Checksums, gpg and ssh-agent'), color: 'blue', fixture: sysFixture,
   lessons: [
     { title: T('Checksums', 'Checksums'), exercises: [
       { type: 'teach', cmd: 'sha256sum', name: 'checksums', text: T('checksum הוא טביעת אצבע של קובץ: שינוי של תו אחד משנה אותה לגמרי. ‏sha256sum מחשבת אותה, ו־md5sum ישנה וכבר לא בטוחה מול תוקף. אתרים מפרסמים קובץ SHA256SUMS, ו־‎sha256sum -c SHA256SUMS‎ בודקת שההורדה לא השתנתה.', 'A checksum is a file\'s fingerprint: changing one character changes it completely. sha256sum computes it, and md5sum is older and no longer safe against an attacker. Sites publish a SHA256SUMS file, and sha256sum -c SHA256SUMS checks that a download did not change.') },

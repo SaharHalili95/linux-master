@@ -117,7 +117,7 @@ const UNIT_74 = {
 };
 
 const UNIT_75 = {
-  section: 9, unit: 75, exams: ['L106.1', 'L106.2', 'L106.3'], title: T('שולחן עבודה ונגישות', 'Desktop and accessibility'), subtitle: T('X11, ‏Wayland, ‏DISPLAY ושולחן עבודה מרוחק', 'X11, Wayland, DISPLAY and remote desktop'), color: 'blue', fixture: p9Fixture,
+  section: 9, unit: 75, exams: ['L106.1', 'L106.2', 'L106.3', 'S6', 'C1.1'], title: T('שולחן עבודה ונגישות', 'Desktop and accessibility'), subtitle: T('X11, ‏Wayland, ‏DISPLAY ושולחן עבודה מרוחק', 'X11, Wayland, DISPLAY and remote desktop'), color: 'blue', fixture: p9Fixture,
   lessons: [
     { title: T('X11 ו־Wayland', 'X11 and Wayland'), exercises: [
       { type: 'teach', cmd: 'X', name: 'graphics on Linux', text: T('X11 ‏(X.Org) היא מערכת הגרפיקה הוותיקה: שרת X מצייר את המסך, ותוכנות (לקוחות) מתחברות אליו, אפילו דרך הרשת. Wayland היא התכנון החדש: ה־compositor של שולחן העבודה הוא גם שרת התצוגה, פשוט ובטוח יותר, ותוכנות X ישנות רצות דרך XWayland. ההגדרות של X נמצאות ב־‎/etc/X11/xorg.conf‎ ובתיקייה ‎/etc/X11/xorg.conf.d/‎, ושגיאות של הסשן נכתבות ל־‎~/.xsession-errors‎.', 'X11 (X.Org) is the veteran graphics system: an X server draws the screen, and programs (clients) connect to it, even over the network. Wayland is the newer design: the desktop\'s compositor is also the display server, simpler and safer, and old X programs run through XWayland. X settings live in /etc/X11/xorg.conf and the folder /etc/X11/xorg.conf.d/, and the session\'s errors go to ~/.xsession-errors.') },
@@ -177,7 +177,7 @@ const UNIT_75 = {
 };
 
 const UNIT_76 = {
-  section: 9, unit: 76, exams: ['F'], title: T('יסודות Git', 'Git basics'), subtitle: T('init, ‏add, ‏commit, ‏branch ו־push', 'init, add, commit, branch and push'), color: 'green', fixture: p9Fixture,
+  section: 9, unit: 76, exams: ['F', 'C4.4'], title: T('יסודות Git', 'Git basics'), subtitle: T('init, ‏add, ‏commit, ‏branch ו־push', 'init, add, commit, branch and push'), color: 'green', fixture: p9Fixture,
   lessons: [
     { title: T('init, ‏status ו־add', 'init, status and add'), exercises: [
       { type: 'teach', cmd: 'git init', name: 'a new repository', text: T('Git שומרת את ההיסטוריה של פרויקט. פעם אחת קובעים מי אתם: ‎git config --global user.name‎ ו־user.email. ‏‎git init NAME‎ יוצרת מאגר (repository) עם תיקייה נסתרת ‎.git‎. ‏git status מציגה מה השתנה, ו־‎git add FILE‎ מכינה קובץ (stage) לגרסה הבאה.', 'Git keeps a project\'s history. Once, you set who you are: git config --global user.name and user.email. git init NAME creates a repository with a hidden .git folder. git status shows what changed, and git add FILE stages a file for the next version.') },
@@ -226,7 +226,7 @@ const UNIT_76 = {
 };
 
 const UNIT_77 = {
-  section: 9, unit: 77, exams: ['F'], title: T('שרתי אינטרנט ופרוקסי', 'Web servers and proxies'), subtitle: T('nginx, ‏virtual hosts, ‏proxy_pass ו־openssl', 'nginx, virtual hosts, proxy_pass and openssl'), color: 'purple', fixture: p9Fixture,
+  section: 9, unit: 77, exams: ['F', 'E011.2', 'C2.4', 'C3.5'], title: T('שרתי אינטרנט ופרוקסי', 'Web servers and proxies'), subtitle: T('nginx, ‏virtual hosts, ‏proxy_pass ו־openssl', 'nginx, virtual hosts, proxy_pass and openssl'), color: 'purple', fixture: p9Fixture,
   lessons: [
     { title: T('nginx ו־Apache', 'nginx and Apache'), exercises: [
       { type: 'teach', cmd: 'nginx -t', name: 'web servers', text: T('שני שרתי האינטרנט הנפוצים הם nginx ו־Apache (‏apache2 בדביאן ובאובונטו, httpd ב־RHEL). ההגדרות של nginx: ‏‎/etc/nginx/nginx.conf‎, אתרים ב־‎/etc/nginx/sites-available‎ שמופעלים בקישור ב־sites-enabled (ב־RHEL: ‏‎/etc/nginx/conf.d/*.conf‎). אחרי כל שינוי: ‎nginx -t‎ בודקת את התחביר, ואז ‎systemctl reload nginx‎. ‎curl -I URL‎ מציגה רק את הכותרות של התשובה.', 'The two common web servers are nginx and Apache (apache2 on Debian and Ubuntu, httpd on RHEL). nginx settings: /etc/nginx/nginx.conf, with sites in /etc/nginx/sites-available turned on by a link in sites-enabled (on RHEL: /etc/nginx/conf.d/*.conf). After every change: nginx -t checks the syntax, then systemctl reload nginx. curl -I URL shows only the response headers.') },

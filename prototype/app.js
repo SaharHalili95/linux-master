@@ -22,6 +22,9 @@ function bidi(text) {
 }
 const code = text => { const c = el('code', 'cmd', text); c.dir = 'ltr'; return c; };
 
+// The sheet shows the full name; the tab bar the short one.
+const TRACK_NAMES = { L: 'LPIC-1', R: 'RHCSA', F: 'LFCS', E: 'Linux Essentials', S: 'SUSE SCA', C: 'CompTIA Linux+' };
+const TRACK_SHORT = { ...TRACK_NAMES, E: 'Essentials', C: 'Linux+' };
 const DEFAULTS = { xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {}, reports: [], track: '' };
 // Saved state can be stale or hand-edited; keep only fields of the expected type.
 function loadState(raw) {
@@ -33,12 +36,13 @@ function loadState(raw) {
   if (typeof saved.lastDay === 'string') S.lastDay = saved.lastDay;
   if (typeof saved.sound === 'boolean') S.sound = saved.sound;
   if (saved.layout && typeof saved.layout === 'object') for (const [k, v] of Object.entries(saved.layout)) if (typeof v === 'string') S.layout[k] = v;
-  if (['L', 'R', 'F'].includes(saved.track)) S.track = saved.track;
+  if (Object.hasOwn(TRACK_NAMES, saved.track)) S.track = saved.track;
   if (Array.isArray(saved.reports)) S.reports = saved.reports.filter(r => r && typeof r.uid === 'string' && typeof r.note === 'string');
   const q = saved.quests;
   if (q && typeof q === 'object' && typeof q.day === 'string' && Array.isArray(q.claimed)) S.quests = { day: q.day, xp: +q.xp || 0, perfect: +q.perfect || 0, combo: +q.combo || 0, claimed: q.claimed.filter(x => typeof x === 'string') };
   return S;
 }
+COURSE.sort((a, b) => a.section - b.section);
 let S;
 try { S = loadState(localStorage.getItem(STORE)); } catch { S = loadState(null); }
 const save = () => { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch { /* not persisted */ } };
@@ -96,10 +100,10 @@ const ICONS = { lesson: '★', chest: '🎁', boss: '$_', exam: '📝', done: '�
 // A certification track keeps only the units tagged for that exam, so a learner who already holds another
 // certification skips the rest. Progress is shared, so switching tracks loses nothing.
 const inTrack = (u, track = S.track) => !track || u.exams?.some(e => e.startsWith(track));
-const TRACK_NAMES = { L: 'LPIC-1', R: 'RHCSA', F: 'LFCS' };
+
 function renderPath() {
   const root = $('path'); root.innerHTML = '';
-  $('trackName').textContent = TRACK_NAMES[S.track] || t('trackAll');
+  $('trackName').textContent = TRACK_SHORT[S.track] || t('trackAll');
   const units = COURSE.filter(u => inTrack(u));
   const order = units.filter(u => !u.locked).flatMap(unitNodes);
   const current = order.find(n => !S.done.includes(n.key))?.key;
@@ -172,13 +176,13 @@ function startBoss(unit, key) {
   const boss = bossFixture();
   startLesson(key, [{ type: 'boss', prompt: unit.boss.text(boss.hideIn), boss }], { boss: true });
 }
-// A mock exam draws questions from every unit tagged for the exam (L, R or F). For LPIC it first takes one question
-// per objective so every objective is asked, then fills up at random. No teach cards and no live terminals.
+// A mock exam draws questions from every unit tagged for the exam. It first takes one question per objective tag
+// (L101.1, E013.2, C1.3 ...) so every objective is asked, then fills up at random. No teach cards and no live terminals.
 function buildExam(tag, count) {
   const units = COURSE.filter(u => !u.locked && !u.exam && u.exams?.some(e => e.startsWith(tag)));
   const pool = units.flatMap(u => withFixture(u, [...u.lessons.flatMap(l => l.exercises), ...(u.boss.exercises || [])]).filter(ex => !['teach', 'terminal', 'boss'].includes(ex.type)).map(ex => ({ ...ex, topic: u.title, objs: u.exams.filter(e => e.startsWith(tag)) })));
   const picked = new Set();
-  if (tag === 'L') for (const obj of [...new Set(pool.flatMap(ex => ex.objs))]) { const options = shuffle(pool.filter(ex => ex.objs.includes(obj) && !picked.has(ex))); if (options.length) picked.add(options[0]); }
+  for (const obj of [...new Set(pool.flatMap(ex => ex.objs))]) { const options = shuffle(pool.filter(ex => ex.objs.includes(obj) && !picked.has(ex))); if (options.length) picked.add(options[0]); }
   for (const ex of shuffle(pool)) { if (picked.size >= count) break; picked.add(ex); }
   return shuffle([...picked]).slice(0, count);
 }
