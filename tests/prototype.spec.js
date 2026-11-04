@@ -547,6 +547,33 @@ test('the terminal completes names with Tab and brings commands back with the ar
   await expect(input).toHaveValue('');
 });
 
+test('progress can be saved to a backup file and restored on a fresh device', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, xp: 345, done: ['L0', 'L1'], streak: 3, lastDay: dayKey() })); });
+  await page.reload();
+  await page.click('[data-tab="profile"]');
+  await page.evaluate(() => { navigator.canShare = () => true; navigator.share = async ({ files }) => { window.shared = { name: files[0].name, text: await files[0].text() }; }; });
+  await page.click('#backupBtn');
+  const shared = await page.waitForFunction(() => window.shared).then(h => h.jsonValue());
+  expect(shared.name).toMatch(/^linux-master-learn-\d{4}-\d\d-\d\d\.json$/);
+  const file = { name: shared.name, mimeType: 'application/json', buffer: Buffer.from(shared.text) };
+  expect(JSON.parse(shared.text)).toMatchObject({ app: 'linux-master-learn', format: 1, state: { xp: 345, done: ['L0', 'L1'] } });
+
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
+  await page.reload();
+  await page.click('[data-tab="profile"]');
+  await expect(page.locator('#pXp')).toHaveText('0');
+  page.once('dialog', d => d.accept());
+  await page.setInputFiles('#restoreFile', file);
+  await page.waitForLoadState('load');
+  await page.click('[data-tab="profile"]');
+  await expect(page.locator('#pXp')).toHaveText('345');
+
+  page.once('dialog', d => { expect(d.message()).toContain('Linux Master'); d.accept(); });
+  await page.setInputFiles('#restoreFile', { name: 'x.json', mimeType: 'application/json', buffer: Buffer.from('{"app":"other"}') });
+  await expect(page.locator('#pXp')).toHaveText('345');
+});
+
 test('Pages deploys every file Learn mode loads', () => {
   const root = path.join(__dirname, '..');
   const html = fs.readFileSync(path.join(root, 'prototype/index.html'), 'utf8');

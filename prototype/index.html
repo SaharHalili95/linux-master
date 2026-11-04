@@ -7,8 +7,8 @@
   <title>Linux Master · מצב למידה</title>
   <meta name="description" content="מצב הלמידה של Linux Master: מסלול בסגנון דואולינגו עם שיעורים קצרים, XP ורצף.">
   <link rel="icon" href="../icon-192.png">
-  <link rel="stylesheet" href="fonts.css?v=p59">
-  <link rel="stylesheet" href="styles.css?v=p59">
+  <link rel="stylesheet" href="fonts.css?v=p60">
+  <link rel="stylesheet" href="styles.css?v=p60">
 </head>
 <body>
   <div class="app">
@@ -41,6 +41,9 @@
         </div>
         <div class="card settings">
           <label class="switch"><input type="checkbox" id="soundToggle"><span data-i18n="sound">צלילים</span></label>
+          <button type="button" class="btn ghost" id="backupBtn" data-i18n="backup">💾 שמירת גיבוי</button>
+          <button type="button" class="btn ghost" id="restoreBtn" data-i18n="restore">📂 שחזור מגיבוי</button>
+          <input type="file" id="restoreFile" accept=".json,application/json" hidden>
           <button type="button" class="btn ghost" id="resetBtn" data-i18n="reset">איפוס ההתקדמות</button>
           <a class="btn ghost" href="../?mode=trivia" data-i18n="toTrivia">למצב טריוויה ←</a>
         </div>
@@ -108,27 +111,27 @@
   <canvas id="confetti" class="confetti" hidden></canvas>
   <div id="toast" class="toast" role="status"></div>
   <script src="../shell.js?v=29"></script>
-  <script src="i18n.js?v=p59"></script>
-  <script src="units.js?v=p59"></script>
-  <script src="lessons.js?v=p59"></script>
-  <script src="recorded.js?v=p59"></script>
-  <script src="parts/p1.js?v=p59"></script>
-  <script src="parts/p2.js?v=p59"></script>
-  <script src="parts/p3.js?v=p59"></script>
-  <script src="parts/p4.js?v=p59"></script>
-  <script src="recorded/p5.js?v=p59"></script>
-  <script src="recorded/p6.js?v=p59"></script>
-  <script src="recorded/p7.js?v=p59"></script>
-  <script src="recorded/p8.js?v=p59"></script>
-  <script src="recorded/p9.js?v=p59"></script>
-  <script src="parts/p5.js?v=p59"></script>
-  <script src="parts/p6.js?v=p59"></script>
-  <script src="parts/p7.js?v=p59"></script>
-  <script src="parts/p8.js?v=p59"></script>
-  <script src="parts/p9.js?v=p59"></script>
-  <script src="parts/p10.js?v=p59"></script>
-  <script src="recorded/coverage.js?v=p59"></script>
-  <script src="parts/p11.js?v=p59"></script>
-  <script src="app.js?v=p59"></script>
+  <script src="i18n.js?v=p60"></script>
+  <script src="units.js?v=p60"></script>
+  <script src="lessons.js?v=p60"></script>
+  <script src="recorded.js?v=p60"></script>
+  <script src="parts/p1.js?v=p60"></script>
+  <script src="parts/p2.js?v=p60"></script>
+  <script src="parts/p3.js?v=p60"></script>
+  <script src="parts/p4.js?v=p60"></script>
+  <script src="recorded/p5.js?v=p60"></script>
+  <script src="recorded/p6.js?v=p60"></script>
+  <script src="recorded/p7.js?v=p60"></script>
+  <script src="recorded/p8.js?v=p60"></script>
+  <script src="recorded/p9.js?v=p60"></script>
+  <script src="parts/p5.js?v=p60"></script>
+  <script src="parts/p6.js?v=p60"></script>
+  <script src="parts/p7.js?v=p60"></script>
+  <script src="parts/p8.js?v=p60"></script>
+  <script src="parts/p9.js?v=p60"></script>
+  <script src="parts/p10.js?v=p60"></script>
+  <script src="recorded/coverage.js?v=p60"></script>
+  <script src="parts/p11.js?v=p60"></script>
+  <script src="app.js?v=p60"></script>
 </body>
 </html>

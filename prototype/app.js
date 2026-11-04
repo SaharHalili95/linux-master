@@ -611,6 +611,27 @@ $('streakBtn').onclick = closeOverlays;
 $('practiceMistakes').onclick = () => practice('mistakes');
 $('practiceMix').onclick = () => practice('mix');
 $('soundToggle').onchange = e => { S.sound = e.target.checked; save(); };
+// Progress lives only in this browser, so a backup file can carry it to another device or a reinstall.
+async function saveBackup() {
+  const name = `linux-master-learn-${dayKey()}.json`;
+  const file = new File([JSON.stringify({ app: 'linux-master-learn', format: 1, state: S, lang: LANG })], name, { type: 'application/json' });
+  try {
+    if (navigator.canShare?.({ files: [file] })) return await navigator.share({ files: [file], title: name });
+  } catch (err) { if (err.name === 'AbortError') return; }
+  const a = el('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function restoreBackup(file) {
+  let backup; try { backup = JSON.parse(await file.text()); } catch { backup = null; }
+  if (backup?.app !== 'linux-master-learn' || backup.format !== 1 || typeof backup.state !== 'object') return alert(t('backupBad'));
+  if (!confirm(t('backupConfirm'))) return;
+  S = loadState(JSON.stringify(backup.state)); save();
+  if (backup.lang === 'he' || backup.lang === 'en') try { localStorage.setItem('lang', backup.lang); } catch { /* not persisted */ }
+  location.reload();
+}
+$('backupBtn').onclick = saveBackup;
+$('restoreBtn').onclick = () => $('restoreFile').click();
+$('restoreFile').onchange = e => { const file = e.target.files[0]; e.target.value = ''; if (file) restoreBackup(file); };
 $('resetBtn').onclick = () => { if (confirm(t('resetConfirm'))) { S = loadState(null); save(); renderTop(); renderProfile(); toast(t('resetDone')); } };
 document.addEventListener('keydown', e => {
   if ($('lesson').hidden || !L) return;
