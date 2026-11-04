@@ -634,6 +634,8 @@ history.scrollRestoration = 'manual';
 document.querySelector('.node.current')?.scrollIntoView({ block: 'center' });
 if ('serviceWorker' in navigator && window.isSecureContext) {
   navigator.serviceWorker.register('../sw.js').catch(() => {});
+  // Loaded through the worker means every file is kept, so the main page may send learners here offline too.
+  if (navigator.serviceWorker.controller) try { localStorage.setItem('learnOffline', '1'); } catch { /* not kept */ }
   // The first visit loads before the worker controls the page, so its files are fetched once more through the
   // worker to be kept for offline use.
   if (!navigator.serviceWorker.controller) navigator.serviceWorker.addEventListener('controllerchange', () => {

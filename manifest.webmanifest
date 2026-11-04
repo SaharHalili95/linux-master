@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Linux Master",
   "short_name": "Linux Master",
-  "description": "מדריך אינטראקטיבי לפקודות לינוקס, שימושים ותרגול",
+  "description": "קורס אינטראקטיבי ללימוד לינוקס, צעד אחר צעד, עם טרמינל לתרגול",
   "lang": "he",
   "dir": "rtl",
   "start_url": "./",
