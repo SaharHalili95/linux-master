@@ -215,7 +215,7 @@ const UNIT_24 = {
 };
 
 const UNIT_25 = {
-  section: 3, unit: 25, exams: ['L104.7'], title: T('עץ התיקיות', 'The filesystem tree'), subtitle: T('מה יש ב־‎/etc, ‏/var, ‏/usr ועוד', 'What lives in /etc, /var, /usr and more'), color: 'purple', fixture: filesFixture,
+  section: 3, unit: 25, exams: ['L104.7', 'F'], title: T('עץ התיקיות', 'The filesystem tree'), subtitle: T('מה יש ב־‎/etc, ‏/var, ‏/usr ועוד', 'What lives in /etc, /var, /usr and more'), color: 'purple', fixture: filesFixture,
   lessons: [
     { title: T('השורש', 'The root'), exercises: [
       { type: 'teach', cmd: '/', name: 'FHS', text: T('בלינוקס יש עץ אחד שמתחיל ב־/. החלוקה שלו קבועה בתקן שנקרא FHS, אז בכל הפצה תמצאו הגדרות ב־‎/etc, לוגים ב־‎/var/log ותוכנות ב־‎/usr/bin.', 'Linux has one tree that starts at /. Its layout is fixed by a standard called the FHS, so on any distribution you find settings in /etc, logs in /var/log and programs in /usr/bin.') },

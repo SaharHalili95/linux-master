@@ -37,7 +37,7 @@ const PARTS = {
 
 const COURSE = [
   {
-    section: 1, unit: 1, exams: ['L103.1', 'F'], title: T('איפה אני?', 'Where am I?'), subtitle: T('מיקום, רשימת קבצים ומעבר בין תיקיות', 'Location, listing files and moving between folders'), color: 'green',
+    section: 1, unit: 1, exams: ['L103.1', 'R', 'F'], title: T('איפה אני?', 'Where am I?'), subtitle: T('מיקום, רשימת קבצים ומעבר בין תיקיות', 'Location, listing files and moving between folders'), color: 'green',
     lessons: [
       { title: T('pwd ו־ls', 'pwd and ls'), exercises: [
         { type: 'teach', cmd: 'pwd', name: 'print working directory', text: T('מדפיסה את התיקייה שבה אתם נמצאים עכשיו.', 'Prints the folder you are in right now.'), demo: [[], 'pwd'] },
