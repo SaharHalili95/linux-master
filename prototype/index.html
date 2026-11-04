@@ -7,8 +7,8 @@
   <title>Linux Master · מצב למידה</title>
   <meta name="description" content="מצב הלמידה של Linux Master: מסלול בסגנון דואולינגו עם שיעורים קצרים, XP ורצף.">
   <link rel="icon" href="../icon-192.png">
-  <link rel="stylesheet" href="fonts.css?v=p61">
-  <link rel="stylesheet" href="styles.css?v=p61">
+  <link rel="stylesheet" href="fonts.css?v=p62">
+  <link rel="stylesheet" href="styles.css?v=p62">
 </head>
 <body>
   <div class="app">
@@ -20,7 +20,7 @@
       <div class="chip xp" title="נקודות XP"><span aria-hidden="true">⚡</span><b id="xpN">0</b><span class="sr">XP</span></div>
     </header>
     <main>
-      <section id="learn" class="tab active" aria-label="מסלול הלימוד" data-i18n-aria="pathLabel"><div class="track-pick" role="group" aria-labelledby="trackLabel"><span id="trackLabel" data-i18n="trackLabel">המסלול שלי:</span><button type="button" data-track="" data-i18n="trackAll">כל הקורס</button><button type="button" data-track="L">LPIC-1</button><button type="button" data-track="R">RHCSA</button><button type="button" data-track="F">LFCS</button></div><div id="path" class="path"></div></section>
+      <section id="learn" class="tab active" aria-label="מסלול הלימוד" data-i18n-aria="pathLabel"><div id="path" class="path"></div><div class="path-jump"><button type="button" id="toTopBtn" aria-label="לתחילת המסלול" data-i18n-aria="toTop">⬆</button><button type="button" id="toHereBtn" aria-label="למקום שלי במסלול" data-i18n-aria="toHere">📍</button></div></section>
       <section id="practice" class="tab">
         <h1 class="tab-title" data-i18n="practiceTitle">תרגול</h1>
         <div class="card practice-card"><div class="pc-icon">↻</div><div><h2 data-i18n="mistakesTitle">חזרה על טעויות</h2><p id="mistakesCount"></p></div><button type="button" class="btn primary" id="practiceMistakes" data-i18n="practiceBtn">תרגול</button></div>
@@ -51,6 +51,7 @@
     </main>
     <nav class="tabbar" aria-label="ניווט" data-i18n-aria="nav">
       <button type="button" data-tab="learn"><span aria-hidden="true">🏠</span><span data-i18n="tabLearn">לימוד</span></button>
+      <button type="button" id="trackBtn" aria-haspopup="dialog"><span aria-hidden="true">🎓</span><span id="trackName">כל הקורס</span></button>
       <button type="button" data-tab="practice"><span aria-hidden="true">🏋️</span><span data-i18n="tabPractice">תרגול</span></button>
       <button type="button" data-tab="quests"><span aria-hidden="true">🎯</span><span data-i18n="tabQuests">משימות</span></button>
       <button type="button" data-tab="profile"><span aria-hidden="true">👤</span><span data-i18n="tabProfile">פרופיל</span></button>
@@ -65,6 +66,15 @@
         <div id="fbBox" class="fb" aria-live="polite" hidden><div class="fb-icon" aria-hidden="true"></div><div><div id="fbTitle" class="fb-title"></div><div id="fbDetail" class="fb-detail"></div><a id="reportLink" class="report" href="https://github.com/SaharHalili95/linux-master/issues/new" target="_blank" rel="noopener" data-i18n="report" hidden>🚩 דיווח על תקלה</a></div></div>
         <button type="button" id="checkBtn" class="btn primary big" disabled>בדיקה</button>
       </div>
+    </div>
+  </div>
+
+  <div id="trackSheet" class="overlay editor" hidden role="dialog" aria-labelledby="trackTitle">
+    <div class="editor-inner">
+      <h2 id="trackTitle" data-i18n="trackTitle">המסלול שלי</h2>
+      <p class="track-help" data-i18n="trackHelp">בחרו הסמכה כדי לראות רק את היחידות שלה. ההתקדמות נשמרת בכל מסלול.</p>
+      <div class="track-pick"><button type="button" data-track=""></button><button type="button" data-track="L"></button><button type="button" data-track="R"></button><button type="button" data-track="F"></button></div>
+      <div class="ed-buttons"><button type="button" id="trackClose" class="btn ghost" data-i18n="edCancel">ביטול</button></div>
     </div>
   </div>
 
@@ -111,27 +121,27 @@
   <canvas id="confetti" class="confetti" hidden></canvas>
   <div id="toast" class="toast" role="status"></div>
   <script src="../shell.js?v=29"></script>
-  <script src="i18n.js?v=p61"></script>
-  <script src="units.js?v=p61"></script>
-  <script src="lessons.js?v=p61"></script>
-  <script src="recorded.js?v=p61"></script>
-  <script src="parts/p1.js?v=p61"></script>
-  <script src="parts/p2.js?v=p61"></script>
-  <script src="parts/p3.js?v=p61"></script>
-  <script src="parts/p4.js?v=p61"></script>
-  <script src="recorded/p5.js?v=p61"></script>
-  <script src="recorded/p6.js?v=p61"></script>
-  <script src="recorded/p7.js?v=p61"></script>
-  <script src="recorded/p8.js?v=p61"></script>
-  <script src="recorded/p9.js?v=p61"></script>
-  <script src="parts/p5.js?v=p61"></script>
-  <script src="parts/p6.js?v=p61"></script>
-  <script src="parts/p7.js?v=p61"></script>
-  <script src="parts/p8.js?v=p61"></script>
-  <script src="parts/p9.js?v=p61"></script>
-  <script src="parts/p10.js?v=p61"></script>
-  <script src="recorded/coverage.js?v=p61"></script>
-  <script src="parts/p11.js?v=p61"></script>
-  <script src="app.js?v=p61"></script>
+  <script src="i18n.js?v=p62"></script>
+  <script src="units.js?v=p62"></script>
+  <script src="lessons.js?v=p62"></script>
+  <script src="recorded.js?v=p62"></script>
+  <script src="parts/p1.js?v=p62"></script>
+  <script src="parts/p2.js?v=p62"></script>
+  <script src="parts/p3.js?v=p62"></script>
+  <script src="parts/p4.js?v=p62"></script>
+  <script src="recorded/p5.js?v=p62"></script>
+  <script src="recorded/p6.js?v=p62"></script>
+  <script src="recorded/p7.js?v=p62"></script>
+  <script src="recorded/p8.js?v=p62"></script>
+  <script src="recorded/p9.js?v=p62"></script>
+  <script src="parts/p5.js?v=p62"></script>
+  <script src="parts/p6.js?v=p62"></script>
+  <script src="parts/p7.js?v=p62"></script>
+  <script src="parts/p8.js?v=p62"></script>
+  <script src="parts/p9.js?v=p62"></script>
+  <script src="parts/p10.js?v=p62"></script>
+  <script src="recorded/coverage.js?v=p62"></script>
+  <script src="parts/p11.js?v=p62"></script>
+  <script src="app.js?v=p62"></script>
 </body>
 </html>

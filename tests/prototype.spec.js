@@ -467,8 +467,11 @@ test('choosing a certification track hides the other units and keeps progress', 
   await page.reload();
   const kickers = () => page.locator('.unit-kicker').allInnerTexts().then(k => k.map(x => Number(x.match(/\d+$/)[0])));
   expect(await kickers()).toHaveLength(80);
+  await page.click('#trackBtn');
+  await expect(page.locator('.track-pick [data-track="R"]')).toContainText('56');
   await page.click('.track-pick [data-track="R"]');
-  await expect(page.locator('.track-pick [data-track="R"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#trackSheet')).toBeHidden();
+  await expect(page.locator('#trackName')).toHaveText('RHCSA');
   const rhcsa = await kickers();
   expect(rhcsa).toContain(79);
   for (const u of [2, 6, 78, 80]) expect(rhcsa).not.toContain(u);
@@ -476,8 +479,15 @@ test('choosing a certification track hides the other units and keeps progress', 
   expect(await page.evaluate(() => document.querySelector('.node.current').closest('ol').previousElementSibling.querySelector('.unit-kicker').textContent)).toMatch(/ 3$/);
   await page.reload();
   expect(await kickers()).toEqual(rhcsa);
+  await page.click('#trackBtn');
+  await expect(page.locator('.track-pick [data-track="R"]')).toHaveAttribute('aria-pressed', 'true');
   await page.click('.track-pick [data-track=""]');
   expect(await kickers()).toHaveLength(80);
+  await page.evaluate(() => scrollTo(0, 0));
+  await page.click('#toHereBtn');
+  await expect(page.locator('.node.current')).toBeInViewport();
+  await page.click('#toTopBtn');
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')).done)).toContain('boss');
 });
 

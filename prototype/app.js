@@ -81,7 +81,7 @@ const promptFor = cwd => `user@linux:${cwd.startsWith('/home/user') ? '~' + cwd.
 function renderTop() { $('streakN').textContent = liveStreak(); $('gemsN').textContent = S.gems; $('xpN').textContent = S.xp; $('streakChip').classList.toggle('lit', S.lastDay === dayKey()); }
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === name));
-  document.querySelectorAll('.tabbar button').forEach(b => b.setAttribute('aria-current', b.dataset.tab === name ? 'page' : 'false'));
+  document.querySelectorAll('.tabbar button[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === name ? 'page' : 'false'));
   closePop(); ({ learn: renderPath, practice: renderPractice, quests: renderQuests, profile: renderProfile })[name]();
 }
 
@@ -95,11 +95,12 @@ const OFFSETS = [0, 52, 78, 52, 0, -52, -78, -52];
 const ICONS = { lesson: '★', chest: '🎁', boss: '$_', exam: '📝', done: '✓', lock: '🔒' };
 // A certification track keeps only the units tagged for that exam, so a learner who already holds another
 // certification skips the rest. Progress is shared, so switching tracks loses nothing.
-const inTrack = u => !S.track || u.exams?.some(e => e.startsWith(S.track));
+const inTrack = (u, track = S.track) => !track || u.exams?.some(e => e.startsWith(track));
+const TRACK_NAMES = { L: 'LPIC-1', R: 'RHCSA', F: 'LFCS' };
 function renderPath() {
   const root = $('path'); root.innerHTML = '';
-  for (const b of document.querySelectorAll('.track-pick button')) b.setAttribute('aria-pressed', String(b.dataset.track === S.track));
-  const units = COURSE.filter(inTrack);
+  $('trackName').textContent = TRACK_NAMES[S.track] || t('trackAll');
+  const units = COURSE.filter(u => inTrack(u));
   const order = units.filter(u => !u.locked).flatMap(unitNodes);
   const current = order.find(n => !S.done.includes(n.key))?.key;
   let part;
@@ -607,7 +608,7 @@ function confetti() {
 }
 
 // ---------- Wiring ----------
-document.querySelectorAll('.tabbar button').forEach(b => { b.onclick = () => showTab(b.dataset.tab); });
+document.querySelectorAll('.tabbar button[data-tab]').forEach(b => { b.onclick = () => showTab(b.dataset.tab); });
 $('checkBtn').onclick = onFootButton;
 $('quitBtn').onclick = quitLesson;
 $('editBtn').onclick = openEditor;
@@ -635,7 +636,20 @@ async function restoreBackup(file) {
   if (backup.lang === 'he' || backup.lang === 'en') try { localStorage.setItem('lang', backup.lang); } catch { /* not persisted */ }
   location.reload();
 }
-for (const b of document.querySelectorAll('.track-pick button')) b.onclick = () => { S.track = b.dataset.track; save(); renderPath(); $('path').querySelector('.node.current')?.scrollIntoView({ block: 'center' }); };
+const toHere = (behavior = 'smooth') => $('path').querySelector('.node.current')?.scrollIntoView({ block: 'center', behavior });
+function openTracks() {
+  for (const b of document.querySelectorAll('.track-pick button')) {
+    const n = COURSE.filter(u => inTrack(u, b.dataset.track)).length;
+    b.replaceChildren(el('b', '', TRACK_NAMES[b.dataset.track] || t('trackAll')), el('span', '', t('trackUnits', n)));
+    b.setAttribute('aria-pressed', String(b.dataset.track === S.track));
+  }
+  $('trackSheet').hidden = false;
+}
+for (const b of document.querySelectorAll('.track-pick button')) b.onclick = () => { S.track = b.dataset.track; save(); $('trackSheet').hidden = true; showTab('learn'); toHere('auto'); };
+$('trackBtn').onclick = openTracks;
+$('trackClose').onclick = () => { $('trackSheet').hidden = true; };
+$('toTopBtn').onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
+$('toHereBtn').onclick = () => toHere();
 $('backupBtn').onclick = saveBackup;
 $('restoreBtn').onclick = () => $('restoreFile').click();
 $('restoreFile').onchange = e => { const file = e.target.files[0]; e.target.value = ''; if (file) restoreBackup(file); };
@@ -659,7 +673,7 @@ $('langBtn').onclick = () => {
 applyLanguage();
 showTab('learn');
 history.scrollRestoration = 'manual';
-document.querySelector('.node.current')?.scrollIntoView({ block: 'center' });
+toHere('auto');
 if ('serviceWorker' in navigator && window.isSecureContext) {
   navigator.serviceWorker.register('../sw.js').catch(() => {});
   // Loaded through the worker means every file is kept, so the main page may send learners here offline too.

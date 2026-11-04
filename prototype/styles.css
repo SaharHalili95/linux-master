@@ -295,7 +295,11 @@ button { cursor: pointer; }
 .ed-buttons, .ed-reports { display: flex; gap: 10px; margin-top: 6px; } .ed-buttons .btn, .ed-reports .btn { flex: 1; }
 .ed-reports { border-top: 2px solid var(--line); padding-top: 12px; } .ed-reports #edShare { flex: 2; }
 
-.track-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; justify-content: center; margin: 4px auto 14px; max-width: 520px; padding: 0 8px; font-weight: 700; font-size: 13px; color: var(--muted); }
-.track-pick button { border: 2px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 5px 9px; font: 700 13px var(--font); white-space: nowrap; cursor: pointer; }
-.track-pick button[aria-pressed="true"] { background: var(--blue); border-color: transparent; color: #fff; }
-.track-pick #trackLabel { flex-basis: 100%; text-align: center; }
+.track-help { margin: 0; color: var(--muted); font-size: 14px; }
+.track-pick { display: grid; gap: 8px; }
+.track-pick button { display: flex; justify-content: space-between; align-items: center; border: 2px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 14px; padding: 12px 14px; font: 700 16px var(--font); cursor: pointer; }
+.track-pick button span { color: var(--muted); font-size: 14px; }
+.track-pick button[aria-pressed="true"] { border-color: var(--blue); background: var(--blue-soft); color: var(--blue-ink); }
+.path-jump { position: fixed; inset-inline-end: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 5; display: flex; flex-direction: column; gap: 8px; }
+.path-jump button { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: #16213af0; color: var(--ink); font-size: 20px; box-shadow: 0 3px 0 var(--line); cursor: pointer; }
+#learn:not(.active) .path-jump { display: none; }
