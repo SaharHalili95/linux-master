@@ -2,7 +2,7 @@
 const RECORDED_ON = T('הפלט הזה הוקלט על לינוקס אמיתי. מה תדפיס הפקודה?', 'This output was recorded on real Linux. What will the command print?');
 
 const UNIT_7 = {
-  section: 1, unit: 7, exams: ['L103.7', 'R'], title: T('תבניות', 'Patterns'), subtitle: T('ביטויים רגולריים עם grep', 'Regular expressions with grep'), color: 'green', fixture: homeFixture,
+  section: 1, unit: 7, exams: ['L103.7', 'R', 'E013.2'], title: T('תבניות', 'Patterns'), subtitle: T('ביטויים רגולריים עם grep', 'Regular expressions with grep'), color: 'green', fixture: homeFixture,
   lessons: [
     { title: T('התחלה וסוף: ^ ו־$', 'Start and end: ^ and $'), exercises: [
       { type: 'teach', cmd: '^', name: 'start of line', text: T('בתבנית של grep, ^ אומר "בתחילת השורה". ‎^08:1 מוצאת רק שורות שמתחילות ב־08:1.', 'In a grep pattern, ^ means "at the start of the line". ^08:1 finds only lines that start with 08:1.'), demo: [[], 'grep "^08:1" logs/app.log'] },
@@ -54,7 +54,7 @@ const UNIT_7 = {
 };
 
 const UNIT_8 = {
-  section: 1, unit: 8, exams: ['L103.1', 'R'], title: T('מוצאים עזרה', 'Getting help'), subtitle: T('man, --help, whatis ו־type', 'man, --help, whatis and type'), color: 'purple', fixture: homeFixture,
+  section: 1, unit: 8, exams: ['L103.1', 'R', 'E012.2', 'S2'], title: T('מוצאים עזרה', 'Getting help'), subtitle: T('man, --help, whatis ו־type', 'man, --help, whatis and type'), color: 'purple', fixture: homeFixture,
   lessons: [
     { title: T('man', 'man'), exercises: [
       { type: 'teach', cmd: 'man', name: 'manual', text: T('פותחת את המדריך של פקודה: מה היא עושה ואילו אפשרויות יש לה. גוללים עם החצים, מחפשים עם / ויוצאים עם q.', 'Opens the manual of a command: what it does and which options it has. Scroll with the arrows, search with / and quit with q.') },
@@ -107,7 +107,7 @@ const UNIT_8 = {
 };
 
 const UNIT_9 = {
-  section: 1, unit: 9, exams: ['L103.3', 'L103.1', 'R'], title: T('תווים כלליים ומרכאות', 'Globs and quoting'), subtitle: T('*, ?, [ ], { } ומרכאות', '*, ?, [ ], { } and quotes'), color: 'blue', fixture: homeFixture,
+  section: 1, unit: 9, exams: ['L103.3', 'L103.1', 'R', 'E012.4', 'C2.1'], title: T('תווים כלליים ומרכאות', 'Globs and quoting'), subtitle: T('*, ?, [ ], { } ומרכאות', '*, ?, [ ], { } and quotes'), color: 'blue', fixture: homeFixture,
   lessons: [
     { title: T('* ו־?', '* and ?'), exercises: [
       { type: 'teach', cmd: '*', name: 'wildcard', known: true, text: T('כבר פגשתם את *: היא מחליפה כל רצף של תווים בשם קובץ. ה־shell מחליף אותה בשמות לפני שהפקודה רצה.', 'You met * already: it stands for any run of characters in a file name. The shell swaps it for the names before the command runs.'), demo: [[], 'echo *.txt'] },
@@ -157,7 +157,7 @@ const UNIT_9 = {
 };
 
 const UNIT_10 = {
-  section: 1, unit: 10, exams: ['L103.1', 'L105.1', 'R'], title: T('ה־shell שלכם', 'Your shell'), subtitle: T('היסטוריה, alias, משתנים ו־‎.bashrc', 'History, aliases, variables and .bashrc'), color: 'green', fixture: homeFixture,
+  section: 1, unit: 10, exams: ['L103.1', 'L105.1', 'R', 'E012.1', 'S2', 'C1.5'], title: T('ה־shell שלכם', 'Your shell'), subtitle: T('היסטוריה, alias, משתנים ו־‎.bashrc', 'History, aliases, variables and .bashrc'), color: 'green', fixture: homeFixture,
   lessons: [
     { title: T('היסטוריה וקיצורים', 'History and shortcuts'), exercises: [
       { type: 'teach', cmd: 'history', name: 'history', text: T('מדפיסה את הפקודות האחרונות שהקלדתם, עם מספר לכל אחת. ‎!!‎ מריצה שוב את הפקודה האחרונה, ו־‎!5‎ את פקודה מספר 5. ההיסטוריה נשמרת בקובץ ‎~/.bash_history.', 'Prints the commands you typed lately, each with a number. !! runs the last command again, and !5 runs command number 5. History is saved in ~/.bash_history.') },

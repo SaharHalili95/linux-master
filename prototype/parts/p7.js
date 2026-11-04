@@ -27,7 +27,7 @@ const P7_SERVER = T('הפלט הוקלט על שרת Ubuntu אמיתי. מה ה�
 const p7Root = (cmd, extra = []) => [cmd, `sudo ${cmd}`, ...extra];
 
 const UNIT_59 = {
-  section: 7, unit: 59, exams: ['L105.1', 'R', 'F'], title: T('משתנים וסביבה', 'Variables and environment'), subtitle: T('VAR=x, ‏export, ‏env, ‏$PATH וקובצי ההפעלה של bash', 'VAR=x, export, env, $PATH and bash startup files'), color: 'green', fixture: p7Fixture,
+  section: 7, unit: 59, exams: ['L105.1', 'R', 'F', 'E012.1', 'S2', 'C1.5', 'C2.2'], title: T('משתנים וסביבה', 'Variables and environment'), subtitle: T('VAR=x, ‏export, ‏env, ‏$PATH וקובצי ההפעלה של bash', 'VAR=x, export, env, $PATH and bash startup files'), color: 'green', fixture: p7Fixture,
   lessons: [
     { title: T('משתנים', 'Variables'), exercises: [
       { type: 'teach', cmd: 'VAR=value', name: 'variable', text: T('משתנה שומר ערך תחת שם. כותבים name=value בלי רווחים סביב ה־=, וקוראים את הערך עם ‎$name. הצורה ‎${name}‎ מסמנת איפה השם נגמר, למשל ‎${n}0.', 'A variable keeps a value under a name. Write name=value with no spaces around the =, and read the value back with $name. The form ${name} marks where the name ends, as in ${n}0.'), demo: [['city=haifa'], 'echo "I live in $city"'] },
@@ -77,7 +77,7 @@ const UNIT_59 = {
 };
 
 const UNIT_60 = {
-  section: 7, unit: 60, exams: ['L105.2', 'R'], title: T('תנאים', 'Conditions'), subtitle: T('‏$?, ‏test, ‏[ ] ו־if/elif/else', '$?, test, [ ] and if/elif/else'), color: 'purple', fixture: p7Fixture,
+  section: 7, unit: 60, exams: ['L105.2', 'R', 'E013.3', 'C4.2'], title: T('תנאים', 'Conditions'), subtitle: T('‏$?, ‏test, ‏[ ] ו־if/elif/else', '$?, test, [ ] and if/elif/else'), color: 'purple', fixture: p7Fixture,
   lessons: [
     { title: T('קוד יציאה', 'Exit status'), exercises: [
       { type: 'teach', cmd: '$?', name: 'exit status', text: T('כל פקודה נגמרת עם קוד יציאה: 0 אומר שהצליחה, וכל מספר אחר (1 עד 255) אומר שהייתה בעיה. ‏$? מחזיק את הקוד של הפקודה האחרונה.', 'Every command ends with an exit status: 0 means it worked, and any other number (1 to 255) means there was a problem. $? holds the status of the last command.'), demo: [['ls nope.txt'], 'echo $?'] },
@@ -127,7 +127,7 @@ const UNIT_60 = {
 };
 
 const UNIT_61 = {
-  section: 7, unit: 61, exams: ['L105.2', 'R'], title: T('לולאות', 'Loops'), subtitle: T('for, ‏while, ‏read, ‏seq ו־break', 'for, while, read, seq and break'), color: 'blue', fixture: p7Fixture,
+  section: 7, unit: 61, exams: ['L105.2', 'R', 'E013.3', 'C4.2'], title: T('לולאות', 'Loops'), subtitle: T('for, ‏while, ‏read, ‏seq ו־break', 'for, while, read, seq and break'), color: 'blue', fixture: p7Fixture,
   lessons: [
     { title: T('לולאת for', 'The for loop'), exercises: [
       { type: 'teach', cmd: 'for', name: 'for loop', text: T('‏for x in a b c; do ...; done מריצה את הגוף פעם אחת לכל מילה, ובכל פעם x שווה למילה הבאה. הרשימה יכולה להיות מילים, תבנית כמו ‎*.txt, או פלט של ‎$( ).', 'for x in a b c; do ...; done runs the body once for every word, with x set to the next word each time. The list can be words, a pattern like *.txt, or the output of $( ).'), demo: [[], 'for f in *.txt; do echo "file: $f"; done'] },
@@ -180,7 +180,7 @@ const UNIT_61 = {
 };
 
 const UNIT_62 = {
-  section: 7, unit: 62, exams: ['L105.2', 'R'], title: T('הסקריפט הראשון', 'Your first script'), subtitle: T('‏#!/bin/bash, ‏chmod +x, ‏$1 ‏$# ‏$@ ו־exit', '#!/bin/bash, chmod +x, $1 $# $@ and exit'), color: 'green', fixture: p7Fixture,
+  section: 7, unit: 62, exams: ['L105.2', 'R', 'E013.3', 'C4.2'], title: T('הסקריפט הראשון', 'Your first script'), subtitle: T('‏#!/bin/bash, ‏chmod +x, ‏$1 ‏$# ‏$@ ו־exit', '#!/bin/bash, chmod +x, $1 $# $@ and exit'), color: 'green', fixture: p7Fixture,
   lessons: [
     { title: T('קובץ של פקודות', 'A file of commands'), exercises: [
       { type: 'teach', cmd: '#!/bin/bash', name: 'shebang', text: T('סקריפט הוא קובץ טקסט של פקודות. השורה הראשונה, ‎#!/bin/bash (ה־shebang), אומרת איזו תוכנה תריץ אותו. שורות שמתחילות ב־# הן הערות, ו־bash מדלגת עליהן. ‏bash greet.sh מריצה סקריפט גם בלי הרשאה מיוחדת.', 'A script is a text file of commands. The first line, #!/bin/bash (the shebang), says which program runs it. Lines starting with # are comments, and bash skips them. bash greet.sh runs a script even without any special permission.'), demo: [[], 'bash greet.sh'] },
@@ -234,7 +234,7 @@ const UNIT_62 = {
 };
 
 const UNIT_63 = {
-  section: 7, unit: 63, exams: ['L105.2'], title: T('פונקציות ו־case', 'Functions and case'), subtitle: T('פונקציות, ‏local, ‏$(( )) ו־case', 'Functions, local, $(( )) and case'), color: 'purple', fixture: p7Fixture,
+  section: 7, unit: 63, exams: ['L105.2', 'C4.2'], title: T('פונקציות ו־case', 'Functions and case'), subtitle: T('פונקציות, ‏local, ‏$(( )) ו־case', 'Functions, local, $(( )) and case'), color: 'purple', fixture: p7Fixture,
   lessons: [
     { title: T('פונקציות', 'Functions'), exercises: [
       { type: 'teach', cmd: 'name() { }', name: 'function', text: T('פונקציה היא פקודה קטנה שמגדירים בעצמכם: ‎hi() { echo "Hi $1"; }. קוראים לה כמו לכל פקודה: hi Dana. בתוכה, ‏$1 ו־$# הם הארגומנטים שלה. שימו לב לרווחים ול־; לפני ה־}.', 'A function is a small command you define yourself: hi() { echo "Hi $1"; }. You call it like any command: hi Dana. Inside it, $1 and $# are its own arguments. Mind the spaces and the ; before the }.'), demo: [['hi() { echo "Hi $1"; }'], 'hi Dana'] },
@@ -284,7 +284,7 @@ const UNIT_63 = {
 };
 
 const UNIT_64 = {
-  section: 7, unit: 64, exams: ['L105.2', 'R', 'F'], title: T('סקריפטים אמיתיים', 'Real scripts'), subtitle: T('גיבוי, דוח יומן ודוח משתמשים', 'A backup, a log report and a user report'), color: 'blue', fixture: p7Fixture,
+  section: 7, unit: 64, exams: ['L105.2', 'R', 'F', 'C4.2'], title: T('סקריפטים אמיתיים', 'Real scripts'), subtitle: T('גיבוי, דוח יומן ודוח משתמשים', 'A backup, a log report and a user report'), color: 'blue', fixture: p7Fixture,
   lessons: [
     { title: T('סקריפט גיבוי', 'A backup script'), exercises: [
       { type: 'teach', cmd: 'backup.sh', name: 'a backup script', text: T('‏backup.sh מחבר את מה שלמדתם: משתנה עם ברירת מחדל (‎${1:-backup}), ‏mkdir -p, לולאת for על ‎*.txt, מונה עם ‎$(( )) ושורת סיכום. קראו אותו מלמעלה למטה לפני שמריצים.', 'backup.sh puts together what you learned: a variable with a default (${1:-backup}), mkdir -p, a for loop over *.txt, a counter with $(( )) and a summary line. Read it top to bottom before you run it.'), demo: [[], './backup.sh'] },
@@ -339,7 +339,7 @@ const UNIT_64 = {
 };
 
 const UNIT_65 = {
-  section: 7, unit: 65, exams: ['L107.2', 'R', 'F'], title: T('cron ו־at', 'cron and at'), subtitle: T('‏crontab, חמשת השדות, ‏/etc/crontab, ‏anacron ו־at', 'crontab, the 5 fields, /etc/crontab, anacron and at'), color: 'green', fixture: p7Fixture,
+  section: 7, unit: 65, exams: ['L107.2', 'R', 'F', 'S11'], title: T('cron ו־at', 'cron and at'), subtitle: T('‏crontab, חמשת השדות, ‏/etc/crontab, ‏anacron ו־at', 'crontab, the 5 fields, /etc/crontab, anacron and at'), color: 'green', fixture: p7Fixture,
   lessons: [
     { title: T('crontab', 'crontab'), exercises: [
       { type: 'teach', cmd: 'crontab', name: 'cron table', text: T('‏cron מריץ פקודות לפי לוח זמנים. לכל משתמש יש טבלה משלו: ‏crontab -e פותחת אותה בעורך, ‏crontab -l מציגה אותה ו־crontab -r מוחקת אותה. ‏root יכול לטפל בטבלה של משתמש אחר עם ‎-u, למשל crontab -u dana -l. הטבלאות שמורות ב־‎/var/spool/cron/crontabs.', 'cron runs commands on a schedule. Every user has their own table: crontab -e opens it in an editor, crontab -l shows it and crontab -r deletes it. root can handle another user\'s table with -u, for example crontab -u dana -l. The tables are kept in /var/spool/cron/crontabs.') },
@@ -389,7 +389,7 @@ const UNIT_65 = {
 };
 
 const UNIT_66 = {
-  section: 7, unit: 66, exams: ['L107.2', 'R', 'F'], title: T('טיימרים של systemd', 'systemd timers'), subtitle: T('יחידות ‎.timer, ‏OnCalendar ו־systemctl list-timers', '.timer units, OnCalendar and systemctl list-timers'), color: 'purple', fixture: p7Fixture,
+  section: 7, unit: 66, exams: ['L107.2', 'R', 'F', 'S11', 'C2.5'], title: T('טיימרים של systemd', 'systemd timers'), subtitle: T('יחידות ‎.timer, ‏OnCalendar ו־systemctl list-timers', '.timer units, OnCalendar and systemctl list-timers'), color: 'purple', fixture: p7Fixture,
   lessons: [
     { title: T('יחידת timer', 'A timer unit'), exercises: [
       { type: 'teach', cmd: '.timer', name: 'timer unit', text: T('טיימר של systemd הוא זוג יחידות: backup.timer אומר מתי, ו־backup.service אומר מה להריץ. בחלק [Timer] כותבים OnCalendar= (זמן בלוח השנה), או OnBootSec= ו־OnUnitActiveSec= (זמן מאז ההפעלה או מאז הריצה הקודמת). ‏Persistent=true מריץ ריצה שפוספסה כשהמחשב חוזר לפעול. ‏WantedBy=timers.target בחלק [Install] מאפשר לעשות לו enable.', 'A systemd timer is a pair of units: backup.timer says when, and backup.service says what to run. In the [Timer] section you write OnCalendar= (a calendar time), or OnBootSec= and OnUnitActiveSec= (time since boot or since the last run). Persistent=true runs a missed run when the computer is back on. WantedBy=timers.target in [Install] lets you enable it.') },

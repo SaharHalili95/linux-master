@@ -278,7 +278,7 @@ const UNIT_15 = {
 const VI = T('בעורך vi', 'In the vi editor');
 
 const UNIT_16 = {
-  section: 2, unit: 16, exams: ['L103.4', 'R'], title: T('צנרת מתקדמת', 'Plumbing'), subtitle: T('tee, ‏$( ), xargs ו־&&', 'tee, $( ), xargs and &&'), color: 'green', fixture: textFixture,
+  section: 2, unit: 16, exams: ['L103.4', 'R', 'C1.5'], title: T('צנרת מתקדמת', 'Plumbing'), subtitle: T('tee, ‏$( ), xargs ו־&&', 'tee, $( ), xargs and &&'), color: 'green', fixture: textFixture,
   lessons: [
     { title: T('tee', 'tee'), exercises: [
       { type: 'teach', cmd: 'tee', name: 'tee', text: T('כמו צומת T בצינור: tee כותבת את מה שמגיע אליה לקובץ, וגם מעבירה אותו הלאה למסך או לפקודה הבאה. ‎-a‎ מוסיפה לסוף הקובץ במקום לדרוס.', 'Like a T joint in a pipe: tee writes what it gets into a file, and also passes it on to the screen or the next command. -a appends instead of overwriting.'), demo: [[], 'grep ERROR logs/app.log | tee errors.txt'] },
@@ -329,7 +329,7 @@ const UNIT_16 = {
 };
 
 const UNIT_17 = {
-  section: 2, unit: 17, exams: ['L103.8', 'R'], title: T('vi: לשרוד', 'vi: survive'), subtitle: T('מצבים, שמירה ויציאה', 'Modes, saving and quitting'), color: 'purple', fixture: textFixture,
+  section: 2, unit: 17, exams: ['L103.8', 'R', 'E011.4', 'S4', 'C1.5'], title: T('vi: לשרוד', 'vi: survive'), subtitle: T('מצבים, שמירה ויציאה', 'Modes, saving and quitting'), color: 'purple', fixture: textFixture,
   lessons: [
     { title: T('מצבים', 'Modes'), exercises: [
       { type: 'teach', cmd: 'vi', name: 'visual editor', text: T('vi (או vim) הוא העורך שיש כמעט בכל שרת. הוא נפתח במצב פקודות: מקשים לא כותבים טקסט אלא עושים פעולות. i עוברת למצב כתיבה, ו־Esc חוזרת למצב פקודות.', 'vi (or vim) is the editor found on almost every server. It opens in command mode: keys do not type text, they run actions. i switches to insert mode, and Esc goes back to command mode.') },
@@ -380,7 +380,7 @@ const UNIT_17 = {
 };
 
 const UNIT_18 = {
-  section: 2, unit: 18, exams: ['L103.8', 'R'], title: T('vi: לערוך מהר', 'vi: edit fast'), subtitle: T('מחיקה, העתקה, חיפוש והחלפה', 'Deleting, copying, searching and replacing'), color: 'blue', fixture: textFixture,
+  section: 2, unit: 18, exams: ['L103.8', 'R', 'S4'], title: T('vi: לערוך מהר', 'vi: edit fast'), subtitle: T('מחיקה, העתקה, חיפוש והחלפה', 'Deleting, copying, searching and replacing'), color: 'blue', fixture: textFixture,
   lessons: [
     { title: T('מחיקה ו־undo', 'Delete and undo'), exercises: [
       { type: 'teach', cmd: 'dd', name: 'delete line', text: T('במצב פקודות: x מוחקת תו, dd מוחקת את כל השורה, dw מוחקת מילה, ו־u מבטלת את הפעולה האחרונה. מספר לפני פקודה חוזר עליה: 3dd מוחקת 3 שורות.', 'In command mode: x deletes a character, dd deletes the whole line, dw deletes a word, and u undoes the last action. A number before a command repeats it: 3dd deletes 3 lines.') },
@@ -428,7 +428,7 @@ const UNIT_18 = {
 };
 
 const UNIT_19 = {
-  section: 2, unit: 19, exams: ['L103.2'], title: T('עוד כלים לטקסט', 'More text tools'), subtitle: T('diff, comm, paste, nl ובדיקת שלמות', 'diff, comm, paste, nl and checksums'), color: 'green', fixture: textFixture,
+  section: 2, unit: 19, exams: ['L103.2', 'C2.1'], title: T('עוד כלים לטקסט', 'More text tools'), subtitle: T('diff, comm, paste, nl ובדיקת שלמות', 'diff, comm, paste, nl and checksums'), color: 'green', fixture: textFixture,
   lessons: [
     { title: T('diff ו־cmp', 'diff and cmp'), exercises: [
       { type: 'teach', cmd: 'diff', name: 'difference', text: T('משווה שני קבצים ומדפיסה מה השתנה. ‎2c2‎ אומר ששורה 2 השתנתה, < היא מהקובץ הראשון ו־> מהשני. ‎diff -u‎ מדפיסה בפורמט שבו - הוסר ו־+ נוסף. אם אין הבדל, אין פלט.', 'Compares two files and prints what changed. 2c2 means line 2 changed, < is from the first file and > from the second. diff -u prints a format where - was removed and + added. If nothing differs, there is no output.') },
@@ -472,7 +472,7 @@ const UNIT_19 = {
 };
 
 const UNIT_20 = {
-  section: 2, unit: 20, exams: ['L103.3', 'R', 'F'], title: T('ארכיונים ודחיסה', 'Archives and compression'), subtitle: T('tar, gzip, bzip2, xz ו־zip', 'tar, gzip, bzip2, xz and zip'), color: 'purple', fixture: textFixture,
+  section: 2, unit: 20, exams: ['L103.3', 'R', 'F', 'E013.1', 'C1.6'], title: T('ארכיונים ודחיסה', 'Archives and compression'), subtitle: T('tar, gzip, bzip2, xz ו־zip', 'tar, gzip, bzip2, xz and zip'), color: 'purple', fixture: textFixture,
   lessons: [
     { title: T('tar', 'tar'), exercises: [
       { type: 'teach', cmd: 'tar', name: 'tape archive', text: T('tar אורזת הרבה קבצים לקובץ אחד. ‎-c‎ יוצרת, ‎-t‎ מציגה מה בפנים, ‎-x‎ פורסת, ‎-f‎ היא שם הארכיון, ‎-v‎ מפרטת, ו־‎-z‎ דוחסת עם gzip. לכן ‎tar -czf a.tar.gz dir‎.', 'tar packs many files into one. -c creates, -t lists what is inside, -x extracts, -f names the archive, -v is verbose, and -z compresses with gzip. Hence tar -czf a.tar.gz dir.') },

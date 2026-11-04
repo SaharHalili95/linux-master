@@ -7,7 +7,7 @@ const P5_WEB_OPTS = [['-d', '--name web', '-p 8080:80'], ['--name web', '-d', '-
 const P5_RUN_WEB = p5Sudo(...['podman', 'docker'].flatMap(e => P5_WEB_OPTS.map(o => `${e} run ${o.join(' ')} nginx`)));
 
 const UNIT_45 = {
-  section: 5, unit: 45, exams: ['L102.4', 'F'], title: T('apt', 'apt'), subtitle: T('מתקינים, מסירים ומשדרגים ב־Debian ו־Ubuntu', 'Install, remove and upgrade on Debian and Ubuntu'), color: 'green', fixture: homeFixture,
+  section: 5, unit: 45, exams: ['L102.4', 'F', 'E011.1', 'E011.2', 'C2.4'], title: T('apt', 'apt'), subtitle: T('מתקינים, מסירים ומשדרגים ב־Debian ו־Ubuntu', 'Install, remove and upgrade on Debian and Ubuntu'), color: 'green', fixture: homeFixture,
   lessons: [
     { title: T('מחפשים חבילה', 'Finding a package'), exercises: [
       { type: 'teach', cmd: 'apt', name: 'package manager', text: T('תוכנה בלינוקס מגיעה כחבילה: הקבצים של התוכנה, ורשימה של חבילות אחרות שהיא צריכה (תלויות). החבילות יושבות במאגרים (repositories) ברשת. ב־Debian וב־Ubuntu הכלי הוא apt: ‎apt update‎ מורידה את רשימת החבילות העדכנית מהמאגרים (לא מתקינה כלום), ‎apt search‎ מחפשת, ו־‎apt show‎ מציגה פרטים על חבילה.', 'Software on Linux comes as a package: the program\'s files, plus a list of other packages it needs (dependencies). Packages live in repositories on the network. On Debian and Ubuntu the tool is apt: apt update downloads the latest package lists from the repositories (it installs nothing), apt search searches, and apt show shows details about a package.') },
@@ -58,7 +58,7 @@ const UNIT_45 = {
 };
 
 const UNIT_46 = {
-  section: 5, unit: 46, exams: ['L102.4', 'F'], title: T('dpkg ומאגרים', 'dpkg and repos'), subtitle: T('dpkg, ‏sources.list.d ו־apt-cache', 'dpkg, sources.list.d and apt-cache'), color: 'purple', fixture: homeFixture,
+  section: 5, unit: 46, exams: ['L102.4', 'F', 'C2.4'], title: T('dpkg ומאגרים', 'dpkg and repos'), subtitle: T('dpkg, ‏sources.list.d ו־apt-cache', 'dpkg, sources.list.d and apt-cache'), color: 'purple', fixture: homeFixture,
   lessons: [
     { title: T('מה מותקן', 'What is installed'), exercises: [
       { type: 'teach', cmd: 'dpkg', name: 'Debian package', text: T('dpkg הוא הכלי שמתחת ל־apt. הוא מכיר את מסד הנתונים של מה שמותקן ואת קובצי ה־‎.deb‎, אבל לא מוריד מהרשת ולא מתקין תלויות. ‎dpkg -l‎ מציגה חבילות מותקנות (ii אומר מותקנת), ‎dpkg -L name‎ את הקבצים שחבילה התקינה, ו־‎dpkg -S /path‎ איזו חבילה התקינה קובץ.', 'dpkg is the tool under apt. It knows the database of what is installed and .deb files, but it does not download or install dependencies. dpkg -l lists installed packages (ii means installed), dpkg -L name the files a package installed, and dpkg -S /path which package installed a file.') },
@@ -109,7 +109,7 @@ const UNIT_46 = {
 };
 
 const UNIT_47 = {
-  section: 5, unit: 47, exams: ['L102.5', 'R', 'F'], title: T('dnf', 'dnf'), subtitle: T('חבילות ומאגרים ב־RHEL', 'Packages and repositories on RHEL'), color: 'blue', fixture: homeFixture,
+  section: 5, unit: 47, exams: ['L102.5', 'R', 'F', 'E011.1', 'C2.4'], title: T('dnf', 'dnf'), subtitle: T('חבילות ומאגרים ב־RHEL', 'Packages and repositories on RHEL'), color: 'blue', fixture: homeFixture,
   lessons: [
     { title: T('מחפשים חבילה', 'Finding a package'), exercises: [
       { type: 'teach', cmd: 'dnf', name: 'package manager', text: T('ב־RHEL, ‏Fedora, ‏AlmaLinux ו־Rocky החבילות הן קובצי ‎.rpm, והכלי שמקביל ל־apt הוא dnf: הוא מוריד מהמאגרים ומתקין תלויות. yum הוא השם הישן: ב־RHEL 8 ומעלה yum הוא קישור ל־dnf. ‏dnf מרעננת את הרשימות לבד, בלי שלב update נפרד. ‎dnf repolist‎ מציגה מאגרים, ‎dnf search‎ מחפשת ו־‎dnf info‎ מציגה פרטים. ב־SUSE הכלי הוא zypper.', 'On RHEL, Fedora, AlmaLinux and Rocky packages are .rpm files, and the tool that matches apt is dnf: it downloads from repositories and installs dependencies. yum is the old name: on RHEL 8 and later yum is a link to dnf. dnf refreshes its lists by itself, with no separate update step. dnf repolist shows repositories, dnf search searches and dnf info shows details. On SUSE the tool is zypper.') },
@@ -161,7 +161,7 @@ const UNIT_47 = {
 };
 
 const UNIT_48 = {
-  section: 5, unit: 48, exams: ['L102.5', 'R', 'F'], title: T('rpm', 'rpm'), subtitle: T('שאילתות, קובצי ‎.rpm‎ ו־rpm2cpio', 'Queries, .rpm files and rpm2cpio'), color: 'green', fixture: homeFixture,
+  section: 5, unit: 48, exams: ['L102.5', 'R', 'F', 'C2.4'], title: T('rpm', 'rpm'), subtitle: T('שאילתות, קובצי ‎.rpm‎ ו־rpm2cpio', 'Queries, .rpm files and rpm2cpio'), color: 'green', fixture: homeFixture,
   lessons: [
     { title: T('מה מותקן', 'What is installed'), exercises: [
       { type: 'teach', cmd: 'rpm', name: 'Red Hat package manager', text: T('rpm הוא הכלי שמתחת ל־dnf, כמו dpkg מתחת ל־apt: הוא מכיר את מסד הנתונים ואת קובצי ה־‎.rpm, ולא מוריד ולא פותר תלויות. ‎-q‎ הוא שאילתה: ‎rpm -qa‎ כל החבילות, ‎rpm -q name‎ האם מותקנת, ‎rpm -qi‎ פרטים. השם המלא הוא שם-גרסה-שחרור.ארכיטקטורה, למשל bash-5.2.26-6.el10.x86_64.', 'rpm is the tool under dnf, like dpkg under apt: it knows the database and .rpm files, and does not download or resolve dependencies. -q is query: rpm -qa all packages, rpm -q name whether it is installed, rpm -qi details. The full name is name-version-release.architecture, for example bash-5.2.26-6.el10.x86_64.') },
@@ -209,7 +209,7 @@ const UNIT_48 = {
 };
 
 const UNIT_49 = {
-  section: 5, unit: 49, exams: ['L102.3'], title: T('ספריות משותפות', 'Shared libraries'), subtitle: T('ldd, ‏ldconfig ו־LD_LIBRARY_PATH', 'ldd, ldconfig and LD_LIBRARY_PATH'), color: 'purple', fixture: homeFixture,
+  section: 5, unit: 49, exams: ['L102.3', 'C2.4'], title: T('ספריות משותפות', 'Shared libraries'), subtitle: T('ldd, ‏ldconfig ו־LD_LIBRARY_PATH', 'ldd, ldconfig and LD_LIBRARY_PATH'), color: 'purple', fixture: homeFixture,
   lessons: [
     { title: T('ldd', 'ldd'), exercises: [
       { type: 'teach', cmd: 'ldd', name: 'list dynamic dependencies', text: T('רוב התוכנות לא מכילות את כל הקוד שלהן: הן טוענות ספריות משותפות (קובצי ‎.so, כמו DLL ב־Windows), כך שכל תוכנה משתמשת באותו עותק. כשתוכנה עולה, ה־dynamic linker (‏ld-linux) מוצא את הספריות. ‎ldd /usr/bin/ls‎ מציגה אילו ספריות התוכנה צריכה ואיפה הן נמצאו. ספרייה סטטית (‎.a) נכנסת לתוך התוכנה בזמן הבנייה.', 'Most programs do not contain all their code: they load shared libraries (.so files, like DLLs on Windows), so every program uses the same copy. When a program starts, the dynamic linker (ld-linux) finds the libraries. ldd /usr/bin/ls shows which libraries a program needs and where they were found. A static library (.a) goes inside the program when it is built.') },
@@ -261,7 +261,7 @@ const UNIT_49 = {
 };
 
 const UNIT_50 = {
-  section: 5, unit: 50, exams: ['L102.6', 'R', 'F'], title: T('Flatpak, מכונות וירטואליות וקונטיינרים', 'Flatpak, VMs and containers'), subtitle: T('flatpak, ‏virsh, ‏podman ו־cloud-init', 'flatpak, virsh, podman and cloud-init'), color: 'blue', fixture: homeFixture,
+  section: 5, unit: 50, exams: ['L102.6', 'R', 'F', 'E011.4', 'C1.7', 'C2.4', 'C2.6', 'C4.1'], title: T('Flatpak, מכונות וירטואליות וקונטיינרים', 'Flatpak, VMs and containers'), subtitle: T('flatpak, ‏virsh, ‏podman ו־cloud-init', 'flatpak, virsh, podman and cloud-init'), color: 'blue', fixture: homeFixture,
   lessons: [
     { title: T('Flatpak', 'Flatpak'), exercises: [
       { type: 'teach', cmd: 'flatpak', name: 'sandboxed apps', text: T('Flatpak מתקינה אפליקציות בתוך ארגז חול, עם runtime משלהן, כך שאותה אפליקציה עובדת על כל הפצה. האפליקציות מגיעות מ־remotes כמו Flathub, ולכל אחת מזהה בסגנון org.gnome.Calculator. ‎flatpak remote-add‎ מוסיפה remote, ‎remotes‎ מציגה אותם, ‎search‎, ‏‎install‎, ‏‎list‎, ‏‎run‎, ‏‎update‎ ו־‎uninstall. זה חלק ממבחן RHCSA 10.', 'Flatpak installs apps inside a sandbox, with their own runtime, so the same app works on every distro. Apps come from remotes like Flathub, and each has an ID like org.gnome.Calculator. flatpak remote-add adds a remote, remotes lists them, then search, install, list, run, update and uninstall. This is part of the RHCSA 10 exam.') },

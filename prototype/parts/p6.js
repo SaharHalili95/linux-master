@@ -26,7 +26,7 @@ const p6Perm = s => s.length <= 1 ? [s] : [...s].flatMap((c, i) => p6Perm(s.slic
 const p6Nm = (...cmds) => p6Sudo([...new Set(cmds.flatMap(c => { const out = [c]; for (const [a, b] of [[' con ', ' connection '], [' mod ', ' modify '], ["'", '"']]) out.push(...out.map(x => x.split(a).join(b))); return out; }))]);
 
 const UNIT_51 = {
-  section: 6, unit: 51, exams: ['L109.1', 'R'], title: T('יסודות הרשת', 'Network fundamentals'), subtitle: T('IPv4, ‏IPv6, ‏CIDR, פורטים, TCP ו־UDP', 'IPv4, IPv6, CIDR, ports, TCP and UDP'), color: 'green', fixture: p6Fixture,
+  section: 6, unit: 51, exams: ['L109.1', 'R', 'E014.4'], title: T('יסודות הרשת', 'Network fundamentals'), subtitle: T('IPv4, ‏IPv6, ‏CIDR, פורטים, TCP ו־UDP', 'IPv4, IPv6, CIDR, ports, TCP and UDP'), color: 'green', fixture: p6Fixture,
   lessons: [
     { title: T('כתובות IPv4', 'IPv4 addresses'), exercises: [
       { type: 'teach', cmd: '192.168.1.50', name: 'IPv4', text: T('לכל מחשב ברשת יש כתובת IP. כתובת IPv4 היא 4 מספרים בין 0 ל־255 עם נקודות ביניהם, בסך הכול 32 ביטים. חלק מהכתובת מזהה את הרשת וחלק את המחשב בתוכה. ה־netmask (או ‎/24‎) קובע איפה עובר הגבול. הכתובת הראשונה ברשת היא כתובת הרשת, והאחרונה היא ה־broadcast, ששולחת לכולם.', 'Every computer on a network has an IP address. An IPv4 address is 4 numbers from 0 to 255 with dots between them, 32 bits in all. Part of the address names the network and part names the computer in it. The netmask (or /24) sets where the line falls. The first address in a network is the network address, and the last is the broadcast, which sends to everyone.') },
@@ -85,7 +85,7 @@ const UNIT_51 = {
 };
 
 const UNIT_52 = {
-  section: 6, unit: 52, exams: ['L109.2', 'L109.3', 'R', 'F'], title: T('הפקודה ip', 'ip'), subtitle: T('כתובות, ממשקים, נתיבים ו־gateway', 'Addresses, interfaces, routes and the gateway'), color: 'purple', fixture: p6Fixture,
+  section: 6, unit: 52, exams: ['L109.2', 'L109.3', 'R', 'F', 'E014.4', 'S13', 'C1.4'], title: T('הפקודה ip', 'ip'), subtitle: T('כתובות, ממשקים, נתיבים ו־gateway', 'Addresses, interfaces, routes and the gateway'), color: 'purple', fixture: p6Fixture,
   lessons: [
     { title: T('ip addr', 'ip addr'), exercises: [
       { type: 'teach', cmd: 'ip addr', name: 'IP addresses', text: T('‎ip addr‎ (או ‎ip a) מציגה את הכתובות של כל ממשק רשת: אחרי inet באה כתובת IPv4, אחרי inet6 כתובת IPv6, ו־‎/24‎ היא הקידומת. ‎ip -br addr‎ מקצרת לשורה אחת לממשק, ‎ip -4 addr‎ מציגה רק IPv4, ו־‎ip addr add 192.168.50.2/24 dev lab0‎ מוסיפה כתובת. ‏ifconfig היא הכלי הישן. בתרגילים: על שרת אמיתי בנינו ממשק lab0 שמחובר לשרת מעבדה בשם srv.', 'ip addr (or ip a) shows the addresses of every network interface: an IPv4 address follows inet, an IPv6 one follows inet6, and /24 is the prefix. ip -br addr shortens it to one line per interface, ip -4 addr shows only IPv4, and ip addr add 192.168.50.2/24 dev lab0 adds an address. ifconfig is the old tool. In the exercises: on a real server we built an interface lab0 that connects to a lab server called srv.') },
@@ -135,7 +135,7 @@ const UNIT_52 = {
 };
 
 const UNIT_53 = {
-  section: 6, unit: 53, exams: ['L109.2', 'L109.4', 'R', 'F'], title: T('הגדרות רשת קבועות', 'Persistent network config'), subtitle: T('nmcli, ‏hostnamectl, קבצי ‎/etc, ‏bridge ו־bond', 'nmcli, hostnamectl, /etc files, bridges and bonds'), color: 'blue', fixture: p6Fixture,
+  section: 6, unit: 53, exams: ['L109.2', 'L109.4', 'R', 'F', 'E014.4', 'S13', 'C1.4', 'C2.5'], title: T('הגדרות רשת קבועות', 'Persistent network config'), subtitle: T('nmcli, ‏hostnamectl, קבצי ‎/etc, ‏bridge ו־bond', 'nmcli, hostnamectl, /etc files, bridges and bonds'), color: 'blue', fixture: p6Fixture,
   lessons: [
     { title: T('NetworkManager ו־nmcli', 'NetworkManager and nmcli'), exercises: [
       { type: 'teach', cmd: 'nmcli', name: 'NetworkManager', text: T('NetworkManager שומר הגדרות רשת כ"פרופילי חיבור" ומפעיל אותם בכל אתחול. ‎nmcli device status‎ מציגה כרטיסים, ‎nmcli con show‎ פרופילים, ‎nmcli con add‎ יוצרת, ‎nmcli con mod‎ משנה ו־‎nmcli con up‎ מפעילה. ‏ipv4.method manual זו כתובת קבועה ו־auto זה DHCP. ב־RHEL זו הדרך הרגילה, והפרופילים נשמרים ב־‎/etc/NetworkManager/system-connections/. ‏nmtui היא גרסה עם תפריטים. באובונטו שרת משתמשים לרוב ב־netplan.', 'NetworkManager keeps network settings as "connection profiles" and applies them at every boot. nmcli device status lists cards, nmcli con show lists profiles, nmcli con add creates, nmcli con mod changes and nmcli con up activates. ipv4.method manual is a fixed address and auto is DHCP. On RHEL this is the normal way, and profiles are saved in /etc/NetworkManager/system-connections/. nmtui is a menu version. Ubuntu Server usually uses netplan.') },
@@ -184,7 +184,7 @@ const UNIT_53 = {
 };
 
 const UNIT_54 = {
-  section: 6, unit: 54, exams: ['L109.4', 'R', 'F'], title: T('DNS', 'DNS'), subtitle: T('host, ‏dig, ‏getent וסדר הבדיקה', 'host, dig, getent and the lookup order'), color: 'green', fixture: p6Fixture,
+  section: 6, unit: 54, exams: ['L109.4', 'R', 'F', 'E014.4', 'S13', 'C1.4'], title: T('DNS', 'DNS'), subtitle: T('host, ‏dig, ‏getent וסדר הבדיקה', 'host, dig, getent and the lookup order'), color: 'green', fixture: p6Fixture,
   lessons: [
     { title: T('host', 'host'), exercises: [
       { type: 'teach', cmd: 'host', name: 'DNS lookup', text: T('DNS מתרגם שמות לכתובות. לכל שם יש רשומות: A (כתובת IPv4), ‏AAAA (‏IPv6), ‏MX (שרתי דואר, עם עדיפות: מספר קטן קודם), ‏NS (שרתי השמות של הדומיין), ‏CNAME (כינוי) ו־PTR (כתובת בחזרה לשם). ‎host one.one.one.one‎ נותנת תשובה קצרה וקריאה, ‎host -t MX gmail.com‎ מבקשת סוג מסוים.', 'DNS turns names into addresses. Each name has records: A (an IPv4 address), AAAA (IPv6), MX (mail servers, with a priority: lower goes first), NS (the domain\'s name servers), CNAME (an alias) and PTR (an address back to a name). host one.one.one.one gives a short readable answer, and host -t MX gmail.com asks for one type.') },
@@ -236,7 +236,7 @@ const UNIT_54 = {
 };
 
 const UNIT_55 = {
-  section: 6, unit: 55, exams: ['L109.3', 'F'], title: T('פתרון תקלות רשת', 'Network troubleshooting'), subtitle: T('ping, ‏traceroute, ‏ss, ‏nc ו־curl', 'ping, traceroute, ss, nc and curl'), color: 'purple', fixture: p6Fixture,
+  section: 6, unit: 55, exams: ['L109.3', 'F', 'E014.4', 'S13', 'C1.4', 'C5.3'], title: T('פתרון תקלות רשת', 'Network troubleshooting'), subtitle: T('ping, ‏traceroute, ‏ss, ‏nc ו־curl', 'ping, traceroute, ss, nc and curl'), color: 'purple', fixture: p6Fixture,
   lessons: [
     { title: T('ping', 'ping'), exercises: [
       { type: 'teach', cmd: 'ping', name: 'ICMP echo', text: T('ping שולחת בקשת ICMP ומחכה לתשובה. כל שורה מראה ttl (יורד ב־1 בכל נתב בדרך) ו־time. בלינוקס היא רצה עד Ctrl+C, אז ‎-c 3‎ קובע כמות ו־‎-W 1‎ זמן המתנה. ‎ping -6‎ (או ping6) ל־IPv6. ‏100% packet loss: אין תשובה (המחשב כבוי או firewall חוסם ICMP). ‏"Network is unreachable": אין בכלל נתיב.', 'ping sends an ICMP request and waits for a reply. Each line shows ttl (it drops by 1 at every router on the way) and time. On Linux it runs until Ctrl+C, so -c 3 sets a count and -W 1 a wait time. ping -6 (or ping6) is for IPv6. 100% packet loss: no reply (the machine is off or a firewall blocks ICMP). "Network is unreachable": there is no route at all.') },
@@ -288,7 +288,7 @@ const UNIT_55 = {
 };
 
 const UNIT_56 = {
-  section: 6, unit: 56, exams: ['L110.3', 'R', 'F'], title: T('SSH', 'SSH'), subtitle: T('ssh, ‏known_hosts, ‏‎~/.ssh/config‎ ו־scp', 'ssh, known_hosts, ~/.ssh/config and scp'), color: 'blue', fixture: p6Fixture,
+  section: 6, unit: 56, exams: ['L110.3', 'R', 'F', 'E015.1', 'S5'], title: T('SSH', 'SSH'), subtitle: T('ssh, ‏known_hosts, ‏‎~/.ssh/config‎ ו־scp', 'ssh, known_hosts, ~/.ssh/config and scp'), color: 'blue', fixture: p6Fixture,
   lessons: [
     { title: T('התחברות עם ssh', 'Logging in with ssh'), exercises: [
       { type: 'teach', cmd: 'ssh', name: 'secure shell', text: T('‎ssh dana@srv‎ נכנסת לשרת srv בתור dana, בחיבור מוצפן. בלי ‎dana@‎ היא משתמשת בשם המשתמש שלכם. ‎-p 2222‎ מתחברת לפורט אחר, ו־‎ssh dana@srv uptime‎ מריצה פקודה אחת וחוזרת. exit יוצאת. בצד השרת רץ sshd בפורט 22. בהקלטות: root בשרת Ubuntu אמיתי התחבר ל־localhost בתור dana. ‎-n‎ רק אומרת ל־ssh לא לקרוא מהמקלדת, כי ההקלטה רצה מסקריפט.', 'ssh dana@srv logs into the server srv as dana, over an encrypted connection. Without dana@ it uses your own user name. -p 2222 connects to another port, and ssh dana@srv uptime runs one command and comes back. exit leaves. On the server side sshd runs on port 22. In the recordings: root on a real Ubuntu server connected to localhost as dana. -n only tells ssh not to read the keyboard, because the recording ran from a script.') },
@@ -337,7 +337,7 @@ const UNIT_56 = {
 };
 
 const UNIT_57 = {
-  section: 6, unit: 57, exams: ['L110.3', 'R', 'F'], title: T('מפתחות SSH', 'SSH keys'), subtitle: T('ssh-keygen, ‏ssh-copy-id, ‏ssh-agent והקשחת sshd', 'ssh-keygen, ssh-copy-id, ssh-agent and hardening sshd'), color: 'green', fixture: p6Fixture,
+  section: 6, unit: 57, exams: ['L110.3', 'R', 'F', 'E015.1', 'S5', 'C3.3'], title: T('מפתחות SSH', 'SSH keys'), subtitle: T('ssh-keygen, ‏ssh-copy-id, ‏ssh-agent והקשחת sshd', 'ssh-keygen, ssh-copy-id, ssh-agent and hardening sshd'), color: 'green', fixture: p6Fixture,
   lessons: [
     { title: T('ssh-keygen', 'ssh-keygen'), exercises: [
       { type: 'teach', cmd: 'ssh-keygen', name: 'key pair', text: T('זוג מפתחות: הפרטי (id_ed25519) נשאר אצלכם, בהרשאות 600, והציבורי (id_ed25519.pub) הולך לשרתים. סוגים: ed25519 (מומלץ), ‏rsa (עם ‎-b 4096), ‏ecdsa. ‏dsa ישן ולא בטוח. ‎-N‎ קובעת passphrase, ‏‎-C‎ הערה ו־‎-f‎ קובץ. טביעת האצבע (fingerprint) מזהה את המפתח. ההקלטות נעשו בתור root, לכן הנתיב הוא ‎/root/.ssh.', 'A key pair: the private key (id_ed25519) stays with you, with mode 600, and the public key (id_ed25519.pub) goes to servers. Types: ed25519 (recommended), rsa (with -b 4096), ecdsa. dsa is old and unsafe. -N sets a passphrase, -C a comment and -f a file. The fingerprint identifies the key. The recordings ran as root, so the path is /root/.ssh.') },
@@ -386,7 +386,7 @@ const UNIT_57 = {
 };
 
 const UNIT_58 = {
-  section: 6, unit: 58, exams: ['R', 'F'], title: T('העברת קבצים', 'Moving files around'), subtitle: T('rsync, ‏sftp, ‏wget ו־curl -O', 'rsync, sftp, wget and curl -O'), color: 'purple', fixture: p6Fixture,
+  section: 6, unit: 58, exams: ['R', 'F', 'S5', 'C1.6'], title: T('העברת קבצים', 'Moving files around'), subtitle: T('rsync, ‏sftp, ‏wget ו־curl -O', 'rsync, sftp, wget and curl -O'), color: 'purple', fixture: p6Fixture,
   lessons: [
     { title: T('rsync', 'rsync'), exercises: [
       { type: 'teach', cmd: 'rsync -av', name: 'sync folders', text: T('rsync מעתיקה רק מה שהשתנה, אז ההעתקה השנייה מהירה מאוד. ‎-a‎ (archive) מעתיקה תיקיות ושומרת הרשאות, זמנים, בעלים וקישורים, ו־‎-v‎ מציגה את הקבצים. הסלאש בסוף המקור חשוב: ‏‎site/‎ זה התוכן של התיקייה, ו־site זו התיקייה עצמה. בתרגילים: בתיקייה site יש index.html, ‏css/style.css ו־img/logo.png.', 'rsync copies only what changed, so the second copy is very fast. -a (archive) copies folders and keeps permissions, times, owners and links, and -v lists the files. The slash at the end of the source matters: site/ is the folder\'s contents, and site is the folder itself. In the exercises: the folder site holds index.html, css/style.css and img/logo.png.') },

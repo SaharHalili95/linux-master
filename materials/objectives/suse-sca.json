@@ -1,0 +1,20 @@
+[
+  {"id": "S1", "title": "Features and components of SLES 16; SLES in the public cloud", "units": [83], "terms": ["SLES", "zypper", "public cloud"]},
+  {"id": "S2", "title": "The command line: help, executing commands, redirection and piping, environment variables, root privileges, tab completion, history", "units": [1, 5, 8, 10, 35, 59], "terms": ["man", "--help", "export", "sudo", "history"]},
+  {"id": "S3", "title": "The file system: FHS, structure, navigation, file types, management commands", "units": [1, 2, 3, 21, 25], "terms": ["/etc", "/var", "ls", "cp", "mv"]},
+  {"id": "S4", "title": "The Vim editor: using and configuring Vim", "units": [17, 18], "terms": ["vim", ":wq", "vimrc"]},
+  {"id": "S5", "title": "Remote administration with SSH: public key authentication, secure file transfer", "units": [56, 57, 58], "terms": ["ssh", "ssh-keygen", "scp", "rsync"]},
+  {"id": "S6", "title": "GNOME Remote Desktop and Cockpit: install, MFA, features", "units": [75, 84], "terms": ["Cockpit", "cockpit.socket", "GNOME Remote Desktop"]},
+  {"id": "S7", "title": "Users and groups: command line and Cockpit", "units": [33, 34, 84], "terms": ["useradd", "usermod", "groupadd"]},
+  {"id": "S8", "title": "File system permissions and ownership", "units": [22, 23], "terms": ["chmod", "chown"]},
+  {"id": "S9", "title": "Processes: viewing, managing, foreground and background", "units": [36, 37], "terms": ["ps", "top", "kill", "bg", "fg"]},
+  {"id": "S10", "title": "Services", "units": [38, 39], "terms": ["systemctl"]},
+  {"id": "S11", "title": "Schedule tasks", "units": [65, 66], "terms": ["crontab", "OnCalendar"]},
+  {"id": "S12", "title": "Storage: partitioning, persistent device naming, making file systems accessible, managing space", "units": [27, 28, 29, 30, 85], "terms": ["parted", "mkfs", "mount", "/etc/fstab", "/dev/disk/by-uuid", "df", "btrfs"]},
+  {"id": "S13", "title": "Network configuration, testing and name resolution", "units": [52, 53, 54, 55], "terms": ["ip addr", "nmcli", "ping", "/etc/resolv.conf"]},
+  {"id": "S14", "title": "The firewall", "units": [69], "terms": ["firewall-cmd"]},
+  {"id": "S15", "title": "SELinux configuration, modes, contexts and management", "units": [70], "terms": ["getenforce", "setenforce", "restorecon", "semanage"]},
+  {"id": "S16", "title": "System logging: kernel ring buffer, syslog daemon, logrotate, systemd journal", "units": [40, 42], "terms": ["dmesg", "rsyslog", "logrotate", "journalctl"]},
+  {"id": "S17", "title": "Supportconfig for troubleshooting", "units": [83], "terms": ["supportconfig"]},
+  {"id": "S18", "title": "Manual deployment of a basic SLES 16 system", "units": [41, 83], "terms": ["SLES"]}
+]

@@ -134,15 +134,41 @@ Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a u
 | 76 | Git basics | `git clone`, `status`, `add`, `commit`, `log`, `diff`, `branch`, `checkout`, `push` | F | 🎞 | live |
 | 77 | Web servers and proxies | nginx/Apache basics, virtual hosts, reverse proxy, `curl -I`, TLS certificates with `openssl` | F | 🎞 | live |
 
-## Part 10: Mock exams (units 78-80)
+## Part 10: More certifications (units 81-96)
+
+Linux Essentials (E), SUSE SCA (S) and CompTIA Linux+ (C). See [the design](../docs/superpowers/specs/2026-11-05-more-certs-design.md).
+
+| # | Unit | Commands and ideas | Exams | Sim | Status |
+| --- | --- | --- | --- | --- | --- |
+| 81 | Open source and distributions | distribution families, release types, `apk`, GPL, BSD, copyleft, Creative Commons, FSF, OSI, major apps | E C | concept | planned |
+| 82 | Linux in everyday computing | CPU architectures, Raspberry Pi, `/dev/nvme*`, ISO media, dual boot, WSL, password managers, MFA, passkeys | E C | concept | planned |
+| 83 | SUSE and SLES 16 | `zypper`, SLES in the public cloud, `supportconfig`, manual deployment | S | 🎞 | planned |
+| 84 | Cockpit and remote desktop | `cockpit.socket`, Cockpit MFA and users, GNOME Remote Desktop | S | concept | planned |
+| 85 | Btrfs and snapshots | `btrfs subvolume`, `snapper`, `/dev/disk/by-uuid` | S C | 🎞 | planned |
+| 86 | Hardware and kernel modules in depth | `dmidecode`, `lshw`, `lsmem`, `modinfo`, `depmod`, `rmmod`, `dracut`, `mkinitrd`, `sensors`, `ipmitool` | C | 🎞 | planned |
+| 87 | LVM in depth and RAID | `pvs`, `pvmove`, `vgextend`, `lvremove`, `vgexport`, `mdadm`, `/proc/mdstat`, `growpart`, mount options | C | 🎞 | planned |
+| 88 | Network tools | `ethtool`, `tcpdump`, `iperf3`, netplan, `nmap`, `nslookup` | C | 🎞 | planned |
+| 89 | Performance and tracing | `strace`, `pstree`, `mpstat`, `pidstat`, `atop`, `systemd-analyze blame` | C | 🎞 | planned |
+| 90 | Virtualization | QEMU/KVM, `virt-manager`, qcow2, snapshots, VM networking | C | concept | planned |
+| 91 | Containers in depth | Dockerfile, images and tags, volumes, ports, networks, privileged, Compose | C | 🎞 | planned |
+| 92 | Security tools | `auditd`, `fail2ban`, `audit2allow`, `sealert`, `chattr`, `lsattr`, PAM, polkit, `rbash`, `/etc/issue` | C | 🎞 | planned |
+| 93 | Compliance and encryption | OpenSCAP, CIS, AIDE, `rkhunter`, CVE/CVSS, `shred`, LUKS2, WireGuard, certificates | C | 🎞 | planned |
+| 94 | Automation and infrastructure as code | Ansible, Puppet, OpenTofu, CI/CD, GitOps, Kubernetes, cloud-init, kickstart | C | concept | planned |
+| 95 | Python and AI for administrators | `python3 -m venv`, `pip`, data types, PEP 8, responsible AI use | C | concept | planned |
+| 96 | Monitoring and troubleshooting method | SLA/SLO/SLI, SNMP, alerts, log aggregation, troubleshooting scenarios | C | concept | planned |
+
+## Part 11: Mock exams (units 78-80, 97-99)
 
 | # | Unit | Content | Exams |
 | --- | --- | --- | --- |
 | 78 | LPIC-1 mock exam | 60 questions from the LPIC-tagged bank, weighted by objective, 90 minutes, pass at 500/800 | L |
 | 79 | RHCSA mock exam | 20 task-style questions on the R-tagged bank, no hints | R |
 | 80 | LFCS mock exam | 20 task-style questions on the F-tagged bank, weighted by the 6 domains | F |
+| 97 | Linux Essentials mock exam | 40 questions, one per objective first, 60 minutes, pass at 500/800 | E |
+| 98 | SUSE SCA mock exam | 70 questions on SLES 16 topics, 90 minutes, pass at 70% | S |
+| 99 | CompTIA Linux+ mock exam | 60 questions across the five domains, 90 minutes, pass at 720/900 | C |
 
-The official objectives of all three exams, mapped to these units, are in [objectives/](objectives/). Every LPIC-1 v5.0 objective (101.1 to 110.3; v5.0 has no 104.4 and no SQL objective) appears in at least one unit above; `tests/prototype.spec.js` checks that every objective tag is covered.
+The official objectives of all six exams, mapped to these units, are in [objectives/](objectives/). Every LPIC-1 v5.0 objective (101.1 to 110.3; v5.0 has no 104.4 and no SQL objective) appears in at least one unit above; `tests/prototype.spec.js` checks that every objective tag is covered.
 
 ## Sources
 

@@ -157,7 +157,7 @@ test('visiting the beta does not replace the main page in the offline cache', as
   await context.setOffline(false);
 });
 
-test('Learn mode works offline after a first visit, fonts and all 80 units included', async ({ page, context, browserName }) => {
+test('Learn mode works offline after a first visit, fonts and every unit included', async ({ page, context, browserName }) => {
   test.skip(browserName === 'webkit', 'Playwright WebKit does not support service workers');
   await page.goto('./prototype/');
   await page.waitForFunction(() => navigator.serviceWorker.controller);
@@ -168,7 +168,7 @@ test('Learn mode works offline after a first visit, fonts and all 80 units inclu
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('.node.current')).toBeVisible();
-  expect(await page.evaluate(() => COURSE.length)).toBe(80);
+  expect(await page.evaluate(() => COURSE.length)).toBeGreaterThanOrEqual(83);
   const faces = await page.evaluate(async () => [...await document.fonts.load('700 16px Rubik', 'שלום'), ...await document.fonts.load('16px "JetBrains Mono"', 'ls')].map(f => `${f.family} ${f.status}`));
   expect(faces).toEqual(expect.arrayContaining(['Rubik loaded', 'JetBrains Mono loaded']));
   await page.goto('./');
@@ -316,7 +316,7 @@ test('a scenario accepts any listed command, however it is spaced, and rejects o
 });
 
 // One test per part, each starting where the earlier parts end, so CI can play the parts side by side.
-for (let part = 1; part <= 10; part++) test(`part ${part} can be played to the end, unit after unit @content @part${part}`, async ({ page }) => {
+for (let part = 1; part <= 11; part++) test(`part ${part} can be played to the end, unit after unit @content @part${part}`, async ({ page }) => {
   test.setTimeout(600_000);
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
@@ -355,7 +355,9 @@ test('every exercise in every unit is answerable and fully translated @content',
   const texts = [];
   const walk = v => { if (v && typeof v === 'object') { if ('he' in v && 'en' in v) texts.push(v); else Object.values(v).forEach(walk); } };
   let count = 0;
-  expect(COURSE.map(u => u.unit), 'units 1-80 in order').toEqual(Array.from({ length: 80 }, (_, i) => i + 1));
+  const nums = COURSE.map(u => u.unit);
+  expect(new Set(nums).size, 'unit numbers are unique').toBe(nums.length);
+  expect(nums.filter(n => n <= 80), 'units 1-80 in order').toEqual(Array.from({ length: 80 }, (_, i) => i + 1));
   const taught = new Set(COURSE.flatMap(u => u.exams || []));
   const lpic = JSON.parse(fs.readFileSync(path.join(root, 'materials/objectives/lpic1.json'), 'utf8'));
   expect(lpic.filter(o => !taught.has(`L${o.id}`)).map(o => o.id), 'LPIC-1 objectives no unit teaches').toEqual([]);
@@ -372,7 +374,7 @@ test('every exercise in every unit is answerable and fully translated @content',
   }).map(term => `${o.id}: ${term}`));
   expect(missing, 'LPIC-1 terms the course never mentions').toEqual([]);
   for (const unit of COURSE.filter(u => u.exam)) {
-    expect(['L', 'R', 'F'], `unit ${unit.unit}`).toContain(unit.exam.tag);
+    expect(['L', 'R', 'F', 'E', 'S', 'C'], `unit ${unit.unit}`).toContain(unit.exam.tag);
     expect(COURSE.filter(u => !u.locked && !u.exam && u.exams?.some(e => e.startsWith(unit.exam.tag))).length, `unit ${unit.unit} has units to draw from`).toBeGreaterThan(0);
     walk(unit);
   }
@@ -442,23 +444,34 @@ test('corrupted saved progress does not break Learn mode', async ({ page }) => {
 test('every official exam objective maps to a real unit, and every unit teaches some objective', () => {
   const root = path.join(__dirname, '..');
   const load = f => JSON.parse(fs.readFileSync(path.join(root, 'materials/objectives', f), 'utf8'));
-  const [lpic, rhcsa, lfcs] = ['lpic1.json', 'rhcsa.json', 'lfcs.json'].map(load);
+  const [lpic, rhcsa, lfcs, essentials, suse, linuxPlus] = ['lpic1.json', 'rhcsa.json', 'lfcs.json', 'linux-essentials.json', 'suse-sca.json', 'linux-plus.json'].map(load);
+  expect(essentials).toHaveLength(19);
+  expect(essentials.reduce((s, o) => s + o.weight, 0), 'Linux Essentials weights are its 40 questions').toBe(40);
+  expect(linuxPlus).toHaveLength(29);
+  expect(suse).toHaveLength(18);
   const units = [...fs.readFileSync(path.join(root, 'materials/curriculum.md'), 'utf8').matchAll(/^\| (\d+) \|/gm)].map(m => Number(m[1]));
-  expect(units).toEqual(Array.from({ length: 80 }, (_, i) => i + 1));
+  expect([...units].sort((a, b) => a - b)).toEqual(Array.from({ length: 99 }, (_, i) => i + 1));
   expect(lpic).toHaveLength(42);
   for (const exam of ['101-500', '102-500']) expect(lpic.filter(o => o.exam === exam).reduce((s, o) => s + o.weight, 0), exam).toBe(60);
   const mapped = new Set();
-  for (const o of [...lpic, ...rhcsa, ...lfcs]) { expect(o.units.length, o.id).toBeGreaterThan(0); for (const u of o.units) { expect(units, o.id).toContain(u); mapped.add(u); } }
-  for (let u = 1; u <= 77; u++) expect(mapped.has(u), `unit ${u} teaches no objective`).toBe(true);
+  for (const o of [...lpic, ...rhcsa, ...lfcs, ...essentials, ...suse, ...linuxPlus]) { expect(o.units.length, o.id).toBeGreaterThan(0); for (const u of o.units) { expect(units, o.id).toContain(u); mapped.add(u); } }
+  for (const u of units.filter(n => n <= 77 || (n >= 81 && n <= 96))) expect(mapped.has(u), `unit ${u} teaches no objective`).toBe(true);
 });
 
 test('each certification track keeps exactly the units its official objectives map to, plus its mock exam', async ({ page }) => {
   const root = path.join(__dirname, '..');
   await page.goto('./prototype/');
   const tags = await page.evaluate(() => Object.fromEntries(COURSE.map(u => [u.unit, u.exams || []])));
-  for (const [tag, file] of [['L', 'lpic1.json'], ['R', 'rhcsa.json'], ['F', 'lfcs.json']])
+  // Units 81-96 are written in later steps of docs/superpowers/specs/2026-11-05-more-certs-design.md; remove each
+  // from this list as it lands.
+  const NOT_WRITTEN_YET = new Set([81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96]);
+  for (const [tag, file] of [['L', 'lpic1.json'], ['R', 'rhcsa.json'], ['F', 'lfcs.json'], ['E', 'linux-essentials.json'], ['S', 'suse-sca.json'], ['C', 'linux-plus.json']])
     for (const o of JSON.parse(fs.readFileSync(path.join(root, 'materials/objectives', file), 'utf8')))
-      for (const u of o.units) expect(tags[u].some(e => e.startsWith(tag)), `unit ${u} teaches ${o.id} but is not tagged ${tag}`).toBe(true);
+      for (const u of o.units) {
+        if (NOT_WRITTEN_YET.has(u)) { expect(tags[u], `unit ${u} exists, take it off NOT_WRITTEN_YET`).toBeUndefined(); continue; }
+        const want = tag === 'E' || tag === 'C' ? `${tag}${o.id}` : tag === 'S' ? o.id : tag;
+        expect(tags[u].some(e => e.startsWith(want)), `unit ${u} teaches ${o.id} but is not tagged ${want}`).toBe(true);
+      }
 });
 
 test('choosing a certification track hides the other units and keeps progress', async ({ page }) => {
@@ -466,7 +479,7 @@ test('choosing a certification track hides the other units and keeps progress', 
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, done: ['L0', 'L1', 'c1', 'L2', 'L3', 'boss'] })); });
   await page.reload();
   const kickers = () => page.locator('.unit-kicker').allInnerTexts().then(k => k.map(x => Number(x.match(/\d+$/)[0])));
-  expect(await kickers()).toHaveLength(80);
+  expect(await kickers()).toHaveLength(await page.evaluate(() => COURSE.length));
   await page.click('#trackBtn');
   await expect(page.locator('.track-pick [data-track="R"]')).toContainText('56');
   await page.click('.track-pick [data-track="R"]');
@@ -482,7 +495,7 @@ test('choosing a certification track hides the other units and keeps progress', 
   await page.click('#trackBtn');
   await expect(page.locator('.track-pick [data-track="R"]')).toHaveAttribute('aria-pressed', 'true');
   await page.click('.track-pick [data-track=""]');
-  expect(await kickers()).toHaveLength(80);
+  expect(await kickers()).toHaveLength(await page.evaluate(() => COURSE.length));
   await page.evaluate(() => scrollTo(0, 0));
   await page.click('#toHereBtn');
   await expect(page.locator('.node.current')).toBeInViewport();

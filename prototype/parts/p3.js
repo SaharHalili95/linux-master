@@ -18,7 +18,7 @@ const filesShown = (log, cmd, setup) => { const want = filesOut(cmd, setup).trim
 const modeOf = (sh, p) => sh.meta(p)?.mode & 0o7777;
 
 const UNIT_21 = {
-  section: 3, unit: 21, exams: ['L104.6', 'R'], title: T('קישורים ו־inode', 'Links and inodes'), subtitle: T('קישור קשיח, קישור סימבולי ו־ls -i', 'Hard links, symbolic links and ls -i'), color: 'green', fixture: filesFixture,
+  section: 3, unit: 21, exams: ['L104.6', 'R', 'E015.4', 'S3', 'C1.3', 'C2.1'], title: T('קישורים ו־inode', 'Links and inodes'), subtitle: T('קישור קשיח, קישור סימבולי ו־ls -i', 'Hard links, symbolic links and ls -i'), color: 'green', fixture: filesFixture,
   lessons: [
     { title: T('קישור סימבולי', 'Symbolic links'), exercises: [
       { type: 'teach', cmd: 'ln -s', name: 'symbolic link', text: T('קישור סימבולי הוא "קיצור דרך": קובץ קטן שמצביע על נתיב של קובץ אחר. ‎ln -s target link‎: קודם היעד, אחר כך שם הקישור. ב־ls -l הוא מתחיל ב־l ומראה ‎->‎ לאן הוא מצביע.', 'A symbolic link is a "shortcut": a small file that points to another file\'s path. ln -s target link: the target first, then the link name. In ls -l it starts with l and shows -> where it points.'), demo: [['ln -s notes.txt todo'], 'ls -l todo'] },
@@ -67,7 +67,7 @@ const UNIT_21 = {
 };
 
 const UNIT_22 = {
-  section: 3, unit: 22, exams: ['L104.5', 'R', 'F'], title: T('הרשאות', 'Permissions'), subtitle: T('rwx, ‏ls -l ו־chmod', 'rwx, ls -l and chmod'), color: 'purple', fixture: filesFixture,
+  section: 3, unit: 22, exams: ['L104.5', 'R', 'F', 'E015.3', 'S8', 'C3.3'], title: T('הרשאות', 'Permissions'), subtitle: T('rwx, ‏ls -l ו־chmod', 'rwx, ls -l and chmod'), color: 'purple', fixture: filesFixture,
   lessons: [
     { title: T('לקרוא את ls -l', 'Reading ls -l'), exercises: [
       { type: 'teach', cmd: 'ls -l', name: 'long listing', text: T('ls -l מציגה שורה לכל קובץ: הרשאות, מספר קישורים, בעלים, קבוצה, גודל, תאריך ושם. התו הראשון הוא הסוג: - קובץ, d תיקייה, l קישור.', 'ls -l shows one line per file: permissions, link count, owner, group, size, date and name. The first character is the type: - file, d folder, l link.'), demo: [[], 'ls -l'] },
@@ -121,7 +121,7 @@ const UNIT_22 = {
 };
 
 const UNIT_23 = {
-  section: 3, unit: 23, exams: ['L104.5', 'R'], title: T('בעלים ו־umask', 'Owners and umask'), subtitle: T('sudo, chown, chgrp וברירות מחדל', 'sudo, chown, chgrp and defaults'), color: 'blue', fixture: filesFixture,
+  section: 3, unit: 23, exams: ['L104.5', 'R', 'E015.3', 'S8', 'C3.3'], title: T('בעלים ו־umask', 'Owners and umask'), subtitle: T('sudo, chown, chgrp וברירות מחדל', 'sudo, chown, chgrp and defaults'), color: 'blue', fixture: filesFixture,
   lessons: [
     { title: T('sudo', 'sudo'), exercises: [
       { type: 'teach', cmd: 'sudo', name: 'superuser do', text: T('root הוא המשתמש שמותר לו הכול. sudo מריצה פקודה אחת בתור root, אחרי שהיא שואלת את הסיסמה שלכם. רק משתמשים שהמנהל הרשה להם יכולים להשתמש בה.', 'root is the user who may do anything. sudo runs one command as root, after asking for your password. Only users the admin allowed can use it.'), demo: [[], 'sudo whoami'] },
@@ -169,7 +169,7 @@ const UNIT_23 = {
 };
 
 const UNIT_24 = {
-  section: 3, unit: 24, exams: ['L104.5', 'R', 'F'], title: T('ביטים מיוחדים ו־ACL', 'Special bits and ACLs'), subtitle: T('SUID, ‏SGID, ‏sticky ו־setfacl', 'SUID, SGID, sticky and setfacl'), color: 'green', fixture: filesFixture,
+  section: 3, unit: 24, exams: ['L104.5', 'R', 'F', 'E015.4', 'C3.3', 'C5.4'], title: T('ביטים מיוחדים ו־ACL', 'Special bits and ACLs'), subtitle: T('SUID, ‏SGID, ‏sticky ו־setfacl', 'SUID, SGID, sticky and setfacl'), color: 'green', fixture: filesFixture,
   lessons: [
     { title: T('SUID', 'SUID'), exercises: [
       { type: 'teach', cmd: 'chmod u+s', name: 'set user ID', text: T('קובץ עם SUID רץ בהרשאות של הבעלים שלו, לא של מי שהריץ. ככה passwd, של root, יכולה לשנות את ‎/etc/shadow בשבילכם. ב־ls -l רואים s במקום x של הבעלים. במספרים: 4 לפני השלישיות, למשל 4755.', 'A file with SUID runs with its owner\'s rights, not the caller\'s. That is how passwd, owned by root, can change /etc/shadow for you. In ls -l you see s instead of the owner\'s x. In numbers: 4 before the triplets, like 4755.') },
@@ -215,7 +215,7 @@ const UNIT_24 = {
 };
 
 const UNIT_25 = {
-  section: 3, unit: 25, exams: ['L104.7', 'F'], title: T('עץ התיקיות', 'The filesystem tree'), subtitle: T('מה יש ב־‎/etc, ‏/var, ‏/usr ועוד', 'What lives in /etc, /var, /usr and more'), color: 'purple', fixture: filesFixture,
+  section: 3, unit: 25, exams: ['L104.7', 'F', 'E012.3', 'E015.4', 'S3', 'C1.1'], title: T('עץ התיקיות', 'The filesystem tree'), subtitle: T('מה יש ב־‎/etc, ‏/var, ‏/usr ועוד', 'What lives in /etc, /var, /usr and more'), color: 'purple', fixture: filesFixture,
   lessons: [
     { title: T('השורש', 'The root'), exercises: [
       { type: 'teach', cmd: '/', name: 'FHS', text: T('בלינוקס יש עץ אחד שמתחיל ב־/. החלוקה שלו קבועה בתקן שנקרא FHS, אז בכל הפצה תמצאו הגדרות ב־‎/etc, לוגים ב־‎/var/log ותוכנות ב־‎/usr/bin.', 'Linux has one tree that starts at /. Its layout is fixed by a standard called the FHS, so on any distribution you find settings in /etc, logs in /var/log and programs in /usr/bin.') },
@@ -263,7 +263,7 @@ const UNIT_25 = {
 };
 
 const UNIT_26 = {
-  section: 3, unit: 26, exams: ['L104.7', 'R'], title: T('למצוא כל דבר', 'Finding anything'), subtitle: T('find לפי הרשאות, בעלים וגודל, ו־locate', 'find by permissions, owner and size, and locate'), color: 'blue', fixture: filesFixture,
+  section: 3, unit: 26, exams: ['L104.7', 'R', 'E012.3', 'C2.1'], title: T('למצוא כל דבר', 'Finding anything'), subtitle: T('find לפי הרשאות, בעלים וגודל, ו־locate', 'find by permissions, owner and size, and locate'), color: 'blue', fixture: filesFixture,
   lessons: [
     { title: T('find לפי מאפיינים', 'find by attributes'), exercises: [
       { type: 'teach', cmd: 'find -user', name: 'find tests', text: T('find יודעת לחפש לפי הרבה דברים: ‎-user root‎ לפי בעלים, ‎-perm 600‎ לפי הרשאות, ‎-size +1M‎ לפי גודל, ‎-type l‎ קישורים, ‎-empty‎ קבצים ריקים. אפשר לשלב כמה תנאים, וכולם צריכים להתקיים.', 'find can search by many things: -user root by owner, -perm 600 by permissions, -size +1M by size, -type l links, -empty empty files. You can combine conditions, and all must hold.'), demo: [[], 'find . -perm 600'] },
@@ -312,7 +312,7 @@ const UNIT_26 = {
 const ON_VM = T('הפלט הוקלט על שרת Ubuntu אמיתי, עם דיסק וירטואלי. מה הודפס?', 'This was recorded on a real Ubuntu server, with a virtual disk. What was printed?');
 
 const UNIT_27 = {
-  section: 3, unit: 27, exams: ['L102.1', 'L104.1', 'R', 'F'], title: T('דיסקים ומחיצות', 'Disks and partitions'), subtitle: T('lsblk, ‏fdisk, ‏parted, ‏MBR ו־GPT', 'lsblk, fdisk, parted, MBR and GPT'), color: 'green', fixture: filesFixture,
+  section: 3, unit: 27, exams: ['L102.1', 'L104.1', 'R', 'F', 'E014.2', 'S12', 'C1.3'], title: T('דיסקים ומחיצות', 'Disks and partitions'), subtitle: T('lsblk, ‏fdisk, ‏parted, ‏MBR ו־GPT', 'lsblk, fdisk, parted, MBR and GPT'), color: 'green', fixture: filesFixture,
   lessons: [
     { title: T('דיסקים ושמות', 'Disks and names'), exercises: [
       { type: 'teach', cmd: 'lsblk', name: 'list block devices', text: T('לינוקס נותנת לכל דיסק שם ב־‎/dev: ‏sda, ‏sdb לדיסקים רגילים, ‏nvme0n1 ל־NVMe, ‏vda למכונות וירטואליות. מחיצות מקבלות מספר: sda1, ‏sda2 (ו־nvme0n1p1). ‏lsblk מציגה את כל הדיסקים והמחיצות כעץ, עם הגודל ואיפה הם מחוברים.', 'Linux names every disk in /dev: sda, sdb for regular disks, nvme0n1 for NVMe, vda for virtual machines. Partitions get a number: sda1, sda2 (and nvme0n1p1). lsblk shows all disks and partitions as a tree, with their size and where they are mounted.') },
@@ -361,7 +361,7 @@ const UNIT_27 = {
 };
 
 const UNIT_28 = {
-  section: 3, unit: 28, exams: ['L104.1', 'L104.2', 'R', 'F'], title: T('מערכות קבצים', 'Filesystems'), subtitle: T('mkfs, ‏fsck, ‏tune2fs ו־xfs_repair', 'mkfs, fsck, tune2fs and xfs_repair'), color: 'purple', fixture: filesFixture,
+  section: 3, unit: 28, exams: ['L104.1', 'L104.2', 'R', 'F', 'S12', 'C1.3', 'C5.2'], title: T('מערכות קבצים', 'Filesystems'), subtitle: T('mkfs, ‏fsck, ‏tune2fs ו־xfs_repair', 'mkfs, fsck, tune2fs and xfs_repair'), color: 'purple', fixture: filesFixture,
   lessons: [
     { title: T('mkfs', 'mkfs'), exercises: [
       { type: 'teach', cmd: 'mkfs', name: 'make filesystem', text: T('מחיצה ריקה צריכה מערכת קבצים לפני שאפשר לשמור בה. ‎mkfs.ext4 /dev/sdb1‎ יוצרת ext4 (ברירת המחדל באובונטו), ‏mkfs.xfs יוצרת XFS (ברירת המחדל ב־Red Hat), ו־mkfs.vfat יוצרת FAT לדיסק און קי. זה מוחק את כל מה שהיה במחיצה.', 'An empty partition needs a filesystem before you can store anything. mkfs.ext4 /dev/sdb1 creates ext4 (Ubuntu\'s default), mkfs.xfs creates XFS (Red Hat\'s default), and mkfs.vfat creates FAT for USB sticks. It erases whatever was on the partition.') },
@@ -411,7 +411,7 @@ const UNIT_28 = {
 };
 
 const UNIT_29 = {
-  section: 3, unit: 29, exams: ['L104.3', 'R', 'F'], title: T('חיבור מחיצות', 'Mounting'), subtitle: T('mount, ‏umount, ‏findmnt ו־‎/etc/fstab', 'mount, umount, findmnt and /etc/fstab'), color: 'blue', fixture: filesFixture,
+  section: 3, unit: 29, exams: ['L104.3', 'R', 'F', 'S12', 'C1.3'], title: T('חיבור מחיצות', 'Mounting'), subtitle: T('mount, ‏umount, ‏findmnt ו־‎/etc/fstab', 'mount, umount, findmnt and /etc/fstab'), color: 'blue', fixture: filesFixture,
   lessons: [
     { title: T('mount', 'mount'), exercises: [
       { type: 'teach', cmd: 'mount', name: 'mount', text: T('בלינוקס אין "כונן D". מחיצה מחברים לתיקייה קיימת, נקודת חיבור: ‎mount /dev/sdb1 /mnt/data‎, ומאותו רגע הקבצים שלה מופיעים שם. mount בלי כלום מציגה מה מחובר, ו־df -h מציגה כמה מקום יש בכל אחת.', 'Linux has no "drive D". You attach a partition to an existing folder, a mount point: mount /dev/sdb1 /mnt/data, and from then on its files show up there. mount with nothing lists what is mounted, and df -h shows how much space each has.') },
@@ -460,7 +460,7 @@ const UNIT_29 = {
 };
 
 const UNIT_30 = {
-  section: 3, unit: 30, exams: ['L104.2', 'F'], title: T('מקום בדיסק', 'Disk space'), subtitle: T('df, ‏du, ‏iostat ודיסק מלא', 'df, du, iostat and a full disk'), color: 'green', fixture: filesFixture,
+  section: 3, unit: 30, exams: ['L104.2', 'F', 'S12', 'C1.3', 'C5.2'], title: T('מקום בדיסק', 'Disk space'), subtitle: T('df, ‏du, ‏iostat ודיסק מלא', 'df, du, iostat and a full disk'), color: 'green', fixture: filesFixture,
   lessons: [
     { title: T('df', 'df'), exercises: [
       { type: 'teach', cmd: 'df -h', name: 'disk free', text: T('df מציגה לכל מערכת קבצים מחוברת: גודל, כמה בשימוש, כמה פנוי, אחוז, ואיפה היא מחוברת. ‎-h‎ מציגה ביחידות קריאות (M, ‏G). ‎df -i‎ מציגה inodes, כי אפשר להיתקע גם כשיש מקום אבל נגמרו ה־inodes.', 'df shows each mounted filesystem: size, used, available, percent, and where it is mounted. -h uses readable units (M, G). df -i shows inodes, since you can get stuck with free space but no inodes left.') },
@@ -509,7 +509,7 @@ const UNIT_30 = {
 };
 
 const UNIT_31 = {
-  section: 3, unit: 31, exams: ['R', 'F'], title: T('LVM', 'LVM'), subtitle: T('PV, ‏VG ו־LV: דיסקים גמישים', 'PV, VG and LV: flexible disks'), color: 'purple', fixture: filesFixture,
+  section: 3, unit: 31, exams: ['R', 'F', 'C1.3'], title: T('LVM', 'LVM'), subtitle: T('PV, ‏VG ו־LV: דיסקים גמישים', 'PV, VG and LV: flexible disks'), color: 'purple', fixture: filesFixture,
   lessons: [
     { title: T('שלוש השכבות', 'The three layers'), exercises: [
       { type: 'teach', cmd: 'LVM', name: 'logical volume manager', text: T('LVM מחבר דיסקים לבריכה אחת ומחלק אותה מחדש בגמישות. שלוש שכבות: PV (physical volume) הוא דיסק או מחיצה, VG (volume group) היא הבריכה שמאחדת PVs, ו־LV (logical volume) היא "מחיצה" שחותכים מה־VG ושמים עליה מערכת קבצים. את LV אפשר להגדיל בלי לכבות את השרת.', 'LVM joins disks into one pool and carves it up flexibly. Three layers: a PV (physical volume) is a disk or partition, a VG (volume group) is the pool that combines PVs, and an LV (logical volume) is a "partition" cut from the VG that gets a filesystem. An LV can grow without shutting the server down.') },
@@ -557,7 +557,7 @@ const UNIT_31 = {
 };
 
 const UNIT_32 = {
-  section: 3, unit: 32, exams: ['L104.1', 'R', 'F'], title: T('swap ואחסון ברשת', 'Swap and network storage'), subtitle: T('mkswap, ‏swapon, ‏NFS ו־autofs', 'mkswap, swapon, NFS and autofs'), color: 'blue', fixture: filesFixture,
+  section: 3, unit: 32, exams: ['L104.1', 'R', 'F', 'C1.3'], title: T('swap ואחסון ברשת', 'Swap and network storage'), subtitle: T('mkswap, ‏swapon, ‏NFS ו־autofs', 'mkswap, swapon, NFS and autofs'), color: 'blue', fixture: filesFixture,
   lessons: [
     { title: T('swap', 'swap'), exercises: [
       { type: 'teach', cmd: 'swap', name: 'swap space', text: T('swap הוא מקום בדיסק שהקרנל משתמש בו כשהזיכרון נגמר. הוא איטי בהרבה מזיכרון, אבל מונע קריסה. אפשר מחיצת swap או קובץ swap. ‏mkswap מכינה אותו, ‏swapon מפעילה, ‏swapoff מכבה, ו־‎swapon --show‎ או free -h מציגות מה פעיל.', 'swap is disk space the kernel uses when memory runs out. It is much slower than RAM, but prevents crashes. You can use a swap partition or a swap file. mkswap prepares it, swapon turns it on, swapoff turns it off, and swapon --show or free -h show what is active.') },

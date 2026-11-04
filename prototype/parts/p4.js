@@ -15,7 +15,7 @@ const ON_SERVER = T('הפלט הוקלט על שרת Ubuntu אמיתי. מה ה�
 const svc = (cmd, extra = []) => [cmd, `sudo ${cmd}`, ...extra];
 
 const UNIT_33 = {
-  section: 4, unit: 33, exams: ['L107.1', 'R', 'F'], title: T('משתמשים וקבוצות', 'Users and groups'), subtitle: T('‎/etc/passwd, ‏/etc/group, ‏id ו־groups', '/etc/passwd, /etc/group, id and groups'), color: 'green', fixture: sysFixture,
+  section: 4, unit: 33, exams: ['L107.1', 'R', 'F', 'E015.2', 'S7', 'C2.2'], title: T('משתמשים וקבוצות', 'Users and groups'), subtitle: T('‎/etc/passwd, ‏/etc/group, ‏id ו־groups', '/etc/passwd, /etc/group, id and groups'), color: 'green', fixture: sysFixture,
   lessons: [
     { title: T('‎/etc/passwd', '/etc/passwd'), exercises: [
       { type: 'teach', cmd: '/etc/passwd', name: 'accounts', text: T('כל משתמש הוא שורה ב־‎/etc/passwd, עם 7 שדות מופרדים ב־: שם, x (הסיסמה נמצאת במקום אחר), UID, ‏GID, תיאור, תיקיית בית ו־shell. ל־root תמיד UID 0. משתמשי מערכת (כמו www-data) מקבלים UID נמוך ו־shell בשם nologin.', 'Every user is a line in /etc/passwd, with 7 fields split by ":": name, x (the password lives elsewhere), UID, GID, description, home folder and shell. root always has UID 0. System users (like www-data) get a low UID and a shell called nologin.'), demo: [[], 'grep dana /etc/passwd'] },
@@ -61,7 +61,7 @@ const UNIT_33 = {
 };
 
 const UNIT_34 = {
-  section: 4, unit: 34, exams: ['L107.1', 'R', 'F'], title: T('ניהול משתמשים', 'Managing users'), subtitle: T('useradd, ‏usermod, ‏userdel, ‏passwd ו־chage', 'useradd, usermod, userdel, passwd and chage'), color: 'purple', fixture: sysFixture,
+  section: 4, unit: 34, exams: ['L107.1', 'R', 'F', 'E015.2', 'S7', 'C2.2', 'C3.1'], title: T('ניהול משתמשים', 'Managing users'), subtitle: T('useradd, ‏usermod, ‏userdel, ‏passwd ו־chage', 'useradd, usermod, userdel, passwd and chage'), color: 'purple', fixture: sysFixture,
   lessons: [
     { title: T('useradd', 'useradd'), exercises: [
       { type: 'teach', cmd: 'useradd', name: 'add user', text: T('‎useradd -m -s /bin/bash omer‎ יוצרת משתמש: ‎-m‎ יוצרת תיקיית בית (עם קבצים מ־‎/etc/skel), ‎-s‎ קובעת shell, ‎-c‎ תיאור, ‎-G‎ קבוצות נוספות, ‎-u‎ UID. אחר כך ‎passwd omer‎ נותנת לו סיסמה. ‏groupadd יוצרת קבוצה.', 'useradd -m -s /bin/bash omer creates a user: -m makes a home folder (with files from /etc/skel), -s sets the shell, -c a description, -G extra groups, -u the UID. Then passwd omer gives a password. groupadd creates a group.') },
@@ -107,7 +107,7 @@ const UNIT_34 = {
 };
 
 const UNIT_35 = {
-  section: 4, unit: 35, exams: ['L110.1', 'R', 'F'], title: T('sudo ו־su', 'sudo and su'), subtitle: T('הרשאות ניהול בצורה בטוחה', 'Admin rights, safely'), color: 'blue', fixture: sysFixture,
+  section: 4, unit: 35, exams: ['L110.1', 'R', 'F', 'E015.1', 'S2', 'C3.3'], title: T('sudo ו־su', 'sudo and su'), subtitle: T('הרשאות ניהול בצורה בטוחה', 'Admin rights, safely'), color: 'blue', fixture: sysFixture,
   lessons: [
     { title: T('su', 'su'), exercises: [
       { type: 'teach', cmd: 'su -', name: 'switch user', text: T('su מחליפה משתמש: ‎su - dana‎ נכנסת בתור dana עם הסביבה שלה (המקף חשוב: תיקיית הבית וה־PATH שלה). su בלי שם עוברת ל־root ודורשת את הסיסמה של root. ‏exit חוזרת.', 'su switches user: su - dana logs in as dana with her environment (the dash matters: her home folder and PATH). su with no name switches to root and needs root\'s password. exit goes back.') },
@@ -154,7 +154,7 @@ const UNIT_35 = {
 };
 
 const UNIT_36 = {
-  section: 4, unit: 36, exams: ['L103.5', 'R', 'F'], title: T('תהליכים', 'Processes'), subtitle: T('ps, ‏top, ‏pgrep, ‏kill ואותות', 'ps, top, pgrep, kill and signals'), color: 'green', fixture: sysFixture,
+  section: 4, unit: 36, exams: ['L103.5', 'R', 'F', 'E014.3', 'S9', 'C2.3'], title: T('תהליכים', 'Processes'), subtitle: T('ps, ‏top, ‏pgrep, ‏kill ואותות', 'ps, top, pgrep, kill and signals'), color: 'green', fixture: sysFixture,
   lessons: [
     { title: T('ps', 'ps'), exercises: [
       { type: 'teach', cmd: 'ps aux', name: 'process status', text: T('כל תוכנה שרצה היא תהליך עם מספר, PID. ‏ps מציגה תהליכים: ‎ps aux‎ את כולם, עם המשתמש, ‏%CPU, ‏%MEM וה־STAT (R רץ, S ישן, Z זומבי). ‎ps -ef‎ מראה גם את ה־PPID, התהליך שהפעיל אותו.', 'Every running program is a process with a number, the PID. ps lists processes: ps aux shows them all, with the user, %CPU, %MEM and STAT (R running, S sleeping, Z zombie). ps -ef also shows the PPID, the process that started it.') },
@@ -201,7 +201,7 @@ const UNIT_36 = {
 };
 
 const UNIT_37 = {
-  section: 4, unit: 37, exams: ['L103.5', 'L103.6', 'R'], title: T('עבודות ועדיפות', 'Jobs and priority'), subtitle: T('&, ‏bg, ‏fg, ‏nohup, ‏nice ו־tmux', '&, bg, fg, nohup, nice and tmux'), color: 'purple', fixture: sysFixture,
+  section: 4, unit: 37, exams: ['L103.5', 'L103.6', 'R', 'S9', 'C2.3'], title: T('עבודות ועדיפות', 'Jobs and priority'), subtitle: T('&, ‏bg, ‏fg, ‏nohup, ‏nice ו־tmux', '&, bg, fg, nohup, nice and tmux'), color: 'purple', fixture: sysFixture,
   lessons: [
     { title: T('רקע וחזית', 'Background and foreground'), exercises: [
       { type: 'teach', cmd: '&', name: 'jobs', text: T('‎&‎ בסוף פקודה מריצה אותה ברקע, והטרמינל פנוי מיד. ‏Ctrl+Z עוצרת את מה שרץ בחזית. jobs מציגה את העבודות, ‎bg %1‎ ממשיכה את עבודה 1 ברקע, ו־‎fg %1‎ מחזירה אותה לחזית.', '& at the end of a command runs it in the background, freeing the terminal at once. Ctrl+Z pauses what runs in the foreground. jobs lists the jobs, bg %1 resumes job 1 in the background, and fg %1 brings it back to the front.') },
@@ -250,7 +250,7 @@ const UNIT_37 = {
 };
 
 const UNIT_38 = {
-  section: 4, unit: 38, exams: ['L101.3', 'R', 'F'], title: T('שירותי systemd', 'systemd services'), subtitle: T('systemctl start, ‏stop, ‏enable ו־status', 'systemctl start, stop, enable and status'), color: 'blue', fixture: sysFixture,
+  section: 4, unit: 38, exams: ['L101.3', 'R', 'F', 'E014.3', 'S10', 'C2.5'], title: T('שירותי systemd', 'systemd services'), subtitle: T('systemctl start, ‏stop, ‏enable ו־status', 'systemctl start, stop, enable and status'), color: 'blue', fixture: sysFixture,
   lessons: [
     { title: T('status', 'status'), exercises: [
       { type: 'teach', cmd: 'systemctl status', name: 'service status', text: T('systemd הוא התהליך הראשון (PID 1), והוא מנהל את כל השירותים. ‎systemctl status nginx‎ מראה אם השירות רץ (active), אם הוא יעלה באתחול (enabled), ואת השורות האחרונות בלוג שלו.', 'systemd is the first process (PID 1), and it manages every service. systemctl status nginx shows whether the service is running (active), whether it starts at boot (enabled), and its latest log lines.') },
@@ -296,7 +296,7 @@ const UNIT_38 = {
 };
 
 const UNIT_39 = {
-  section: 4, unit: 39, exams: ['L101.3', 'R', 'F'], title: T('systemd לעומק', 'systemd deeper'), subtitle: T('קבצי unit, ‏targets ו־mask', 'Unit files, targets and mask'), color: 'green', fixture: sysFixture,
+  section: 4, unit: 39, exams: ['L101.3', 'R', 'F', 'S10', 'C2.5'], title: T('systemd לעומק', 'systemd deeper'), subtitle: T('קבצי unit, ‏targets ו־mask', 'Unit files, targets and mask'), color: 'green', fixture: sysFixture,
   lessons: [
     { title: T('קבצי unit', 'Unit files'), exercises: [
       { type: 'teach', cmd: '.service', name: 'unit files', text: T('כל שירות מוגדר בקובץ unit עם שלושה חלקים: ‎[Unit]‎ (תיאור ותלויות כמו After=), ‏‎[Service]‎ (ExecStart= הפקודה שמריצים, Restart= מתי להפעיל מחדש), ו־‎[Install]‎ (WantedBy= לאיזה target הוא שייך). קבצים של חבילות נמצאים ב־‎/usr/lib/systemd/system, ושלכם ב־‎/etc/systemd/system.', 'Each service is defined in a unit file with three sections: [Unit] (a description and ordering like After=), [Service] (ExecStart= the command to run, Restart= when to restart), and [Install] (WantedBy= which target it belongs to). Package files live in /usr/lib/systemd/system, and yours in /etc/systemd/system.') },
@@ -339,7 +339,7 @@ const UNIT_39 = {
 };
 
 const UNIT_40 = {
-  section: 4, unit: 40, exams: ['L108.2', 'R', 'F'], title: T('לוגים', 'Logs'), subtitle: T('journalctl, ‏‎/var/log, ‏logger ו־logrotate', 'journalctl, /var/log, logger and logrotate'), color: 'purple', fixture: sysFixture,
+  section: 4, unit: 40, exams: ['L108.2', 'R', 'F', 'E014.3', 'S16', 'C2.5', 'C3.1', 'C5.1'], title: T('לוגים', 'Logs'), subtitle: T('journalctl, ‏‎/var/log, ‏logger ו־logrotate', 'journalctl, /var/log, logger and logrotate'), color: 'purple', fixture: sysFixture,
   lessons: [
     { title: T('journalctl', 'journalctl'), exercises: [
       { type: 'teach', cmd: 'journalctl', name: 'the journal', text: T('systemd אוסף את כל הלוגים ל־journal. ‏journalctl מציגה אותו: ‎-u nginx‎ רק שירות אחד, ‎-b‎ רק מהאתחול הנוכחי, ‎-p err‎ רק שגיאות ומעלה, ‎-f‎ ממשיכה להציג שורות חדשות, ו־‎--since "1 hour ago"‎ לפי זמן.', 'systemd collects all logs into the journal. journalctl shows it: -u nginx just one service, -b only since this boot, -p err only errors and worse, -f keeps showing new lines, and --since "1 hour ago" by time.') },
@@ -385,7 +385,7 @@ const UNIT_40 = {
 };
 
 const UNIT_41 = {
-  section: 4, unit: 41, exams: ['L101.2', 'L102.2', 'R', 'F'], title: T('אתחול', 'Boot'), subtitle: T('UEFI, ‏GRUB, ‏initramfs ושחזור סיסמה', 'UEFI, GRUB, initramfs and password recovery'), color: 'blue', fixture: sysFixture,
+  section: 4, unit: 41, exams: ['L101.2', 'L102.2', 'R', 'F', 'S18', 'C1.1', 'C5.2'], title: T('אתחול', 'Boot'), subtitle: T('UEFI, ‏GRUB, ‏initramfs ושחזור סיסמה', 'UEFI, GRUB, initramfs and password recovery'), color: 'blue', fixture: sysFixture,
   lessons: [
     { title: T('סדר האתחול', 'The boot sequence'), exercises: [
       { type: 'teach', cmd: 'boot', name: 'boot sequence', text: T('הסדר: הקושחה (BIOS או UEFI) בודקת חומרה ומוצאת את מנהל האתחול; ‏GRUB2 מציג תפריט וטוען את הקרנל ואת ה־initramfs; ה־initramfs (מערכת קבצים זמנית בזיכרון) מכינה דרייברים כדי למצוא את /; הקרנל מפעיל את systemd (PID 1); ו־systemd מעלה את ה־default target.', 'The order: firmware (BIOS or UEFI) checks hardware and finds the boot loader; GRUB2 shows a menu and loads the kernel and the initramfs; the initramfs (a temporary filesystem in memory) prepares drivers to find /; the kernel starts systemd (PID 1); and systemd brings up the default target.') },
@@ -435,7 +435,7 @@ const UNIT_41 = {
 };
 
 const UNIT_42 = {
-  section: 4, unit: 42, exams: ['L101.1', 'R', 'F'], title: T('קרנל וחומרה', 'Kernel and hardware'), subtitle: T('uname, ‏modprobe, ‏lspci, ‏/proc ו־sysctl', 'uname, modprobe, lspci, /proc and sysctl'), color: 'green', fixture: sysFixture,
+  section: 4, unit: 42, exams: ['L101.1', 'R', 'F', 'E014.2', 'S16', 'C1.2'], title: T('קרנל וחומרה', 'Kernel and hardware'), subtitle: T('uname, ‏modprobe, ‏lspci, ‏/proc ו־sysctl', 'uname, modprobe, lspci, /proc and sysctl'), color: 'green', fixture: sysFixture,
   lessons: [
     { title: T('uname', 'uname'), exercises: [
       { type: 'teach', cmd: 'uname', name: 'unix name', text: T('הקרנל הוא הלב של לינוקס: הוא מנהל זיכרון, תהליכים וחומרה. ‎uname -r‎ מראה את גרסת הקרנל, ‎uname -m‎ את הארכיטקטורה (x86_64, ‏aarch64), ו־‎uname -a‎ הכול.', 'The kernel is the heart of Linux: it manages memory, processes and hardware. uname -r shows the kernel version, uname -m the architecture (x86_64, aarch64), and uname -a everything.') },
@@ -529,7 +529,7 @@ const UNIT_43 = {
 };
 
 const UNIT_44 = {
-  section: 4, unit: 44, exams: ['R', 'F'], title: T('בריאות וכיוונון', 'Health and tuning'), subtitle: T('uptime, ‏free, ‏vmstat ו־tuned', 'uptime, free, vmstat and tuned'), color: 'blue', fixture: sysFixture,
+  section: 4, unit: 44, exams: ['R', 'F', 'E014.3', 'C2.3', 'C5.1', 'C5.5'], title: T('בריאות וכיוונון', 'Health and tuning'), subtitle: T('uptime, ‏free, ‏vmstat ו־tuned', 'uptime, free, vmstat and tuned'), color: 'blue', fixture: sysFixture,
   lessons: [
     { title: T('עומס', 'Load'), exercises: [
       { type: 'teach', cmd: 'uptime', name: 'load average', text: T('uptime מציגה כמה זמן השרת למעלה, כמה משתמשים מחוברים, ושלושה מספרי עומס: ממוצע של דקה, 5 דקות ו־15 דקות. עומס הוא בערך כמה תהליכים רוצים מעבד. משווים למספר הליבות (nproc): עומס 4 על 4 ליבות זה מלא, על 16 ליבות זה רגוע.', 'uptime shows how long the server has been up, how many users are logged in, and three load numbers: averages over 1, 5 and 15 minutes. Load is roughly how many processes want the CPU. Compare to the core count (nproc): a load of 4 on 4 cores is full, on 16 cores it is calm.') },
