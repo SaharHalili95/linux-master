@@ -7,7 +7,7 @@ const p8sudo = (cmd, extra = []) => [cmd, `sudo ${cmd}`, ...extra];
 const P8_SUID_SETUP = ['touch tool backup.sh', 'chmod 4755 tool', 'chmod 2755 backup.sh'];
 
 const UNIT_67 = {
-  section: 8, unit: 67, exams: ['L110.1'], title: T('בדיקות אבטחה', 'Security checks'), subtitle: T('מי מחובר, קבצי SUID, פורטים פתוחים ומגבלות', 'Who is logged in, SUID files, open ports and limits'), color: 'green', fixture: sysFixture,
+  section: 8, unit: 67, exams: ['L110.1', 'F'], title: T('בדיקות אבטחה', 'Security checks'), subtitle: T('מי מחובר, קבצי SUID, פורטים פתוחים ומגבלות', 'Who is logged in, SUID files, open ports and limits'), color: 'green', fixture: sysFixture,
   lessons: [
     { title: T('מי מחובר?', 'Who is logged in?'), exercises: [
       { type: 'teach', cmd: 'who', name: 'logins', text: T('who מציגה מי מחובר עכשיו: שם, מסוף (tty או pts), שעה ומאיפה. ‏w מוסיפה את העומס ומה כל אחד מריץ. ‏last קוראת את ‎/var/log/wtmp‎ ומציגה את כל הכניסות האחרונות, ו־lastb קוראת את ‎/var/log/btmp‎: ניסיונות כניסה שנכשלו.', 'who shows who is logged in now: name, terminal (tty or pts), time and where from. w adds the load and what each person is running. last reads /var/log/wtmp and lists recent logins, and lastb reads /var/log/btmp: failed login attempts.') },
@@ -157,7 +157,7 @@ const UNIT_69 = {
 };
 
 const UNIT_70 = {
-  section: 8, unit: 70, exams: ['R'], title: T('SELinux', 'SELinux'), subtitle: T('מצבים, תוויות, restorecon, פורטים ו־booleans', 'Modes, labels, restorecon, ports and booleans'), color: 'green', fixture: sysFixture,
+  section: 8, unit: 70, exams: ['R', 'F'], title: T('SELinux', 'SELinux'), subtitle: T('מצבים, תוויות, restorecon, פורטים ו־booleans', 'Modes, labels, restorecon, ports and booleans'), color: 'green', fixture: sysFixture,
   lessons: [
     { title: T('מצבים', 'Modes'), exercises: [
       { type: 'teach', cmd: 'getenforce', name: 'SELinux modes', text: T('הרשאות רגילות (rwx) הן DAC: הבעלים מחליט. ‏SELinux מוסיף MAC: מדיניות של המערכת שאפילו root לא עוקף. יש לו שלושה מצבים: Enforcing (חוסם ורושם), ‏Permissive (רק רושם) ו־Disabled. ‏getenforce מציגה את המצב, ‏‎setenforce 0‎ או ‎1‎ מחליפה עד האתחול, והמצב הקבוע נקבע ב־‎/etc/selinux/config‎ (‏SELINUX=enforcing).', 'Regular permissions (rwx) are DAC: the owner decides. SELinux adds MAC: a system policy that even root cannot bypass. It has three modes: Enforcing (blocks and logs), Permissive (only logs) and Disabled. getenforce shows the mode, setenforce 0 or 1 switches until reboot, and the lasting mode is set in /etc/selinux/config (SELINUX=enforcing).') },

@@ -452,6 +452,35 @@ test('every official exam objective maps to a real unit, and every unit teaches 
   for (let u = 1; u <= 77; u++) expect(mapped.has(u), `unit ${u} teaches no objective`).toBe(true);
 });
 
+test('each certification track keeps exactly the units its official objectives map to, plus its mock exam', async ({ page }) => {
+  const root = path.join(__dirname, '..');
+  await page.goto('./prototype/');
+  const tags = await page.evaluate(() => Object.fromEntries(COURSE.map(u => [u.unit, u.exams || []])));
+  for (const [tag, file] of [['L', 'lpic1.json'], ['R', 'rhcsa.json'], ['F', 'lfcs.json']])
+    for (const o of JSON.parse(fs.readFileSync(path.join(root, 'materials/objectives', file), 'utf8')))
+      for (const u of o.units) expect(tags[u].some(e => e.startsWith(tag)), `unit ${u} teaches ${o.id} but is not tagged ${tag}`).toBe(true);
+});
+
+test('choosing a certification track hides the other units and keeps progress', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, done: ['L0', 'L1', 'c1', 'L2', 'L3', 'boss'] })); });
+  await page.reload();
+  const kickers = () => page.locator('.unit-kicker').allInnerTexts().then(k => k.map(x => Number(x.match(/\d+$/)[0])));
+  expect(await kickers()).toHaveLength(80);
+  await page.click('.track-pick [data-track="R"]');
+  await expect(page.locator('.track-pick [data-track="R"]')).toHaveAttribute('aria-pressed', 'true');
+  const rhcsa = await kickers();
+  expect(rhcsa).toContain(79);
+  for (const u of [2, 6, 78, 80]) expect(rhcsa).not.toContain(u);
+  await expect(page.locator('.node.current').first()).toHaveAttribute('aria-label', /.+/);
+  expect(await page.evaluate(() => document.querySelector('.node.current').closest('ol').previousElementSibling.querySelector('.unit-kicker').textContent)).toMatch(/ 3$/);
+  await page.reload();
+  expect(await kickers()).toEqual(rhcsa);
+  await page.click('.track-pick [data-track=""]');
+  expect(await kickers()).toHaveLength(80);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')).done)).toContain('boss');
+});
+
 test('a mock exam draws its questions only from tagged units, with no teach cards or live terminals', async ({ page }) => {
   await page.goto('./prototype/');
   const r = await page.evaluate(() => { const qs = buildExam('L', 60); const tagged = new Set(COURSE.filter(u => u.exams?.some(e => e.startsWith('L'))).map(u => tr(u.title))); return { n: qs.length, types: [...new Set(qs.map(q => q.type))], foreign: qs.filter(q => !tagged.has(tr(q.topic))).length }; });

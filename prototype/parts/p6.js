@@ -26,7 +26,7 @@ const p6Perm = s => s.length <= 1 ? [s] : [...s].flatMap((c, i) => p6Perm(s.slic
 const p6Nm = (...cmds) => p6Sudo([...new Set(cmds.flatMap(c => { const out = [c]; for (const [a, b] of [[' con ', ' connection '], [' mod ', ' modify '], ["'", '"']]) out.push(...out.map(x => x.split(a).join(b))); return out; }))]);
 
 const UNIT_51 = {
-  section: 6, unit: 51, exams: ['L109.1'], title: T('יסודות הרשת', 'Network fundamentals'), subtitle: T('IPv4, ‏IPv6, ‏CIDR, פורטים, TCP ו־UDP', 'IPv4, IPv6, CIDR, ports, TCP and UDP'), color: 'green', fixture: p6Fixture,
+  section: 6, unit: 51, exams: ['L109.1', 'R'], title: T('יסודות הרשת', 'Network fundamentals'), subtitle: T('IPv4, ‏IPv6, ‏CIDR, פורטים, TCP ו־UDP', 'IPv4, IPv6, CIDR, ports, TCP and UDP'), color: 'green', fixture: p6Fixture,
   lessons: [
     { title: T('כתובות IPv4', 'IPv4 addresses'), exercises: [
       { type: 'teach', cmd: '192.168.1.50', name: 'IPv4', text: T('לכל מחשב ברשת יש כתובת IP. כתובת IPv4 היא 4 מספרים בין 0 ל־255 עם נקודות ביניהם, בסך הכול 32 ביטים. חלק מהכתובת מזהה את הרשת וחלק את המחשב בתוכה. ה־netmask (או ‎/24‎) קובע איפה עובר הגבול. הכתובת הראשונה ברשת היא כתובת הרשת, והאחרונה היא ה־broadcast, ששולחת לכולם.', 'Every computer on a network has an IP address. An IPv4 address is 4 numbers from 0 to 255 with dots between them, 32 bits in all. Part of the address names the network and part names the computer in it. The netmask (or /24) sets where the line falls. The first address in a network is the network address, and the last is the broadcast, which sends to everyone.') },
@@ -184,7 +184,7 @@ const UNIT_53 = {
 };
 
 const UNIT_54 = {
-  section: 6, unit: 54, exams: ['L109.4', 'F'], title: T('DNS', 'DNS'), subtitle: T('host, ‏dig, ‏getent וסדר הבדיקה', 'host, dig, getent and the lookup order'), color: 'green', fixture: p6Fixture,
+  section: 6, unit: 54, exams: ['L109.4', 'R', 'F'], title: T('DNS', 'DNS'), subtitle: T('host, ‏dig, ‏getent וסדר הבדיקה', 'host, dig, getent and the lookup order'), color: 'green', fixture: p6Fixture,
   lessons: [
     { title: T('host', 'host'), exercises: [
       { type: 'teach', cmd: 'host', name: 'DNS lookup', text: T('DNS מתרגם שמות לכתובות. לכל שם יש רשומות: A (כתובת IPv4), ‏AAAA (‏IPv6), ‏MX (שרתי דואר, עם עדיפות: מספר קטן קודם), ‏NS (שרתי השמות של הדומיין), ‏CNAME (כינוי) ו־PTR (כתובת בחזרה לשם). ‎host one.one.one.one‎ נותנת תשובה קצרה וקריאה, ‎host -t MX gmail.com‎ מבקשת סוג מסוים.', 'DNS turns names into addresses. Each name has records: A (an IPv4 address), AAAA (IPv6), MX (mail servers, with a priority: lower goes first), NS (the domain\'s name servers), CNAME (an alias) and PTR (an address back to a name). host one.one.one.one gives a short readable answer, and host -t MX gmail.com asks for one type.') },
@@ -386,7 +386,7 @@ const UNIT_57 = {
 };
 
 const UNIT_58 = {
-  section: 6, unit: 58, exams: ['F'], title: T('העברת קבצים', 'Moving files around'), subtitle: T('rsync, ‏sftp, ‏wget ו־curl -O', 'rsync, sftp, wget and curl -O'), color: 'purple', fixture: p6Fixture,
+  section: 6, unit: 58, exams: ['R', 'F'], title: T('העברת קבצים', 'Moving files around'), subtitle: T('rsync, ‏sftp, ‏wget ו־curl -O', 'rsync, sftp, wget and curl -O'), color: 'purple', fixture: p6Fixture,
   lessons: [
     { title: T('rsync', 'rsync'), exercises: [
       { type: 'teach', cmd: 'rsync -av', name: 'sync folders', text: T('rsync מעתיקה רק מה שהשתנה, אז ההעתקה השנייה מהירה מאוד. ‎-a‎ (archive) מעתיקה תיקיות ושומרת הרשאות, זמנים, בעלים וקישורים, ו־‎-v‎ מציגה את הקבצים. הסלאש בסוף המקור חשוב: ‏‎site/‎ זה התוכן של התיקייה, ו־site זו התיקייה עצמה. בתרגילים: בתיקייה site יש index.html, ‏css/style.css ו־img/logo.png.', 'rsync copies only what changed, so the second copy is very fast. -a (archive) copies folders and keeps permissions, times, owners and links, and -v lists the files. The slash at the end of the source matters: site/ is the folder\'s contents, and site is the folder itself. In the exercises: the folder site holds index.html, css/style.css and img/logo.png.') },

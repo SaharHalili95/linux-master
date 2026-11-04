@@ -380,7 +380,7 @@ const UNIT_17 = {
 };
 
 const UNIT_18 = {
-  section: 2, unit: 18, exams: ['L103.8'], title: T('vi: לערוך מהר', 'vi: edit fast'), subtitle: T('מחיקה, העתקה, חיפוש והחלפה', 'Deleting, copying, searching and replacing'), color: 'blue', fixture: textFixture,
+  section: 2, unit: 18, exams: ['L103.8', 'R'], title: T('vi: לערוך מהר', 'vi: edit fast'), subtitle: T('מחיקה, העתקה, חיפוש והחלפה', 'Deleting, copying, searching and replacing'), color: 'blue', fixture: textFixture,
   lessons: [
     { title: T('מחיקה ו־undo', 'Delete and undo'), exercises: [
       { type: 'teach', cmd: 'dd', name: 'delete line', text: T('במצב פקודות: x מוחקת תו, dd מוחקת את כל השורה, dw מוחקת מילה, ו־u מבטלת את הפעולה האחרונה. מספר לפני פקודה חוזר עליה: 3dd מוחקת 3 שורות.', 'In command mode: x deletes a character, dd deletes the whole line, dw deletes a word, and u undoes the last action. A number before a command repeats it: 3dd deletes 3 lines.') },

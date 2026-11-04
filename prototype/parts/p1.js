@@ -107,7 +107,7 @@ const UNIT_8 = {
 };
 
 const UNIT_9 = {
-  section: 1, unit: 9, exams: ['L103.3', 'L103.1'], title: T('תווים כלליים ומרכאות', 'Globs and quoting'), subtitle: T('*, ?, [ ], { } ומרכאות', '*, ?, [ ], { } and quotes'), color: 'blue', fixture: homeFixture,
+  section: 1, unit: 9, exams: ['L103.3', 'L103.1', 'R'], title: T('תווים כלליים ומרכאות', 'Globs and quoting'), subtitle: T('*, ?, [ ], { } ומרכאות', '*, ?, [ ], { } and quotes'), color: 'blue', fixture: homeFixture,
   lessons: [
     { title: T('* ו־?', '* and ?'), exercises: [
       { type: 'teach', cmd: '*', name: 'wildcard', known: true, text: T('כבר פגשתם את *: היא מחליפה כל רצף של תווים בשם קובץ. ה־shell מחליף אותה בשמות לפני שהפקודה רצה.', 'You met * already: it stands for any run of characters in a file name. The shell swaps it for the names before the command runs.'), demo: [[], 'echo *.txt'] },
@@ -157,7 +157,7 @@ const UNIT_9 = {
 };
 
 const UNIT_10 = {
-  section: 1, unit: 10, exams: ['L103.1', 'L105.1'], title: T('ה־shell שלכם', 'Your shell'), subtitle: T('היסטוריה, alias, משתנים ו־‎.bashrc', 'History, aliases, variables and .bashrc'), color: 'green', fixture: homeFixture,
+  section: 1, unit: 10, exams: ['L103.1', 'L105.1', 'R'], title: T('ה־shell שלכם', 'Your shell'), subtitle: T('היסטוריה, alias, משתנים ו־‎.bashrc', 'History, aliases, variables and .bashrc'), color: 'green', fixture: homeFixture,
   lessons: [
     { title: T('היסטוריה וקיצורים', 'History and shortcuts'), exercises: [
       { type: 'teach', cmd: 'history', name: 'history', text: T('מדפיסה את הפקודות האחרונות שהקלדתם, עם מספר לכל אחת. ‎!!‎ מריצה שוב את הפקודה האחרונה, ו־‎!5‎ את פקודה מספר 5. ההיסטוריה נשמרת בקובץ ‎~/.bash_history.', 'Prints the commands you typed lately, each with a number. !! runs the last command again, and !5 runs command number 5. History is saved in ~/.bash_history.') },

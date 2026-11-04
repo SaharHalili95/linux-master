@@ -385,7 +385,7 @@ const UNIT_40 = {
 };
 
 const UNIT_41 = {
-  section: 4, unit: 41, exams: ['L101.2', 'L102.2', 'R'], title: T('אתחול', 'Boot'), subtitle: T('UEFI, ‏GRUB, ‏initramfs ושחזור סיסמה', 'UEFI, GRUB, initramfs and password recovery'), color: 'blue', fixture: sysFixture,
+  section: 4, unit: 41, exams: ['L101.2', 'L102.2', 'R', 'F'], title: T('אתחול', 'Boot'), subtitle: T('UEFI, ‏GRUB, ‏initramfs ושחזור סיסמה', 'UEFI, GRUB, initramfs and password recovery'), color: 'blue', fixture: sysFixture,
   lessons: [
     { title: T('סדר האתחול', 'The boot sequence'), exercises: [
       { type: 'teach', cmd: 'boot', name: 'boot sequence', text: T('הסדר: הקושחה (BIOS או UEFI) בודקת חומרה ומוצאת את מנהל האתחול; ‏GRUB2 מציג תפריט וטוען את הקרנל ואת ה־initramfs; ה־initramfs (מערכת קבצים זמנית בזיכרון) מכינה דרייברים כדי למצוא את /; הקרנל מפעיל את systemd (PID 1); ו־systemd מעלה את ה־default target.', 'The order: firmware (BIOS or UEFI) checks hardware and finds the boot loader; GRUB2 shows a menu and loads the kernel and the initramfs; the initramfs (a temporary filesystem in memory) prepares drivers to find /; the kernel starts systemd (PID 1); and systemd brings up the default target.') },

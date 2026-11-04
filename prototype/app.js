@@ -22,10 +22,10 @@ function bidi(text) {
 }
 const code = text => { const c = el('code', 'cmd', text); c.dir = 'ltr'; return c; };
 
-const DEFAULTS = { xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {}, reports: [] };
+const DEFAULTS = { xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {}, reports: [], track: '' };
 // Saved state can be stale or hand-edited; keep only fields of the expected type.
 function loadState(raw) {
-  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {}, layout: {}, reports: [] };
+  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {}, layout: {}, reports: [], track: '' };
   let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
   if (!saved || typeof saved !== 'object') return S;
   for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
@@ -33,6 +33,7 @@ function loadState(raw) {
   if (typeof saved.lastDay === 'string') S.lastDay = saved.lastDay;
   if (typeof saved.sound === 'boolean') S.sound = saved.sound;
   if (saved.layout && typeof saved.layout === 'object') for (const [k, v] of Object.entries(saved.layout)) if (typeof v === 'string') S.layout[k] = v;
+  if (['L', 'R', 'F'].includes(saved.track)) S.track = saved.track;
   if (Array.isArray(saved.reports)) S.reports = saved.reports.filter(r => r && typeof r.uid === 'string' && typeof r.note === 'string');
   const q = saved.quests;
   if (q && typeof q === 'object' && typeof q.day === 'string' && Array.isArray(q.claimed)) S.quests = { day: q.day, xp: +q.xp || 0, perfect: +q.perfect || 0, combo: +q.combo || 0, claimed: q.claimed.filter(x => typeof x === 'string') };
@@ -92,12 +93,17 @@ const unitNodes = unit => unit.exam ? [{ key: unitKey(unit, 'exam'), kind: 'exam
 const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: unit.fixture || unitFixture }));
 const OFFSETS = [0, 52, 78, 52, 0, -52, -78, -52];
 const ICONS = { lesson: '★', chest: '🎁', boss: '$_', exam: '📝', done: '✓', lock: '🔒' };
+// A certification track keeps only the units tagged for that exam, so a learner who already holds another
+// certification skips the rest. Progress is shared, so switching tracks loses nothing.
+const inTrack = u => !S.track || u.exams?.some(e => e.startsWith(S.track));
 function renderPath() {
   const root = $('path'); root.innerHTML = '';
-  const order = COURSE.filter(u => !u.locked).flatMap(unitNodes);
+  for (const b of document.querySelectorAll('.track-pick button')) b.setAttribute('aria-pressed', String(b.dataset.track === S.track));
+  const units = COURSE.filter(inTrack);
+  const order = units.filter(u => !u.locked).flatMap(unitNodes);
   const current = order.find(n => !S.done.includes(n.key))?.key;
   let part;
-  for (const unit of COURSE) {
+  for (const unit of units) {
     if (unit.section !== part) { part = unit.section; const h = el('h2', 'part-header', t('partN', part, tr(PARTS[part]))); h.dataset.part = part; root.append(h); }
     const banner = el('div', `unit-banner ${unit.color}${unit.locked ? ' locked' : ''}`);
     const txt = el('div'); txt.append(el('div', 'unit-kicker', t('kicker', unit.section, unit.unit)), el('h2', '', tr(unit.title)), el('div', 'unit-sub', tr(unit.subtitle)));
@@ -629,6 +635,7 @@ async function restoreBackup(file) {
   if (backup.lang === 'he' || backup.lang === 'en') try { localStorage.setItem('lang', backup.lang); } catch { /* not persisted */ }
   location.reload();
 }
+for (const b of document.querySelectorAll('.track-pick button')) b.onclick = () => { S.track = b.dataset.track; save(); renderPath(); $('path').querySelector('.node.current')?.scrollIntoView({ block: 'center' }); };
 $('backupBtn').onclick = saveBackup;
 $('restoreBtn').onclick = () => $('restoreFile').click();
 $('restoreFile').onchange = e => { const file = e.target.files[0]; e.target.value = ''; if (file) restoreBackup(file); };

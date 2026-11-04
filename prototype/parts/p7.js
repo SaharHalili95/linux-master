@@ -27,7 +27,7 @@ const P7_SERVER = T('הפלט הוקלט על שרת Ubuntu אמיתי. מה ה�
 const p7Root = (cmd, extra = []) => [cmd, `sudo ${cmd}`, ...extra];
 
 const UNIT_59 = {
-  section: 7, unit: 59, exams: ['L105.1', 'R'], title: T('משתנים וסביבה', 'Variables and environment'), subtitle: T('VAR=x, ‏export, ‏env, ‏$PATH וקובצי ההפעלה של bash', 'VAR=x, export, env, $PATH and bash startup files'), color: 'green', fixture: p7Fixture,
+  section: 7, unit: 59, exams: ['L105.1', 'R', 'F'], title: T('משתנים וסביבה', 'Variables and environment'), subtitle: T('VAR=x, ‏export, ‏env, ‏$PATH וקובצי ההפעלה של bash', 'VAR=x, export, env, $PATH and bash startup files'), color: 'green', fixture: p7Fixture,
   lessons: [
     { title: T('משתנים', 'Variables'), exercises: [
       { type: 'teach', cmd: 'VAR=value', name: 'variable', text: T('משתנה שומר ערך תחת שם. כותבים name=value בלי רווחים סביב ה־=, וקוראים את הערך עם ‎$name. הצורה ‎${name}‎ מסמנת איפה השם נגמר, למשל ‎${n}0.', 'A variable keeps a value under a name. Write name=value with no spaces around the =, and read the value back with $name. The form ${name} marks where the name ends, as in ${n}0.'), demo: [['city=haifa'], 'echo "I live in $city"'] },
@@ -389,7 +389,7 @@ const UNIT_65 = {
 };
 
 const UNIT_66 = {
-  section: 7, unit: 66, exams: ['L107.2', 'R'], title: T('טיימרים של systemd', 'systemd timers'), subtitle: T('יחידות ‎.timer, ‏OnCalendar ו־systemctl list-timers', '.timer units, OnCalendar and systemctl list-timers'), color: 'purple', fixture: p7Fixture,
+  section: 7, unit: 66, exams: ['L107.2', 'R', 'F'], title: T('טיימרים של systemd', 'systemd timers'), subtitle: T('יחידות ‎.timer, ‏OnCalendar ו־systemctl list-timers', '.timer units, OnCalendar and systemctl list-timers'), color: 'purple', fixture: p7Fixture,
   lessons: [
     { title: T('יחידת timer', 'A timer unit'), exercises: [
       { type: 'teach', cmd: '.timer', name: 'timer unit', text: T('טיימר של systemd הוא זוג יחידות: backup.timer אומר מתי, ו־backup.service אומר מה להריץ. בחלק [Timer] כותבים OnCalendar= (זמן בלוח השנה), או OnBootSec= ו־OnUnitActiveSec= (זמן מאז ההפעלה או מאז הריצה הקודמת). ‏Persistent=true מריץ ריצה שפוספסה כשהמחשב חוזר לפעול. ‏WantedBy=timers.target בחלק [Install] מאפשר לעשות לו enable.', 'A systemd timer is a pair of units: backup.timer says when, and backup.service says what to run. In the [Timer] section you write OnCalendar= (a calendar time), or OnBootSec= and OnUnitActiveSec= (time since boot or since the last run). Persistent=true runs a missed run when the computer is back on. WantedBy=timers.target in [Install] lets you enable it.') },

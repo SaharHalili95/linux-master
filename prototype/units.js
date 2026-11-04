@@ -138,7 +138,7 @@ const UNIT_3 = {
 };
 
 const UNIT_4 = {
-  section: 1, unit: 4, exams: ['L103.7', 'L104.7'], title: T('מחפשים', 'Searching'), subtitle: T('מוצאים מילים בקבצים וקבצים בתיקיות', 'Finding words in files and files in folders'), color: 'green', fixture: homeFixture,
+  section: 1, unit: 4, exams: ['L103.7', 'L104.7', 'R'], title: T('מחפשים', 'Searching'), subtitle: T('מוצאים מילים בקבצים וקבצים בתיקיות', 'Finding words in files and files in folders'), color: 'green', fixture: homeFixture,
   lessons: [
     { title: T('grep', 'grep'), exercises: [
       { type: 'teach', cmd: 'grep', name: 'global regular expression print', text: T('מחפשת מילה בקובץ ומדפיסה רק את השורות שבהן היא מופיעה.', 'Searches a file for a word and prints only the lines that contain it.'), demo: [[], 'grep ERROR logs/app.log'] },
