@@ -564,13 +564,13 @@ test('progress can be saved to a backup file and restored on a fresh device', as
   await page.click('[data-tab="profile"]');
   await expect(page.locator('#pXp')).toHaveText('0');
   page.once('dialog', d => d.accept());
-  await page.setInputFiles('#restoreFile', file);
-  await page.waitForLoadState('load');
+  await Promise.all([page.waitForEvent('load'), page.setInputFiles('#restoreFile', file)]);
   await page.click('[data-tab="profile"]');
   await expect(page.locator('#pXp')).toHaveText('345');
 
-  page.once('dialog', d => { expect(d.message()).toContain('Linux Master'); d.accept(); });
-  await page.setInputFiles('#restoreFile', { name: 'x.json', mimeType: 'application/json', buffer: Buffer.from('{"app":"other"}') });
+  const [refused] = await Promise.all([page.waitForEvent('dialog'), page.setInputFiles('#restoreFile', { name: 'x.json', mimeType: 'application/json', buffer: Buffer.from('{"app":"other"}') })]);
+  expect(refused.message()).toContain('Linux Master');
+  await refused.accept();
   await expect(page.locator('#pXp')).toHaveText('345');
 });
 
