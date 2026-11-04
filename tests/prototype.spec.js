@@ -162,6 +162,26 @@ test('visiting the beta does not replace the main page in the offline cache', as
   await context.setOffline(false);
 });
 
+test('Learn mode works offline after a first visit, fonts and all 80 units included', async ({ page, context, browserName }) => {
+  test.skip(browserName === 'webkit', 'Playwright WebKit does not support service workers');
+  await page.goto('./prototype/');
+  await page.waitForFunction(() => navigator.serviceWorker.controller);
+  await page.waitForFunction(async () => {
+    const urls = (await (await caches.open('linux-master-learn')).keys()).map(r => r.url);
+    return ['/prototype/index.html', 'parts/p11.js', 'fonts.css', 'rubik-hebrew.woff2', 'jetbrainsmono-latin.woff2'].every(f => urls.some(u => u.includes(f)));
+  });
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.locator('.node.current')).toBeVisible();
+  expect(await page.evaluate(() => COURSE.length)).toBe(80);
+  const faces = await page.evaluate(async () => [...await document.fonts.load('700 16px Rubik', 'שלום'), ...await document.fonts.load('16px "JetBrains Mono"', 'ls')].map(f => `${f.family} ${f.status}`));
+  expect(faces).toEqual(expect.arrayContaining(['Rubik loaded', 'JetBrains Mono loaded']));
+  await page.click('.node.current'); await page.locator('#pop .btn').click();
+  await expect(page.locator('#lesson')).toBeVisible();
+  await expect(page.locator('#exBody')).not.toBeEmpty();
+  await context.setOffline(false);
+});
+
 test('the path never scrolls sideways, even with a popover open on the outermost node', async ({ page }) => {
   await page.goto('./prototype/');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ done: ['L0', 'L1'] })); });
