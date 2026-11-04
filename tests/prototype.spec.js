@@ -129,23 +129,18 @@ test('the app opens in Learn mode, and Trivia stays put once chosen', async ({ p
   await expect(page.locator('.level-card')).toHaveCount(8);
 });
 
-test('the Trivia | Learn switch and the home card move between the two modes', async ({ page }) => {
+test('the Trivia | Learn switch moves between the two modes, with no beta card left', async ({ page }) => {
   await page.goto('./?mode=trivia');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await expect(page.locator('#betaLink')).toHaveText('לנסות ←');
+  await expect(page.locator('.beta-card')).toHaveCount(0);
   await page.click('#langBtn');
-  await expect(page.locator('#betaLink')).toHaveText('Try it →');
   await expect(page.locator('.mode-switch .mode.on')).toHaveText('🎯 Trivia');
   await page.click('#modeLearn');
   await expect(page).toHaveURL(/\/prototype\/$/);
   await expect(page.locator('.node.current')).toBeVisible();
   await expect(page.locator('.mode-switch .mode.on')).toHaveText('🎓 Learn');
   await page.click('.mode-switch a.mode');
-  await expect(page.locator('.level-card')).toHaveCount(8);
-  await page.click('#betaLink');
-  await expect(page).toHaveURL(/\/prototype\/$/);
-  await page.goBack();
   await expect(page.locator('.level-card')).toHaveCount(8);
 });
 
@@ -176,6 +171,8 @@ test('Learn mode works offline after a first visit, fonts and all 80 units inclu
   expect(await page.evaluate(() => COURSE.length)).toBe(80);
   const faces = await page.evaluate(async () => [...await document.fonts.load('700 16px Rubik', 'שלום'), ...await document.fonts.load('16px "JetBrains Mono"', 'ls')].map(f => `${f.family} ${f.status}`));
   expect(faces).toEqual(expect.arrayContaining(['Rubik loaded', 'JetBrains Mono loaded']));
+  await page.goto('./');
+  await expect(page).toHaveURL(/\/prototype\/$/);
   await page.click('.node.current'); await page.locator('#pop .btn').click();
   await expect(page.locator('#lesson')).toBeVisible();
   await expect(page.locator('#exBody')).not.toBeEmpty();
