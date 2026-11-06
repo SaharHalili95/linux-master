@@ -626,6 +626,16 @@ test('progress can be saved to a backup file and restored on a fresh device', as
   await expect(page.locator('#pXp')).toHaveText('345');
 });
 
+test('Hebrew text keeps a leading dot or colon inside its command, and sentence punctuation outside', async ({ page }) => {
+  await page.goto('./prototype/');
+  const runs = text => page.evaluate(t => { const d = document.createElement('div'); d.append(bidi(t)); return [...d.querySelectorAll('bdi')].map(b => b.textContent); }, text);
+  expect(await runs('חבילה בסיומת .deb מותקנת כך')).toEqual(['.deb']);
+  expect(await runs('שומרים ויוצאים עם :wq או בלי לשמור עם :q!')).toEqual([':wq', ':q!']);
+  expect(await runs('עברו אל ../logs ואז הריצו ./run.sh.')).toEqual(['../logs', './run.sh']);
+  expect(await runs('הפקודה: ls -l.')).toEqual(['ls -l']);
+  expect(await runs('השעה 10:30 בדיוק')).toEqual(['10:30']);
+});
+
 test('Pages deploys every file Learn mode loads', () => {
   const root = path.join(__dirname, '..');
   const html = fs.readFileSync(path.join(root, 'prototype/index.html'), 'utf8');
