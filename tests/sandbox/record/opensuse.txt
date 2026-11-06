@@ -2,27 +2,28 @@
 # Lines share one container and run in order, so later lines see what earlier ones installed. The supportconfig file names are masked, they hold the host, date and time.
 # packages: supportutils cockpit-ws cockpit firewalld vim
 sc-os	grep -E '^(NAME|VERSION)=' /etc/os-release
-sc-lr	zypper -q lr -E | cut -d'|' -f3,4 | grep -v '^-'
+sc-lr	zypper -q lr -E | cut -d'|' -f3,4 | grep '^[^-]'
 sc-refresh	zypper refresh | grep -E '^(Repository|All)'
-sc-search	zypper -q search -x htop | cut -d'|' -f1,2,4 | grep -v '^-'
-sc-search-i	zypper -q search -i vim | cut -d'|' -f1,2,4 | grep -v '^-' | head -n 4
-sc-info	zypper info htop | grep -E '^(Name|Version|Repository|Installed  |Status|Summary)'
-sc-install	zypper --non-interactive install htop | grep -A1 'NEW package'
-sc-installed	zypper info htop | grep -E '^(Name|Status)'
-sc-remove	zypper --non-interactive remove htop | grep -A1 'REMOVED'
-sc-removed	rpm -q htop
-sc-lu	zypper -q list-updates | cut -d'|' -f3,5 | grep -v '^-' | head -n 4
+sc-search	zypper -q search -x tree | cut -d'|' -f1,2,4 | grep '^[^-]'
+sc-search-i	zypper -q search -i vim | cut -d'|' -f1,2,4 | grep '^[^-]' | head -n 4
+sc-info	zypper info tree | grep -E '^(Name|Version|Repository|Installed  |Status|Summary)'
+sc-install	zypper --non-interactive install tree | grep -A1 'NEW package'
+sc-installed	zypper info tree | grep -E '^(Name|Status)'
+sc-remove	zypper --non-interactive remove tree | grep -A1 'REMOVED'
+sc-removed	rpm -q tree
+sc-lu	zypper -q list-updates | cut -d'|' -f3,5 | grep '^[^-]' | head -n 4
 sc-ar	zypper ar https://download.opensuse.org/distribution/leap/16.0/repo/oss/ extra | grep -E 'success|^Enabled|^Auto'
-sc-lr-extra	zypper -q lr -E | cut -d'|' -f2,4 | grep -v '^-'
+sc-lr-extra	zypper -q lr -E | cut -d'|' -f2,4 | grep '^[^-]'
 sc-rr	zypper rr extra | grep 'Repository'
-sc-pattern-search	zypper -q search -t pattern cockpit | cut -d'|' -f2,4 | grep -v '^-'
+sc-pattern-search	zypper -q search -t pattern cockpit | cut -d'|' -f2,4 | grep '^[^-]'
 sc-pattern-info	zypper info -t pattern cockpit | grep -E '^(Name|Summary)'
 sc-pattern-ctn	zypper info -t pattern cockpit | grep -oE 'cockpit-(ws|system|networkmanager|storaged)' | sort -u
-sc-sc-raw	rm -f /var/log/scc_*	supportconfig -i ENV 2>&1 | head -n 25
 sc-sc-run	rm -f /var/log/scc_*	supportconfig -i ENV 2>&1 | sed -E 's/scc_[^ .]*/scc_HOST_DATE_TIME/' | grep -E 'Data Directory|tar ball' | sed -E 's/ +/ /g; s/^ //'
 sc-sc-ls	ls /var/log | grep '^scc_' | sed -E 's/scc_[^.]*/scc_HOST_DATE_TIME/'
 sc-sc-tar	tar -tJf /var/log/scc_*.txz | sed 's#^[^/]*/##' | grep -v '^$' | head -n 5
 sc-sc-f	supportconfig -F 2>&1 | tr ' ' '\n' | grep -E '^(BTRFS|LVM|NET|SELINUX)$'
+sc-sc-steps	rm -rf /var/log/scc_*	supportconfig -i ENV 2>&1 | grep -E 'Done|Excluded' | head -n 5 | sed -E 's/\.\.\.+ +/ ... /; s/^ +//'
+sc-vim-etc	grep -n '/etc/' /usr/share/vim/vim92/suse.vimrc | head -n 3; ls /etc/vimrc 2>&1
 sc-socket	grep -E '^ListenStream' /usr/lib/systemd/system/cockpit.socket
 sc-fw-cockpit	grep -E 'short|port ' /usr/lib/firewalld/services/cockpit.xml | sed 's/^ *//'
 sc-fw-rdp	grep -E 'short|port ' /usr/lib/firewalld/services/rdp.xml | sed 's/^ *//'
@@ -31,5 +32,3 @@ sc-pam	grep -o 'pam_oath.so usersfile=[^ ]*' /usr/lib/pam.d/cockpit
 sc-useradd	groupadd devs; useradd -m dana	usermod -aG devs dana; id dana
 sc-passwd	echo 'dana:Sup3rS3cret!' | chpasswd	passwd -S dana | cut -d' ' -f1,2
 sc-vim-files	vim --version | grep -E '(system|user) vimrc file'
-sc-etc-vimrc	ls /etc/vimrc /usr/etc/vimrc 2>&1
-sc-wheel	getent group wheel; grep -rE '^%?(wheel|ALL)' /etc/sudoers /usr/etc/sudoers 2>/dev/null | head -n 3
