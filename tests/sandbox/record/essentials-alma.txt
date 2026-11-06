@@ -1,0 +1,3 @@
+# Linux Essentials (unit 81), AlmaLinux 10, local Docker.
+# packages: findutils
+e-os-alma	grep -E "^(NAME|VERSION_ID|ID_LIKE)=" /etc/os-release

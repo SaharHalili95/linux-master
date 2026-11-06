@@ -1,0 +1,8 @@
+# Linux Essentials (units 81, 82 and additions), Ubuntu 24.04, local Docker. Dates are cut with awk.
+e-os-ubuntu	grep -E "^(NAME|VERSION_ID|ID_LIKE)=" /etc/os-release
+e-dev-ls	ls -l /dev/null /dev/zero /dev/urandom | awk '{print $1,$3,$5,$6,$NF}'
+e-null-size	echo hello > /dev/null; wc -c < /dev/null
+e-null-silent	ls /nope 2> /dev/null; echo "done"
+e-zero	head -c 8 /dev/zero | od -An -tx1
+e-urandom-count	head -c 16 /dev/urandom | wc -c
+e-tmp-dirs	ls -ld /tmp /var/tmp | awk '{print $1,$3,$NF}'
