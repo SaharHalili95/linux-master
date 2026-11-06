@@ -1,0 +1,34 @@
+# Unit 85 (SUSE SCA, Linux+ 1.3): Btrfs and snapper on a practice disk, recorded on a GitHub Actions Ubuntu 24.04 VM. Lines share the VM and run in order.
+# The snapper config is named root, as on SLES, so plain snapper commands work. UUIDs change per run and are masked with <uuid>; dates are cut from the diff.
+# packages: btrfs-progs snapper
+b-mkfs	modprobe btrfs; modprobe loop; truncate -s 2G /var/tmp/disk.img; [ -e /dev/loop50 ] || mknod -m660 /dev/loop50 b 7 50; losetup /dev/loop50 /var/tmp/disk.img	mkfs.btrfs -L data /dev/loop50 | grep -E '^(Label|Node size|Filesystem size|Metadata|Data)'
+b-mount	mkdir -p /mnt/data; mount /dev/loop50 /mnt/data	findmnt -no SOURCE,FSTYPE /mnt/data
+b-show	btrfs filesystem show /mnt/data | sed -E 's/uuid: .*/uuid: <uuid>/'
+b-sub-create	btrfs subvolume create /mnt/data/home; btrfs subvolume create /mnt/data/srv
+b-sub-ls	ls /mnt/data
+b-sub-list	btrfs subvolume list /mnt/data
+b-df	btrfs filesystem df /mnt/data
+b-usage	btrfs filesystem usage /mnt/data | head -n 9
+b-sub-mount	mkdir -p /mnt/h; echo hello > /mnt/data/home/notes.txt; mount -o subvol=home /dev/loop50 /mnt/h	ls /mnt/h; findmnt -no OPTIONS /mnt/h | grep -o 'subvol=.*'
+b-sub-delete	umount /mnt/h	btrfs subvolume delete /mnt/data/srv; ls /mnt/data
+s-config	snapper -c root create-config /mnt/data; snapper list-configs
+s-list0	snapper list --columns number,type,description
+s-create	printf 'port=80\n' > /mnt/data/app.conf	snapper create -p -d 'before port change'
+s-modify	sed -i 's/80/8080/' /mnt/data/app.conf	snapper create -p -d 'after port change'
+s-list1	snapper list --columns number,type,description
+s-status	snapper status 1..2
+s-diff	snapper diff 1..2 | sed -E 's/\t.*//'
+s-ls	ls /mnt/data/.snapshots; ls /mnt/data/.snapshots/1
+s-ro	touch /mnt/data/.snapshots/1/snapshot/x
+s-sublist	btrfs subvolume list /mnt/data | awk '{print $NF}'
+s-undo	cat /mnt/data/app.conf; snapper undochange 1..2; cat /mnt/data/app.conf
+s-prepost	n=$(snapper create -t pre -p -d 'zypper update'); echo new > /mnt/data/new.txt; snapper create -t post --pre-number $n -d 'zypper update'; snapper list --columns number,type,pre-number,description
+s-delete	snapper delete 2; snapper list --columns number,description
+p-dirs	udevadm settle	ls /dev/disk
+p-blkid	blkid /dev/loop50 | sed -E 's/UUID="[^"]*"/UUID="<uuid>"/; s/UUID_SUB="[^"]*"/UUID_SUB="<uuid>"/'
+p-uuid	ls -l /dev/disk/by-uuid | grep loop50 | sed -E 's/.* [0-9a-f-]{36}/<uuid>/'
+p-label	ls -l /dev/disk/by-label | grep loop50 | awk '{print $9,$10,$11}'
+p-path	ls /dev/disk/by-path | grep -v part | head -n 2
+p-id	ls /dev/disk/by-id | grep -v part | head -n 2
+p-fstab	mkdir -p /mnt/u; echo "UUID=$(blkid -s UUID -o value /dev/loop50) /mnt/u btrfs defaults 0 0" >> /etc/fstab	mount -a 2>/dev/null; findmnt -no SOURCE,TARGET,FSTYPE /mnt/u
+p-move	umount /mnt/u /mnt/data; a=$(blkid -s UUID -o value /dev/loop50); losetup -d /dev/loop50; [ -e /dev/loop60 ] || mknod -m660 /dev/loop60 b 7 60; losetup /dev/loop60 /var/tmp/disk.img; udevadm settle; b=$(blkid -s UUID -o value /dev/loop60); [ "$a" = "$b" ] && echo 'same UUID'; ls -l /dev/disk/by-label | grep data | awk '{print $9,$10,$11}'
