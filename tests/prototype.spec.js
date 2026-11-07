@@ -286,6 +286,8 @@ test('every part gets one header, in order, and units show their exams', async (
   await page.goto('./prototype/');
   const parts = await page.evaluate(() => [...new Set(COURSE.map(u => u.section))]);
   await expect(page.locator('.part-header')).toHaveCount(parts.length);
+  const order = await page.evaluate(() => COURSE.map(u => [u.section, u.unit]));
+  expect(order, 'units read in order inside each part').toEqual([...order].sort((a, b) => a[0] - b[0] || a[1] - b[1]));
   expect(await page.locator('.part-header').evaluateAll(els => els.map(e => Number(e.dataset.part)))).toEqual(parts);
   await expect(page.locator('.unit-banner').first().locator('.exam-chip', { hasText: 'LPIC' })).toHaveCount(1);
 });
@@ -464,7 +466,7 @@ test('each certification track keeps exactly the units its official objectives m
   const tags = await page.evaluate(() => Object.fromEntries(COURSE.map(u => [u.unit, u.exams || []])));
   // Units 81-96 are written in later steps of docs/superpowers/specs/2026-11-05-more-certs-design.md; remove each
   // from this list as it lands.
-  const NOT_WRITTEN_YET = new Set([83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96]);
+  const NOT_WRITTEN_YET = new Set([86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96]);
   for (const [tag, file] of [['L', 'lpic1.json'], ['R', 'rhcsa.json'], ['F', 'lfcs.json'], ['E', 'linux-essentials.json'], ['S', 'suse-sca.json'], ['C', 'linux-plus.json']])
     for (const o of JSON.parse(fs.readFileSync(path.join(root, 'materials/objectives', file), 'utf8')))
       for (const u of o.units) {
