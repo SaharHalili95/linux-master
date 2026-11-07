@@ -466,7 +466,7 @@ test('each certification track keeps exactly the units its official objectives m
   const tags = await page.evaluate(() => Object.fromEntries(COURSE.map(u => [u.unit, u.exams || []])));
   // Units 81-96 are written in later steps of docs/superpowers/specs/2026-11-05-more-certs-design.md; remove each
   // from this list as it lands.
-  const NOT_WRITTEN_YET = new Set([86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96]);
+  const NOT_WRITTEN_YET = new Set([92, 93, 94, 95, 96]);
   for (const [tag, file] of [['L', 'lpic1.json'], ['R', 'rhcsa.json'], ['F', 'lfcs.json'], ['E', 'linux-essentials.json'], ['S', 'suse-sca.json'], ['C', 'linux-plus.json']])
     for (const o of JSON.parse(fs.readFileSync(path.join(root, 'materials/objectives', file), 'utf8')))
       for (const u of o.units) {
