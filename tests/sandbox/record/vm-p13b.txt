@@ -1,0 +1,44 @@
+# Second run for units 86-91: lines that needed a fix after the first run, and everything after the Compose step.
+# Same format as vm-p13.txt. A fresh VM, so each block builds its own lab. Commands that read stdin get </dev/null, or they would eat this list.
+# packages: dracut-core lvm2 mdadm cloud-guest-utils parted e2fsprogs iperf3 netplan.io mtr-tiny tcpdump strace psmisc pciutils gddrescue p7zip-full podman uidmap
+p13-lspci-k	true	lspci -k | grep -E 'Ethernet|in use' | cut -c1-44 | sed -E 's/^[0-9a-f:.]+ //'
+p13-depmod	true	depmod -a; grep -E '^[^:]*/vxlan\.ko[^:]*:' /lib/modules/$(uname -r)/modules.dep | sed -E 's#[a-z0-9_/-]*/##g'
+p13-lsinitrd	dracut --force --hostonly --quiet /srv/test-initrd.img	lsinitrd /srv/test-initrd.img | grep -E '^(Image|Arguments)' | cut -c1-50
+p13-pvmove	mkdir -p /srv/lab /mnt/lab /mnt/in; cd /srv/lab; for i in 20 21 23 24 25 26 27 28 29 31; do [ -b /dev/loop$i ] || mknod -m 660 /dev/loop$i b 7 $i; s=200M; [ $i -lt 22 ] && s=600M; truncate -s $s d$i.img; losetup /dev/loop$i d$i.img; done; pvcreate -q /dev/loop20 /dev/loop21; vgcreate -q data /dev/loop20 /dev/loop21; lvcreate -q -y -n web -L 60M data /dev/loop20	pvmove /dev/loop20 /dev/loop21 >/dev/null; pvs -o pv_name,pv_used
+p13-growpart-before	cd /srv/lab; truncate -s 200M d30.img; parted -s d30.img mklabel gpt mkpart p1 ext4 1MiB 100MiB; [ -b /dev/loop30 ] || mknod -m 660 /dev/loop30 b 7 30; losetup -P /dev/loop30 d30.img; sleep 2; mkfs.ext4 -q /dev/loop30p1; mount /dev/loop30p1 /mnt/lab	lsblk -o NAME,SIZE /dev/loop30; df -h --output=size /mnt/lab
+p13-md-levels	mdadm --create /dev/md0 --run --level=1 --raid-devices=2 /dev/loop28 /dev/loop31 >/dev/null 2>&1; mdadm --create /dev/md1 --run --level=0 --raid-devices=2 /dev/loop26 /dev/loop27 >/dev/null 2>&1; mdadm --create /dev/md5 --run --level=5 --raid-devices=3 /dev/loop23 /dev/loop24 /dev/loop25 >/dev/null 2>&1; sleep 15	lsblk -dno NAME,SIZE /dev/md0 /dev/md1 /dev/md5 | tr -s ' '; grep -oE '^md[0-9]+ : active raid[0-9]+' /proc/mdstat | sort
+p13-df-i	mkfs.ext4 -q -N 64 /dev/loop29; mount /dev/loop29 /mnt/in	df -i /mnt/in | tr -s ' ' | cut -d' ' -f2-5
+p13-inode-full	true	cd /mnt/in; i=0; while touch f$i 2>/dev/null; do i=$((i+1)); done; echo "created: $i"; touch one-more
+p13-inode-df	true	df -h --output=size,used,avail,pcent /mnt/in; df -i /mnt/in | tr -s ' ' | cut -d' ' -f2-5
+p13-tcpdump-nodns	true	(sleep 1; ping -c 1 -q 127.0.0.1 >/dev/null) & tcpdump -i lo -t -c 1 icmp 2>/dev/null | sed -E 's/, id.*//'
+p13-netplan-perm	printf 'network:\n  version: 2\n  dummy-devices:\n    lab0:\n      addresses:\n        - 192.168.50.10/24\n        - fd00:50::10/64\n' > /etc/netplan/60-lab.yaml; chmod 600 /etc/netplan/60-lab.yaml	chmod 644 /etc/netplan/60-lab.yaml; netplan generate 2>&1 | grep 60-lab | sed -E 's/.*WARNING[^P]*//' | cut -c1-60; chmod 600 /etc/netplan/60-lab.yaml
+p13-netplan-bad	true	cp /etc/netplan/60-lab.yaml /tmp/ok.yaml; sed -i 's/addresses:/adresses:/' /etc/netplan/60-lab.yaml; netplan generate 2>&1 | sed 's#/etc/netplan/##'; cp /tmp/ok.yaml /etc/netplan/60-lab.yaml
+p13-mtr	true	mtr -r -n -c 2 127.0.0.1 | tail -n +2 | sed -E 's/HOST: [^ ]+/HOST: <host>/' | awk '{print $1,$2,$3,$4}'
+p13-states	true	cd /srv; yes >/dev/null & r=$!; sleep 300 & s=$!; sleep 300 & t=$!; kill -STOP $t; sleep 1; for p in $r $s $t; do ps -o stat= -o comm= -p $p | tr -s ' '; done; kill -KILL $r $s $t; wait 2>/dev/null
+p13-zombie	true	cd /srv; bash -c 'sleep 1 & exec sleep 20' & z=$!; sleep 3; ps -o stat= -o comm= --ppid $z | tr -s ' '; kill -KILL $z; wait 2>/dev/null
+p13-pstree	true	cd /srv; bash -c 'sleep 30 & sleep 30 & wait' & p=$!; sleep 1; pstree -A $p; kill $p; pkill -x sleep; wait 2>/dev/null
+p13-strace-w	true	strace -o /tmp/t.txt -e trace=write echo hello; cat /tmp/t.txt | tr -s ' '
+p13-killall	true	cd /srv; { sleep 300 & sleep 300 & sleep 300 & sleep 1; pgrep -c -x sleep; killall sleep; wait; pgrep -c -x sleep; } 2>/dev/null
+p13-sig-hup-term	printf 'trap "echo reloading" HUP\ntrap "echo cleaning up; exit 0" TERM\necho started\nwhile :; do sleep 0.1; done\n' > /srv/svc.sh	cd /srv; bash svc.sh > svc.log & p=$!; sleep 1; kill -HUP $p; sleep 1; kill -TERM $p; sleep 1; cat svc.log
+p13-sig-kill	true	cd /srv; { bash svc.sh > svc.log & p=$!; sleep 1; kill -KILL $p; wait; } 2>/dev/null; cat svc.log
+p13-analyze	true	systemd-analyze | head -1 | sed -E 's/ = .*//'
+p13-chain	true	systemd-analyze critical-chain | grep -E 'target|service' | head -3 | sed -E 's/\x1b\[[0-9;]*m//g' | cut -c1-40
+p13-docker-env	docker pull -q alpine:3.20; docker pull -q nginx:1.27-alpine	docker run --rm -e CITY=Haifa alpine:3.20 sh -c 'echo $CITY'; docker run --rm alpine:3.20 sh -c 'echo [$CITY]'
+p13-rootless-id	true	sudo -u user env -u XDG_CONFIG_HOME -u XDG_DATA_HOME -u XDG_CACHE_HOME HOME=/home/user XDG_RUNTIME_DIR=/run/user/$(id -u user) sh -c 'cd; id -un; podman run --rm docker.io/library/alpine:3.20 id -un; podman unshare cat /proc/self/uid_map | tr -s " " | head -1' </dev/null 2>&1
+p13-rootless-port	true	sudo -u user env -u XDG_CONFIG_HOME -u XDG_DATA_HOME -u XDG_CACHE_HOME HOME=/home/user XDG_RUNTIME_DIR=/run/user/$(id -u user) sh -c 'cd; podman run --rm -p 80:80 docker.io/library/alpine:3.20 true 2>&1 | cut -c1-70' </dev/null
+p13-compose-ps	mkdir -p /srv/shop; cd /srv/shop; printf 'services:\n  web:\n    image: nginx:1.27-alpine\n    ports:\n      - "8082:80"\n    environment:\n      - MODE=prod\n    depends_on:\n      - cache\n  cache:\n    image: alpine:3.20\n    command: sleep 300\n' > compose.yaml; docker compose up -d >/dev/null 2>&1 </dev/null; sleep 2	cd /srv/shop; docker compose ps --format '{{.Service}} {{.State}}'; curl -s -o /dev/null -w '%{http_code}\n' localhost:8082; docker compose exec -T web sh -c 'echo $MODE' </dev/null
+p13-compose-down	true	cd /srv/shop; docker compose down 2>&1 </dev/null | grep -E 'Removed' | tr -s ' ' | sed -E 's/ [0-9.]+s$//' | sort -u; docker ps -q | wc -l
+p13-prune-c	docker run --name old1 alpine:3.20 true; docker volume create notes >/dev/null	docker container prune -f | sed -E 's/[0-9a-f]{64}/<id>/; s/[0-9a-f]{12}/<id>/' | grep -vE '^$' | sed -E 's/: .*B$/: <size>/'
+p13-prune-v	true	docker volume prune -af | grep -vE '^$' | sed -E 's/: .*B$/: <size>/'
+p13-prune-n	true	docker network create junk >/dev/null; docker network prune -f | grep -vE '^$'
+p13-zgrep	printf 'INFO start\nERROR disk full\nINFO stop\n' > app.log; gzip app.log	zgrep ERROR app.log.gz; zgrep -c INFO app.log.gz; ls
+p13-7z	echo one > notes.txt; echo two > report.txt	7z a -bd docs.7z notes.txt report.txt | grep -E 'Everything|Add new'; 7z l docs.7z | grep -E '\.txt$' | awk '{print $NF}'
+p13-ddrescue	head -c 1M /dev/urandom > disk.img	ddrescue -q -f disk.img copy.img rescue.map; echo "exit: $?"; cmp disk.img copy.img && echo same; grep -E '^0x' rescue.map | tail -1
+p13-sdiff	printf 'apple 5\nbread 8\nmilk 7\n' > old.txt; printf 'apple 5\nbread 9\nmilk 7\neggs 12\n' > new.txt	sdiff -w 30 old.txt new.txt
+p13-sdiff-s	printf 'apple 5\nbread 8\nmilk 7\n' > old.txt; printf 'apple 5\nbread 9\nmilk 7\neggs 12\n' > new.txt	sdiff -s -w 30 old.txt new.txt
+p13-adduser	true	adduser --disabled-password --gecos 'Noam Cohen' noam 2>&1 | grep -E '^info: (Adding user .noam|Creating home)' | cut -c1-44; getent passwd noam | cut -d: -f1,5,6,7
+p13-useradd-cmp	true	useradd tal; getent passwd tal | cut -d: -f1,6,7; ls -d /home/tal; echo "exit: $?"
+p13-chsh	true	chsh -s /bin/sh noam; getent passwd noam | cut -d: -f1,7
+p13-lastlog	true	lastlog -u noam | tr -s ' '
+p13-getent	true	getent passwd noam | cut -d: -f1,7; getent passwd nosuch; echo "exit: $?"
+p13-deluser	true	deluser --remove-home noam 2>&1 | grep -E '^info: (Removing user|Done)|home' | cut -c1-44; getent passwd noam; echo "exit: $?"
