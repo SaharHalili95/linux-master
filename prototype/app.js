@@ -6,7 +6,8 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 // Hebrew text with commands inside: each command run becomes a left-to-right island, so it stays in one
 // piece and the punctuation around it (like a final ?) stays on the Hebrew side.
 // A run may open with dots or a colon when a name follows (.deb, ../logs, :wq), and a vi command keeps its ! (:q!).
-const CODE_RUN = /:[A-Za-z0-9%/]+!?|(?:\.+(?=[A-Za-z0-9/~_-]))?[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\-](?:[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\ .,:!()-]*[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\-])?/g;
+// A quote opens a run only when a command follows, so the closing quote of a Hebrew phrase never swallows what comes next.
+const CODE_RUN = /:[A-Za-z0-9%/]+!?|(?:\.+(?=[A-Za-z0-9/~_-]))?(?:["'](?=\.?[A-Za-z0-9~/$_^*[(\\-])|[\^A-Za-z0-9~/$_<>|*={}[\]#%+&@\\-])(?:[\^A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\ .,:!?()-]*[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\-])?/g;
 function bidi(text) {
   const frag = document.createDocumentFragment(); text = String(text);
   if (!/[\u0590-\u05FF]/.test(text)) { frag.append(text); return frag; }
@@ -682,10 +683,12 @@ toHere('auto');
 if ('serviceWorker' in navigator && window.isSecureContext) {
   navigator.serviceWorker.register('../sw.js').catch(() => {});
   // Loaded through the worker means every file is kept, so the main page may send learners here offline too.
-  if (navigator.serviceWorker.controller) try { localStorage.setItem('learnOffline', '1'); } catch { /* not kept */ }
+  const kept = () => { try { localStorage.setItem('learnOffline', '1'); } catch { /* not kept */ } window.learnKept = true; };
+  if (navigator.serviceWorker.controller) kept();
   // The first visit loads before the worker controls the page, so its files are fetched once more through the
   // worker to be kept for offline use.
-  if (!navigator.serviceWorker.controller) navigator.serviceWorker.addEventListener('controllerchange', () => {
-    for (const u of [location.href, ...performance.getEntriesByType('resource').map(e => e.name)]) if (new URL(u).pathname.includes('/prototype/')) fetch(u).catch(() => {});
+  else navigator.serviceWorker.addEventListener('controllerchange', () => {
+    const files = [location.href, ...performance.getEntriesByType('resource').map(e => e.name)].filter(u => new URL(u).pathname.includes('/prototype/'));
+    Promise.all(files.map(u => fetch(u))).then(kept).catch(() => { /* not all kept: the next visit tries again */ });
   }, { once: true });
 }
