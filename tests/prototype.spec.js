@@ -161,10 +161,8 @@ test('Learn mode works offline after a first visit, fonts and every unit include
   test.skip(browserName === 'webkit', 'Playwright WebKit does not support service workers');
   await page.goto('./prototype/');
   await page.waitForFunction(() => navigator.serviceWorker.controller);
-  await page.waitForFunction(async () => {
-    const urls = (await (await caches.open('linux-master-learn')).keys()).map(r => r.url);
-    return ['/prototype/index.html', 'parts/p11.js', 'fonts.css', 'rubik-hebrew.woff2', 'jetbrainsmono-latin.woff2'].every(f => urls.some(u => u.includes(f)));
-  });
+  await page.waitForFunction(() => window.learnKept);
+  expect(await page.evaluate(() => localStorage.getItem('learnOffline')), 'one visit is enough').toBe('1');
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator('.node.current')).toBeVisible();
@@ -636,6 +634,13 @@ test('Hebrew text keeps a leading dot or colon inside its command, and sentence 
   expect(await runs('עברו אל ../logs ואז הריצו ./run.sh.')).toEqual(['../logs', './run.sh']);
   expect(await runs('הפקודה: ls -l.')).toEqual(['ls -l']);
   expect(await runs('השעה 10:30 בדיוק')).toEqual(['10:30']);
+  expect(await runs('הסימן + אומר "פעם אחת". ap+le מוצאת')).toEqual(['+', 'ap+le']);
+  expect(await runs('התבנית "ERROR|WARN" מוצאת')).toEqual(['"ERROR|WARN"']);
+  expect(await runs('הריצו grep -E "^a|b$" a.txt עכשיו')).toEqual(['grep -E "^a|b$" a.txt']);
+  expect(await runs('התבנית ^08:1 מוצאת')).toEqual(['^08:1']);
+  expect(await runs('לכן ap?le מוצאת')).toEqual(['ap?le']);
+  expect(await runs('מה עושה grep -c? ומה עוד')).toEqual(['grep -c']);
+  expect(await runs('התבנית "[0-9]" ו־"*.txt"')).toEqual(['"[0-9]"', '"*.txt"']);
 });
 
 test('Pages deploys every file Learn mode loads', () => {
