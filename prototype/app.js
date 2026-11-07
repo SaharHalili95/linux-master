@@ -43,7 +43,7 @@ function loadState(raw) {
   if (q && typeof q === 'object' && typeof q.day === 'string' && Array.isArray(q.claimed)) S.quests = { day: q.day, xp: +q.xp || 0, perfect: +q.perfect || 0, combo: +q.combo || 0, claimed: q.claimed.filter(x => typeof x === 'string') };
   return S;
 }
-COURSE.sort((a, b) => a.section - b.section);
+COURSE.sort((a, b) => a.section - b.section || a.unit - b.unit);
 let S;
 try { S = loadState(localStorage.getItem(STORE)); } catch { S = loadState(null); }
 const save = () => { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch { /* not persisted */ } };
