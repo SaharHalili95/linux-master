@@ -1,0 +1,6 @@
+# Third run for unit 87: the LVM tables with fewer columns, so each row fits on one line on a phone.
+# Same format as vm-p13.txt.
+# packages: lvm2
+p13-pvs-free	mkdir -p /srv/lab; cd /srv/lab; for i in 20 21; do [ -b /dev/loop$i ] || mknod -m 660 /dev/loop$i b 7 $i; truncate -s 600M d$i.img; losetup /dev/loop$i d$i.img; done; pvcreate -q /dev/loop20 /dev/loop21; vgcreate -q data /dev/loop20; lvcreate -q -y -n web -L 60M data	pvs -o pv_name,vg_name,pv_free
+p13-vgs-free	true	vgs -o vg_name,pv_count,lv_count,vg_free
+p13-vgextend-free	true	vgextend data /dev/loop21; vgs -o vg_name,pv_count,lv_count,vg_free
