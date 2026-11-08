@@ -644,6 +644,15 @@ test('Hebrew text keeps a leading dot or colon inside its command, and sentence 
   expect(await runs('התבנית "[0-9]" ו־"*.txt"')).toEqual(['"[0-9]"', '"*.txt"']);
 });
 
+test('a sentence blank stays on the line of the word before it', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto('./prototype/');
+  await page.evaluate(() => startLesson('blank-test', [{ type: 'sentence', prompt: READ, text: T('קבצים ששמם מתחיל בנקודה מוסתרים. כדי לראות גם אותם כותבים ls ___.', 'x ls ___.'), options: ['-a', '-l'], answer: '-a' }]));
+  const glued = await page.evaluate(() => { const g = document.querySelector('.sentence .glued'); return { text: g.textContent.replace(/\s+/g, ' ').trim(), lines: g.getClientRects().length }; });
+  expect(glued.text).toMatch(/^ls .*\.$/);
+  expect(glued.lines, 'the word, the blank and the period share one line').toBe(1);
+});
+
 test('Pages deploys every file Learn mode loads', () => {
   const root = path.join(__dirname, '..');
   const html = fs.readFileSync(path.join(root, 'prototype/index.html'), 'utf8');

@@ -361,7 +361,10 @@ const RENDER = {
   sentence(root, ex) {
     const [head, tail] = tr(ex.text).split('___');
     const line = el('p', 'sentence'); const slot = Object.assign(el('span', 'slot', '   '), { dir: 'ltr' });
-    line.append(bidi(head), slot, bidi(tail));
+    // The blank stays on one line with the word before it and the punctuation after it.
+    const before = head.match(/\S+\s*$/)?.[0] || '', after = tail.match(/^[.,:;?!]+/)?.[0] || '', glue = el('span', 'glued');
+    glue.append(bidi(before), slot, after);
+    line.append(bidi(head.slice(0, head.length - before.length)), glue, bidi(tail.slice(after.length)));
     const chips = el('div', 'chips');
     shuffle(ex.options).forEach(o => { const c = el('button', 'tile', o); c.type = 'button'; c.dir = 'ltr'; c.onclick = () => { if (L.answered) return; SFX.tap(); chips.querySelectorAll('.tile').forEach(t => t.classList.toggle('sel', t === c)); slot.textContent = o; slot.classList.add('filled'); L.value = o; setCan(true); }; chips.append(c); });
     root.append(line, chips);
