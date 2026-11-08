@@ -1,0 +1,30 @@
+# Fourth run for units 92-96: the same recordings with shorter commands, so each one fits a phone. Same format, a fresh VM.
+# Preparation moved to the setup column. The record script captures stderr already, so 2>&1 is not needed.
+# packages: auditd fail2ban policycoreutils-python-utils selinux-policy-default cryptsetup aide ansible-core python3-venv python3-pip ipset git curl
+p14-audit-text	auditctl -w /etc/passwd -p wa -k passwd_watch; chmod 644 /etc/passwd; sleep 2	ausearch -k passwd_watch --format text | tail -1 | cut -d' ' -f4-
+p14-f2b-ban	printf '[sshd]\nenabled = true\nbackend = systemd\n' > /etc/fail2ban/jail.local; systemctl restart fail2ban; sleep 5; fail2ban-client set sshd banip 203.0.113.7	fail2ban-client status sshd | tail -4
+p14-rbash	true	rbash -c 'cd /tmp'; rbash -c '/usr/bin/ls'; rbash -c 'echo hi > x.txt'
+p14-pkaction	true	pkaction -a org.freedesktop.systemd1.manage-units -v | grep implicit
+p14-audit2allow	printf '%s\n' 'type=AVC msg=audit(1762600000.123:410): avc:  denied  { read } for  pid=2210 comm="httpd" name="index.html" dev="sda1" ino=5123 scontext=system_u:system_r:httpd_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=file permissive=0' > avc.log	audit2allow -p /etc/selinux/default/policy/policy.* -i avc.log
+p14-aide-init	mkdir -p /srv/aide/watch; echo 'port 80' > /srv/aide/watch/web.conf; echo 'ok' > /srv/aide/watch/index.html; printf 'database_in=file:/srv/aide/aide.db\ndatabase_out=file:/srv/aide/aide.db.new\n/srv/aide/watch R\n' > /srv/aide/aide.conf	aide -c /srv/aide/aide.conf --init | grep -E 'initialized|entries'
+p14-aide-check	mv /srv/aide/aide.db.new /srv/aide/aide.db; echo 'port 8080' > /srv/aide/watch/web.conf; echo 'x' > /srv/aide/watch/new.sh	aide -c /srv/aide/aide.conf --check | grep -E 'entries|^f'
+p14-luks-format	mkdir -p /srv/luks; truncate -s 64M /srv/luks/vault.img; printf 'lab-pass-123' > /srv/luks/key; cryptsetup luksFormat --batch-mode --key-file /srv/luks/key /srv/luks/vault.img; cp /srv/luks/vault.img .	cryptsetup luksDump vault.img | grep -E '^Version|PBKDF'
+p14-luks-open	cryptsetup open --key-file /srv/luks/key /srv/luks/vault.img vault	cryptsetup status vault | head -3
+p14-luks-close	cp /srv/luks/vault.img .; printf 'wrong' > bad.key	cryptsetup close vault; ls /dev/mapper; cryptsetup open --key-file bad.key vault.img vault; echo "exit: $?"
+p14-ansible-ping	true	ansible localhost -m ping
+p14-ansible-facts	true	ansible localhost -m setup | grep '"ansible_distribution"'
+p14-playbook	mkdir -p /srv/pb; printf -- '- hosts: localhost\n  tasks:\n    - name: Write the banner\n      ansible.builtin.copy:\n        dest: /srv/pb/banner.txt\n        content: "Authorized users only\\n"\n' > site.yml	ansible-playbook site.yml | grep -E '^(ok|changed)'
+p14-playbook-again	printf -- '- hosts: localhost\n  tasks:\n    - name: Write the banner\n      ansible.builtin.copy:\n        dest: /srv/pb/banner.txt\n        content: "Authorized users only\\n"\n' > site.yml	ansible-playbook site.yml | grep -E '^(ok|changed)'
+p14-venv	rm -rf /srv/app; mkdir -p /srv/app	cd /srv/app; python3 -m venv env; ls env; . env/bin/activate; which python
+p14-pip	/srv/app/env/bin/pip install -q requests==2.32.3	/srv/app/env/bin/pip show requests | sed -n 1,2p
+p14-failed-unit	printf '[Service]\nExecStart=/bin/false\n' > /etc/systemd/system/demo.service; systemctl daemon-reload; systemctl start demo; sleep 1	systemctl is-failed demo
+p14-killed	true	timeout -s KILL 1 sleep 9; echo "exit: $?"
+p14-segv	true	timeout --preserve-status -s SEGV 1 sleep 9; echo "exit: $?"
+p14-health	setsid nohup python3 -m http.server 8080 >/dev/null 2>&1 </dev/null & sleep 1	for p in / /nope; do curl -so /dev/null -w '%{http_code}\n' localhost:8080$p; done
+p14-health-down	true	curl -so /dev/null -w '%{http_code}\n' localhost:9099/; echo "exit: $?"
+p14-git-stash	mkdir shop; cd shop; git init -q -b main; git config user.email dev@example.com; git config user.name Dev; echo 'v1' > app.txt; git add app.txt; git commit -qm 'First version'; echo 'half done' >> app.txt	cd shop; git stash -q; git status --short; git stash list --format=%gd
+p14-git-stash-pop	mkdir shop; cd shop; git init -q -b main; git config user.email dev@example.com; git config user.name Dev; echo 'v1' > app.txt; git add app.txt; git commit -qm 'First version'; echo 'half done' >> app.txt; git stash -q	cd shop; git stash pop -q; cat app.txt
+p14-git-squash	mkdir shop; cd shop; git init -q -b main; git config user.email dev@example.com; git config user.name Dev; echo a > a.txt; git add .; git commit -qm 'Start'; git switch -qc feature; for n in 1 2 3; do echo $n >> a.txt; git commit -qam "Step $n"; done; git switch -q main; git merge -q --squash feature; git commit -qm 'Add steps 1-3'	cd shop; git log --format=%s
+p14-git-rebase	mkdir shop; cd shop; git init -q -b main; git config user.email dev@example.com; git config user.name Dev; echo a > a.txt; git add .; git commit -qm 'Start'; git switch -qc feature; echo f > f.txt; git add .; git commit -qm 'Add feature'; git switch -q main; echo m > m.txt; git add .; git commit -qm 'Fix on main'; git switch -q feature	cd shop; git rebase -q main; git log --format=%s
+p14-ipset	ipset create blocklist hash:ip; ipset add blocklist 203.0.113.7; ipset add blocklist 198.51.100.9	ipset list blocklist | grep -vE '^(Header|Size|Ref)'
+p14-ipset-test	true	ipset test blocklist 203.0.113.7; ipset test blocklist 192.0.2.1
