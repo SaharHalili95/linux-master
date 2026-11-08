@@ -149,7 +149,10 @@ button { cursor: pointer; }
 .term-input input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #fff; font: 700 16px var(--mono); padding: 4px 0; caret-color: var(--term-green); }
 .term-keys { display: flex; gap: 8px; margin-top: 8px; }
 .term-key { background: #ffffff14; color: #fff; border: 1px solid #ffffff2a; border-radius: 8px; font: 700 14px var(--mono); padding: 6px 12px; min-height: 34px; cursor: pointer; }
-.term-key:first-child { margin-inline-end: auto; }
+.term-keys .restart { margin-inline: auto; }
+/* A real keyboard has Tab and the arrows. */
+@media (hover: hover) and (pointer: fine) { .term-key.kb { display: none; } .term-keys .restart { margin-inline: 0; } }
+.term-key[hidden] { display: none; }
 .term-key:active { background: #ffffff30; }
 .term-input input::placeholder { color: #ffffff55; text-align: left; font-family: var(--font); font-weight: 500; }
 .hint-link { border: 0; background: none; color: var(--blue-ink); font-weight: 800; padding: 4px 0; }
@@ -303,3 +306,4 @@ button { cursor: pointer; }
 .path-jump { position: fixed; inset-inline-end: 12px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 5; display: flex; flex-direction: column; gap: 8px; }
 .path-jump button { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: #16213af0; color: var(--ink); font-size: 20px; box-shadow: 0 3px 0 var(--line); cursor: pointer; }
 #learn:not(.active) .path-jump { display: none; }
+.term-keys .restart { font-family: var(--font); }

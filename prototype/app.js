@@ -497,11 +497,20 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
   };
   // Phone keyboards have no Tab or arrow keys. pointerdown is cancelled so the keyboard stays open.
   const keys = el('div', 'term-keys');
-  for (const [label, act, name] of [['⇥ Tab', tab, 'keyTab'], ['↑', () => recall(-1), 'keyUp'], ['↓', () => recall(1), 'keyDown']]) {
-    const b = el('button', 'term-key', label); b.type = 'button'; b.setAttribute('aria-label', t(name));
+  const key = (cls, label, act, name) => {
+    const b = el('button', cls, label); b.type = 'button'; b.setAttribute('aria-label', t(name));
     b.onpointerdown = e => e.preventDefault(); b.onclick = () => { act(); input.focus({ preventScroll: true }); };
-    keys.append(b);
-  }
+    return b;
+  };
+  // Back to how the task began: a wrong cd or rm can make even the right answer fail.
+  const restart = key('term-key restart', t('termRestart'), () => {
+    if (L.answered) return;
+    sh = new Shell(ex.fx()); for (const c of ex.setup || []) sh.run(c);
+    L.term.sh = sh; log.length = 0; out.replaceChildren(); input.value = ''; ps.textContent = promptFor(sh.cwd);
+    L.value = ''; restart.hidden = true; if (ex.type === 'terminal' && !ex.ask) setCan(false); onRun(log);
+  }, 'termRestart');
+  restart.hidden = true;
+  keys.append(key('term-key kb', '⇥ Tab', tab, 'keyTab'), restart, key('term-key kb', '↑', () => recall(-1), 'keyUp'), key('term-key kb', '↓', () => recall(1), 'keyDown'));
   box.append(keys);
   form.onsubmit = e => {
     e.preventDefault(); const cmd = input.value.trim(); input.value = ''; if (!cmd || L.answered) return;
@@ -511,6 +520,7 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
     if (text) out.append(el('pre', 'term-out', text));
     log.push({ cmd, out: text }); if (TERM_HISTORY.at(-1) !== cmd) TERM_HISTORY.push(cmd); back = TERM_HISTORY.length;
     ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
+    restart.hidden = !ex.fx;
     L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal' && !ex.ask) setCan(true); onRun(log);
   };
   if (ex.hint) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(box, h); } else root.append(box);
