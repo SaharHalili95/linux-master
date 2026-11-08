@@ -120,17 +120,18 @@ for (const scheme of ['light', 'dark']) {
   });
 }
 
-test('the app opens in Learn mode, and Trivia stays put once chosen', async ({ page }) => {
+test('the app opens in Learn mode with no Trivia switch, and the old Trivia address still works', async ({ page }) => {
   await page.goto('./');
   await expect(page).toHaveURL(/\/prototype\/$/);
   await expect(page.locator('.node.current')).toBeVisible();
-  await page.click('.mode-switch a.mode');
+  await expect(page.locator('.mode-switch')).toHaveCount(0);
+  await page.goto('./?mode=trivia');
   await expect(page.locator('.level-card')).toHaveCount(8);
   await page.goto('./');
   await expect(page.locator('.level-card')).toHaveCount(8);
 });
 
-test('the Trivia | Learn switch moves between the two modes, with no beta card left', async ({ page }) => {
+test('the old Trivia page links to Learn mode, with no beta card left', async ({ page }) => {
   await page.goto('./?mode=trivia');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -140,9 +141,6 @@ test('the Trivia | Learn switch moves between the two modes, with no beta card l
   await page.click('#modeLearn');
   await expect(page).toHaveURL(/\/prototype\/$/);
   await expect(page.locator('.node.current')).toBeVisible();
-  await expect(page.locator('.mode-switch .mode.on')).toHaveText('Learn');
-  await page.click('.mode-switch a.mode');
-  await expect(page.locator('.level-card')).toHaveCount(8);
 });
 
 test('visiting the beta does not replace the main page in the offline cache', async ({ page, context, browserName }) => {
@@ -192,7 +190,7 @@ test('the path never scrolls sideways, even with a popover open on the outermost
   expect(box.x + box.width).toBeLessThanOrEqual(width);
 });
 
-test('the language button switches Learn mode and the choice carries over to Trivia mode', async ({ page }) => {
+test('the language button switches Learn mode and the choice is remembered', async ({ page }) => {
   await page.goto('./prototype/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -201,9 +199,9 @@ test('the language button switches Learn mode and the choice carries over to Tri
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
   await expect(page.locator('.tabbar [data-tab="learn"]')).toContainText('Learn');
   await expect(page.locator('.unit-banner h2').first()).toHaveText('Where am I?');
-  await page.click('.mode-switch a.mode');
+  await page.reload();
   await expect(page.locator('#langBtn')).toHaveText('עב');
-  await expect(page.locator('.mode-switch .mode.on')).toHaveText('🎯 Trivia');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
 });
 
 for (const lang of ['he', 'en']) test(`the top bar fits a small phone, with streak and gems visible (${lang})`, async ({ page }) => {
@@ -211,7 +209,7 @@ for (const lang of ['he', 'en']) test(`the top bar fits a small phone, with stre
   await page.evaluate(l => { localStorage.clear(); localStorage.setItem('lang', l); }, lang);
   await page.reload();
   const width = page.viewportSize().width;
-  for (const sel of ['.mode-switch', '#langBtn', '.chip.streak', '.chip.gems']) {
+  for (const sel of ['#livesChip', '#langBtn', '.chip.streak', '.chip.gems']) {
     const box = await page.locator(sel).boundingBox();
     expect(box.x, sel).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width, sel).toBeLessThanOrEqual(width);
@@ -723,6 +721,51 @@ test('the hero earns ranks, a lesson gives a power, and the win screen shows the
   await expect(page.locator('#endMoon svg')).toBeVisible();
   await expect(page.locator('#endRank')).toContainText(await page.evaluate(() => rankOf(S.xp).name));
   expect(await page.evaluate(() => getComputedStyle(document.getElementById('end')).backgroundColor)).toBe('rgb(20, 26, 82)');
+});
+
+test('lives are lost on wrong answers, come back with time, and can be bought or earned', async ({ page }) => {
+  await page.goto('./prototype/');
+  const set = v => page.evaluate(x => { localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, ...x })); }, v);
+  await set({ gems: 25, lives: 1, livesAt: Date.now() });
+  await page.reload();
+  await expect(page.locator('#livesN')).toHaveText('1');
+  await page.evaluate(() => { const ex = { type: 'choice', prompt: T('x', 'x'), options: ['a', 'b'], answer: 'a', fx: unitFixture }; startLesson('u2-L0', [ex, ex]); answer(false, 'a', ''); });
+  expect(await page.evaluate(() => S.lives)).toBe(0);
+  await page.evaluate(() => closeOverlays());
+  await page.locator('.node.current').click();
+  await page.locator('#pop .btn').click();
+  await expect(page.locator('#livesSheet')).toBeVisible();
+  await expect(page.locator('#lesson')).toBeHidden();
+  await page.click('#buyLife');
+  await expect(page.locator('#livesCount')).toHaveText('1 / 5');
+  expect(await page.evaluate(() => S.gems)).toBe(5);
+  await expect(page.locator('#buyLife')).toBeDisabled();
+  await set({ lives: 2, livesAt: Date.now() - 65 * 60 * 1000 });
+  await page.reload();
+  await expect(page.locator('#livesN')).toHaveText('4');
+  await page.evaluate(() => { startLesson('practice', [{ type: 'choice', prompt: T('x', 'x'), options: ['a', 'b'], answer: 'a', fx: unitFixture }], { practice: true }); answer(false, 'a', ''); });
+  expect(await page.evaluate(() => S.lives), 'practice never costs a life').toBe(4);
+});
+
+test('light practice uses the old Trivia questions and can earn a life', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, lives: 2, livesAt: Date.now() })); });
+  await page.reload();
+  await page.click('#livesChip');
+  await page.click('#earnLife');
+  await expect(page.locator('#lesson')).toBeVisible();
+  const n = await page.evaluate(() => { const all = triviaExercises(500); return [all.length, L.total, all.every(q => q.options.includes(q.answer) && q.options.length >= 2 && new Set(q.options).size === q.options.length)]; });
+  expect(n[0]).toBe(121); expect(n[1]).toBe(5); expect(n[2]).toBe(true);
+  await page.evaluate(() => { L.correct = 3; finishLesson(); });
+  await expect(page.locator('#endQuests')).not.toBeEmpty();
+  expect(await page.evaluate(() => S.lives)).toBe(3);
+});
+
+test('the character gains upgrades as its rank rises', async ({ page }) => {
+  await page.goto('./prototype/');
+  const parts = await page.evaluate(() => [1, 2, 4, 6, 8, 10, 12].map(l => { const d = document.createElement('div'); d.innerHTML = mascot('happy', l); return d.querySelectorAll('svg > *').length; }));
+  for (let i = 1; i < 6; i++) expect(parts[i], `tier ${i}`).toBeGreaterThan(parts[i - 1]);
+  expect(parts[6]).toBeGreaterThan(parts[0]);
 });
 
 test('Pages deploys every file Learn mode loads', () => {

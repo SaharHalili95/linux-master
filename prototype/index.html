@@ -15,14 +15,15 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="../icon-192.png">
-  <link rel="stylesheet" href="fonts.css?v=p77">
-  <link rel="stylesheet" href="styles.css?v=p77">
+  <link rel="stylesheet" href="fonts.css?v=p78">
+  <link rel="stylesheet" href="styles.css?v=p78">
 </head>
 <body>
   <div class="app">
     <header class="topbar">
-      <div class="course"><span class="course-mark" dir="ltr">$_</span><nav class="mode-switch" aria-label="מצב" data-i18n-aria="mode"><a class="mode" href="../?mode=trivia" data-i18n="trivia">טריוויה</a><span class="mode on" aria-current="page" data-i18n="learn">למידה</span></nav></div>
+      <div class="course"><span class="course-mark" dir="ltr">$_</span></div>
       <button type="button" class="lang-btn" id="langBtn" data-i18n="langBtn">EN</button>
+      <button type="button" class="chip lives" id="livesChip" aria-haspopup="dialog"><span class="ic ic-heart" aria-hidden="true"></span><b id="livesN">5</b><span class="sr" data-i18n="livesLabel">חיים</span></button>
       <div class="chip streak" id="streakChip" title="רצף ימים"><span class="ic ic-flame" aria-hidden="true"></span><b id="streakN">0</b><span class="sr" data-i18n="streak">ימי רצף</span></div>
       <div class="chip gems" title="יהלומים"><span class="ic ic-gem" aria-hidden="true"></span><b id="gemsN">0</b><span class="sr" data-i18n="gems">יהלומים</span></div>
       <div class="chip xp" title="נקודות XP"><span class="ic ic-bolt" aria-hidden="true"></span><b id="xpN">0</b><span class="sr">XP</span></div>
@@ -32,6 +33,7 @@
       <section id="practice" class="tab">
         <h1 class="tab-title" data-i18n="practiceTitle">תרגול</h1>
         <div class="card practice-card"><div class="pc-icon"><span class="ic ic-redo"></span></div><div><h2 data-i18n="mistakesTitle">חזרה על טעויות</h2><p id="mistakesCount"></p></div><button type="button" class="btn primary" id="practiceMistakes" data-i18n="practiceBtn">תרגול</button></div>
+        <div class="card practice-card"><div class="pc-icon"><span class="ic ic-target"></span></div><div><h2 data-i18n="lightTitle">אימון קליל</h2><p data-i18n="lightText">8 שאלות מהירות על פקודות</p></div><button type="button" class="btn primary" id="practiceLight" data-i18n="start2">התחלה</button></div>
         <div class="card practice-card"><div class="pc-icon blue"><span class="ic ic-bolt"></span></div><div><h2 data-i18n="mixTitle">תרגול מעורב</h2><p data-i18n="mixText">8 תרגילים מהשיעורים שסיימתם</p></div><button type="button" class="btn blue" id="practiceMix" data-i18n="startBtn">התחלה</button></div>
       </section>
       <section id="quests" class="tab">
@@ -53,7 +55,6 @@
           <button type="button" class="btn ghost" id="restoreBtn" data-i18n="restore">שחזור מגיבוי</button>
           <input type="file" id="restoreFile" accept=".json,application/json" hidden>
           <button type="button" class="btn danger" id="resetBtn" data-i18n="reset">איפוס ההתקדמות</button>
-          <a class="btn ghost" href="../?mode=trivia" data-i18n="toTrivia">למצב טריוויה ←</a>
           <a class="btn ghost" href="legal.html" data-i18n="legal">מידע משפטי, פרטיות ונגישות</a>
         </div>
       </section>
@@ -84,6 +85,17 @@
       <p class="track-help" data-i18n="trackHelp">בחרו הסמכה כדי לראות רק את היחידות שלה. ההתקדמות נשמרת בכל מסלול.</p>
       <div class="track-pick"><button type="button" data-track=""></button><button type="button" data-track="L"></button><button type="button" data-track="R"></button><button type="button" data-track="F"></button><button type="button" data-track="E"></button><button type="button" data-track="S"></button><button type="button" data-track="C"></button></div>
       <div class="ed-buttons"><button type="button" id="trackClose" class="btn ghost" data-i18n="edCancel">ביטול</button></div>
+    </div>
+  </div>
+
+  <div id="livesSheet" class="overlay editor" hidden role="dialog" aria-labelledby="livesTitle">
+    <div class="editor-inner">
+      <h2 id="livesTitle" data-i18n="livesTitle">חיים</h2>
+      <p class="lives-count"><span class="ic ic-heart" aria-hidden="true"></span> <b id="livesCount" dir="ltr">5 / 5</b></p>
+      <p id="livesWait" class="track-help"></p>
+      <button type="button" id="buyLife" class="btn primary big" data-i18n="buyLife">קנו חיים ב־20 יהלומים</button>
+      <button type="button" id="earnLife" class="btn ghost big" data-i18n="earnLife">ענו נכון על 3 מתוך 5 שאלות</button>
+      <button type="button" id="livesClose" class="btn ghost big" data-i18n="edCancel">ביטול</button>
     </div>
   </div>
 
@@ -130,38 +142,38 @@
 
   <canvas id="confetti" class="confetti" hidden></canvas>
   <div id="toast" class="toast" role="status"></div>
-  <script src="../shell.js?v=29"></script>
-  <script src="i18n.js?v=p77"></script>
-  <script src="units.js?v=p77"></script>
-  <script src="lessons.js?v=p77"></script>
-  <script src="recorded.js?v=p77"></script>
-  <script src="parts/p1.js?v=p77"></script>
-  <script src="parts/p2.js?v=p77"></script>
-  <script src="parts/p3.js?v=p77"></script>
-  <script src="parts/p4.js?v=p77"></script>
-  <script src="recorded/p5.js?v=p77"></script>
-  <script src="recorded/p6.js?v=p77"></script>
-  <script src="recorded/p7.js?v=p77"></script>
-  <script src="recorded/p8.js?v=p77"></script>
-  <script src="recorded/p9.js?v=p77"></script>
-  <script src="parts/p5.js?v=p77"></script>
-  <script src="parts/p6.js?v=p77"></script>
-  <script src="parts/p7.js?v=p77"></script>
-  <script src="parts/p8.js?v=p77"></script>
-  <script src="parts/p9.js?v=p77"></script>
-  <script src="parts/p10.js?v=p77"></script>
-  <script src="recorded/coverage.js?v=p77"></script>
-  <script src="parts/p11.js?v=p77"></script>
-  <script src="recorded/p12.js?v=p77"></script>
-  <script src="recorded/p13.js?v=p77"></script>
-  <script src="recorded/p14.js?v=p77"></script>
-  <script src="recorded/p15.js?v=p77"></script>
-  <script src="parts/p12.js?v=p77"></script>
-  <script src="parts/p13.js?v=p77"></script>
-  <script src="parts/p14.js?v=p77"></script>
-  <script src="parts/p15.js?v=p77"></script>
-  <script src="world.js?v=p77"></script>
-  <script src="sync.js?v=p77"></script>
-  <script src="app.js?v=p77"></script>
+  <script src="../shell.js?v=30"></script>
+  <script src="i18n.js?v=p78"></script>
+  <script src="units.js?v=p78"></script>
+  <script src="lessons.js?v=p78"></script>
+  <script src="recorded.js?v=p78"></script>
+  <script src="parts/p1.js?v=p78"></script>
+  <script src="parts/p2.js?v=p78"></script>
+  <script src="parts/p3.js?v=p78"></script>
+  <script src="parts/p4.js?v=p78"></script>
+  <script src="recorded/p5.js?v=p78"></script>
+  <script src="recorded/p6.js?v=p78"></script>
+  <script src="recorded/p7.js?v=p78"></script>
+  <script src="recorded/p8.js?v=p78"></script>
+  <script src="recorded/p9.js?v=p78"></script>
+  <script src="parts/p5.js?v=p78"></script>
+  <script src="parts/p6.js?v=p78"></script>
+  <script src="parts/p7.js?v=p78"></script>
+  <script src="parts/p8.js?v=p78"></script>
+  <script src="parts/p9.js?v=p78"></script>
+  <script src="parts/p10.js?v=p78"></script>
+  <script src="recorded/coverage.js?v=p78"></script>
+  <script src="parts/p11.js?v=p78"></script>
+  <script src="recorded/p12.js?v=p78"></script>
+  <script src="recorded/p13.js?v=p78"></script>
+  <script src="recorded/p14.js?v=p78"></script>
+  <script src="recorded/p15.js?v=p78"></script>
+  <script src="parts/p12.js?v=p78"></script>
+  <script src="parts/p13.js?v=p78"></script>
+  <script src="parts/p14.js?v=p78"></script>
+  <script src="parts/p15.js?v=p78"></script>
+  <script src="world.js?v=p78"></script>
+  <script src="sync.js?v=p78"></script>
+  <script src="app.js?v=p78"></script>
 </body>
 </html>

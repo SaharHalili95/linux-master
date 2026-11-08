@@ -105,14 +105,14 @@ button { cursor: pointer; }
 
 /* Mascot */
 .mascot { width: 100%; height: auto; overflow: visible; }
-.mascot .body { fill: #2b3a33; stroke: var(--term-green); stroke-width: 3; }
-.mascot .bar { fill: #3a4d44; }
+.mascot .body { fill: var(--shell, #2b3a33); stroke: var(--frame, var(--term-green)); stroke-width: 3; }
+.mascot .bar { fill: var(--shell, #3a4d44); filter: brightness(1.3); }
 .mascot .dot { fill: #ff6b6b; } .mascot .dot:nth-of-type(2) { fill: #f7c531; } .mascot .dot:nth-of-type(3) { fill: #58c43b; }
-.mascot .eye { fill: #fff; } .mascot .pupil { fill: #1d2421; }
-.mascot .mouth path { fill: none; stroke: var(--term-green); stroke-width: 4; stroke-linecap: round; }
-.mascot .mouth .open { fill: #9be46d; stroke-width: 3; }
-.mascot .cursor { fill: var(--term-green); animation: blink 1s steps(1) infinite; }
-.mascot .foot { fill: #2b3a33; }
+.mascot .eye { fill: #fff; } .mascot .pupil { fill: var(--pupil, #1d2421); }
+.mascot .mouth path { fill: none; stroke: var(--frame, var(--term-green)); stroke-width: 4; stroke-linecap: round; }
+.mascot .mouth .open { fill: var(--frame, #9be46d); stroke-width: 3; }
+.mascot .cursor { fill: var(--frame, var(--term-green)); animation: blink 1s steps(1) infinite; }
+.mascot .foot { fill: var(--shell, #2b3a33); }
 .mascot.party, .mascot.happy { animation: hop 1.6s ease-in-out infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 @keyframes hop { 0%, 100% { transform: translateY(0); } 15% { transform: translateY(-6px); } 30% { transform: translateY(0); } }
@@ -288,7 +288,7 @@ button { cursor: pointer; }
 @media (max-width: 480px) { .answer-row, .bank { gap: 6px; } .answer-row .tile, .bank .tile { padding: 8px 10px; font-size: 15px; min-height: 42px; } }
 /* Owner's edit-and-report sheet. Prompts keep the line breaks a layout fix adds. */
 .ex-prompt, .bubble p { white-space: pre-line; }
-.overlay.editor { z-index: 60; background: #000000aa; display: flex; align-items: flex-end; }
+.overlay.editor { z-index: 60; background: #000000aa; display: flex; flex-direction: column; justify-content: flex-end; }
 .editor-inner { width: 100%; max-width: 640px; margin: 0 auto; background: var(--surface); border-radius: 20px 20px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 8px; max-height: 92vh; overflow-y: auto; }
 .editor-inner h2 { margin: 0 0 4px; font-size: 20px; }
 .editor-inner label, .ed-preview-h { font-weight: 700; font-size: 14px; color: var(--muted); }
@@ -353,7 +353,6 @@ h1, h2, h3, .tab-title, .ex-prompt, .sentence { font-family: var(--display); fon
 input, textarea { caret-color: var(--accent); }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 @media (max-width: 480px) {
-  .course-mark { display: none; }
   .topbar { gap: 4px; }
   .chip { padding: 4px 3px; font-size: 15px; gap: 3px; }
   .mode-switch .mode { padding: 4px 8px; }
@@ -422,3 +421,7 @@ input, textarea { caret-color: var(--accent); }
 .end h1 { font: 400 34px/1.1 var(--display); color: var(--ink); margin: 10px 0 6px; }
 .end-rank { min-height: 26px; margin: 0 0 16px; font: 400 21px/1.2 var(--display); color: var(--r-accent); }
 .end-quests { color: var(--ink); }
+.ic-heart { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c0 6-8 11-8 11z'/%3E%3C/svg%3E"); }
+.chip.lives { background: none; border: 0; color: #ff7b8a; cursor: pointer; min-height: 40px; }
+.chip.lives b { color: #ff7b8a; }
+.lives-count { margin: 0; font: 400 34px var(--display); color: #ff7b8a; }
