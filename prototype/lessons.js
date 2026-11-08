@@ -75,7 +75,7 @@ const COURSE = [
         { type: 'tiles', prompt: T('הציגו את כל הקבצים, כולל המוסתרים, בתיקייה projects', 'Show all files, hidden ones too, in the projects folder'), answer: 'ls -a projects', accept: ['ls projects -a'], tiles: ['ls', '-a', 'projects', '-l', 'cd', 'docs'] },
       ] },
       { title: T('נתיבים: / ו־~', 'Paths: / and ~'), exercises: [
-        { type: 'teach', cmd: 'cd /', name: 'root', text: T('/ היא תיקיית השורש, ההתחלה של כל המערכת. ~ היא תיקיית הבית שלכם.', '/ is the root folder, where the whole system starts. ~ is your home folder.'), demo: [['cd /'], 'pwd'] },
+        { type: 'teach', cmd: 'cd /', name: 'root', text: T('/ היא תיקיית השורש, ההתחלה של כל המערכת.\n ~ היא תיקיית הבית שלכם.', '/ is the root folder, where the whole system starts. ~ is your home folder.'), demo: [['cd /'], 'pwd'] },
         { type: 'choice', prompt: T('איזו פקודה תחזיר אתכם הביתה מכל מקום?', 'Which command takes you home from anywhere?'), options: ['cd ~', 'cd /', 'cd ..', 'ls ~'], answer: 'cd ~',
           why: { 'cd /': T('cd / לוקחת אתכם לשורש, לא הביתה.', 'cd / takes you to the root, not home.'), 'cd ..': T('cd .. עולה רק תיקייה אחת.', 'cd .. only goes up one folder.'), 'ls ~': T('ls ~ מציגה מה יש בבית, אבל לא מעבירה אתכם לשם.', 'ls ~ shows what is at home, but does not take you there.') } },
         { type: 'sentence', prompt: READ, text: T('הסימן ___ מייצג את תיקיית הבית שלכם.', 'The ___ sign stands for your home folder.'), options: ['~', '/', '..'], answer: '~' },
