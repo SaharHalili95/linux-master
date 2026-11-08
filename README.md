@@ -84,6 +84,8 @@ A weekly job also checks that every link to the official Bandit pages is still a
 
 ## Legal
 
+© 2026 Sahar Halili. All rights reserved, except the third-party material credited on the page linked below.
+
 Linux Master is an independent project and is not affiliated with LPI, Red Hat, the Linux Foundation, SUSE, CompTIA or OverTheWire. Certification names are marks of their owners. See the [legal, privacy and accessibility page](https://saharhalili95.github.io/linux-master/prototype/legal.html).
 
 ## Run locally
