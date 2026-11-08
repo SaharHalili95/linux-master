@@ -58,7 +58,7 @@ const COURSE = [
         { type: 'output', prompt: T('מה תדפיס pwd אחרי הפקודות האלה?', 'What will pwd print after these commands?'), setup: ['cd projects'], cmd: 'pwd', wrongText: ['/home/user', '/projects', 'projects'] },
         { type: 'teach', cmd: 'cd ..', name: 'parent directory', text: T('עולה תיקייה אחת למעלה. שתי הנקודות הן התיקייה שמעל.', 'Goes up one folder. The two dots mean the folder above.'), demo: [['cd projects', 'cd ..'], 'pwd'] },
         { type: 'tiles', prompt: T('עלו תיקייה אחת למעלה', 'Go up one folder'), answer: 'cd ..', tiles: ['cd', '..', '.', '~', 'ls'] },
-        { type: 'terminal', prompt: T('היכנסו לתיקייה photos, ואז הדפיסו איפה אתם', 'Go into photos, then print where you are'), hint: T('קודם cd, אחר כך pwd', 'First cd, then pwd'),
+        { type: 'terminal', prompt: T('היכנסו לתיקייה photos, ואז הדפיסו איפה אתם', 'Go into photos, then print where you are'), hint: T('קודם נכנסים לתיקייה עם cd, ואחר כך מריצים את הפקודה שמדפיסה את המיקום הנוכחי.', 'First go into the folder with cd, then run the command that prints your current location.'),
           goal: (sh, log) => sh.cwd === '/home/user/photos' && log.some(l => l.cmd === 'pwd' && l.out.trim() === '/home/user/photos'), solve: ['cd photos', 'pwd'] },
         { type: 'output', prompt: T('מה תדפיס pwd עכשיו?', 'What will pwd print now?'), setup: ['cd projects', 'cd ..'], cmd: 'pwd', wrongText: ['/home', '/home/user/projects', '/'] },
       ] },
