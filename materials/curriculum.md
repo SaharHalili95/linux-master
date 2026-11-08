@@ -140,22 +140,22 @@ Linux Essentials (E), SUSE SCA (S) and CompTIA Linux+ (C). See [the design](../d
 
 | # | Unit | Commands and ideas | Exams | Sim | Status |
 | --- | --- | --- | --- | --- | --- |
-| 81 | Open source and distributions | distribution families, release types, `apk`, GPL, BSD, copyleft, Creative Commons, FSF, OSI, major apps | E C | concept | planned |
-| 82 | Linux in everyday computing | CPU architectures, Raspberry Pi, `/dev/nvme*`, ISO media, dual boot, WSL, password managers, MFA, passkeys | E C | concept | planned |
-| 83 | SUSE and SLES 16 | `zypper`, SLES in the public cloud, `supportconfig`, manual deployment | S | 🎞 | planned |
-| 84 | Cockpit and remote desktop | `cockpit.socket`, Cockpit MFA and users, GNOME Remote Desktop | S | concept | planned |
-| 85 | Btrfs and snapshots | `btrfs subvolume`, `snapper`, `/dev/disk/by-uuid` | S C | 🎞 | planned |
-| 86 | Hardware and kernel modules in depth | `dmidecode`, `lshw`, `lsmem`, `modinfo`, `depmod`, `rmmod`, `dracut`, `mkinitrd`, `sensors`, `ipmitool` | C | 🎞 | planned |
-| 87 | LVM in depth and RAID | `pvs`, `pvmove`, `vgextend`, `lvremove`, `vgexport`, `mdadm`, `/proc/mdstat`, `growpart`, mount options | C | 🎞 | planned |
-| 88 | Network tools | `ethtool`, `tcpdump`, `iperf3`, netplan, `nmap`, `nslookup` | C | 🎞 | planned |
-| 89 | Performance and tracing | `strace`, `pstree`, `mpstat`, `pidstat`, `atop`, `systemd-analyze blame` | C | 🎞 | planned |
-| 90 | Virtualization | QEMU/KVM, `virt-manager`, qcow2, snapshots, VM networking | C | concept | planned |
-| 91 | Containers in depth | Dockerfile, images and tags, volumes, ports, networks, privileged, Compose | C | 🎞 | planned |
-| 92 | Security tools | `auditd`, `fail2ban`, `audit2allow`, `sealert`, `chattr`, `lsattr`, PAM, polkit, `rbash`, `/etc/issue` | C | 🎞 | planned |
-| 93 | Compliance and encryption | OpenSCAP, CIS, AIDE, `rkhunter`, CVE/CVSS, `shred`, LUKS2, WireGuard, certificates | C | 🎞 | planned |
-| 94 | Automation and infrastructure as code | Ansible, Puppet, OpenTofu, CI/CD, GitOps, Kubernetes, cloud-init, kickstart | C | concept | planned |
-| 95 | Python and AI for administrators | `python3 -m venv`, `pip`, data types, PEP 8, responsible AI use | C | concept | planned |
-| 96 | Monitoring and troubleshooting method | SLA/SLO/SLI, SNMP, alerts, log aggregation, troubleshooting scenarios | C | concept | planned |
+| 81 | Open source and distributions | distribution families, release types, `apk`, GPL, BSD, copyleft, Creative Commons, FSF, OSI, major apps | E C | concept | live |
+| 82 | Linux in everyday computing | CPU architectures, Raspberry Pi, `/dev/nvme*`, ISO media, dual boot, WSL, password managers, MFA, passkeys | E C | concept | live |
+| 83 | SUSE and SLES 16 | `zypper`, SLES in the public cloud, `supportconfig`, manual deployment | S | 🎞 | live |
+| 84 | Cockpit and remote desktop | `cockpit.socket`, Cockpit MFA and users, GNOME Remote Desktop | S | concept | live |
+| 85 | Btrfs and snapshots | `btrfs subvolume`, `snapper`, `/dev/disk/by-uuid` | S C | 🎞 | live |
+| 86 | Hardware and kernel modules in depth | `dmidecode`, `lshw`, `lsmem`, `modinfo`, `depmod`, `rmmod`, `dracut`, `mkinitrd`, `sensors`, `ipmitool` | C | 🎞 | live |
+| 87 | LVM in depth and RAID | `pvs`, `pvmove`, `vgextend`, `lvremove`, `vgexport`, `mdadm`, `/proc/mdstat`, `growpart`, mount options | C | 🎞 | live |
+| 88 | Network tools | `ethtool`, `tcpdump`, `iperf3`, netplan, `nmap`, `nslookup` | C | 🎞 | live |
+| 89 | Performance and tracing | `strace`, `pstree`, `mpstat`, `pidstat`, `atop`, `systemd-analyze blame` | C | 🎞 | live |
+| 90 | Virtualization | QEMU/KVM, `virt-manager`, qcow2, snapshots, VM networking | C | concept | live |
+| 91 | Containers in depth | Dockerfile, images and tags, volumes, ports, networks, privileged, Compose | C | 🎞 | live |
+| 92 | Security tools | `auditd`, `fail2ban`, `audit2allow`, `sealert`, `chattr`, `lsattr`, PAM, polkit, `rbash`, `/etc/issue` | C | 🎞 | live |
+| 93 | Compliance and encryption | OpenSCAP, CIS, AIDE, `rkhunter`, CVE/CVSS, `shred`, LUKS2, WireGuard, certificates | C | 🎞 | live |
+| 94 | Automation and infrastructure as code | Ansible, Puppet, OpenTofu, CI/CD, GitOps, Kubernetes, cloud-init, kickstart | C | concept | live |
+| 95 | Python and AI for administrators | `python3 -m venv`, `pip`, data types, PEP 8, responsible AI use | C | concept | live |
+| 96 | Monitoring and troubleshooting method | SLA/SLO/SLI, SNMP, alerts, log aggregation, troubleshooting scenarios | C | concept | live |
 
 ## Part 11: Mock exams (units 78-80, 97-99)
 
