@@ -53,10 +53,11 @@ const code = text => { const c = el('code', 'cmd', text); c.dir = 'ltr'; return 
 // The sheet shows the full name; the tab bar the short one.
 const TRACK_NAMES = { L: 'LPIC-1', R: 'RHCSA', F: 'LFCS', E: 'Linux Essentials', S: 'SUSE SCA', C: 'CompTIA Linux+' };
 const TRACK_SHORT = { ...TRACK_NAMES, E: 'Essentials', C: 'Linux+' };
-const DEFAULTS = { xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {}, reports: [], track: '' };
+const MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, LIFE_GEMS = 20;
+const DEFAULTS = { xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
 // Saved state can be stale or hand-edited; keep only fields of the expected type.
 function loadState(raw) {
-  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {}, layout: {}, reports: [], track: '' };
+  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
   let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
   if (!saved || typeof saved !== 'object') return S;
   for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
@@ -65,6 +66,8 @@ function loadState(raw) {
   if (typeof saved.sound === 'boolean') S.sound = saved.sound;
   if (saved.layout && typeof saved.layout === 'object') for (const [k, v] of Object.entries(saved.layout)) if (typeof v === 'string') S.layout[k] = v;
   if (Object.hasOwn(TRACK_NAMES, saved.track)) S.track = saved.track;
+  if (Number.isInteger(saved.lives) && saved.lives >= 0 && saved.lives <= MAX_LIVES) S.lives = saved.lives;
+  if (Number.isFinite(saved.livesAt) && saved.livesAt >= 0) S.livesAt = saved.livesAt;
   if (Array.isArray(saved.reports)) S.reports = saved.reports.filter(r => r && typeof r.uid === 'string' && typeof r.note === 'string');
   const q = saved.quests;
   if (q && typeof q === 'object' && typeof q.day === 'string' && Array.isArray(q.claimed)) S.quests = { day: q.day, xp: +q.xp || 0, perfect: +q.perfect || 0, combo: +q.combo || 0, claimed: q.claimed.filter(x => typeof x === 'string') };
@@ -97,9 +100,24 @@ function tone(notes) {
 }
 const SFX = { good: () => tone([[660, 0.09], [990, 0.16]]), bad: () => tone([[240, 0.16, 'triangle'], [190, 0.22, 'triangle']]), win: () => tone([[523, 0.12], [659, 0.12], [784, 0.12], [1047, 0.32]]), tap: () => tone([[520, 0.04]]) };
 
-function mascot(mood = 'idle') {
+function mascot(mood = 'idle', level = rankOf(S.xp).level) {
+  // The hero grows with its rank: every level adds something, and the frame changes color along the way.
+  const frame = level >= 11 ? '#ffc53d' : level >= 9 ? '#ff6ec7' : level >= 7 ? '#b79cff' : level >= 5 ? '#38e1ff' : level >= 3 ? '#4fe0c0' : '#9be46d';
+  const shell = level >= 11 ? '#3a2a10' : level >= 9 ? '#3a1a3c' : level >= 7 ? '#2a2352' : level >= 5 ? '#14384a' : '#2b3a33';
+  const glow = level >= 12 ? '#ffc53d' : level >= 6 ? '#38e1ff' : '#1d2421';
+  const back = (level >= 12 ? '<circle cx="50" cy="48" r="48" fill="none" stroke="#ffc53d" stroke-width="2" stroke-dasharray="3 7"/>' : '')
+    + (level >= 11 ? '<path d="M12 46 L-16 24 L-8 50 L-20 58 L-6 66 L-12 80 L12 70Z M88 46 L116 24 L108 50 L120 58 L106 66 L112 80 L88 70Z" fill="#ffc53d" stroke="#8a6200" stroke-width="1.5"/>' : '')
+    + (level >= 10 ? '<path d="M18 40 L2 98 H98 L82 40Z" fill="#b3201f"/><path d="M2 98 H98 L96 90 H4Z" fill="#ffc53d"/>' : '')
+    + (level >= 9 ? '<path d="M14 58 L2 74 L14 80Z M86 58 L98 74 L86 80Z" fill="#ff6ec7"/>' : '');
+  const front = (level >= 12 ? '<path d="M26 19 L21 1 L37 11 L50 -3 L63 11 L79 1 L74 19Z" fill="#ffc53d" stroke="#8a6200" stroke-width="1.5"/><circle cx="50" cy="12" r="3.4" fill="#ff5a6e"/><circle cx="35" cy="15" r="2.2" fill="#38e1ff"/><circle cx="65" cy="15" r="2.2" fill="#38e1ff"/>' : level >= 2 ? `<path d="M50 18V8" stroke="${frame}" stroke-width="3"/><circle cx="50" cy="6" r="4.5" fill="#ffc53d"/><circle cx="48.5" cy="4.5" r="1.4" fill="#fff"/>` : '')
+    + (level >= 3 ? '<path d="M70 36 L80 36 L62 80 L52 80Z" fill="#fff" opacity=".08"/>' : '')
+    + (level >= 4 ? `<path d="M12 42 Q10 12 50 11 Q90 12 88 42" fill="none" stroke="${frame}" stroke-width="3.5"/><rect x="4" y="36" width="11" height="24" rx="5" fill="${frame}"/><rect x="85" y="36" width="11" height="24" rx="5" fill="${frame}"/><path d="M9 60 Q10 78 28 76" fill="none" stroke="${frame}" stroke-width="2.5"/><circle cx="29" cy="76" r="3" fill="#fff"/>` : '')
+    + (level >= 5 ? '<circle cx="9.5" cy="44" r="1.8" fill="#fff"/><circle cx="90.5" cy="44" r="1.8" fill="#fff"/><circle cx="9.5" cy="52" r="1.8" fill="#fff"/><circle cx="90.5" cy="52" r="1.8" fill="#fff"/>' : '')
+    + (level >= 6 ? '<rect x="22" y="39" width="56" height="22" rx="11" fill="#38e1ff" opacity=".24" stroke="#38e1ff" stroke-width="1.5"/><path d="M28 47H72" stroke="#fff" stroke-opacity=".5" stroke-width="1"/>' : '')
+    + (level >= 7 ? `<path d="M12 62 H26 V84 H18 Q12 84 12 78Z M88 62 H74 V84 H82 Q88 84 88 78Z" fill="${frame}" opacity=".85"/>` : '')
+    + (level >= 8 ? '<path d="M50 68 l11 6 v9 l-11 6 -11 -6 v-9z" fill="#10163a" stroke="#ffc53d" stroke-width="2"/><path d="M50 71.5 l2.2 4.6 5 .7 -3.6 3.5 .9 5 -4.5 -2.4 -4.5 2.4 .9 -5 -3.6 -3.5 5 -.7z" fill="#ffc53d"/>' : '');
   const mouth = { idle: '<rect x="44" y="66" width="14" height="4" rx="2" class="cursor"/>', happy: '<path d="M38 64 Q50 76 62 64" />', sad: '<path d="M39 72 Q50 62 61 72" />', party: '<path d="M36 62 Q50 80 64 62 Z" class="open"/>' }[mood];
-  return `<svg class="mascot ${mood}" viewBox="0 0 100 100" aria-hidden="true"><rect x="12" y="18" width="76" height="66" rx="18" class="body"/><rect x="12" y="18" width="76" height="16" rx="8" class="bar"/><circle cx="24" cy="26" r="2.6" class="dot"/><circle cx="32" cy="26" r="2.6" class="dot"/><circle cx="40" cy="26" r="2.6" class="dot"/><circle cx="37" cy="50" r="7" class="eye"/><circle cx="63" cy="50" r="7" class="eye"/><circle cx="38.5" cy="51" r="3.4" class="pupil"/><circle cx="64.5" cy="51" r="3.4" class="pupil"/><g class="mouth">${mouth}</g><rect x="20" y="84" width="14" height="8" rx="4" class="foot"/><rect x="66" y="84" width="14" height="8" rx="4" class="foot"/></svg>`;
+  return `<svg class="mascot ${mood}" viewBox="0 0 100 100" aria-hidden="true" style="--frame:${frame};--shell:${shell};--pupil:${glow}">${back}<rect x="12" y="18" width="76" height="66" rx="18" class="body"/><rect x="12" y="18" width="76" height="16" rx="8" class="bar"/><circle cx="24" cy="26" r="2.6" class="dot"/><circle cx="32" cy="26" r="2.6" class="dot"/><circle cx="40" cy="26" r="2.6" class="dot"/><circle cx="37" cy="50" r="7" class="eye"/><circle cx="63" cy="50" r="7" class="eye"/><circle cx="38.5" cy="51" r="3.4" class="pupil"/><circle cx="64.5" cy="51" r="3.4" class="pupil"/><g class="mouth">${mouth}</g><rect x="20" y="84" width="14" height="8" rx="4" class="foot"/><rect x="66" y="84" width="14" height="8" rx="4" class="foot"/>${front}</svg>`;
 }
 
 function runIn(setup, cmd, fixture = unitFixture()) {
@@ -110,7 +128,7 @@ function runIn(setup, cmd, fixture = unitFixture()) {
 const promptFor = cwd => `user@linux:${cwd.startsWith('/home/user') ? '~' + cwd.slice(10) : cwd}$ `;
 
 // ---------- Top bar and tabs ----------
-function renderTop() { $('streakN').textContent = liveStreak(); $('gemsN').textContent = S.gems; $('xpN').textContent = S.xp; $('streakChip').classList.toggle('lit', S.lastDay === dayKey()); }
+function renderTop() { $('streakN').textContent = liveStreak(); $('gemsN').textContent = S.gems; $('xpN').textContent = S.xp; syncLives(); $('livesN').textContent = S.lives; $('streakChip').classList.toggle('lit', S.lastDay === dayKey()); }
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === name));
   document.querySelectorAll('.tabbar button[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === name ? 'page' : 'false'));
@@ -130,6 +148,41 @@ const ICONS = { lesson: 'star', chest: 'gift', exam: 'note', done: 'check', lock
 // certification skips the rest. Progress is shared, so switching tracks loses nothing.
 const inTrack = (u, track = S.track) => !track || u.exams?.some(e => e.startsWith(track));
 
+// Lives come back with time. Practice never costs one, so there is always something to learn.
+function syncLives() {
+  if (S.lives >= MAX_LIVES) { S.livesAt = 0; return; }
+  if (!S.livesAt) S.livesAt = Date.now();
+  const gained = Math.floor((Date.now() - S.livesAt) / LIFE_MS);
+  if (gained > 0) { S.lives = Math.min(MAX_LIVES, S.lives + gained); S.livesAt = S.lives >= MAX_LIVES ? 0 : S.livesAt + gained * LIFE_MS; save(); }
+}
+function addLife() { S.lives = Math.min(MAX_LIVES, S.lives + 1); syncLives(); save(); renderTop(); }
+function loseLife() { if (S.lives === MAX_LIVES) S.livesAt = Date.now(); S.lives = Math.max(0, S.lives - 1); save(); renderTop(); }
+const lifeWait = () => { const ms = Math.max(0, S.livesAt + LIFE_MS - Date.now()); return `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`; };
+function renderLives() {
+  syncLives(); $('livesCount').textContent = `${S.lives} / ${MAX_LIVES}`;
+  $('livesWait').textContent = S.lives < MAX_LIVES ? t('livesNext', lifeWait()) : t('livesFull');
+  $('buyLife').disabled = S.gems < LIFE_GEMS || S.lives >= MAX_LIVES; $('earnLife').disabled = S.lives >= MAX_LIVES;
+}
+function openLives() { renderLives(); $('livesSheet').hidden = false; clearInterval(openLives.tick); openLives.tick = setInterval(() => { if ($('livesSheet').hidden) clearInterval(openLives.tick); else renderLives(); }, 1000); }
+// The Trivia questions live on as light practice. They load on first use, so the app itself stays small.
+let triviaReady;
+function loadTrivia() {
+  triviaReady ||= Promise.all(['content', 'content.en'].map(name => new Promise((ok, fail) => { const tag = document.createElement('script'); tag.src = `../data/${name}.js?v=29`; tag.onload = ok; tag.onerror = fail; document.head.append(tag); })));
+  return triviaReady;
+}
+function triviaExercises(count) {
+  /* global commands, pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios, CONTENT */
+  const names = commands.map(c => c.name), en = CONTENT.en;
+  const byName = commands.map(c => ({ type: 'choice', prompt: T(`איזו פקודה עושה את זה? ${c.meaning}`, `Which command does this? ${en.commands[c.name] || c.meaning}`), options: [c.name, ...shuffle(names.filter(n => n !== c.name)).slice(0, 3)], answer: c.name, fx: unitFixture }));
+  const groups = { pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios };
+  const tasks = Object.entries(groups).flatMap(([key, list]) => list.map((q, i) => ({ type: 'choice', prompt: T(q.prompt, en.scenarios[key]?.[i]?.prompt || q.prompt), options: [q.answer, ...q.wrong.slice(0, 3)], answer: q.answer, fx: unitFixture })));
+  return shuffle([...byName, ...tasks]).slice(0, count);
+}
+async function startTrivia(earn) {
+  try { await loadTrivia(); } catch { return toast(t('triviaFailed')); }
+  $('livesSheet').hidden = true;
+  L = null; startLesson('trivia', triviaExercises(earn ? 5 : 8), { practice: true, earnLife: earn });
+}
 function heroBar() {
   const r = rankOf(S.xp), box = el('div', 'hero-bar'), face = el('div', 'hero-face'), info = el('div', 'hero-info'), bar = el('div', 'hero-progress'), fill = el('div');
   face.innerHTML = mascot('happy');
@@ -219,7 +272,7 @@ function openPop(anchor, n, state) {
     const title = tr(n.kind === 'boss' ? unit.boss.title : unit.lessons[n.i].title);
     pop.append(el('h3', '', title), el('p', '', n.kind === 'boss' ? tr(unit.boss.intro || unit.boss.text) : t('lessonOf', n.i + 1, unit.lessons.length)));
     const go = el('button', 'btn primary', state === 'done' ? t('again') : n.kind === 'boss' ? t('toBoss') : t('startXp'));
-    go.onclick = () => { closePop(); n.kind === 'boss' ? startBoss(unit, n.key) : startLesson(n.key, withFixture(unit, unit.lessons[n.i].exercises), { title, replay: state === 'done' }); };
+    go.onclick = () => { closePop(); syncLives(); if (S.lives === 0 && state !== 'done') return openLives(); n.kind === 'boss' ? startBoss(unit, n.key) : startLesson(n.key, withFixture(unit, unit.lessons[n.i].exercises), { title, replay: state === 'done' }); };
     pop.append(go);
   }
   anchor.parentElement.append(pop); anchor.parentElement.classList.add('open'); setTimeout(() => document.addEventListener('click', outside), 0);
@@ -353,7 +406,7 @@ function answer(ok, solution = '', why = '') {
     const praise = t('praise');
     setFoot('good', L.combo >= 3 ? t('inARow', L.combo) : praise[Math.floor(Math.random() * praise.length)], { label: t('solution'), sol: L.ex.type === 'match' || L.ex.plain ? '' : solution });
   } else {
-    L.mistakes++; L.combo = 0; SFX.bad();
+    L.mistakes++; L.combo = 0; SFX.bad(); if (!L.opts.practice && !L.opts.replay) loseLife();
     L.queue.push({ ...L.ex, retry: true });
     if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss) S.mistakes.push(L.ex.uid);
     setFoot('bad', t('correctAnswer'), ['terminal', 'scenario'].includes(L.ex.type) ? { sol: solution } : L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
@@ -646,7 +699,8 @@ function finishLesson() {
   $('endTitle').textContent = L.opts.boss ? t('bossWon') : perfect ? t('perfect') : t('done');
   $('endXp').textContent = xp; $('endAcc').textContent = `${Math.round((L.correct / Math.max(1, L.correct + L.mistakes)) * 100)}%`;
   $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
-  $('endQuests').textContent = newly.length ? t('questsDone', newly.length) : '';
+  const earned = L.opts.earnLife && L.correct >= 3; if (earned) addLife();
+  $('endQuests').textContent = L.opts.earnLife ? t(earned ? 'lifeEarned' : 'lifeNotEarned') : newly.length ? t('questsDone', newly.length) : '';
   $('endBtn').onclick = () => firstToday ? showStreak() : closeOverlays();
   SFX.win(); confetti(); $('endBtn').focus();
 }
@@ -710,6 +764,12 @@ $('edClear').onclick = () => { if (confirm(t('edClearConfirm'))) { S.reports = [
 $('streakBtn').onclick = closeOverlays;
 $('practiceMistakes').onclick = () => practice('mistakes');
 $('practiceMix').onclick = () => practice('mix');
+$('practiceLight').onclick = () => startTrivia(false);
+$('livesChip').onclick = openLives;
+$('livesClose').onclick = () => { $('livesSheet').hidden = true; };
+$('buyLife').onclick = () => { if (S.gems < LIFE_GEMS || S.lives >= MAX_LIVES) return; S.gems -= LIFE_GEMS; addLife(); renderLives(); };
+$('earnLife').onclick = () => startTrivia(true);
+setInterval(renderTop, 30000);
 $('soundToggle').onchange = e => { S.sound = e.target.checked; save(); };
 // Progress lives only in this browser, so a backup file can carry it to another device or a reinstall.
 async function saveBackup() {
