@@ -663,6 +663,21 @@ test('a sentence blank stays on the line of the word before it', async ({ page }
   expect(glued.lines, 'the word, the blank and the period share one line').toBe(1);
 });
 
+test('merging two devices keeps everything the learner earned', async ({ page }) => {
+  await page.goto('./prototype/');
+  const mac = { xp: 300, gems: 10, done: ['L0', 'L1'], days: ['2026-11-01'], mistakes: ['a'], lastDay: '2026-11-01', streak: 4, track: 'R', quests: { day: '2026-11-01', xp: 5, perfect: 0, combo: 1, claimed: ['q1'] } };
+  const phone = { xp: 120, gems: 40, done: ['L1', 'c1'], days: ['2026-11-02'], mistakes: ['b'], lastDay: '2026-11-02', streak: 1, track: 'C', quests: { day: '2026-11-02', xp: 9, perfect: 1, combo: 0, claimed: [] } };
+  const merged = await page.evaluate(([a, b]) => [mergeProgress(a, b), mergeProgress(b, a), mergeProgress(a, { ...a, xp: 1, streak: 9, quests: { day: a.quests.day, xp: 7, perfect: 0, combo: 0, claimed: ['q2'] } }), mergeProgress({}, a), loadState(JSON.stringify(mergeProgress(a, b))).done.length], [mac, phone]);
+  expect(merged[0]).toMatchObject({ xp: 300, gems: 40, lastDay: '2026-11-02', streak: 1, track: 'C', quests: phone.quests });
+  expect(merged[0].done.sort()).toEqual(['L0', 'L1', 'c1']);
+  expect(merged[0].days.sort()).toEqual(['2026-11-01', '2026-11-02']);
+  expect(merged[0].mistakes.sort()).toEqual(['a', 'b']);
+  expect({ ...merged[1], done: [...merged[1].done].sort(), days: [...merged[1].days].sort(), mistakes: [...merged[1].mistakes].sort() }, 'the order of the devices does not matter').toEqual({ ...merged[0], done: [...merged[0].done].sort(), days: [...merged[0].days].sort(), mistakes: [...merged[0].mistakes].sort() });
+  expect(merged[2]).toMatchObject({ xp: 300, streak: 9, quests: { xp: 7, claimed: ['q1', 'q2'] } });
+  expect(merged[3]).toMatchObject({ xp: 300, done: ['L0', 'L1'], streak: 4, track: 'R' });
+  expect(merged[4]).toBe(3);
+});
+
 test('Pages deploys every file Learn mode loads', () => {
   const root = path.join(__dirname, '..');
   const html = fs.readFileSync(path.join(root, 'prototype/index.html'), 'utf8');
