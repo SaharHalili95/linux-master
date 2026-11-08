@@ -123,27 +123,46 @@ const unitKey = (unit, id) => (unit.unit === 1 ? id : `u${unit.unit}-${id}`);
 const NODE_PLAN = [['L0', 'lesson', 0], ['L1', 'lesson', 1], ['c1', 'chest'], ['L2', 'lesson', 2], ['L3', 'lesson', 3], ['boss', 'boss']];
 const unitNodes = unit => unit.exam ? [{ key: unitKey(unit, 'exam'), kind: 'exam', unit }] : NODE_PLAN.map(([id, kind, i]) => ({ key: unitKey(unit, id), kind, i, unit }));
 const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: unit.fixture || unitFixture }));
-const OFFSETS = [0, 52, 78, 52, 0, -52, -78, -52];
+const OFFSETS = [0, 66, 66, 0, -66, -66];
 const icon = name => { const i = el('span', `ic ic-${name}`); i.setAttribute('aria-hidden', 'true'); return i; };
 const ICONS = { lesson: 'star', chest: 'gift', exam: 'note', done: 'check', lock: 'lock' };
 // A certification track keeps only the units tagged for that exam, so a learner who already holds another
 // certification skips the rest. Progress is shared, so switching tracks loses nothing.
 const inTrack = (u, track = S.track) => !track || u.exams?.some(e => e.startsWith(track));
 
+function regionBlock(part) {
+  const r = REGIONS[part], box = el('section', 'region');
+  for (const [k, v] of Object.entries({ ground: r.ground, panel: r.panel, accent: r.accent })) box.style.setProperty(`--r-${k}`, v);
+  const hero = el('div', 'region-hero'); hero.innerHTML = regionScene(part);
+  const h = el('h2', `part-header${tr(r.name).length > 11 ? ' long' : ''}`, tr(r.name)); h.dataset.part = part;
+  hero.append(h, el('p', 'region-blurb', tr(r.blurb))); box.append(hero);
+  return box;
+}
+// Lines between the path's nodes, measured after layout so they follow any screen width.
+function drawTraces() {
+  for (const list of document.querySelectorAll('#path .nodes')) {
+    list.querySelector('.traces')?.remove();
+    const box = list.getBoundingClientRect(); if (!box.width) continue;
+    const nodes = [...list.querySelectorAll('.node')].map(n => { const q = n.getBoundingClientRect(); return { x: q.left - box.left + q.width / 2, y: q.top - box.top + q.height / 2, done: n.classList.contains('done') }; });
+    const svg = nodes.slice(1).map((n, i) => `<path class="${nodes[i].done ? 'lit' : ''}" d="M${nodes[i].x} ${nodes[i].y}L${n.x} ${n.y}"/>`).join('');
+    list.insertAdjacentHTML('afterbegin', `<svg class="traces" width="${box.width}" height="${box.height}" aria-hidden="true">${svg}</svg>`);
+  }
+}
+addEventListener('resize', () => drawTraces());
 function renderPath() {
   const root = $('path'); root.innerHTML = '';
   $('trackName').textContent = TRACK_SHORT[S.track] || t('trackAll');
   const units = COURSE.filter(u => inTrack(u));
   const order = units.filter(u => !u.locked).flatMap(unitNodes);
   const current = order.find(n => !S.done.includes(n.key))?.key;
-  let part;
+  let part, region;
   for (const unit of units) {
-    if (unit.section !== part) { part = unit.section; const h = el('h2', 'part-header', t('partN', part, tr(PARTS[part]))); h.dataset.part = part; root.append(h); }
+    if (unit.section !== part) { part = unit.section; region = regionBlock(part); root.append(region); }
     const banner = el('div', `unit-banner ${unit.color}${unit.locked ? ' locked' : ''}`);
     const txt = el('div'); txt.append(el('div', 'unit-kicker', t('kicker', unit.section, unit.unit)), el('h2', '', tr(unit.title)), el('div', 'unit-sub', tr(unit.subtitle)));
     const exams = [['L', 'LPIC-1'], ['R', 'RHCSA'], ['F', 'LFCS']].filter(([k]) => unit.exams?.some(e => e.startsWith(k)));
     if (exams.length) { const chips = el('div', 'exam-chips'); for (const [, name] of exams) chips.append(el('span', 'exam-chip', name)); txt.append(chips); }
-    const book = el('div', 'unit-book'); book.append(icon(unit.locked ? 'lock' : 'book')); banner.append(txt, book); root.append(banner);
+    const book = el('div', 'unit-book'); book.append(icon(unit.locked ? 'lock' : 'book')); banner.append(txt, book); region.append(banner);
     const list = el('ol', 'nodes');
     const nodes = unit.locked ? NODE_PLAN.map(([id, kind]) => ({ key: unitKey(unit, id), kind: kind === 'boss' ? 'boss' : 'lesson', unit, lockedUnit: true })).filter(n => n.key !== unitKey(unit, 'c1')) : unitNodes(unit);
     let lessonNo = 0;
@@ -161,8 +180,9 @@ function renderPath() {
       if (i === 2 && !unit.locked) { const m = el('div', 'path-mascot'); m.innerHTML = mascot(S.done.includes(n.key) ? 'happy' : 'idle'); li.append(m); }
       list.append(li);
     });
-    root.append(list);
+    region.append(list);
   }
+  drawTraces();
   renderTop();
 }
 function openPop(anchor, n, state) {
