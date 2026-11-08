@@ -742,6 +742,7 @@ test('every region has its name, text and scene, and readable colors', async ({ 
   await page.goto('./prototype/');
   await expect(page.locator('.region')).toHaveCount(await page.evaluate(() => new Set(COURSE.map(u => u.section)).size));
   await expect(page.locator('#stage .region-scene')).toHaveCount(1);
+  await expect.poll(() => page.locator('#pathField').evaluate(c => c.getContext('2d').getImageData(0, 0, c.width, c.height).data.some(v => v > 0))).toBe(true);
   await expect(page.locator('#stage .topbar #livesChip')).toBeVisible();
   const last = await page.evaluate(() => +[...document.querySelectorAll('.region')].at(-1).dataset.part);
   await expect(async () => { // The path also scrolls itself to the current step while fonts load.

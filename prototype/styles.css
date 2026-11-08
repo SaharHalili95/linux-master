@@ -372,6 +372,8 @@ input, textarea { caret-color: var(--accent); }
 .region { display: flow-root; --n-accent: var(--r-accent); background: var(--r-ground); padding: 0 16px 56px; color: #f5f8ff; }
 .region-scene { position: absolute; inset: 0; width: 100%; height: 100%; }
 .stage { position: sticky; top: 0; z-index: 4; display: flex; flex-direction: column; box-sizing: border-box; height: calc(226px + env(safe-area-inset-top)); margin-top: -18px; padding: calc(12px + env(safe-area-inset-top)) 16px 10px; overflow: hidden; background: var(--r-ground); color: #f5f8ff; box-shadow: 0 12px 24px -10px #00000099; }
+.path-field { position: fixed; inset: 0; z-index: 0; margin-inline: auto; width: 100%; max-width: 620px; height: 100%; pointer-events: none; }
+.unit-banner, .part-header { position: relative; z-index: 1; }
 .stage-scenes, .stage-layer { position: absolute; inset: 0; }
 .stage-moon { position: absolute; bottom: 0; inset-inline-end: 0; }
 .stage-scenes::after { content: ''; position: absolute; inset: auto 0 0; height: 168px; background: linear-gradient(to top, var(--r-ground) 50%, transparent); opacity: .84; }
