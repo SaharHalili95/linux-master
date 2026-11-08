@@ -3,7 +3,7 @@
 [![Tests](https://github.com/SaharHalili95/linux-master/actions/workflows/tests.yml/badge.svg)](https://github.com/SaharHalili95/linux-master/actions/workflows/tests.yml)
 [![Live site](https://img.shields.io/badge/live-saharhalili95.github.io%2Flinux--master-b4f36b)](https://saharhalili95.github.io/linux-master/)
 
-A Linux command-line trainer that runs entirely in the browser, in English and Hebrew. It drills commands with spaced repetition, checks typed answers by running them in a simulated shell, and ends with 12 terminal missions shaped like the first levels of OverTheWire Bandit. It is an installable, offline-capable PWA with no server, no account and no build step.
+A Linux course that runs entirely in the browser, in English and Hebrew. It has two modes: **Learn**, a phone-first course from your first command to certification, and **Trivia**, the original command trainer with spaced repetition and 12 terminal missions shaped like the first levels of OverTheWire Bandit. It is an installable, offline-capable PWA with no server, no account and no build step.
 
 **Live:** https://saharhalili95.github.io/linux-master/
 
@@ -14,7 +14,17 @@ A Linux command-line trainer that runs entirely in the browser, in English and H
   <img src="docs/screenshots/mission-terminal-en.jpg" width="200" alt="Mission 6 solved with find in the simulated terminal">
 </p>
 
-## Features
+## Learn mode
+
+- **93 short units in 10 parts and about 3,000 exercises,** from your first command to every LPIC-1 v5.0 objective, plus topics from RHCSA, LFCS, Linux Essentials, SUSE SCA and CompTIA Linux+.
+- **Six certification tracks.** Pick one and see only its units: LPIC-1 (71 units), RHCSA (56), LFCS (49), Linux Essentials (47), SUSE SCA (43) or CompTIA Linux+ (76). Progress is saved for each track.
+- **Six mock exams,** one per certification. LPIC-1 has 60 questions, a 90-minute timer and a 500/800 pass mark.
+- **No invented output.** Answers run in the simulated shell or come from output recorded on real Ubuntu, AlmaLinux and openSUSE machines.
+- **Your data stays yours.** Progress stays in the browser, with a backup file you can save and restore.
+
+The code is in [`prototype/`](prototype/README.md) and the unit list is in [`materials/curriculum.md`](materials/curriculum.md).
+
+## Trivia mode
 
 - **8 levels, about 1,100 questions:** 46 commands asked in both directions, all 450 usage lines from the Bandit guide, 75 pipe and workflow scenarios, and 30 Bandit-specific tools.
 - **Choice or typing, one tap to switch.** Typed answers are normalised (flag order, merged flags like `-la`, quoting, spacing). If the text still differs, the command runs in the simulated shell and is accepted when its output matches the reference answer.
@@ -53,11 +63,12 @@ flowchart LR
 
 ## Testing
 
-Every push runs three CI jobs, and GitHub Pages deploys only after all of them pass.
+Every push runs four CI jobs, and GitHub Pages deploys only after all of them pass.
 
 | Job | What it checks |
 | --- | --- |
-| **browser** | About 380 Playwright tests on 4 devices (desktop Chrome, iPhone 13 WebKit, Pixel 7, iPhone SE): game flow, review scheduling, typing checks with hundreds of generated variations, both languages, offline and update flow, layout overflow, size budget, and **axe WCAG 2.1 AA** on every screen in both languages |
+| **browser** | About 570 Playwright tests on 4 devices (desktop Chrome, iPhone 13 WebKit, Pixel 7, iPhone SE): game flow, review scheduling, typing checks with hundreds of generated variations, both languages, offline and update flow, layout overflow, size budget, and **axe WCAG 2.1 AA** on every screen in both languages |
+| **course** | Plays all 11 parts of Learn mode to the end in Chromium, one parallel job per part |
 | **ubuntu-answers** | Runs every correct and wrong answer of levels 3-8 on real Ubuntu 24.04 in Docker. Then a **differential test** runs 570 commands both in the simulator and in Ubuntu and requires identical output, plus a safety check that none of the 190 wrong options is accepted by output |
 | **quality** | ESLint, html-validate, and Lighthouse CI with hard thresholds (performance 90, accessibility, best practices and SEO 100; currently 98/100/100/100) |
 
