@@ -1,0 +1,3 @@
+# Sixth run for unit 96: an inner shell keeps the Killed message, with its changing PID, out of the output.
+# packages: coreutils
+p14-killed	true	bash -c 'timeout -s KILL 1 sleep 9; echo "exit: $?"' 2>/dev/null
