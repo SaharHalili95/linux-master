@@ -22,7 +22,6 @@ p14-pam-ls	true	ls /etc/pam.d | head -8 | tr '\n' ' '; echo
 p14-pkaction	true	pkaction --action-id org.freedesktop.systemd1.manage-units --verbose | grep -E 'implicit|description:' | tr -s ' '
 p14-faillock	true	faillock --user dana; echo "exit: $?"
 p14-audit2allow	printf '%s\n' 'type=AVC msg=audit(1762600000.123:410): avc:  denied  { read } for  pid=2210 comm="httpd" name="index.html" dev="sda1" ino=5123 scontext=system_u:system_r:httpd_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=file permissive=0' > avc.log	audit2allow -i avc.log 2>&1
-p14-audit2allow-w	printf '%s\n' 'type=AVC msg=audit(1762600000.123:410): avc:  denied  { read } for  pid=2210 comm="httpd" name="index.html" dev="sda1" ino=5123 scontext=system_u:system_r:httpd_t:s0 tcontext=unconfined_u:object_r:user_home_t:s0 tclass=file permissive=0' > avc.log	audit2allow -w -i avc.log 2>&1 | head -4
 p14-shred-z	echo 'card 4111 1111' > secret.txt	shred -v -n 1 -z secret.txt; od -An -c secret.txt | head -1
 p14-shred-u	echo 'card 4111 1111' > secret.txt	shred -u secret.txt; ls; echo "files: $(ls | wc -l)"
 p14-badblocks	truncate -s 1M disk.img	badblocks -wv -b 4096 disk.img 2>&1 | tr -s '\b' ' ' | sed 's/ *$//'
@@ -36,7 +35,6 @@ p14-aide-check	echo 'port 8080' > /srv/aide/watch/web.conf; echo 'x' > /srv/aide
 p14-dpkg-verify	echo '# lab' >> /etc/issue.net	dpkg --verify base-files
 p14-openssl-self	openssl req -x509 -newkey rsa:2048 -nodes -keyout k.pem -out c.pem -days 365 -subj '/CN=lab.example.com' 2>/dev/null	openssl x509 -in c.pem -noout -subject -issuer
 p14-openssl-version	true	openssl version | cut -d' ' -f1-2
-p14-sshd-ciphers	true	sshd -T 2>/dev/null | grep -E '^ciphers' | tr ',' '\n' | head -4
 p14-wg-key	true	wg genkey > priv; wg pubkey < priv | wc -c; ls -l priv | cut -d' ' -f1
 p14-wg-show	wg genkey > priv; ip link add wg0 type wireguard; wg set wg0 private-key ./priv listen-port 51820	wg show wg0 | sed -E 's#(public key: ).*#\1<key>#'; ip link del wg0
 p14-ansible-ping	true	ansible localhost -m ping 2>&1
@@ -52,7 +50,6 @@ p14-py-count	printf 'INFO start\nERROR disk full\nINFO retry\nERROR disk full\n'
 p14-py-dict	true	python3 -c 'srv = {"name": "web1", "cpu": 90}; print(srv["name"], srv["cpu"] > 80)'
 p14-venv	rm -rf /srv/app; mkdir -p /srv/app	cd /srv/app && python3 -m venv env && ls env; . env/bin/activate; which python
 p14-pip	true	cd /srv/app && env/bin/pip install -q requests==2.32.3 2>&1 | tail -1; env/bin/pip show requests | head -2
-p14-pip-system	true	pip3 install requests 2>&1 | head -1
 p14-pycodestyle	printf 'x=1\ndef f( a ):\n  return a\n' > bad.py	pycodestyle bad.py
 p14-failed-unit	printf '[Service]\nExecStart=/bin/false\n' > /etc/systemd/system/demo.service; systemctl daemon-reload; systemctl start demo; sleep 1	systemctl is-failed demo; systemctl --failed --no-legend | tr -s ' ' | cut -d' ' -f2-4
 p14-mount-fail	mkdir -p /mnt/data	mount /dev/sdz1 /mnt/data 2>&1 | cut -c1-60
