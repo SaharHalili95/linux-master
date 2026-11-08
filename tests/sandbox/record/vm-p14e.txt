@@ -1,0 +1,6 @@
+# Fifth run for units 94 and 96: hides Ansible's warnings and the PID in the Killed message, so the output is stable and short.
+# packages: ansible-core
+p14-ansible-facts	true	ansible localhost -m setup 2>/dev/null | grep '"ansible_distribution"'
+p14-playbook	mkdir -p /srv/pb; printf -- '- hosts: localhost\n  tasks:\n    - name: Write the banner\n      ansible.builtin.copy:\n        dest: /srv/pb/banner.txt\n        content: "Authorized users only\\n"\n' > site.yml	ansible-playbook site.yml 2>/dev/null | grep -E '^(ok|changed)'
+p14-playbook-again	printf -- '- hosts: localhost\n  tasks:\n    - name: Write the banner\n      ansible.builtin.copy:\n        dest: /srv/pb/banner.txt\n        content: "Authorized users only\\n"\n' > site.yml	ansible-playbook site.yml 2>/dev/null | grep -E '^(ok|changed)'
+p14-killed	true	(timeout -s KILL 1 sleep 9) 2>/dev/null; echo "exit: $?"
