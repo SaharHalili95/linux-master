@@ -576,28 +576,38 @@ test('the owner can fix a question\'s spacing only, see it at once, send it to b
   expect(await page.evaluate(() => window.opened)).toBeNull();
 });
 
-test('the terminal completes names with Tab and brings commands back with the arrow keys', async ({ page }) => {
+test('the terminal completes names with Tab, brings commands back, and can start over', async ({ page, isMobile }) => {
   await page.goto('./prototype/');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
   await page.reload();
   await page.evaluate(() => { startLesson('u6-boss', [{ ...UNIT_6.boss.exercises[1], fx: homeFixture }]); });
   const input = page.locator('.term-input input');
+  const keys = page.locator('.term-key.kb');
+  if (isMobile) await expect(keys).toHaveCount(3); else await expect(keys.first()).toBeHidden();
   await input.fill('cat lo');
-  await page.click('.term-key >> nth=0');
+  if (isMobile) await keys.nth(0).click(); else await input.press('Tab');
   await expect(input).toHaveValue('cat logs/');
   await input.press('Tab');
   await expect(input).toHaveValue('cat logs/app.log ');
   await input.fill('cat p');
   await input.press('Tab');
   await expect(input).toHaveValue('cat p');
-  await input.fill('cut -d" " -f 2 logs/app.log');
+  const restart = page.locator('.term-key.restart');
+  await expect(restart).toBeHidden();
+  await input.fill('cd logs');
   await input.press('Enter');
   await expect(input).toHaveValue('');
-  await page.click('.term-key >> nth=1');
-  await expect(input).toHaveValue('cut -d" " -f 2 logs/app.log');
+  await expect(page.locator('.term-input .ps1')).toContainText('logs');
+  if (isMobile) await keys.nth(1).click(); else await input.press('ArrowUp');
+  await expect(input).toHaveValue('cd logs');
   await expect(input).toBeFocused();
   await input.press('ArrowDown');
   await expect(input).toHaveValue('');
+  await restart.click();
+  await expect(page.locator('.term-input .ps1')).not.toContainText('logs');
+  await expect(page.locator('.term-scroll')).toBeEmpty();
+  await expect(restart).toBeHidden();
+  await expect(page.locator('#checkBtn')).toBeDisabled();
 });
 
 test('progress can be saved to a backup file and restored on a fresh device', async ({ page }) => {
