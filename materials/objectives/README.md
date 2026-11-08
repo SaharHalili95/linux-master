@@ -1,5 +1,7 @@
 # Official exam objectives, mapped to units
 
+The objectives and exam names belong to their owners (LPI, Red Hat, the Linux Foundation, SUSE and CompTIA). They are kept here only to check that the course covers each topic. This project is not affiliated with any of them, and anything here will be removed on request.
+
 Downloaded 2026-11-01 from the official pages. Each entry lists the units (from [../curriculum.md](../curriculum.md)) that teach it.
 
 | File | Exam | Source | Entries |

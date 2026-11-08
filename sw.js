@@ -1,5 +1,5 @@
-const CACHE = 'linux-master-v29';
-const FILES = ['./', './index.html', './styles.css?v=29', './shell.js?v=29', './data/missions.js?v=29', './app.js?v=29', './data/content.js?v=29', './data/content.en.js?v=29', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png?v=29'];
+const CACHE = 'linux-master-v30';
+const FILES = ['./', './index.html', './styles.css?v=30', './shell.js?v=30', './data/missions.js?v=30', './app.js?v=30', './data/content.js?v=30', './data/content.en.js?v=30', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png?v=30'];
 const LEARN = 'linux-master-learn';
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 

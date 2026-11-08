@@ -82,6 +82,10 @@ A weekly job also checks that every link to the official Bandit pages is still a
 - **Phones.** The stats row overflowed on iPhone SE, and long answers overflowed narrow screens.
 - **Mixed languages.** A scan for Hebrew characters in the English UI found sentences assembled from Hebrew fragments.
 
+## Legal
+
+Linux Master is an independent project and is not affiliated with LPI, Red Hat, the Linux Foundation, SUSE, CompTIA or OverTheWire. Certification names are marks of their owners. See the [legal, privacy and accessibility page](https://saharhalili95.github.io/linux-master/prototype/legal.html).
+
 ## Run locally
 
 ```bash
