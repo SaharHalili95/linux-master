@@ -87,3 +87,4 @@
 @media (max-width:640px){.top-meta .tagline,.top-meta .status-dot{display:none}}
 @media (max-width:400px){.brand .version{display:none}.mode-switch .mode{padding:4px 8px;font-size:12px}}
 @media (max-width:360px){.brand .brand-name{display:none}}
+footer a{color:inherit;text-underline-offset:3px}
