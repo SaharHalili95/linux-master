@@ -20,12 +20,12 @@ async function solve(page, lang = 'he') {
     for (const key of pairs) { await page.locator(`.pair.cmd[data-key="${key}"]`).click(); await page.locator(`.pair.mean[data-key="${key}"]`).click(); }
   }
   if (ex.type === 'terminal') {
-    for (const c of await page.evaluate(() => L.ex.solve)) { await page.fill('.term-input input', c); await page.press('.term-input input', 'Enter'); }
+    for (const c of await page.evaluate(() => L.ex.solve)) { await page.fill('.term-input textarea', c); await page.press('.term-input textarea', 'Enter'); }
     if (await page.evaluate(() => !!L.ex.ask)) await page.fill('#askAnswer', await page.evaluate(() => L.expected));
   }
   if (ex.type === 'scenario') await page.fill('#scenarioCmd', await page.evaluate(() => L.ex.accept[0]));
   if (ex.type === 'boss') {
-    for (const c of [`ls -a ${ex.boss.dir}`, `cat ${ex.boss.dir}/.code`]) { await page.fill('.term-input input', c); await page.press('.term-input input', 'Enter'); }
+    for (const c of [`ls -a ${ex.boss.dir}`, `cat ${ex.boss.dir}/.code`]) { await page.fill('.term-input textarea', c); await page.press('.term-input textarea', 'Enter'); }
     await expect(page.locator('.goals li.done')).toHaveCount(2);
     await expect(page.locator('.term')).toContainText(`The password is: ${ex.boss.word}`);
     await expect(page.locator('#exPrompt')).toContainText(`cat ${ex.boss.dir}/.code`);
@@ -581,7 +581,7 @@ test('the terminal completes names with Tab, brings commands back, and can start
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
   await page.reload();
   await page.evaluate(() => { startLesson('u6-boss', [{ ...UNIT_6.boss.exercises[1], fx: homeFixture }]); });
-  const input = page.locator('.term-input input');
+  const input = page.locator('.term-input textarea');
   const keys = page.locator('.term-key.kb');
   if (isMobile) await expect(keys).toHaveCount(3); else await expect(keys.first()).toBeHidden();
   await input.fill('cat lo');
@@ -702,14 +702,47 @@ test('at phone width no exercise scrolls sideways and no command run carries hal
   expect(found.broken, 'command runs with half a pair').toEqual([]);
 });
 
+test('a long command wraps in the terminal, Enter runs it, and typing keeps the terminal above the keyboard', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => startLesson('u6-boss', [{ ...UNIT_6.boss.exercises[1], fx: homeFixture }]));
+  const input = page.locator('.term-input textarea');
+  await input.fill('grep -E "(full|timeout)$" logs/app.log | sort | uniq -c | head -n 20 | tail -n 5 | cat');
+  await expect.poll(() => input.evaluate(e => e.offsetHeight)).toBeGreaterThan(24);
+  expect(await input.evaluate(e => e.scrollWidth <= e.clientWidth && e.scrollHeight <= e.clientHeight)).toBe(true);
+  await input.focus();
+  await page.evaluate(() => { Object.defineProperty(window, 'visualViewport', { value: { height: 400, offsetTop: 0, scale: 1, addEventListener() {} }, configurable: true }); fitLesson(); });
+  await expect(page.locator('#lesson')).toHaveClass(/typing/);
+  const gap = await page.evaluate(() => 400 - document.querySelector('.term.live').getBoundingClientRect().bottom);
+  expect(gap).toBeLessThan(40);
+  await input.press('Enter');
+  await expect(input).toHaveValue('');
+  await expect(page.locator('.term-scroll .term-line')).toHaveCount(1);
+});
+
+test('a grep task that needs an anchor rejects the same command without it', async ({ page }) => {
+  await page.goto('./prototype/');
+  const weak = await page.evaluate(() => {
+    const out = [];
+    const passes = (ex, cmds) => { const sh = new Shell((ex.fx || homeFixture)()); for (const c of ex.setup || []) sh.run(c); return ex.goal(sh, cmds.map(cmd => { const r = sh.run(cmd); return { cmd, out: (r.out + r.err).replace(/\n$/, '') }; })); };
+    for (const u of COURSE) for (const l of [...(u.lessons || []), ...(u.boss ? [u.boss] : [])]) for (const ex of l.exercises || []) {
+      if (ex.type !== 'terminal' || !ex.solve) continue;
+      ex.solve.forEach((c, i) => { if (!/\bgrep\b/.test(c)) return; const m = c.replace(/\$(["')])/g, '$1').replace(/(["'(|])\^/g, '$1'); if (m !== c && passes(ex, ex.solve.map((x, j) => (j === i ? m : x)))) out.push(c); });
+    }
+    return out;
+  });
+  expect(weak).toEqual([]);
+});
+
 test('every region has its name, text and scene, and readable colors', async ({ page }) => {
   await page.goto('./prototype/');
   await expect(page.locator('.region')).toHaveCount(await page.evaluate(() => new Set(COURSE.map(u => u.section)).size));
   await expect(page.locator('#stage .region-scene')).toHaveCount(1);
   await expect(page.locator('#stage .topbar #livesChip')).toBeVisible();
-  await page.evaluate(() => [...document.querySelectorAll('.region')].at(-1).scrollIntoView());
   const last = await page.evaluate(() => +[...document.querySelectorAll('.region')].at(-1).dataset.part);
-  await expect(page.locator('#stage')).toHaveAttribute('data-part', String(last));
+  await expect(async () => { // The path also scrolls itself to the current step while fonts load.
+    await page.evaluate(() => [...document.querySelectorAll('.region')].at(-1).scrollIntoView());
+    await expect(page.locator('#stage')).toHaveAttribute('data-part', String(last), { timeout: 500 });
+  }).toPass();
   expect(await page.locator('#stage').evaluate(e => e.getBoundingClientRect().top)).toBe(0);
   await page.locator('.tabbar button[data-tab="profile"]').click();
   await expect(page.locator('.app > .topbar #livesChip')).toBeVisible();
