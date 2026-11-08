@@ -637,12 +637,12 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
   const log = []; L.term = { sh, log };
   const box = el('div', 'term live'); box.dir = 'ltr'; const out = el('div', 'term-scroll');
   const form = el('form', 'term-input'); const ps = el('span', 'ps1', promptFor(sh.cwd));
-  const input = el('textarea'); input.rows = 1; input.setAttribute('aria-label', t('command')); input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off'); input.enterKeyHint = 'send'; input.placeholder = t('command');
+  const input = el('textarea'); input.rows = 1; input.setAttribute('aria-label', t('command')); input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off'); input.setAttribute('autocorrect', 'off'); input.enterKeyHint = 'send'; input.placeholder = t('command');
   form.append(ps, input); box.append(out, form);
   // The field is a textarea so a long command wraps instead of being cut; the first line starts after the prompt.
   const grow = () => { input.style.height = 'auto'; input.style.height = `${input.scrollHeight}px`; box.scrollTop = box.scrollHeight; };
   const fit = () => { input.style.textIndent = `${ps.offsetWidth + 8}px`; grow(); };
-  new ResizeObserver(fit).observe(ps); new ResizeObserver(grow).observe(form);
+  const seen = new ResizeObserver(() => requestAnimationFrame(fit)); seen.observe(ps); seen.observe(box);
   let back = TERM_HISTORY.length;
   const recall = step => {
     back = Math.min(TERM_HISTORY.length, Math.max(0, back + step));
@@ -683,7 +683,7 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
   box.append(keys);
   form.onsubmit = e => { e.preventDefault(); run(); };
   function run() {
-    const cmd = input.value.trim(); input.value = ''; grow(); if (!cmd || L.answered) return;
+    const cmd = input.value.replace(/[\u201c\u201d\u201e]/g, '"').replace(/[\u2018\u2019]/g, "'").trim(); input.value = ''; grow(); if (!cmd || L.answered) return;
     const row = el('div', 'term-line'); row.append(el('span', 'ps1', promptFor(sh.cwd)), el('span', 'typed', cmd)); out.append(row);
     let text;
     try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { text = err instanceof ShellUnsupported ? t('unsupported', cmd.split(/\s+/)[0]) : String(err.message); }
@@ -703,6 +703,7 @@ function fitLesson() {
   const on = !!vv && !box.hidden && vv.scale < 1.05 && innerHeight - vv.height > 120 && !!document.activeElement?.closest('.term-input');
   box.classList.toggle('typing', on);
   box.style.height = on ? `${vv.height}px` : ''; box.style.top = on ? `${vv.offsetTop}px` : ''; box.style.bottom = on ? 'auto' : '';
+  if (on) { const term = box.querySelector('.term.live'); term.scrollTop = term.scrollHeight; }
 }
 visualViewport?.addEventListener('resize', fitLesson); visualViewport?.addEventListener('scroll', fitLesson);
 $('lesson').addEventListener('focusin', fitLesson); $('lesson').addEventListener('focusout', () => setTimeout(fitLesson));
