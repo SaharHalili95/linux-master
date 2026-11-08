@@ -167,7 +167,7 @@ function openLives() { renderLives(); $('livesSheet').hidden = false; clearInter
 // The Trivia questions live on as light practice. They load on first use, so the app itself stays small.
 let triviaReady;
 function loadTrivia() {
-  triviaReady ||= Promise.all(['content', 'content.en'].map(name => new Promise((ok, fail) => { const tag = document.createElement('script'); tag.src = `../data/${name}.js?v=29`; tag.onload = ok; tag.onerror = fail; document.head.append(tag); })));
+  triviaReady ||= Promise.all(['content', 'content.en'].map(name => new Promise((ok, fail) => { const tag = document.createElement('script'); tag.src = `../data/${name}.js?v=30`; tag.onload = ok; tag.onerror = fail; document.head.append(tag); })));
   return triviaReady;
 }
 function triviaExercises(count) {
