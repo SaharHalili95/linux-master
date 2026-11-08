@@ -1,0 +1,11 @@
+# Third run for units 93-96: hashing, exit codes of killed processes, a Python built-in module and an HTTP health check.
+# Same format as vm-p14.txt. A fresh VM. The PID of a killed process is masked with sed.
+# packages: curl
+p14-sha256	printf 'backup ok\n' > msg.txt	sha256sum msg.txt | cut -c1-16; printf 'backup OK\n' | sha256sum | cut -c1-16
+p14-hmac	printf 'backup ok\n' > msg.txt	openssl dgst -sha256 -hmac key1 msg.txt | sed 's/.*= //' | cut -c1-16; openssl dgst -sha256 -hmac key2 msg.txt | sed 's/.*= //' | cut -c1-16
+p14-killed	true	{ bash -c 'kill -9 $$'; echo "exit: $?"; } 2>&1 | sed -E 's/[0-9]+ Killed/<pid> Killed/; s/^.*: line/line/'
+p14-segv	true	{ bash -c 'kill -SEGV $$'; echo "exit: $?"; } 2>&1 | sed -E 's/[0-9]+ Segmentation/<pid> Segmentation/; s/^.*: line/line/'
+p14-path	true	PATH=/nonexistent; ls; echo "exit: $?"
+p14-py-module	true	python3 -c 'import json, platform; print(json.dumps({"os": platform.system()}))'
+p14-health	setsid nohup python3 -m http.server 8080 >/dev/null 2>&1 </dev/null &	sleep 1; curl -s -o /dev/null -w '%{http_code}\n' localhost:8080/; curl -s -o /dev/null -w '%{http_code}\n' localhost:8080/nope
+p14-health-down	true	curl -s -o /dev/null -w '%{http_code}\n' localhost:9099/; echo "exit: $?"
