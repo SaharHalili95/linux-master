@@ -717,6 +717,11 @@ test('a long command wraps in the terminal, Enter runs it, and typing keeps the 
   await input.press('Enter');
   await expect(input).toHaveValue('');
   await expect(page.locator('.term-scroll .term-line')).toHaveCount(1);
+  for (let i = 0; i < 6; i++) { await input.fill('cat logs/app.log'); await input.press('Enter'); }
+  const seen = await page.evaluate(() => { const q = document.getElementById('exPrompt').getBoundingClientRect(), f = document.querySelector('.term-input').getBoundingClientRect(); return q.top >= 0 && f.bottom <= 400; });
+  expect(seen).toBe(true);
+  await input.fill('echo \u201chello\u201d'); await input.press('Enter');
+  await expect(page.locator('.term-scroll .term-out').last()).toHaveText('hello');
 });
 
 test('a grep task that needs an anchor rejects the same command without it', async ({ page }) => {
