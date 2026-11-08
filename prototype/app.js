@@ -637,21 +637,32 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
   const log = []; L.term = { sh, log };
   const box = el('div', 'term live'); box.dir = 'ltr'; const out = el('div', 'term-scroll');
   const form = el('form', 'term-input'); const ps = el('span', 'ps1', promptFor(sh.cwd));
-  const input = el('input'); input.setAttribute('aria-label', t('command')); input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off'); input.enterKeyHint = 'send'; input.placeholder = t('command');
+  const input = el('textarea'); input.rows = 1; input.setAttribute('aria-label', t('command')); input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off'); input.enterKeyHint = 'send'; input.placeholder = t('command');
   form.append(ps, input); box.append(out, form);
+  // The field is a textarea so a long command wraps instead of being cut; the first line starts after the prompt.
+  const grow = () => { input.style.height = 'auto'; input.style.height = `${input.scrollHeight}px`; box.scrollTop = box.scrollHeight; };
+  const fit = () => { input.style.textIndent = `${ps.offsetWidth + 8}px`; grow(); };
+  const seen = new ResizeObserver(() => requestAnimationFrame(fit)); seen.observe(ps); seen.observe(box);
   let back = TERM_HISTORY.length;
   const recall = step => {
     back = Math.min(TERM_HISTORY.length, Math.max(0, back + step));
-    input.value = TERM_HISTORY[back] ?? ''; input.setSelectionRange(input.value.length, input.value.length);
+    input.value = TERM_HISTORY[back] ?? ''; input.setSelectionRange(input.value.length, input.value.length); grow();
   };
   const tab = () => {
     const { value, list } = completeWord(sh, input.value);
-    input.value = value; input.setSelectionRange(value.length, value.length);
+    input.value = value; input.setSelectionRange(value.length, value.length); grow();
     if (list.length > 1) { out.append(el('pre', 'term-out', list.join('  '))); box.scrollTop = box.scrollHeight; }
   };
   input.onkeydown = e => {
     const act = { Tab: tab, ArrowUp: () => recall(-1), ArrowDown: () => recall(1) }[e.key];
     if (act) { e.preventDefault(); act(); }
+    if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); run(); }
+  };
+  // A phone keyboard may insert the new line without a usable key event, and a paste can carry several.
+  input.oninput = () => {
+    const v = input.value;
+    if (v.includes('\n')) { input.value = v.replace(/\n+$/, '').replace(/\n/g, ' '); if (v.endsWith('\n')) { run(); return; } }
+    grow();
   };
   // Phone keyboards have no Tab or arrow keys. pointerdown is cancelled so the keyboard stays open.
   const keys = el('div', 'term-keys');
@@ -664,14 +675,15 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
   const restart = key('term-key restart', t('termRestart'), () => {
     if (L.answered) return;
     sh = new Shell(ex.fx()); for (const c of ex.setup || []) sh.run(c);
-    L.term.sh = sh; log.length = 0; out.replaceChildren(); input.value = ''; ps.textContent = promptFor(sh.cwd);
+    L.term.sh = sh; log.length = 0; out.replaceChildren(); input.value = ''; ps.textContent = promptFor(sh.cwd); grow();
     L.value = ''; restart.hidden = true; if (ex.type === 'terminal' && !ex.ask) setCan(false); onRun(log);
   }, 'termRestart');
   restart.hidden = true;
   keys.append(key('term-key kb', 'Tab', tab, 'keyTab'), restart, key('term-key kb', '↑', () => recall(-1), 'keyUp'), key('term-key kb', '↓', () => recall(1), 'keyDown'));
   box.append(keys);
-  form.onsubmit = e => {
-    e.preventDefault(); const cmd = input.value.trim(); input.value = ''; if (!cmd || L.answered) return;
+  form.onsubmit = e => { e.preventDefault(); run(); };
+  function run() {
+    const cmd = input.value.trim(); input.value = ''; grow(); if (!cmd || L.answered) return;
     const row = el('div', 'term-line'); row.append(el('span', 'ps1', promptFor(sh.cwd)), el('span', 'typed', cmd)); out.append(row);
     let text;
     try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { text = err instanceof ShellUnsupported ? t('unsupported', cmd.split(/\s+/)[0]) : String(err.message); }
@@ -680,11 +692,20 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
     ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
     restart.hidden = !ex.fx;
     L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal' && !ex.ask) setCan(true); onRun(log);
-  };
+  }
   if (ex.hint) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(box, h); } else root.append(box);
   // Never steal focus from a field the learner already moved to.
-  setTimeout(() => { if (document.activeElement?.tagName !== 'INPUT') input.focus({ preventScroll: true }); }, 50);
+  setTimeout(() => { if (!['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) input.focus({ preventScroll: true }); }, 50);
 }
+// iPhone keeps the page under the keyboard: while typing in the terminal the lesson takes only the visible part, so the terminal sits right above the keys.
+function fitLesson() {
+  const vv = window.visualViewport, box = $('lesson');
+  const on = !!vv && !box.hidden && vv.scale < 1.05 && innerHeight - vv.height > 120 && !!document.activeElement?.closest('.term-input');
+  box.classList.toggle('typing', on);
+  box.style.height = on ? `${vv.height}px` : ''; box.style.top = on ? `${vv.offsetTop}px` : ''; box.style.bottom = on ? 'auto' : '';
+}
+visualViewport?.addEventListener('resize', fitLesson); visualViewport?.addEventListener('scroll', fitLesson);
+$('lesson').addEventListener('focusin', fitLesson); $('lesson').addEventListener('focusout', () => setTimeout(fitLesson));
 const CHECK = {
   choice: (ex, v) => ex.plain ? { ok: v === '0', solution: tr(ex.options[0]), why: tr(ex.why?.[v]) || '' } : { ok: v === ex.answer, solution: ex.answer, why: tr(ex.why?.[v]) || '' },
   sentence: (ex, v) => ({ ok: v === ex.answer, solution: tr(ex.text).replace('___', ex.answer) }),
@@ -849,7 +870,7 @@ $('restoreFile').onchange = e => { const file = e.target.files[0]; e.target.valu
 $('resetBtn').onclick = () => { if (confirm(t('resetConfirm'))) { S = loadState(null); save(); renderTop(); renderProfile(); toast(t('resetDone')); } };
 document.addEventListener('keydown', e => {
   if ($('lesson').hidden || !L) return;
-  if (e.target.tagName === 'INPUT') return;
+  if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
   if (e.key === 'Enter' && !$('checkBtn').disabled) { e.preventDefault(); onFootButton(); return; }
   const n = Number(e.key); if (!L.answered && n >= 1 && n <= 9) $('exBody').querySelectorAll('.opt')[n - 1]?.click();
 });

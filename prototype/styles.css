@@ -145,8 +145,9 @@ button { cursor: pointer; }
 .file-peek pre { margin: 0; font: 600 15px/1.5 var(--mono); text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; }
 .term-out { margin: 0 0 4px; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--term-ink); }
 .term.live { min-height: 96px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-end; }
-.term-input { display: flex; align-items: center; gap: 2px; }
-.term-input input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #fff; font: 700 16px var(--mono); padding: 4px 0; caret-color: var(--term-green); }
+.term-input { position: relative; }
+.term-input .ps1 { position: absolute; top: 0; left: 0; font-size: 15px; line-height: 24px; white-space: pre; pointer-events: none; }
+.term-input textarea { display: block; width: 100%; box-sizing: border-box; margin: 0; padding: 0; background: transparent; border: 0; outline: 0; resize: none; overflow: hidden; color: #fff; font: 700 16px/24px var(--mono); overflow-wrap: anywhere; caret-color: var(--term-green); }
 .term-keys { display: flex; gap: 8px; margin-top: 8px; }
 .term-key { background: #ffffff14; color: #fff; border: 1px solid #ffffff2a; border-radius: 8px; font: 700 14px var(--mono); padding: 6px 12px; min-height: 34px; cursor: pointer; }
 .term-keys .restart { margin-inline: auto; }
@@ -154,7 +155,7 @@ button { cursor: pointer; }
 @media (hover: hover) and (pointer: fine) { .term-key.kb { display: none; } .term-keys .restart { margin-inline: 0; } }
 .term-key[hidden] { display: none; }
 .term-key:active { background: #ffffff30; }
-.term-input input::placeholder { color: #ffffff55; text-align: left; font-family: var(--font); font-weight: 500; }
+.term-input textarea::placeholder { color: #ffffff55; text-align: left; font-family: var(--font); font-weight: 500; }
 .hint-link { border: 0; background: none; color: var(--blue-ink); font-weight: 800; padding: 4px 0; }
 .hint { color: var(--muted); border: 2px dashed var(--line); border-radius: 12px; padding: 10px 12px; }
 
@@ -307,6 +308,13 @@ button { cursor: pointer; }
 .path-jump button { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: #16213af0; color: var(--ink); font-size: 20px; cursor: pointer; }
 #learn:not(.active) .path-jump { display: none; }
 .term-keys .restart { font-family: var(--font); }
+.lesson.typing .lesson-top { padding-top: 8px; }
+.lesson.typing .lesson-main { display: flex; flex-direction: column; padding-top: 4px; padding-bottom: 8px; }
+.lesson.typing #exBody { margin-top: auto; display: flex; flex-direction: column; }
+.lesson.typing .term { margin-bottom: 0; }
+.lesson.typing .hint-link, .lesson.typing .hint { order: -1; align-self: flex-start; margin-bottom: 8px; }
+.lesson.typing #foot { padding: 8px 16px; }
+.lesson.typing #foot.idle:has(#checkBtn:disabled) { display: none; }
 .bubble { min-width: 0; }
 .teach-head { min-width: 0; flex-wrap: wrap; }
 .teach-head .cmd { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
