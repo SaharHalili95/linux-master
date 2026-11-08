@@ -139,7 +139,7 @@ test('the Trivia | Learn switch moves between the two modes, with no beta card l
   await page.click('#modeLearn');
   await expect(page).toHaveURL(/\/prototype\/$/);
   await expect(page.locator('.node.current')).toBeVisible();
-  await expect(page.locator('.mode-switch .mode.on')).toHaveText('🎓 Learn');
+  await expect(page.locator('.mode-switch .mode.on')).toHaveText('Learn');
   await page.click('.mode-switch a.mode');
   await expect(page.locator('.level-card')).toHaveCount(8);
 });

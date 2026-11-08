@@ -77,9 +77,9 @@ const save = () => { try { localStorage.setItem(STORE, JSON.stringify(S)); } cat
 const liveStreak = () => (S.lastDay === dayKey() || S.lastDay === dayKey(-1)) ? S.streak : 0;
 const questDay = () => (S.quests.day === dayKey() ? S.quests : (S.quests = { day: dayKey(), xp: 0, perfect: 0, combo: 0, claimed: [] }));
 const QUESTS = [
-  { id: 'xp', icon: '⚡', text: 'qXp', goal: 30 },
-  { id: 'perfect', icon: '🎯', text: 'qPerfect', goal: 1 },
-  { id: 'combo', icon: '🔥', text: 'qCombo', goal: 5 },
+  { id: 'xp', icon: 'bolt', text: 'qXp', goal: 30 },
+  { id: 'perfect', icon: 'target', text: 'qPerfect', goal: 1 },
+  { id: 'combo', icon: 'flame', text: 'qCombo', goal: 5 },
 ];
 
 // Sound: short synthesized tones, no audio files.
@@ -124,7 +124,8 @@ const NODE_PLAN = [['L0', 'lesson', 0], ['L1', 'lesson', 1], ['c1', 'chest'], ['
 const unitNodes = unit => unit.exam ? [{ key: unitKey(unit, 'exam'), kind: 'exam', unit }] : NODE_PLAN.map(([id, kind, i]) => ({ key: unitKey(unit, id), kind, i, unit }));
 const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: unit.fixture || unitFixture }));
 const OFFSETS = [0, 52, 78, 52, 0, -52, -78, -52];
-const ICONS = { lesson: '★', chest: '🎁', boss: '$_', exam: '📝', done: '✓', lock: '🔒' };
+const icon = name => { const i = el('span', `ic ic-${name}`); i.setAttribute('aria-hidden', 'true'); return i; };
+const ICONS = { lesson: 'star', chest: 'gift', exam: 'note', done: 'check', lock: 'lock' };
 // A certification track keeps only the units tagged for that exam, so a learner who already holds another
 // certification skips the rest. Progress is shared, so switching tracks loses nothing.
 const inTrack = (u, track = S.track) => !track || u.exams?.some(e => e.startsWith(track));
@@ -142,7 +143,7 @@ function renderPath() {
     const txt = el('div'); txt.append(el('div', 'unit-kicker', t('kicker', unit.section, unit.unit)), el('h2', '', tr(unit.title)), el('div', 'unit-sub', tr(unit.subtitle)));
     const exams = [['L', 'LPIC-1'], ['R', 'RHCSA'], ['F', 'LFCS']].filter(([k]) => unit.exams?.some(e => e.startsWith(k)));
     if (exams.length) { const chips = el('div', 'exam-chips'); for (const [, name] of exams) chips.append(el('span', 'exam-chip', name)); txt.append(chips); }
-    banner.append(txt, el('div', 'unit-book', unit.locked ? '🔒' : '📘')); root.append(banner);
+    const book = el('div', 'unit-book'); book.append(icon(unit.locked ? 'lock' : 'book')); banner.append(txt, book); root.append(banner);
     const list = el('ol', 'nodes');
     const nodes = unit.locked ? NODE_PLAN.map(([id, kind]) => ({ key: unitKey(unit, id), kind: kind === 'boss' ? 'boss' : 'lesson', unit, lockedUnit: true })).filter(n => n.key !== unitKey(unit, 'c1')) : unitNodes(unit);
     let lessonNo = 0;
@@ -150,7 +151,7 @@ function renderPath() {
       const li = el('li', 'node-row'); li.style.setProperty('--x', `${OFFSETS[i % OFFSETS.length]}px`);
       const state = n.lockedUnit ? 'locked' : S.done.includes(n.key) ? 'done' : n.key === current ? 'current' : 'locked';
       const b = el('button', `node ${n.kind} ${state}`); b.type = 'button';
-      b.textContent = state === 'done' && n.kind !== 'chest' ? ICONS.done : state === 'locked' && n.kind === 'lesson' ? ICONS.lock : ICONS[n.kind];
+      if (n.kind === 'boss' && state !== 'done') b.textContent = '$_'; else b.replaceChildren(icon(state === 'done' && n.kind !== 'chest' ? ICONS.done : state === 'locked' && n.kind === 'lesson' ? ICONS.lock : ICONS[n.kind]));
       if (n.kind === 'boss') b.dir = 'ltr';
       if (n.kind === 'lesson') b.append(el('span', 'node-num', String(++lessonNo)));
       b.setAttribute('aria-label', n.lockedUnit ? (n.kind === 'lesson' ? `${lessonNo} · ${t('locked')}` : t('locked')) : n.kind === 'lesson' ? t('lessonN', n.i + 1, tr(unit.lessons[n.i].title)) : n.kind === 'chest' ? t('chest') : n.kind === 'exam' ? tr(unit.title) : tr(unit.boss.title));
@@ -322,7 +323,7 @@ function answer(ok, solution = '', why = '') {
   }
   if (ok && L.ex.retry) S.mistakes = S.mistakes.filter(id => id !== L.ex.uid);
   $('bar').style.width = `${(L.correct / Math.max(1, L.total)) * 100}%`;
-  $('comboTag').textContent = L.combo >= 2 ? `🔥 ${L.combo}` : '';
+  $('comboTag').replaceChildren(...(L.combo >= 2 ? [icon('flame'), ` ${L.combo}`] : []));
   setCan(true); $('checkBtn').focus({ preventScroll: true }); save();
 }
 function quitLesson() { if (L && (L.correct || L.mistakes) && !confirm(t('quitConfirm'))) return; closeOverlays(); }
@@ -536,7 +537,7 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
     L.value = ''; restart.hidden = true; if (ex.type === 'terminal' && !ex.ask) setCan(false); onRun(log);
   }, 'termRestart');
   restart.hidden = true;
-  keys.append(key('term-key kb', '⇥ Tab', tab, 'keyTab'), restart, key('term-key kb', '↑', () => recall(-1), 'keyUp'), key('term-key kb', '↓', () => recall(1), 'keyDown'));
+  keys.append(key('term-key kb', 'Tab', tab, 'keyTab'), restart, key('term-key kb', '↑', () => recall(-1), 'keyUp'), key('term-key kb', '↓', () => recall(1), 'keyDown'));
   box.append(keys);
   form.onsubmit = e => {
     e.preventDefault(); const cmd = input.value.trim(); input.value = ''; if (!cmd || L.answered) return;
@@ -607,7 +608,7 @@ function showStreak() {
   $('streakText').textContent = S.streak === 1 ? t('streakFirst') : t('streakMore', S.streak);
   const week = $('week'); week.innerHTML = '';
   const names = t('days');
-  for (let i = -6; i <= 0; i++) { const d = new Date(); d.setDate(d.getDate() + i); const on = S.days.includes(dayKey(i)); const c = el('div', `day${on ? ' on' : ''}${i === 0 ? ' today' : ''}`); c.append(el('span', 'dot', on ? '✓' : ''), el('span', '', names[d.getDay()])); week.append(c); }
+  for (let i = -6; i <= 0; i++) { const d = new Date(); d.setDate(d.getDate() + i); const on = S.days.includes(dayKey(i)); const c = el('div', `day${on ? ' on' : ''}${i === 0 ? ' today' : ''}`); c.append(Object.assign(el('span', 'dot'), { className: `dot${on ? ' ic ic-check' : ''}` }), el('span', '', names[d.getDay()])); week.append(c); }
   SFX.win(); $('streakBtn').focus();
 }
 
@@ -629,7 +630,7 @@ function renderQuests() {
     const val = Math.min(x.goal, q[x.id] || 0), li = el('li', `quest${val >= x.goal ? ' done' : ''}`);
     const bar = el('div', 'qbar'); const fill = el('div', 'qfill'); fill.style.width = `${(val / x.goal) * 100}%`; bar.append(fill, el('span', 'qnum', `${val} / ${x.goal}`));
     const body = el('div', 'qbody'); body.append(el('div', 'qtext', t(x.text)), bar);
-    li.append(el('div', 'qicon', x.icon), body, el('div', 'qreward', val >= x.goal ? '✓' : '💎10')); list.append(li);
+    const qi = el('div', 'qicon'); qi.append(icon(x.icon)); const reward = el('div', 'qreward'); reward.append(icon(val >= x.goal ? 'check' : 'gem'), val >= x.goal ? '' : '10'); li.append(qi, body, reward); list.append(li);
   }
 }
 function renderProfile() {
@@ -718,7 +719,11 @@ $('langBtn').onclick = () => {
 applyLanguage();
 showTab('learn');
 history.scrollRestoration = 'manual';
+let scrollMoved = false;
+for (const type of ['touchstart', 'wheel', 'keydown']) addEventListener(type, () => { scrollMoved = true; }, { once: true, passive: true });
 toHere('auto');
+// Web fonts change heading heights after the first layout, which would leave the current lesson off screen.
+document.fonts?.ready.then(() => { if (!scrollMoved) toHere('auto'); });
 if ('serviceWorker' in navigator && window.isSecureContext) {
   navigator.serviceWorker.register('../sw.js').catch(() => {});
   // Loaded through the worker means every file is kept, so the main page may send learners here offline too.
