@@ -130,6 +130,21 @@ const ICONS = { lesson: 'star', chest: 'gift', exam: 'note', done: 'check', lock
 // certification skips the rest. Progress is shared, so switching tracks loses nothing.
 const inTrack = (u, track = S.track) => !track || u.exams?.some(e => e.startsWith(track));
 
+function heroBar() {
+  const r = rankOf(S.xp), box = el('div', 'hero-bar'), face = el('div', 'hero-face'), info = el('div', 'hero-info'), bar = el('div', 'hero-progress'), fill = el('div');
+  face.innerHTML = mascot('happy');
+  fill.style.width = `${r.to ? Math.round(((S.xp - r.from) / (r.to - r.from)) * 100) : 100}%`; bar.append(fill);
+  info.append(el('div', 'hero-rank', t('rankLine', r.level, r.name)), bar, Object.assign(el('div', 'hero-xp', r.to ? `${S.xp} / ${r.to} XP` : `${S.xp} XP`), { dir: 'ltr' }));
+  box.append(face, info); return box;
+}
+// The lesson and its end screen take the colors of the region they belong to.
+function paintRegion(part) {
+  const r = REGIONS[part] || REGIONS[3];
+  for (const id of ['lesson', 'end']) for (const [k, v] of Object.entries({ '--r-ground': r.ground, '--r-panel': r.panel, '--r-accent': r.accent, '--accent': r.accent, '--on-accent': REGION_ON_ACCENT, '--bg': r.ground, '--surface': r.panel, '--soft': r.panel, '--muted': REGION_MUTE, '--ink': REGION_INK, '--line': '#ffffff33', '--line-strong': '#ffffff55' })) $(id).style.setProperty(k, v);
+}
+const unitOfKey = key => { const m = /^u(\d+)-/.exec(key); return COURSE.find(u => u.unit === (m ? +m[1] : /^(L\d|c1|boss)$/.test(key) ? 1 : -1)); };
+// The command a lesson teaches first is the power it gives.
+const powerOf = (unit, lesson) => { const cmd = unit?.lessons?.[lesson]?.exercises.find(e => e.type === 'teach')?.cmd; return cmd && cmd.length <= 12 ? cmd : ''; };
 function regionBlock(part) {
   const r = REGIONS[part], box = el('section', 'region');
   for (const [k, v] of Object.entries({ ground: r.ground, panel: r.panel, accent: r.accent })) box.style.setProperty(`--r-${k}`, v);
@@ -155,6 +170,7 @@ function renderPath() {
   const units = COURSE.filter(u => inTrack(u));
   const order = units.filter(u => !u.locked).flatMap(unitNodes);
   const current = order.find(n => !S.done.includes(n.key))?.key;
+  root.append(heroBar());
   let part, region;
   for (const unit of units) {
     if (unit.section !== part) { part = unit.section; region = regionBlock(part); root.append(region); }
@@ -177,6 +193,7 @@ function renderPath() {
       b.onclick = () => openPop(b, n, state);
       if (state === 'current') { const tip = el('div', 'start-tip', n.kind === 'chest' ? t('open') : t('start')); li.append(tip); li.classList.add('tipped'); }
       li.append(b);
+      if (n.kind === 'lesson' && (state === 'done' || state === 'current') && powerOf(unit, n.i)) li.append(Object.assign(el('span', 'node-power', powerOf(unit, n.i)), { dir: 'ltr' }));
       if (i === 2 && !unit.locked) { const m = el('div', 'path-mascot'); m.innerHTML = mascot(S.done.includes(n.key) ? 'happy' : 'idle'); li.append(m); }
       list.append(li);
     });
@@ -218,6 +235,7 @@ let L = null;
 function startLesson(key, exercises, opts = {}) {
   const queue = exercises.map((ex, i) => ({ ...ex, uid: `${key}.${i}` }));
   L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
+  paintRegion(unitOfKey(key)?.section);
   $('lesson').hidden = false; document.body.classList.add('in-lesson'); next();
 }
 function startBoss(unit, key) {
@@ -586,8 +604,14 @@ const CHECK = {
 };
 
 // ---------- End of lesson ----------
+function winMoment(part, rankBefore, power) {
+  const moon = $('endMoon'), now = rankOf(S.xp), r = part || 3, up = now.level > rankBefore;
+  moon.innerHTML = `<svg viewBox="0 0 390 250" aria-hidden="true">${moonSvg(r, 195, 118, 96)}</svg>`;
+  $('endRank').textContent = up ? t('rankUp', now.name) : power ? t('newPower', power) : ''; $('endRank').dir = 'auto';
+}
 function finishExam() {
   clearInterval(L.timer);
+  const rankBefore = rankOf(S.xp).level;
   const x = L.opts.exam, score = L.correct / Math.max(1, L.total), passed = score >= x.pass, secs = Math.round((Date.now() - L.start) / 1000);
   const misses = {}; for (const r of L.opts.results) if (!r.ok) misses[tr(r.topic)] = (misses[tr(r.topic)] || 0) + 1;
   const weakest = Object.entries(misses).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name);
@@ -595,6 +619,7 @@ function finishExam() {
   save();
   $('lesson').hidden = true; $('end').hidden = false; $('comboTag').textContent = '';
   $('endMascot').innerHTML = mascot(passed ? 'party' : 'idle');
+  winMoment(unitOfKey(L.key)?.section, rankBefore, '');
   $('endTitle').textContent = passed ? t('examPassed') : t('examFailed');
   $('endXp').textContent = passed ? 50 : 0; $('endAcc').textContent = `${Math.round(score * 100)}%`;
   $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
@@ -605,6 +630,7 @@ function finishExam() {
 }
 function finishLesson() {
   if (L.opts.exam) return finishExam();
+  const rankBefore = rankOf(S.xp).level, wasDone = S.done.includes(L.key);
   const perfect = L.mistakes === 0 && !L.matchMiss, secs = Math.round((Date.now() - L.start) / 1000);
   const xp = L.opts.boss ? 25 : L.opts.replay || L.opts.practice ? 5 : 10 + (perfect ? 5 : 0);
   const firstToday = S.lastDay !== dayKey();
@@ -616,6 +642,7 @@ function finishLesson() {
   save();
   $('lesson').hidden = true; $('end').hidden = false;
   $('endMascot').innerHTML = mascot('party');
+  winMoment(unitOfKey(L.key)?.section, rankBefore, wasDone || L.opts.practice ? '' : powerOf(unitOfKey(L.key), +(/L(\d)$/.exec(L.key)?.[1] ?? -1)));
   $('endTitle').textContent = L.opts.boss ? t('bossWon') : perfect ? t('perfect') : t('done');
   $('endXp').textContent = xp; $('endAcc').textContent = `${Math.round((L.correct / Math.max(1, L.correct + L.mistakes)) * 100)}%`;
   $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;

@@ -14,6 +14,10 @@ const REGIONS = {
 };
 const REGION_INK = '#f5f8ff', REGION_MUTE = '#d6e0f0', REGION_ON_ACCENT = '#0a0d1a';
 
+// The hero's ranks, earned by XP.
+const RANKS = [[0, T('טירון', 'Recruit')], [100, T('חוקר טרמינל', 'Terminal Explorer')], [300, T('צייד טקסט', 'Text Hunter')], [600, T('שומר הקבצים', 'File Keeper')], [1000, T('שומר ההרשאות', 'Keeper of Permissions')], [1500, T('מאלף תהליכים', 'Process Tamer')], [2200, T('רב־חובל חבילות', 'Package Captain')], [3000, T('נווט רשתות', 'Network Navigator')], [4000, T('מהנדס סקריפטים', 'Script Engineer')], [5200, T('מגן החומה', 'Wall Guardian')], [6500, T('אדריכל מערכות', 'Systems Architect')], [8000, T('מאסטר לינוקס', 'Linux Master')]];
+function rankOf(xp) { let i = 0; while (i + 1 < RANKS.length && xp >= RANKS[i + 1][0]) i++; return { level: i + 1, name: tr(RANKS[i][1]), from: RANKS[i][0], to: RANKS[i + 1]?.[0] ?? null }; }
+
 // Each scene draws its far and near layers; the last shape fades into the region's ground.
 const seeded = seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const sceneBlocks = (rnd, y, min, max, fill, extra = () => '') => { let s = '', x = -6; while (x < 390) { const w = 34 + rnd() * 34, h = min + rnd() * (max - min); s += `<rect x="${x.toFixed(0)}" y="${(y - h).toFixed(0)}" width="${w.toFixed(0)}" height="${(h + 300 - y).toFixed(0)}" fill="${fill}"/>` + extra(x, y - h, w, h); x += w + 6; } return s; };

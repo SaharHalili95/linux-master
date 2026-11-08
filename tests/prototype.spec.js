@@ -713,6 +713,18 @@ test('every region has its name, text and scene, and readable colors', async ({ 
   for (const [name, a, b, min] of pairs) { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); expect((x + 0.05) / (y + 0.05), name).toBeGreaterThanOrEqual(min); }
 });
 
+test('the hero earns ranks, a lesson gives a power, and the win screen shows the moon', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, xp: 995 })); });
+  await page.reload();
+  await expect(page.locator('.hero-rank')).toContainText('4');
+  expect(await page.evaluate(() => [rankOf(0).level, rankOf(99).level, rankOf(100).level, rankOf(999999).level, rankOf(999999).to])).toEqual([1, 1, 2, 12, null]);
+  await page.evaluate(() => { const u = COURSE.find(x => x.unit === 22); startLesson('u22-L0', [{ ...u.lessons[0].exercises.find(e => e.type === 'choice'), fx: u.fixture || homeFixture }]); L.correct = 1; finishLesson(); });
+  await expect(page.locator('#endMoon svg')).toBeVisible();
+  await expect(page.locator('#endRank')).toContainText(await page.evaluate(() => rankOf(S.xp).name));
+  expect(await page.evaluate(() => getComputedStyle(document.getElementById('end')).backgroundColor)).toBe('rgb(20, 26, 82)');
+});
+
 test('Pages deploys every file Learn mode loads', () => {
   const root = path.join(__dirname, '..');
   const html = fs.readFileSync(path.join(root, 'prototype/index.html'), 'utf8');
