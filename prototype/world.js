@@ -9,7 +9,7 @@ const REGIONS = {
   7: { scene: 'factory', ground: '#3a1f10', panel: '#4b2a16', far: '#57321b', near: '#472814', accent: '#ff9a3d', name: T('מפעל הסקריפטים', 'The Script Works'), blurb: T('מה שעשיתם פעמיים, המכונה תעשה מעכשיו לבד.', 'What you did twice, the machine now does alone.') },
   8: { scene: 'wall', ground: '#470f16', panel: '#5a141c', far: '#6a1a23', near: '#551319', accent: '#ffb02e', name: T('חומת האש', 'The Firewall'), blurb: T('מאחורי החומה יש מי לשמור עליו. הגיע תורכם.', 'Behind the wall is someone to protect. Your turn.') },
   9: { scene: 'stacks', ground: '#3a1238', panel: '#4a1a47', far: '#572153', near: '#461a43', accent: '#ff9ec4', name: T('הארכיון', 'The Archive'), blurb: T('הידע שמבדיל בין מי שעבר למי שכמעט.', 'The knowledge between passing and almost.') },
-  10: { scene: 'horizon', ground: '#06372f', panel: '#0a463d', far: '#0f5548', near: '#0c473d', accent: '#b79cff', name: T('גבולות חדשים', 'New Frontiers'), blurb: T('עוד הסמכות, עוד כלים, עוד שטח לכבוש.', 'More certifications, more tools, more ground to take.') },
+  10: { scene: 'horizon', ground: '#06372f', panel: '#0a463d', far: '#0f5548', near: '#0c473d', accent: '#b79cff', name: T('גבולות חדשים', 'New Frontiers'), blurb: T('עוד הסמכות, עוד כלים, עוד עולמות לגלות.', 'More certifications, more tools, more worlds to explore.') },
   11: { scene: 'arena', ground: '#0a0a0f', panel: '#16161f', far: '#1e1e2a', near: '#15151e', accent: '#ffc53d', name: T('הזירה', 'The Arena'), blurb: T('בלי רמזים ועם שעון. כאן מגלים שאתם מוכנים.', 'No hints, a clock running. Here you find out you are ready.') },
 };
 const REGION_INK = '#f5f8ff', REGION_MUTE = '#d6e0f0', REGION_ON_ACCENT = '#0a0d1a';
