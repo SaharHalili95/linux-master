@@ -649,6 +649,10 @@ test('Hebrew text keeps a leading dot or colon inside its command, and sentence 
   expect(await runs('התבנית "ERROR|WARN" מוצאת')).toEqual(['"ERROR|WARN"']);
   expect(await runs('הריצו grep -E "^a|b$" a.txt עכשיו')).toEqual(['grep -E "^a|b$" a.txt']);
   expect(await runs('התבנית ^08:1 מוצאת')).toEqual(['^08:1']);
+  expect(await runs('חלק מהמערכת (builtin), alias, או קובץ')).toEqual(['builtin', 'alias']);
+  expect(await runs('הריצו $(date) עכשיו')).toEqual(['$(date)']);
+  expect(await runs('ב־todo.txt (2 שורות) יש')).toEqual(['todo.txt', '2']);
+  expect(await runs('כונן "D" אין')).toEqual(['"D"']);
   expect(await runs('לכן ap?le מוצאת')).toEqual(['ap?le']);
   expect(await runs('מה עושה grep -c? ומה עוד')).toEqual(['grep -c']);
   expect(await runs('התבנית "[0-9]" ו־"*.txt"')).toEqual(['"[0-9]"', '"*.txt"']);
@@ -676,6 +680,26 @@ test('merging two devices keeps everything the learner earned', async ({ page })
   expect(merged[2]).toMatchObject({ xp: 300, streak: 9, quests: { xp: 7, claimed: ['q1', 'q2'] } });
   expect(merged[3]).toMatchObject({ xp: 300, done: ['L0', 'L1'], streak: 4, track: 'R' });
   expect(merged[4]).toBe(3);
+});
+
+test('at phone width no exercise scrolls sideways and no command run carries half a pair @content', async ({ page }) => {
+  test.setTimeout(240_000);
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto('./prototype/');
+  const found = await page.evaluate(async () => {
+    const out = { wide: [], broken: [] };
+    const half = t => t.length > 1 && ((t.match(/\(/g) || []).length !== (t.match(/\)/g) || []).length || (t.match(/"/g) || []).length % 2 === 1);
+    for (const u of COURSE.filter(x => !x.exam && !x.locked)) for (const [id, ex] of [...u.lessons.flatMap((l, li) => l.exercises.map((e, i) => [`${u.unit}/L${li}.${i}`, e])), ...(u.boss.exercises || []).map((e, i) => [`${u.unit}/boss.${i}`, e])]) {
+      for (const v of [ex.prompt, ex.text, ex.hint, ...(ex.options || [])]) { const t = tr(v); if (typeof t !== 'string') continue; const d = document.createElement('div'); d.append(bidi(t)); for (const b of d.querySelectorAll('bdi')) if (half(b.textContent)) out.broken.push(`${id}: ${b.textContent}`); }
+      startLesson('scan', [{ ...ex, fx: u.fixture || unitFixture }]);
+      await new Promise(r => setTimeout(r, 0));
+      const m = document.getElementById('lessonMain');
+      if (m.scrollWidth > m.clientWidth + 1) out.wide.push(`${id} +${m.scrollWidth - m.clientWidth}`);
+    }
+    return out;
+  });
+  expect(found.wide, 'exercises that scroll sideways').toEqual([]);
+  expect(found.broken, 'command runs with half a pair').toEqual([]);
 });
 
 test('Pages deploys every file Learn mode loads', () => {
