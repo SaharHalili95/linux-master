@@ -123,27 +123,62 @@ const unitKey = (unit, id) => (unit.unit === 1 ? id : `u${unit.unit}-${id}`);
 const NODE_PLAN = [['L0', 'lesson', 0], ['L1', 'lesson', 1], ['c1', 'chest'], ['L2', 'lesson', 2], ['L3', 'lesson', 3], ['boss', 'boss']];
 const unitNodes = unit => unit.exam ? [{ key: unitKey(unit, 'exam'), kind: 'exam', unit }] : NODE_PLAN.map(([id, kind, i]) => ({ key: unitKey(unit, id), kind, i, unit }));
 const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: unit.fixture || unitFixture }));
-const OFFSETS = [0, 52, 78, 52, 0, -52, -78, -52];
+const OFFSETS = [0, 66, 66, 0, -66, -66];
 const icon = name => { const i = el('span', `ic ic-${name}`); i.setAttribute('aria-hidden', 'true'); return i; };
 const ICONS = { lesson: 'star', chest: 'gift', exam: 'note', done: 'check', lock: 'lock' };
 // A certification track keeps only the units tagged for that exam, so a learner who already holds another
 // certification skips the rest. Progress is shared, so switching tracks loses nothing.
 const inTrack = (u, track = S.track) => !track || u.exams?.some(e => e.startsWith(track));
 
+function heroBar() {
+  const r = rankOf(S.xp), box = el('div', 'hero-bar'), face = el('div', 'hero-face'), info = el('div', 'hero-info'), bar = el('div', 'hero-progress'), fill = el('div');
+  face.innerHTML = mascot('happy');
+  fill.style.width = `${r.to ? Math.round(((S.xp - r.from) / (r.to - r.from)) * 100) : 100}%`; bar.append(fill);
+  info.append(el('div', 'hero-rank', t('rankLine', r.level, r.name)), bar, Object.assign(el('div', 'hero-xp', r.to ? `${S.xp} / ${r.to} XP` : `${S.xp} XP`), { dir: 'ltr' }));
+  box.append(face, info); return box;
+}
+// The lesson and its end screen take the colors of the region they belong to.
+function paintRegion(part) {
+  const r = REGIONS[part] || REGIONS[3];
+  for (const id of ['lesson', 'end']) for (const [k, v] of Object.entries({ '--r-ground': r.ground, '--r-panel': r.panel, '--r-accent': r.accent, '--accent': r.accent, '--on-accent': REGION_ON_ACCENT, '--bg': r.ground, '--surface': r.panel, '--soft': r.panel, '--muted': REGION_MUTE, '--ink': REGION_INK, '--line': '#ffffff33', '--line-strong': '#ffffff55' })) $(id).style.setProperty(k, v);
+}
+const unitOfKey = key => { const m = /^u(\d+)-/.exec(key); return COURSE.find(u => u.unit === (m ? +m[1] : /^(L\d|c1|boss)$/.test(key) ? 1 : -1)); };
+// The command a lesson teaches first is the power it gives.
+const powerOf = (unit, lesson) => { const cmd = unit?.lessons?.[lesson]?.exercises.find(e => e.type === 'teach')?.cmd; return cmd && cmd.length <= 12 ? cmd : ''; };
+function regionBlock(part) {
+  const r = REGIONS[part], box = el('section', 'region');
+  for (const [k, v] of Object.entries({ ground: r.ground, panel: r.panel, accent: r.accent })) box.style.setProperty(`--r-${k}`, v);
+  const hero = el('div', 'region-hero'); hero.innerHTML = regionScene(part);
+  const h = el('h2', `part-header${tr(r.name).length > 11 ? ' long' : ''}`, tr(r.name)); h.dataset.part = part;
+  hero.append(h, el('p', 'region-blurb', tr(r.blurb))); box.append(hero);
+  return box;
+}
+// Lines between the path's nodes, measured after layout so they follow any screen width.
+function drawTraces() {
+  for (const list of document.querySelectorAll('#path .nodes')) {
+    list.querySelector('.traces')?.remove();
+    const box = list.getBoundingClientRect(); if (!box.width) continue;
+    const nodes = [...list.querySelectorAll('.node')].map(n => { const q = n.getBoundingClientRect(); return { x: q.left - box.left + q.width / 2, y: q.top - box.top + q.height / 2, done: n.classList.contains('done') }; });
+    const svg = nodes.slice(1).map((n, i) => `<path class="${nodes[i].done ? 'lit' : ''}" d="M${nodes[i].x} ${nodes[i].y}L${n.x} ${n.y}"/>`).join('');
+    list.insertAdjacentHTML('afterbegin', `<svg class="traces" width="${box.width}" height="${box.height}" aria-hidden="true">${svg}</svg>`);
+  }
+}
+addEventListener('resize', () => drawTraces());
 function renderPath() {
   const root = $('path'); root.innerHTML = '';
   $('trackName').textContent = TRACK_SHORT[S.track] || t('trackAll');
   const units = COURSE.filter(u => inTrack(u));
   const order = units.filter(u => !u.locked).flatMap(unitNodes);
   const current = order.find(n => !S.done.includes(n.key))?.key;
-  let part;
+  root.append(heroBar());
+  let part, region;
   for (const unit of units) {
-    if (unit.section !== part) { part = unit.section; const h = el('h2', 'part-header', t('partN', part, tr(PARTS[part]))); h.dataset.part = part; root.append(h); }
+    if (unit.section !== part) { part = unit.section; region = regionBlock(part); root.append(region); }
     const banner = el('div', `unit-banner ${unit.color}${unit.locked ? ' locked' : ''}`);
     const txt = el('div'); txt.append(el('div', 'unit-kicker', t('kicker', unit.section, unit.unit)), el('h2', '', tr(unit.title)), el('div', 'unit-sub', tr(unit.subtitle)));
     const exams = [['L', 'LPIC-1'], ['R', 'RHCSA'], ['F', 'LFCS']].filter(([k]) => unit.exams?.some(e => e.startsWith(k)));
     if (exams.length) { const chips = el('div', 'exam-chips'); for (const [, name] of exams) chips.append(el('span', 'exam-chip', name)); txt.append(chips); }
-    const book = el('div', 'unit-book'); book.append(icon(unit.locked ? 'lock' : 'book')); banner.append(txt, book); root.append(banner);
+    const book = el('div', 'unit-book'); book.append(icon(unit.locked ? 'lock' : 'book')); banner.append(txt, book); region.append(banner);
     const list = el('ol', 'nodes');
     const nodes = unit.locked ? NODE_PLAN.map(([id, kind]) => ({ key: unitKey(unit, id), kind: kind === 'boss' ? 'boss' : 'lesson', unit, lockedUnit: true })).filter(n => n.key !== unitKey(unit, 'c1')) : unitNodes(unit);
     let lessonNo = 0;
@@ -158,11 +193,13 @@ function renderPath() {
       b.onclick = () => openPop(b, n, state);
       if (state === 'current') { const tip = el('div', 'start-tip', n.kind === 'chest' ? t('open') : t('start')); li.append(tip); li.classList.add('tipped'); }
       li.append(b);
+      if (n.kind === 'lesson' && (state === 'done' || state === 'current') && powerOf(unit, n.i)) li.append(Object.assign(el('span', 'node-power', powerOf(unit, n.i)), { dir: 'ltr' }));
       if (i === 2 && !unit.locked) { const m = el('div', 'path-mascot'); m.innerHTML = mascot(S.done.includes(n.key) ? 'happy' : 'idle'); li.append(m); }
       list.append(li);
     });
-    root.append(list);
+    region.append(list);
   }
+  drawTraces();
   renderTop();
 }
 function openPop(anchor, n, state) {
@@ -198,6 +235,7 @@ let L = null;
 function startLesson(key, exercises, opts = {}) {
   const queue = exercises.map((ex, i) => ({ ...ex, uid: `${key}.${i}` }));
   L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
+  paintRegion(unitOfKey(key)?.section);
   $('lesson').hidden = false; document.body.classList.add('in-lesson'); next();
 }
 function startBoss(unit, key) {
@@ -566,8 +604,14 @@ const CHECK = {
 };
 
 // ---------- End of lesson ----------
+function winMoment(part, rankBefore, power) {
+  const moon = $('endMoon'), now = rankOf(S.xp), r = part || 3, up = now.level > rankBefore;
+  moon.innerHTML = `<svg viewBox="0 0 390 250" aria-hidden="true">${moonSvg(r, 195, 118, 96)}</svg>`;
+  $('endRank').textContent = up ? t('rankUp', now.name) : power ? t('newPower', power) : ''; $('endRank').dir = 'auto';
+}
 function finishExam() {
   clearInterval(L.timer);
+  const rankBefore = rankOf(S.xp).level;
   const x = L.opts.exam, score = L.correct / Math.max(1, L.total), passed = score >= x.pass, secs = Math.round((Date.now() - L.start) / 1000);
   const misses = {}; for (const r of L.opts.results) if (!r.ok) misses[tr(r.topic)] = (misses[tr(r.topic)] || 0) + 1;
   const weakest = Object.entries(misses).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name);
@@ -575,6 +619,7 @@ function finishExam() {
   save();
   $('lesson').hidden = true; $('end').hidden = false; $('comboTag').textContent = '';
   $('endMascot').innerHTML = mascot(passed ? 'party' : 'idle');
+  winMoment(unitOfKey(L.key)?.section, rankBefore, '');
   $('endTitle').textContent = passed ? t('examPassed') : t('examFailed');
   $('endXp').textContent = passed ? 50 : 0; $('endAcc').textContent = `${Math.round(score * 100)}%`;
   $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
@@ -585,6 +630,7 @@ function finishExam() {
 }
 function finishLesson() {
   if (L.opts.exam) return finishExam();
+  const rankBefore = rankOf(S.xp).level, wasDone = S.done.includes(L.key);
   const perfect = L.mistakes === 0 && !L.matchMiss, secs = Math.round((Date.now() - L.start) / 1000);
   const xp = L.opts.boss ? 25 : L.opts.replay || L.opts.practice ? 5 : 10 + (perfect ? 5 : 0);
   const firstToday = S.lastDay !== dayKey();
@@ -596,6 +642,7 @@ function finishLesson() {
   save();
   $('lesson').hidden = true; $('end').hidden = false;
   $('endMascot').innerHTML = mascot('party');
+  winMoment(unitOfKey(L.key)?.section, rankBefore, wasDone || L.opts.practice ? '' : powerOf(unitOfKey(L.key), +(/L(\d)$/.exec(L.key)?.[1] ?? -1)));
   $('endTitle').textContent = L.opts.boss ? t('bossWon') : perfect ? t('perfect') : t('done');
   $('endXp').textContent = xp; $('endAcc').textContent = `${Math.round((L.correct / Math.max(1, L.correct + L.mistakes)) * 100)}%`;
   $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;

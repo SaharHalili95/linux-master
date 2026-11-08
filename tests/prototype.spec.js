@@ -42,7 +42,8 @@ async function solve(page, lang = 'he') {
 for (const lang of ['he', 'en']) test(`prototype: play the whole unit, chest and boss, with streak, XP and quests (${lang})`, async ({ page }) => {
   test.setTimeout(240_000);
   const errors = [];
-  page.on('pageerror', e => errors.push(String(e)));
+  // WebKit reports a first-visit offline fetch that a navigation cancelled; that fetch is retried on the next visit.
+  page.on('pageerror', e => { if (!String(e).includes('Fetch API cannot load')) errors.push(String(e)); });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./prototype/');
   await page.evaluate(l => { localStorage.clear(); localStorage.setItem('lang', l); }, lang);
@@ -319,7 +320,8 @@ test('a scenario accepts any listed command, however it is spaced, and rejects o
 for (let part = 1; part <= 11; part++) test(`part ${part} can be played to the end, unit after unit @content @part${part}`, async ({ page }) => {
   test.setTimeout(600_000);
   const errors = [];
-  page.on('pageerror', e => errors.push(String(e)));
+  // WebKit reports a first-visit offline fetch that a navigation cancelled; that fetch is retried on the next visit.
+  page.on('pageerror', e => { if (!String(e).includes('Fetch API cannot load')) errors.push(String(e)); });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./prototype/');
   const [before, nodes] = await page.evaluate(p => { const open = COURSE.filter(u => !u.locked); return [open.filter(u => u.section < p).flatMap(unitNodes).map(n => n.key), open.filter(u => u.section === p).flatMap(unitNodes).length]; }, part);
@@ -432,7 +434,7 @@ test('every exercise in every unit is answerable and fully translated @content',
 
 test('corrupted saved progress does not break Learn mode', async ({ page }) => {
   const errors = [];
-  page.on('pageerror', e => errors.push(String(e)));
+  page.on('pageerror', e => { if (!String(e).includes('Fetch API cannot load')) errors.push(String(e)); });
   for (const bad of ['{not json', 'null', '"text"', JSON.stringify({ done: 'L0', days: 5, mistakes: [1, null], quests: null, xp: 'lots', gems: -3, streak: {} })]) {
     await page.goto('./prototype/');
     await page.evaluate(v => { localStorage.clear(); localStorage.setItem('linux-master-proto', v); }, bad);
@@ -700,6 +702,27 @@ test('at phone width no exercise scrolls sideways and no command run carries hal
   });
   expect(found.wide, 'exercises that scroll sideways').toEqual([]);
   expect(found.broken, 'command runs with half a pair').toEqual([]);
+});
+
+test('every region has its name, text and scene, and readable colors', async ({ page }) => {
+  await page.goto('./prototype/');
+  await expect(page.locator('.region')).toHaveCount(await page.evaluate(() => new Set(COURSE.map(u => u.section)).size));
+  await expect(page.locator('.region-scene')).toHaveCount(await page.locator('.region').count());
+  const pairs = await page.evaluate(() => Object.entries(REGIONS).flatMap(([p, r]) => [[`${p} text`, REGION_INK, r.ground, 4.5], [`${p} soft text`, REGION_MUTE, r.panel, 4.5], [`${p} on accent`, REGION_ON_ACCENT, r.accent, 4.5], [`${p} accent`, r.accent, r.ground, 3]]));
+  const lum = hex => { const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  for (const [name, a, b, min] of pairs) { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); expect((x + 0.05) / (y + 0.05), name).toBeGreaterThanOrEqual(min); }
+});
+
+test('the hero earns ranks, a lesson gives a power, and the win screen shows the moon', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, xp: 995 })); });
+  await page.reload();
+  await expect(page.locator('.hero-rank')).toContainText('4');
+  expect(await page.evaluate(() => [rankOf(0).level, rankOf(99).level, rankOf(100).level, rankOf(999999).level, rankOf(999999).to])).toEqual([1, 1, 2, 12, null]);
+  await page.evaluate(() => { const u = COURSE.find(x => x.unit === 22); startLesson('u22-L0', [{ ...u.lessons[0].exercises.find(e => e.type === 'choice'), fx: u.fixture || homeFixture }]); L.correct = 1; finishLesson(); });
+  await expect(page.locator('#endMoon svg')).toBeVisible();
+  await expect(page.locator('#endRank')).toContainText(await page.evaluate(() => rankOf(S.xp).name));
+  expect(await page.evaluate(() => getComputedStyle(document.getElementById('end')).backgroundColor)).toBe('rgb(20, 26, 82)');
 });
 
 test('Pages deploys every file Learn mode loads', () => {
