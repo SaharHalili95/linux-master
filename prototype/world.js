@@ -37,8 +37,8 @@ const SCENES = {
 };
 const mixColor = (hex, to, amount) => '#' + [1, 3, 5].map(i => { const a = parseInt(hex.slice(i, i + 2), 16), b = parseInt(to.slice(i, i + 2), 16); return Math.round(a + (b - a) * amount).toString(16).padStart(2, '0'); }).join('');
 // The signature of the world: a digital moon in the region's color, etched with circuits and carrying the $_ prompt.
-function moonSvg(part, cx, cy, r) {
-  const c = REGIONS[part], rnd = seeded(part * 104729 + 7), id = `moon${part}`, deep = mixColor(c.accent, '#000000', 0.42), etch = mixColor(c.accent, '#000000', 0.24), lit = mixColor(c.accent, '#ffffff', 0.62);
+function moonSvg(part, cx, cy, r, tag = '') {
+  const c = REGIONS[part], rnd = seeded(part * 104729 + 7), id = `moon${part}${tag}`, deep = mixColor(c.accent, '#000000', 0.42), etch = mixColor(c.accent, '#000000', 0.24), lit = mixColor(c.accent, '#ffffff', 0.62);
   const stars = Array.from({ length: 16 }, () => `<circle cx="${(rnd() * 390).toFixed(0)}" cy="${(6 + rnd() * 130).toFixed(0)}" r="${(0.6 + rnd() * 1.1).toFixed(1)}" fill="#fff" opacity="${(0.35 + rnd() * 0.55).toFixed(2)}"/>`).join('');
   const craters = Array.from({ length: 7 }, () => { const a = rnd() * 6.28, d = (0.62 + rnd() * 0.32) * r, x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d, q = r * (0.06 + rnd() * 0.09); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${q.toFixed(1)}" fill="${deep}" opacity=".55"/><path d="M${(x - q * 0.8).toFixed(1)} ${(y + q * 0.45).toFixed(1)}A${q.toFixed(1)} ${q.toFixed(1)} 0 0 0 ${(x + q * 0.8).toFixed(1)} ${(y + q * 0.45).toFixed(1)}" fill="none" stroke="${lit}" stroke-width="1" opacity=".7"/>`; }).join('');
   const traces = [[-0.86, -0.3, -0.42, -0.3, -0.2, -0.56, 0.3, -0.56], [0.86, 0.2, 0.46, 0.2, 0.24, 0.46, -0.34, 0.46], [-0.7, 0.42, -0.5, 0.2, -0.5, -0.02], [0.66, -0.5, 0.5, -0.24, 0.72, -0.24]].map(t => { const pts = []; for (let i = 0; i < t.length; i += 2) pts.push(`${(cx + t[i] * r).toFixed(1)} ${(cy + t[i + 1] * r).toFixed(1)}`); const end = pts[pts.length - 1].split(' '); return `<path d="M${pts.join('L')}" fill="none" stroke="${etch}" stroke-width="1.6"/><circle cx="${end[0]}" cy="${end[1]}" r="2.6" fill="${etch}"/>`; }).join('');
@@ -50,7 +50,8 @@ function moonSvg(part, cx, cy, r) {
 <g clip-path="url(#${id}c)">${craters}${traces}<text x="${cx}" y="${cy + r * 0.2}" text-anchor="middle" direction="ltr" font-family="JetBrains Mono, monospace" font-weight="700" font-size="${r * 0.72}" fill="${mixColor(c.accent, '#000000', 0.62)}">$_</text></g>
 <g transform="rotate(-20 ${cx} ${cy})"><path d="M${cx - o} ${cy}A${o} ${o * 0.3} 0 0 0 ${cx + o} ${cy}" fill="none" stroke="${lit}" stroke-width="2"/><g transform="translate(${cx} ${cy}) scale(1 .3)"><g class="moon-orbit"><circle cx="${o}" r="6" fill="#fff"/><circle cx="${o}" r="11" fill="#fff" opacity=".25"/></g></g></g>`;
 }
+// The moon keeps its size on any width; the land stretches under it, anchored to the bottom edge, behind the rows.
 function regionScene(part) {
-  const c = REGIONS[part], rnd = seeded(part * 7919 + 13), moonX = LANG === 'he' ? 78 : 312;
-  return `<svg class="region-scene" viewBox="0 0 390 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${moonSvg(part, moonX, 88, 58)}${SCENES[c.scene](rnd, c)}</svg>`;
+  const c = REGIONS[part], rnd = seeded(part * 7919 + 13), moonX = LANG === 'he' ? 74 : 316;
+  return `<svg class="stage-moon" width="390" height="300" viewBox="0 0 390 300" aria-hidden="true">${moonSvg(part, moonX, 138, 50, 's')}</svg><svg class="region-scene" viewBox="0 0 390 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><g transform="translate(0 60)">${SCENES[c.scene](rnd, c)}</g></svg>`;
 }

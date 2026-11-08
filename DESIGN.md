@@ -31,6 +31,8 @@ Scenes are drawn in SVG from one small generator, so there are no image download
 
 The owner likes the large moon. Every region keeps it as the recurring signature, in that region's accent color, in the sky of the path and behind the power on the win screen.
 
+On the path the region you are in stays on screen as one scene: moon and region name on top, then lives, streak, gems and the rank bar on the same land. It changes with the region as you scroll.
+
 ## Foundations
 
 - **Type.** Secular One for headings (self-hosted, Hebrew and Latin), Rubik for text, JetBrains Mono only for commands,

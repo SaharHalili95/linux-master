@@ -705,7 +705,14 @@ test('at phone width no exercise scrolls sideways and no command run carries hal
 test('every region has its name, text and scene, and readable colors', async ({ page }) => {
   await page.goto('./prototype/');
   await expect(page.locator('.region')).toHaveCount(await page.evaluate(() => new Set(COURSE.map(u => u.section)).size));
-  await expect(page.locator('.region-scene')).toHaveCount(await page.locator('.region').count());
+  await expect(page.locator('#stage .region-scene')).toHaveCount(1);
+  await expect(page.locator('#stage .topbar #livesChip')).toBeVisible();
+  await page.evaluate(() => [...document.querySelectorAll('.region')].at(-1).scrollIntoView());
+  const last = await page.evaluate(() => +[...document.querySelectorAll('.region')].at(-1).dataset.part);
+  await expect(page.locator('#stage')).toHaveAttribute('data-part', String(last));
+  expect(await page.locator('#stage').evaluate(e => e.getBoundingClientRect().top)).toBe(0);
+  await page.locator('.tabbar button[data-tab="profile"]').click();
+  await expect(page.locator('.app > .topbar #livesChip')).toBeVisible();
   const pairs = await page.evaluate(() => Object.entries(REGIONS).flatMap(([p, r]) => [[`${p} text`, REGION_INK, r.ground, 4.5], [`${p} soft text`, REGION_MUTE, r.panel, 4.5], [`${p} on accent`, REGION_ON_ACCENT, r.accent, 4.5], [`${p} accent`, r.accent, r.ground, 3]]));
   const lum = hex => { const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
   for (const [name, a, b, min] of pairs) { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); expect((x + 0.05) / (y + 0.05), name).toBeGreaterThanOrEqual(min); }

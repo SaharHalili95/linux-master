@@ -131,6 +131,7 @@ const promptFor = cwd => `user@linux:${cwd.startsWith('/home/user') ? '~' + cwd.
 function renderTop() { $('streakN').textContent = liveStreak(); $('gemsN').textContent = S.gems; $('xpN').textContent = S.xp; syncLives(); $('livesN').textContent = S.lives; $('streakChip').classList.toggle('lit', S.lastDay === dayKey()); }
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === name));
+  dockBar(); syncStage(false);
   document.querySelectorAll('.tabbar button[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === name ? 'page' : 'false'));
   closePop(); ({ learn: renderPath, practice: renderPractice, quests: renderQuests, profile: renderProfile })[name]();
 }
@@ -198,13 +199,50 @@ function paintRegion(part) {
 const unitOfKey = key => { const m = /^u(\d+)-/.exec(key); return COURSE.find(u => u.unit === (m ? +m[1] : /^(L\d|c1|boss)$/.test(key) ? 1 : -1)); };
 // The command a lesson teaches first is the power it gives.
 const powerOf = (unit, lesson) => { const cmd = unit?.lessons?.[lesson]?.exercises.find(e => e.type === 'teach')?.cmd; return cmd && cmd.length <= 12 ? cmd : ''; };
-function regionBlock(part) {
+function regionBlock(part, first) {
   const r = REGIONS[part], box = el('section', 'region');
   for (const [k, v] of Object.entries({ ground: r.ground, panel: r.panel, accent: r.accent })) box.style.setProperty(`--r-${k}`, v);
-  const hero = el('div', 'region-hero'); hero.innerHTML = regionScene(part);
-  const h = el('h2', `part-header${tr(r.name).length > 11 ? ' long' : ''}`, tr(r.name)); h.dataset.part = part;
-  hero.append(h, el('p', 'region-blurb', tr(r.blurb))); box.append(hero);
+  box.dataset.part = part;
+  const h = el('h2', `part-header${first ? ' sr' : ''}`, tr(r.name)); h.dataset.part = part;
+  box.append(h);
   return box;
+}
+// The region you are in stays on screen: moon, name and land above, your lives and rank on the same ground.
+function worldStage() {
+  const box = el('div', 'stage'), copy = el('div', 'stage-copy'), rows = el('div', 'stage-rows');
+  box.id = 'stage';
+  copy.append(Object.assign(el('div', 'stage-name'), { ariaHidden: 'true' }), el('p', 'stage-blurb'));
+  rows.append(heroBar());
+  box.append(el('div', 'stage-scenes'), copy, rows);
+  return box;
+}
+function paintStage(part, fade) {
+  const box = $('stage'); if (!box || +box.dataset.part === part) return;
+  const r = REGIONS[part], scenes = box.querySelector('.stage-scenes'), copy = box.querySelector('.stage-copy'), layer = el('div', 'stage-layer'), name = copy.firstChild;
+  box.dataset.part = part;
+  box.style.setProperty('--r-ground', r.ground); box.style.setProperty('--accent', r.accent);
+  name.textContent = tr(r.name); name.classList.toggle('long', tr(r.name).length > 11); copy.lastChild.textContent = tr(r.blurb);
+  layer.innerHTML = regionScene(part);
+  while (scenes.children.length > (fade ? 1 : 0)) scenes.firstChild.remove();
+  scenes.append(layer);
+  if (!fade) return;
+  const motion = { duration: 240, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' };
+  copy.animate({ opacity: [0, 1] }, motion);
+  layer.animate({ opacity: [0, 1] }, motion).onfinish = () => { if (layer.isConnected) while (scenes.firstChild !== layer) scenes.firstChild.remove(); };
+}
+function syncStage(fade = true) {
+  const box = $('stage'); if (!box?.offsetHeight) return;
+  const line = box.getBoundingClientRect().bottom + 1; let part;
+  for (const region of document.querySelectorAll('#path .region')) { if (!part || region.getBoundingClientRect().top <= line) part = +region.dataset.part; else break; }
+  if (part) paintStage(part, fade);
+}
+let stageFrame = 0;
+addEventListener('scroll', () => { stageFrame ||= requestAnimationFrame(() => { stageFrame = 0; syncStage(); }); }, { passive: true });
+// The top row belongs to the scene on the path, and to the page on every other tab.
+function dockBar() {
+  const bar = document.querySelector('.topbar'), stage = $('stage');
+  if (stage && $('learn').classList.contains('active')) stage.querySelector('.stage-rows').prepend(bar);
+  else document.querySelector('.app').prepend(bar);
 }
 // Lines between the path's nodes, measured after layout so they follow any screen width.
 function drawTraces() {
@@ -218,15 +256,16 @@ function drawTraces() {
 }
 addEventListener('resize', () => drawTraces());
 function renderPath() {
+  document.querySelector('.app').prepend(document.querySelector('.topbar'));
   const root = $('path'); root.innerHTML = '';
   $('trackName').textContent = TRACK_SHORT[S.track] || t('trackAll');
   const units = COURSE.filter(u => inTrack(u));
   const order = units.filter(u => !u.locked).flatMap(unitNodes);
   const current = order.find(n => !S.done.includes(n.key))?.key;
-  root.append(heroBar());
+  root.append(worldStage());
   let part, region;
   for (const unit of units) {
-    if (unit.section !== part) { part = unit.section; region = regionBlock(part); root.append(region); }
+    if (unit.section !== part) { part = unit.section; region = regionBlock(part, !region); root.append(region); }
     const banner = el('div', `unit-banner ${unit.color}${unit.locked ? ' locked' : ''}`);
     const txt = el('div'); txt.append(el('div', 'unit-kicker', t('kicker', unit.section, unit.unit)), el('h2', '', tr(unit.title)), el('div', 'unit-sub', tr(unit.subtitle)));
     const exams = [['L', 'LPIC-1'], ['R', 'RHCSA'], ['F', 'LFCS']].filter(([k]) => unit.exams?.some(e => e.startsWith(k)));
@@ -254,6 +293,7 @@ function renderPath() {
   }
   drawTraces();
   renderTop();
+  paintStage(+root.querySelector('.region')?.dataset.part, false); dockBar(); syncStage(false);
 }
 function openPop(anchor, n, state) {
   closePop(); SFX.tap();
@@ -659,7 +699,7 @@ const CHECK = {
 // ---------- End of lesson ----------
 function winMoment(part, rankBefore, power) {
   const moon = $('endMoon'), now = rankOf(S.xp), r = part || 3, up = now.level > rankBefore;
-  moon.innerHTML = `<svg viewBox="0 0 390 250" aria-hidden="true">${moonSvg(r, 195, 118, 96)}</svg>`;
+  moon.innerHTML = `<svg viewBox="0 0 390 250" aria-hidden="true">${moonSvg(r, 195, 118, 96, 'w')}</svg>`;
   $('endRank').textContent = up ? t('rankUp', now.name) : power ? t('newPower', power) : ''; $('endRank').dir = 'auto';
 }
 function finishExam() {
