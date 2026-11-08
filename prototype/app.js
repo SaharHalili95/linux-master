@@ -642,7 +642,7 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
   // The field is a textarea so a long command wraps instead of being cut; the first line starts after the prompt.
   const grow = () => { input.style.height = 'auto'; input.style.height = `${input.scrollHeight}px`; box.scrollTop = box.scrollHeight; };
   const fit = () => { input.style.textIndent = `${ps.offsetWidth + 8}px`; grow(); };
-  new ResizeObserver(fit).observe(ps); new ResizeObserver(grow).observe(form);
+  const seen = new ResizeObserver(() => requestAnimationFrame(fit)); seen.observe(ps); seen.observe(box);
   let back = TERM_HISTORY.length;
   const recall = step => {
     back = Math.min(TERM_HISTORY.length, Math.max(0, back + step));
