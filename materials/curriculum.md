@@ -1,14 +1,17 @@
-# Curriculum: 80 units, from zero to Linux certification
+# Curriculum: 99 units, from zero to Linux certification
 
-Goal (owner's words): a learner who finishes all 80 units can pass the best official Linux certifications. The course covers the union of three exams:
+Goal (owner's words): a learner who finishes the course can pass the best official Linux certifications. The course covers the union of six exams:
 
 - **LPIC-1** v5.0 (LPI, exams 101-500 and 102-500): multiple choice and fill-in. The app can prepare for it almost fully. Tag: `L` + objective, e.g. `L103.7`.
 - **RHCSA** EX200 on RHEL 10 (Red Hat): hands-on tasks. The app teaches all the knowledge; the learner should still practise on a real VM before the exam. Tag: `R`.
 - **LFCS** (Linux Foundation): hands-on tasks, 6 domains. Same caveat. Tag: `F`.
+- **Linux Essentials** 010-200 (LPI). Tag: `E`.
+- **SUSE SCA** in SLES 16. Tag: `S`.
+- **CompTIA Linux+** XK0-006. Tag: `C`.
 
-Shape (Duolingo style), unchanged from units 1-6: **parts → units → lessons**. A unit has 4 lessons of 6-8 exercises, a chest after lesson 2 and a boss. About 31 exercises per unit, about 2,300 in total.
+Shape (Duolingo style), unchanged from units 1-6: **parts → units → lessons**. A unit has 4 lessons of 6-8 exercises, a chest after lesson 2 and a boss. About 31 exercises per unit, about 3,000 in the whole course.
 
-Sim column: ✅ the simulated shell (`shell.js`) runs it · 🟡 needs new simulator commands · 🎞 not simulated: real output recorded in Docker (Ubuntu 24.04 or AlmaLinux 10) plus concept questions. Never invent output.
+Sim column: ✅ the simulated shell (`shell.js`) runs it · 🟡 needs new simulator commands · 🎞 not simulated: real output recorded in Docker (Ubuntu 24.04, AlmaLinux 10 or openSUSE Leap 16.0) plus concept questions. Never invent output.
 
 Unit numbers are permanent: progress is saved per unit number (`u12-L0`), so a unit never moves to another number once it ships.
 
