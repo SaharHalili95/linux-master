@@ -8,17 +8,43 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 // A run may open with dots or a colon when a name follows (.deb, ../logs, :wq), and a vi command keeps its ! (:q!).
 // A quote opens a run only when a command follows, so the closing quote of a Hebrew phrase never swallows what comes next.
 const CODE_RUN = /:[A-Za-z0-9%/]+!?|(?:\.+(?=[A-Za-z0-9/~_-]))?(?:["'](?=\.?[A-Za-z0-9~/$_^*[(\\-])|[\^A-Za-z0-9~/$_<>|*={}[\]#%+&@\\-])(?:[\^A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\ .,:!?()-]*[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\-])?/g;
+// A run must not carry half a pair: "builtin), alias" is two commands around a bracket that belongs to the sentence.
+function balancedPieces(run) {
+  const cuts = new Set(), open = [], quotes = [...run.matchAll(/"/g)].map(q => q.index);
+  for (let i = 0; i < run.length; i++) { if (run[i] === '(') open.push(i); else if (run[i] === ')') { if (open.length) open.pop(); else cuts.add(i); } }
+  open.forEach(i => cuts.add(i));
+  if (quotes.length % 2) cuts.add(run[0] === '"' ? 0 : quotes[quotes.length - 1]);
+  const marks = [...cuts].sort((x, y) => x - y), pieces = [];
+  let from = 0;
+  for (const cut of [...marks, run.length]) {
+    let start = from, end = cut;
+    if (from > 0) while (start < end && /[\s,.:;]/.test(run[start])) start++;
+    if (cut < run.length) while (end > start && /[\s,.:;]/.test(run[end - 1])) end--;
+    if (end > start) pieces.push([start, end]);
+    from = cut + 1;
+  }
+  return pieces;
+}
 function bidi(text) {
   const frag = document.createDocumentFragment(); text = String(text);
-  if (!/[\u0590-\u05FF]/.test(text)) { frag.append(text); return frag; }
-  text = text.replace(/\u200E/g, ''); let last = 0;
+  if (!/[֐-׿]/.test(text)) { frag.append(text); return frag; }
+  text = text.replace(/‎/g, ''); let last = 0;
   for (const m of text.matchAll(CODE_RUN)) {
-    // A Hebrew prefix glued with a maqaf (מ־, ב־, ל־) stays on the same line as its command.
-    const before = text.slice(last, m.index), glued = before.match(/[\u05D0-\u05EA]{1,3}\u05BE$/);
-    frag.append(glued ? before.slice(0, -glued[0].length) : before);
-    const b = document.createElement('bdi'); b.dir = 'ltr'; b.className = m[0].length <= 24 ? 'ltr-run keep' : 'ltr-run'; b.textContent = m[0];
-    if (glued) { const s = el('span', 'glued', glued[0]); s.append(b); frag.append(s); } else frag.append(b);
-    last = m.index + m[0].length;
+    let run = m[0];
+    // A closing bracket is left out of the match; it belongs to the run when the run opened it: $(date), %Cpu(s).
+    if (text[m.index + run.length] === ')' && (run.match(/\(/g) || []).length > (run.match(/\)/g) || []).length) run += ')';
+    for (const [from, to] of balancedPieces(run)) {
+      const start = m.index + from, piece = text.slice(start, m.index + to);
+      // A Hebrew prefix glued with a maqaf (מ־, ב־, ל־) stays on the same line as its command.
+      const before = text.slice(last, start), glued = before.match(/[א-ת]{1,3}־$/);
+      frag.append(glued ? before.slice(0, -glued[0].length) : before);
+      const b = document.createElement('bdi'); b.dir = 'ltr'; b.className = piece.length <= 24 ? 'ltr-run keep' : 'ltr-run'; b.textContent = piece;
+      last = start + piece.length;
+      // Punctuation stays with the command before it, so it never wraps alone onto a new line.
+      const punct = text.slice(last).match(/^[.,:;?!)]+/)?.[0] || '';
+      last += punct.length;
+      if (glued || punct) { const s = el('span', 'glued', glued?.[0] || ''); s.append(b, punct); frag.append(s); } else frag.append(b);
+    }
   }
   frag.append(text.slice(last)); return frag;
 }
@@ -334,7 +360,7 @@ const RENDER = {
   teach(root, ex) {
     const card = el('div', 'teach-card');
     const head = el('div', 'teach-head'); const m = el('div', 'teach-mascot'); m.innerHTML = mascot('happy');
-    const bubble = el('div', 'bubble'); const para = el('p'); para.append(bidi(laidOut(ex, tr(ex.text)))); bubble.append(code(ex.cmd), el('div', 'teach-name', ex.name), para);
+    const bubble = el('div', 'bubble'); const para = el('p'); para.append(bidi(laidOut(ex, tr(ex.text)))); const title = code(ex.cmd); title.classList.toggle('long', ex.cmd.length > 14); bubble.append(title, el('div', 'teach-name', ex.name), para);
     head.append(m, bubble); card.append(head);
     if (ex.demo) {
       const [setup, cmd] = ex.demo, sh = new Shell(ex.fx()), lines = [];
