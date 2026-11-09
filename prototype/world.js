@@ -127,3 +127,56 @@ function startField(cv) {
   addEventListener('scroll', start, { passive: true });
   return { tint: hex => { wanted = rgb(hex); start(); } };
 }
+
+// Energy over the land: currents that run across the screen, and now and then a thin bolt of lightning.
+function startBolts(cv) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return { tint() {} };
+  const ctx = cv.getContext('2d'), R = Math.random;
+  let w = 0, h = 0, color = [255, 179, 71], last = 0, wait = 1400, bolts = [];
+  const streams = Array.from({ length: 6 }, () => ({ y: R(), phase: R() * 6.28, speed: 0.05 + R() * 0.07, amp: 26 + R() * 46, t: R() }));
+  const at = (s, t) => [t * (w + 160) - 80, s.y * h + Math.sin(t * 6 + s.phase) * s.amp];
+  const bright = () => color.map(v => Math.round(v + (255 - v) * 0.65)).join(',');
+  const jag = (x1, y1, x2, y2, rough) => {
+    if (rough < 5) return [[x1, y1], [x2, y2]];
+    const mx = (x1 + x2) / 2 + (R() - 0.5) * rough, my = (y1 + y2) / 2 + (R() - 0.5) * rough;
+    return [...jag(x1, y1, mx, my, rough / 2), ...jag(mx, my, x2, y2, rough / 2).slice(1)];
+  };
+  const strike = () => {
+    const x = 30 + R() * (w - 60), y = h * (0.25 + R() * 0.2), ex = x + (R() - 0.5) * 150, ey = y + 130 + R() * 170, main = jag(x, y, ex, ey, 62), lines = [main];
+    for (let n = 0; n < 2; n++) { const [bx, by] = main[Math.floor(main.length * (0.25 + R() * 0.5))]; lines.push(jag(bx, by, bx + (R() - 0.5) * 110, by + 40 + R() * 70, 26)); }
+    bolts.push({ lines, age: 0, life: 460 });
+  };
+  const trace = line => { ctx.beginPath(); line.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); };
+  const frame = now => {
+    requestAnimationFrame(frame);
+    if (now - last < 33 || !w || document.hidden || document.body.classList.contains('in-lesson') || !document.getElementById('learn').classList.contains('active')) { if (now - last >= 33) last = now; return; }
+    const dt = Math.min(now - last, 80); last = now;
+    ctx.clearRect(0, 0, w, h); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const hue = color.join(','), hot = bright();
+    for (const s of streams) {
+      s.t += (s.speed * dt) / 1000; if (s.t > 1.05) { s.t = -0.05; s.y = R(); }
+      for (let i = 0; i < 14; i++) {
+        const [x1, y1] = at(s, s.t - (i + 1) * 0.012), [x2, y2] = at(s, s.t - i * 0.012), fade = 1 - i / 14;
+        ctx.lineWidth = 1 + 2 * fade; ctx.strokeStyle = `rgba(${hue},${0.6 * fade})`; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      }
+      const [hx, hy] = at(s, s.t);
+      ctx.fillStyle = `rgba(${hot},.95)`; ctx.beginPath(); ctx.arc(hx, hy, 2.4, 0, Math.PI * 2); ctx.fill();
+    }
+    wait -= dt; if (wait <= 0) { strike(); wait = 2200 + R() * 3000; }
+    bolts = bolts.filter(b => (b.age += dt) < b.life);
+    for (const b of bolts) {
+      const k = (1 - b.age / b.life) ** 2;
+      b.lines.forEach((line, i) => {
+        ctx.lineWidth = i ? 3 : 7; ctx.strokeStyle = `rgba(${hue},${0.22 * k})`; trace(line);
+        ctx.lineWidth = i ? 0.9 : 1.7; ctx.strokeStyle = `rgba(${hot},${k})`; trace(line);
+      });
+    }
+  };
+  new ResizeObserver(() => {
+    const box = cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 1.5);
+    w = box.width; h = box.height; if (!w) return;
+    cv.width = w * dpr; cv.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }).observe(cv);
+  requestAnimationFrame(frame);
+  return { tint: hex => { color = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)); } };
+}
