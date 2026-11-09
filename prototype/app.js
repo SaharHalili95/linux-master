@@ -220,7 +220,7 @@ function paintStage(part, fade) {
   const box = $('stage'); if (!box || +box.dataset.part === part) return;
   const r = REGIONS[part], scenes = box.querySelector('.stage-scenes'), copy = box.querySelector('.stage-copy'), layer = el('div', 'stage-layer'), name = copy.firstChild;
   box.dataset.part = part;
-  box.style.setProperty('--r-ground', r.ground); box.style.setProperty('--accent', r.accent);
+  box.style.setProperty('--r-ground', r.ground); box.style.setProperty('--accent', r.accent); FIELD.tint(r.accent);
   name.textContent = tr(r.name); name.classList.toggle('long', tr(r.name).length > 11); copy.lastChild.textContent = tr(r.blurb);
   layer.innerHTML = regionScene(part);
   while (scenes.children.length > (fade ? 1 : 0)) scenes.firstChild.remove();
@@ -236,6 +236,7 @@ function syncStage(fade = true) {
   for (const region of document.querySelectorAll('#path .region')) { if (!part || region.getBoundingClientRect().top <= line) part = +region.dataset.part; else break; }
   if (part) paintStage(part, fade);
 }
+const FIELD = startField($('pathField'));
 let stageFrame = 0;
 addEventListener('scroll', () => { stageFrame ||= requestAnimationFrame(() => { stageFrame = 0; syncStage(); }); }, { passive: true });
 // The top row belongs to the scene on the path, and to the page on every other tab.

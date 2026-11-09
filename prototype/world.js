@@ -55,3 +55,75 @@ function regionScene(part) {
   const c = REGIONS[part], rnd = seeded(part * 7919 + 13), moonX = LANG === 'he' ? 74 : 316;
   return `<svg class="stage-moon" width="390" height="300" viewBox="0 0 390 300" aria-hidden="true">${moonSvg(part, moonX, 138, 50, 's')}</svg><svg class="region-scene" viewBox="0 0 390 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><g transform="translate(0 60)">${SCENES[c.scene](rnd, c)}</g></svg>`;
 }
+
+// The land behind the path: contour lines and orbits that trail the scroll on a damped spring and take the color of the region you are in.
+function startField(cv) {
+  const SCALE = 260, LEVELS = 15, STEP = 0.22, FROM = -1.54;
+  const RINGS = [{ x: 0.04, y: 0.1, r: 120, s: 0.2, a: 0.6, turn: 1 }, { x: 0.97, y: 0.34, r: 155, s: 0.11, a: 2.4, turn: -1 }, { x: 0.5, y: 0.58, r: 80, s: 0.3, a: 4.1, turn: 1 }, { x: 0.08, y: 0.8, r: 175, s: 0.15, a: 1.5, turn: -1 }];
+  // Edge pairs per marching-squares case. Edges: 0 top, 1 right, 2 bottom, 3 left.
+  const SEG = [[], [3, 2], [2, 1], [3, 1], [0, 1], [3, 0, 2, 1], [0, 2], [3, 0], [3, 0], [0, 2], [0, 1, 3, 2], [0, 1], [3, 1], [2, 1], [3, 2], []];
+  const terrain = (x, y, z) => {
+    const wx = x + 0.6 * Math.sin(y * 0.7 + z * 0.9), wy = y + 0.6 * Math.cos(x * 0.6 - z * 0.7);
+    return Math.sin(wx * 1.1 + z * 0.5) * Math.cos(wy * 0.9 - z * 0.35) + 0.55 * Math.sin(wx * 2.1 - wy * 1.3 + z * 0.8) + 0.3 * Math.cos(wy * 3.1 + wx * 0.7 - z * 1.1);
+  };
+  const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  const ctx = cv.getContext('2d'), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, cell = 13;
+  let w = 0, h = 0, cols = 0, rows = 0, grid = new Float32Array(0), raf = 0, last = 0, pos = reduce ? 0 : scrollY - 260, vel = 0, wanted = [255, 179, 71], tint = [...wanted];
+  const contours = major => {
+    ctx.beginPath();
+    for (let n = 0; n < LEVELS; n++) {
+      if ((n % 4 === 0) !== major) continue;
+      const level = FROM + n * STEP;
+      for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+        const top = j * (cols + 1) + i, bottom = top + cols + 1, a = grid[top], b = grid[top + 1], c = grid[bottom + 1], d = grid[bottom];
+        const kind = (a > level ? 8 : 0) | (b > level ? 4 : 0) | (c > level ? 2 : 0) | (d > level ? 1 : 0);
+        if (kind === 0 || kind === 15) continue;
+        const x = i * cell, y = j * cell, edge = SEG[kind];
+        edge.forEach((side, e) => {
+          const px = side === 0 ? x + (cell * (level - a)) / (b - a) : side === 1 ? x + cell : side === 2 ? x + (cell * (level - d)) / (c - d) : x;
+          const py = side === 0 ? y : side === 1 ? y + (cell * (level - b)) / (c - b) : side === 2 ? y + cell : y + (cell * (level - a)) / (d - a);
+          if (e % 2 === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        });
+      }
+    }
+    ctx.lineWidth = major ? 1.3 : 0.8; ctx.strokeStyle = `rgba(${tint.map(Math.round)},${major ? 0.3 : 0.16})`; ctx.stroke();
+  };
+  const rings = () => {
+    const margin = 190, span = h + margin * 2, color = tint.map(Math.round).join(',');
+    for (const ring of RINGS) {
+      const cx = ring.x * w, cy = ((((ring.y * span - pos * ring.s) % span) + span) % span) - margin, turn = ring.a + pos * 0.0019 * ring.turn, inner = ring.r * 0.62;
+      ctx.lineWidth = 1; ctx.setLineDash([3, 7]); ctx.lineDashOffset = pos * ring.s * 0.4 * ring.turn; ctx.strokeStyle = `rgba(${color},.3)`;
+      ctx.beginPath(); ctx.arc(cx, cy, ring.r, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]); ctx.strokeStyle = `rgba(${color},.18)`;
+      ctx.beginPath(); ctx.arc(cx, cy, inner, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = `rgba(${color},.75)`;
+      ctx.beginPath(); ctx.arc(cx + Math.cos(turn) * ring.r, cy + Math.sin(turn) * ring.r, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx - Math.cos(turn * 1.4) * inner, cy - Math.sin(turn * 1.4) * inner, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+  };
+  const draw = () => {
+    if (!w) return;
+    const shift = pos * 0.22, z = pos * 0.00085;
+    for (let j = 0; j <= rows; j++) for (let i = 0; i <= cols; i++) grid[j * (cols + 1) + i] = terrain((i * cell) / SCALE, (j * cell + shift) / SCALE, z);
+    ctx.clearRect(0, 0, w, h); ctx.lineCap = 'round'; contours(false); contours(true); rings();
+  };
+  const frame = now => {
+    raf = 0;
+    const dt = last ? Math.min((now - last) / 1000, 0.04) : 1 / 60, goal = scrollY, omega = 9;
+    last = now; vel += (omega * omega * (goal - pos) - 2 * omega * vel) * dt; pos += vel * dt;
+    let shade = 0;
+    tint = tint.map((v, c) => { const next = v + (wanted[c] - v) * Math.min(dt * 5, 1); shade += Math.abs(wanted[c] - next); return next; });
+    draw();
+    if (Math.abs(goal - pos) > 0.3 || Math.abs(vel) > 1 || shade > 1) raf = requestAnimationFrame(frame); else last = 0;
+  };
+  const start = () => { if (reduce) { pos = scrollY; tint = [...wanted]; draw(); } else if (!raf) raf = requestAnimationFrame(frame); };
+  new ResizeObserver(() => {
+    const box = cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 1.5);
+    w = box.width; h = box.height; if (!w) return;
+    cv.width = w * dpr; cv.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cols = Math.ceil(w / cell); rows = Math.ceil(h / cell); grid = new Float32Array((cols + 1) * (rows + 1));
+    draw(); start();
+  }).observe(cv);
+  addEventListener('scroll', start, { passive: true });
+  return { tint: hex => { wanted = rgb(hex); start(); } };
+}
