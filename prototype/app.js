@@ -529,7 +529,7 @@ const RENDER = {
     root.append(line, chips);
   },
   scenario(root, ex) {
-    if (ex.rec) { const rec = RECORDED[ex.rec]; root.append(el('div', 'rec-label', t('recordedOn', rec.distro)), termBlock([[promptFor('/home/user'), rec.cmd, rec.out.replace(/\n$/, '')]])); }
+    if (ex.rec) { const rec = RECORDED[ex.rec]; root.append(termBlock([[promptFor('/home/user'), rec.cmd, rec.out.replace(/\n$/, '')]])); }
     const row = el('div', 'code-row stack'); const lab = el('label', '', t('typeCmd')); lab.htmlFor = 'scenarioCmd';
     const input = el('input'); input.id = 'scenarioCmd'; input.dir = 'ltr'; input.autocomplete = 'off'; input.autocapitalize = 'off'; input.spellcheck = false;
     input.oninput = () => { L.value = input.value; setCan(!!input.value.trim()); };
@@ -539,7 +539,7 @@ const RENDER = {
   output(root, ex) {
     if (ex.rec) {
       const rec = RECORDED[ex.rec];
-      root.append(el('div', 'rec-label', t('recordedOn', rec.distro)), termBlock([[promptFor('/home/user'), rec.cmd, '?']]));
+      root.append(termBlock([[promptFor('/home/user'), rec.cmd, '?']]));
       ex.solution = rec.out;
       return outputOptions(root, rec.out, [...(ex.wrongRec || []).map(id => RECORDED[id].out), ...(ex.wrongText || [])]);
     }

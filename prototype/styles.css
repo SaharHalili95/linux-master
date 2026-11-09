@@ -63,7 +63,6 @@ button { cursor: pointer; }
 .unit-banner.purple { background: var(--purple-dark); }
 .unit-banner.blue { background: var(--blue); }
 .unit-banner.locked { background: var(--locked); color: var(--ink); margin-top: 34px; }
-.rec-label { font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
 .part-header { margin: 34px 0 14px; text-align: center; font-size: 15px; font-weight: 800; color: var(--muted); letter-spacing: .3px; }
 .part-header:first-child { margin-top: 4px; }
 .exam-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
