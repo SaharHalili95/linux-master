@@ -118,7 +118,7 @@ function startField(cv) {
   };
   const start = () => { if (reduce) { pos = scrollY; tint = [...wanted]; draw(); } else if (!raf) raf = requestAnimationFrame(frame); };
   new ResizeObserver(() => {
-    const box = cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 1.5);
+    const box = cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 3);
     w = box.width; h = box.height; if (!w) return;
     cv.width = w * dpr; cv.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     cols = Math.ceil(w / cell); rows = Math.ceil(h / cell); grid = new Float32Array((cols + 1) * (rows + 1));
@@ -173,7 +173,7 @@ function startBolts(cv) {
     }
   };
   new ResizeObserver(() => {
-    const box = cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 1.5);
+    const box = cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 3);
     w = box.width; h = box.height; if (!w) return;
     cv.width = w * dpr; cv.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }).observe(cv);
