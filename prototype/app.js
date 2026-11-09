@@ -489,6 +489,8 @@ function termBlock(lines) {
   for (const [prompt, cmd, out] of lines) { const row = el('div', 'term-line'); row.append(el('span', 'ps1', prompt), el('span', 'typed', cmd)); t.append(row); if (out) t.append(el('pre', 'term-out', out)); }
   return t;
 }
+// An answer box sits inside the terminal, above its keys.
+const inTerminal = (root, row) => { const box = root.querySelector('.term.live'); row.dir = document.documentElement.dir; box.insertBefore(row, box.querySelector('.term-keys')); };
 const RENDER = {
   teach(root, ex) {
     const card = el('div', 'teach-card');
@@ -529,12 +531,13 @@ const RENDER = {
     root.append(line, chips);
   },
   scenario(root, ex) {
-    if (ex.rec) { const rec = RECORDED[ex.rec]; root.append(termBlock([[promptFor('/home/user'), rec.cmd, rec.out.replace(/\n$/, '')]])); }
-    const row = el('div', 'code-row stack'); const lab = el('label', '', t('typeCmd')); lab.htmlFor = 'scenarioCmd';
-    const input = el('input'); input.id = 'scenarioCmd'; input.dir = 'ltr'; input.autocomplete = 'off'; input.autocapitalize = 'off'; input.spellcheck = false;
-    input.oninput = () => { L.value = input.value; setCan(!!input.value.trim()); };
-    input.onkeydown = e => { if (e.key === 'Enter' && input.value.trim()) { e.preventDefault(); onFootButton(); } };
-    row.append(lab, input); root.append(row);
+    const rec = ex.rec && RECORDED[ex.rec], box = rec ? termBlock([[promptFor('/home/user'), rec.cmd, rec.out.replace(/\n$/, '')]]) : el('div', 'term');
+    box.dir = 'ltr'; box.classList.add('live');
+    const { form, input, grow } = termField(promptFor('/home/user'), box);
+    input.id = 'scenarioCmd'; form.onsubmit = e => e.preventDefault();
+    input.oninput = () => { input.value = input.value.replace(/\n/g, ' '); L.value = straightQuotes(input.value); setCan(!!L.value.trim()); grow(); };
+    input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); if (input.value.trim()) onFootButton(); } };
+    box.append(form); root.append(box); focusField(input);
   },
   output(root, ex) {
     if (ex.rec) {
@@ -595,7 +598,7 @@ const RENDER = {
     const input = el('input'); input.id = 'askAnswer'; input.dir = 'ltr'; input.inputMode = 'numeric'; input.autocomplete = 'off';
     input.oninput = () => { L.ask = input.value.trim(); setCan(!!L.ask); };
     input.onkeydown = e => { if (e.key === 'Enter' && L.ask) { e.preventDefault(); onFootButton(); } };
-    row.append(lab, input); root.append(row);
+    row.append(lab, input); inTerminal(root, row);
   },
   boss(root, ex) {
     const goals = el('ul', 'goals');
@@ -613,7 +616,7 @@ const RENDER = {
     const input = el('input'); input.id = 'codeWord'; input.dir = 'ltr'; input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off');
     input.oninput = () => { L.value = input.value.trim(); mark('typed', !!L.value); setCan(!!L.value); };
     input.onkeydown = e => { if (e.key === 'Enter' && L.value) { e.preventDefault(); onFootButton(); } };
-    row.append(lab, input); root.append(row);
+    row.append(lab, input); inTerminal(root, row);
   },
 };
 // Commands typed in any terminal this visit, so ↑ can bring back one from an earlier task too.
@@ -633,17 +636,24 @@ function completeWord(sh, value) {
   const done = names.length === 1 ? names[0] + (isDir(names[0]) ? '/' : ' ') : common;
   return { value: value.slice(0, value.length - base.length) + done, list: names.length > 1 ? names.map(n => n + (isDir(n) ? '/' : '')) : [] };
 }
+const straightQuotes = v => v.replace(/[\u201c\u201d\u201e]/g, '"').replace(/[\u2018\u2019]/g, "'");
+// The typing line of a terminal. It is a textarea so a long command wraps instead of being cut; the first line starts after the prompt.
+function termField(prompt, box) {
+  const form = el('form', 'term-input'), ps = el('span', 'ps1', prompt), input = el('textarea');
+  input.rows = 1; input.setAttribute('aria-label', t('command')); input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off'); input.setAttribute('autocorrect', 'off'); input.enterKeyHint = 'send'; input.placeholder = t('command');
+  form.append(ps, input);
+  const grow = () => { input.style.height = 'auto'; input.style.height = `${input.scrollHeight}px`; box.scrollTop = box.scrollHeight; };
+  const fit = () => { input.style.textIndent = `${ps.offsetWidth + 8}px`; grow(); };
+  const seen = new ResizeObserver(() => requestAnimationFrame(fit)); seen.observe(ps); seen.observe(box);
+  return { form, ps, input, grow };
+}
+const focusField = input => setTimeout(() => { if (!['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) input.focus({ preventScroll: true }); }, 50);
 function mountTerminal(root, ex, sh, onRun = () => {}) {
   for (const c of ex.setup || []) sh.run(c);
   const log = []; L.term = { sh, log };
   const box = el('div', 'term live'); box.dir = 'ltr'; const out = el('div', 'term-scroll');
-  const form = el('form', 'term-input'); const ps = el('span', 'ps1', promptFor(sh.cwd));
-  const input = el('textarea'); input.rows = 1; input.setAttribute('aria-label', t('command')); input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off'); input.setAttribute('autocorrect', 'off'); input.enterKeyHint = 'send'; input.placeholder = t('command');
-  form.append(ps, input); box.append(out, form);
-  // The field is a textarea so a long command wraps instead of being cut; the first line starts after the prompt.
-  const grow = () => { input.style.height = 'auto'; input.style.height = `${input.scrollHeight}px`; box.scrollTop = box.scrollHeight; };
-  const fit = () => { input.style.textIndent = `${ps.offsetWidth + 8}px`; grow(); };
-  const seen = new ResizeObserver(() => requestAnimationFrame(fit)); seen.observe(ps); seen.observe(box);
+  const { form, ps, input, grow } = termField(promptFor(sh.cwd), box);
+  box.append(out, form);
   let back = TERM_HISTORY.length;
   const recall = step => {
     back = Math.min(TERM_HISTORY.length, Math.max(0, back + step));
@@ -684,7 +694,7 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
   box.append(keys);
   form.onsubmit = e => { e.preventDefault(); run(); };
   function run() {
-    const cmd = input.value.replace(/[\u201c\u201d\u201e]/g, '"').replace(/[\u2018\u2019]/g, "'").trim(); input.value = ''; grow(); if (!cmd || L.answered) return;
+    const cmd = straightQuotes(input.value).trim(); input.value = ''; grow(); if (!cmd || L.answered) return;
     const row = el('div', 'term-line'); row.append(el('span', 'ps1', promptFor(sh.cwd)), el('span', 'typed', cmd)); out.append(row);
     let text;
     try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { text = err instanceof ShellUnsupported ? t('unsupported', cmd.split(/\s+/)[0]) : String(err.message); }
@@ -696,15 +706,19 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
   }
   if (ex.hint) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(box, h); } else root.append(box);
   // Never steal focus from a field the learner already moved to.
-  setTimeout(() => { if (!['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) input.focus({ preventScroll: true }); }, 50);
+  focusField(input);
 }
 // iPhone keeps the page under the keyboard: while typing in the terminal the lesson takes only the visible part, so the terminal sits right above the keys.
 function fitLesson() {
   const vv = window.visualViewport, box = $('lesson');
-  const on = !!vv && !box.hidden && vv.scale < 1.05 && innerHeight - vv.height > 120 && !!document.activeElement?.closest('.term-input');
+  const on = !!vv && !box.hidden && vv.scale < 1.05 && innerHeight - vv.height > 120 && !!document.activeElement?.closest('.term');
   box.classList.toggle('typing', on);
   box.style.height = on ? `${vv.height}px` : ''; box.style.top = on ? `${vv.offsetTop}px` : ''; box.style.bottom = on ? 'auto' : '';
-  if (on) { const term = box.querySelector('.term.live'); term.scrollTop = term.scrollHeight; }
+  if (on) {
+    const term = box.querySelector('.term.live'), field = document.activeElement; term.scrollTop = term.scrollHeight;
+    // iPhone leaves the caret where it was before the page moved, until the selection is set again.
+    requestAnimationFrame(() => field.setSelectionRange?.(field.selectionStart, field.selectionEnd));
+  }
 }
 visualViewport?.addEventListener('resize', fitLesson); visualViewport?.addEventListener('scroll', fitLesson);
 $('lesson').addEventListener('focusin', fitLesson); $('lesson').addEventListener('focusout', () => setTimeout(fitLesson));

@@ -304,6 +304,7 @@ test('a scenario accepts any listed command, however it is spaced, and rejects o
   const ex = { type: 'scenario', prompt: { he: 'בדקו את nginx', en: 'Check nginx' }, rec: 'ubuntu-uname', accept: ['systemctl status nginx', 'systemctl status nginx.service'] };
   await page.evaluate(ex => startLesson('scenario-test', [ex]), ex);
   await expect(page.locator('.rec-label')).toHaveCount(0);
+  await expect(page.locator('.term #scenarioCmd')).toBeVisible();
   await page.fill('#scenarioCmd', '  systemctl   status nginx.service ');
   await page.press('#scenarioCmd', 'Enter');
   await expect(page.locator('#foot')).toHaveClass(/good/);
