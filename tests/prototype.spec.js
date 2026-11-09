@@ -724,6 +724,21 @@ test('a long command wraps in the terminal, Enter runs it, and typing keeps the 
   await expect(page.locator('.term-scroll .term-out').last()).toHaveText('hello');
 });
 
+test('a hint explains in words and never hands over the answer', async ({ page }) => {
+  await page.goto('./prototype/');
+  const bad = await page.evaluate(() => {
+    const out = [], esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    for (const u of COURSE) for (const l of [...(u.lessons || []), ...(u.boss ? [u.boss] : [])]) for (const ex of l.exercises || []) {
+      if (!ex.hint) continue;
+      const he = ex.hint.he ?? String(ex.hint), en = ex.hint.en ?? he;
+      if (!/[\u0590-\u05ff]/.test(he)) out.push(`bare: ${he}`);
+      for (const a of [...(ex.solve || []), ...(ex.accept || [])]) if (new RegExp(`(^|[^\\w-])${esc(a.trim())}($|[^\\w-])`).test(`${he} ${en}`)) out.push(`shows ${a}: ${he}`);
+    }
+    return out;
+  });
+  expect(bad).toEqual([]);
+});
+
 test('a grep task that needs an anchor rejects the same command without it', async ({ page }) => {
   await page.goto('./prototype/');
   const weak = await page.evaluate(() => {
