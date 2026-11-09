@@ -96,7 +96,7 @@ const UNIT_8 = {
       { type: 'choice', prompt: T('למה which cd לא מדפיסה כלום?', 'Why does which cd print nothing?'), plain: true,
         options: [T('cd היא חלק מה־shell, אין לה קובץ בדיסק', 'cd is part of the shell, it has no file on disk'), T('cd לא מותקנת', 'cd is not installed'), T('צריך sudo', 'You need sudo'), T('which עובדת רק על קבצים', 'which only works on files')],
         why: [null, T('cd עובדת, היא פשוט builtin. type cd תראה את זה.', 'cd works, it is just a builtin. type cd shows that.'), T('אין קשר להרשאות.', 'It has nothing to do with permissions.'), T('which מחפשת פקודות ב־PATH, לא קבצים רגילים.', 'which looks for commands in PATH, not regular files.')] },
-      { type: 'terminal', prompt: T('בדקו מה זו הפקודה history: builtin או קובץ בדיסק?', 'Check what history is: a builtin or a file on disk?'), hint: T('הפקודה type אומרת מה זו פקודה. אחריה כותבים את שם הפקודה שרוצים לבדוק.', 'The type command tells you what a command is. Write the name of the command to check after it.'), goal: (sh, log) => printed(log, 'type history'), solve: ['type history'] },
+      { type: 'terminal', prompt: T('בדקו איזו פקודה היא history: האם היא מובנית בתוך ה־shell (builtin), או תוכנה נפרדת שיושבת בקובץ בדיסק?', 'Find out what kind of command history is: is it built into the shell (a builtin), or a separate program in a file on disk?'), hint: T('הפקודה type אומרת מה זו פקודה. אחריה כותבים את שם הפקודה שרוצים לבדוק.', 'The type command tells you what a command is. Write the name of the command to check after it.'), goal: (sh, log) => printed(log, 'type history'), solve: ['type history'] },
     ] },
   ],
   boss: { title: CHALLENGE, text: T('נתקעתם? מוצאים תשובה לבד.', 'Stuck? Find the answer yourself.'), exercises: [
