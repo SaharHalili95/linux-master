@@ -1,5 +1,5 @@
 // Part 1: Foundations, units 7-10. See materials/curriculum.md and materials/objectives/.
-const RECORDED_ON = T('הפלט הזה הוקלט על לינוקס אמיתי. מה תדפיס הפקודה?', 'This output was recorded on real Linux. What will the command print?');
+const RECORDED_ON = T('מה תדפיס הפקודה?', 'What will the command print?');
 
 const UNIT_7 = {
   section: 1, unit: 7, exams: ['L103.7', 'R', 'E013.2'], title: T('תבניות', 'Patterns'), subtitle: T('ביטויים רגולריים עם grep', 'Regular expressions with grep'), color: 'green', fixture: homeFixture,

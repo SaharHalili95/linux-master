@@ -292,7 +292,7 @@ test('every part gets one header, in order, and units show their exams', async (
 test('a recorded output card shows the command, where it was recorded, and the real output as the answer', async ({ page }) => {
   await page.goto('./prototype/');
   await page.evaluate(() => startLesson('rec-test', [{ type: 'output', prompt: WHAT, rec: 'ubuntu-uname-m', wrongText: ['arm64', 'i386'] }]));
-  await expect(page.locator('.rec-label')).toContainText('Ubuntu 24.04');
+  await expect(page.locator('.rec-label')).toHaveCount(0);
   await expect(page.locator('.term')).toContainText('uname -m');
   await page.locator('.opt', { hasText: 'x86_64' }).click();
   await page.click('#checkBtn');
@@ -303,7 +303,7 @@ test('a scenario accepts any listed command, however it is spaced, and rejects o
   await page.goto('./prototype/');
   const ex = { type: 'scenario', prompt: { he: 'בדקו את nginx', en: 'Check nginx' }, rec: 'ubuntu-uname', accept: ['systemctl status nginx', 'systemctl status nginx.service'] };
   await page.evaluate(ex => startLesson('scenario-test', [ex]), ex);
-  await expect(page.locator('.rec-label')).toBeVisible();
+  await expect(page.locator('.rec-label')).toHaveCount(0);
   await page.fill('#scenarioCmd', '  systemctl   status nginx.service ');
   await page.press('#scenarioCmd', 'Enter');
   await expect(page.locator('#foot')).toHaveClass(/good/);
@@ -737,6 +737,12 @@ test('a hint explains in words and never hands over the answer', async ({ page }
     return out;
   });
   expect(bad).toEqual([]);
+});
+
+test('no exercise says its output was recorded on a real machine', async ({ page }) => {
+  await page.goto('./prototype/');
+  const said = await page.evaluate(() => COURSE.flatMap(u => [...(u.lessons || []), ...(u.boss ? [u.boss] : [])].flatMap(l => l.exercises || [])).filter(e => e?.prompt).map(e => `${e.prompt.he} ${e.prompt.en}`).filter(x => /הוקלט|recorded on|real (Linux|Ubuntu)|(Ubuntu|לינוקס) אמיתי/.test(x)));
+  expect(said).toEqual([]);
 });
 
 test('a grep task that needs an anchor rejects the same command without it', async ({ page }) => {
