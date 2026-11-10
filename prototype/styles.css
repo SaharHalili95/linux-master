@@ -149,6 +149,10 @@ button { cursor: pointer; }
 .term-input textarea { display: block; width: 100%; box-sizing: border-box; margin: 0; padding: 0; background: transparent; border: 0; outline: 0; resize: none; overflow: hidden; color: #fff; font: 700 16px/24px var(--mono); overflow-wrap: anywhere; caret-color: var(--term-green); }
 .term .code-row { margin-top: 10px; font: 500 14px var(--font); color: #fff; }
 .term .code-row input { padding: 6px 10px; border: 1px solid #ffffff44; border-radius: 8px; background: #ffffff14; color: #fff; font: 700 16px var(--mono); caret-color: var(--term-green); }
+.ask-row { flex-wrap: wrap; }
+.ask-picks { display: flex; gap: 8px; }
+.ask-picks .term-key { min-width: 48px; font-size: 16px; }
+.ask-picks .term-key.on { background: var(--term-green); border-color: var(--term-green); color: #06120a; }
 .term-keys { display: flex; gap: 8px; margin-top: 8px; }
 .term-key { background: #ffffff14; color: #fff; border: 1px solid #ffffff2a; border-radius: 8px; font: 700 14px var(--mono); padding: 6px 12px; min-height: 34px; cursor: pointer; }
 .term-keys .restart { margin-inline: auto; }
