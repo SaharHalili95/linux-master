@@ -844,3 +844,35 @@ test('Pages deploys every file Learn mode loads', () => {
   expect(local.length).toBeGreaterThan(3);
   for (const file of local) expect(deploy, file).toContain(/^(parts|recorded)\//.test(file) ? `prototype/${file.split('/')[0]}` : `prototype/${file}`);
 });
+
+test('character: the new hero keeps rank upgrades and reacts to feedback without revealing exam answers', async ({ page }) => {
+  await page.goto('./prototype/');
+  await expect(page.locator('.hero-face .character-hero')).toBeVisible();
+  const tiers = await page.evaluate(() => [1, 4, 8, 12].map(level => {
+    const node = document.createElement('div'); node.innerHTML = mascot('happy', level);
+    return { rank: node.querySelector('svg').dataset.rank, equipment: node.querySelectorAll('[data-equipment]').length };
+  }));
+  expect(tiers.map(x => x.rank)).toEqual(['1', '4', '8', '12']);
+  for (let i = 1; i < tiers.length; i++) expect(tiers[i].equipment).toBeGreaterThan(tiers[i - 1].equipment);
+  await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+  await page.click('#checkBtn');
+  await page.locator('.opt[data-value="ls"]').click(); await page.click('#checkBtn');
+  await expect(page.locator('#fbBox .character-hero')).toHaveAttribute('data-mood', 'sad');
+  await page.evaluate(() => setFoot('good', 'Correct'));
+  await expect(page.locator('#fbBox .character-hero')).toHaveAttribute('data-mood', 'happy');
+  await page.evaluate(() => setFoot('saved', 'Answer saved'));
+  await expect(page.locator('#fbBox .character-hero')).toHaveAttribute('data-mood', 'idle');
+});
+
+test('character: original moon and animated backgrounds stay intact on iPhone', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('./prototype/');
+  await expect(page.locator('#pathField')).toBeAttached();
+  await expect(page.locator('#pathBolts')).toBeAttached();
+  await expect(page.locator('.stage-moon')).toBeVisible();
+  await expect(page.locator('.hero-face .character-hero')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
+  const before = await page.locator('.stage').boundingBox();
+  await page.evaluate(() => { document.querySelectorAll('.character-hero').forEach(e => e.style.visibility = 'hidden'); });
+  expect(await page.locator('.stage').boundingBox()).toEqual(before);
+});
