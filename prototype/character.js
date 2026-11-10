@@ -4,7 +4,7 @@
   function character(mood = 'idle', level = rankOf(S.xp).level) {
     const id = `hero-${++serial}`;
     const accent = level >= 11 ? '#ffd36e' : level >= 9 ? '#ff8edb' : level >= 7 ? '#c0a2ff' : level >= 5 ? '#6de5ff' : '#8bf0cf';
-    const eyes = mood === 'sad' ? '<path d="m34 34 9 3m14 0 9-3"/><path d="M42 45q8-4 16 0"/>' : mood === 'party' ? '<path d="m34 37 5-4 5 4m12 0 5-4 5 4M43 43q7 10 14 0"/>' : `<rect x="34" y="31" width="9" height="10" rx="4"/><rect x="57" y="31" width="9" height="10" rx="4"/>${mood === 'happy' ? '<path d="M43 44q7 6 14 0"/>' : '<path d="M45 45h10"/>'}`;
+    const eyes = mood === 'sad' ? '<rect x="34" y="31" width="9" height="10" rx="4"/><rect x="57" y="31" width="9" height="10" rx="4"/><path d="M43 44q7 3 14 0"/>' : mood === 'party' ? '<path d="m34 37 5-4 5 4m12 0 5-4 5 4M43 43q7 10 14 0"/>' : `<rect x="34" y="31" width="9" height="10" rx="4"/><rect x="57" y="31" width="9" height="10" rx="4"/>${mood === 'happy' ? '<path d="M43 44q7 6 14 0"/>' : '<path d="M45 45h10"/>'}`;
     const gear = (min, name, shape) => level >= min ? `<g data-equipment="${name}">${shape}</g>` : '';
     const back = gear(3, 'power-pack', `<path d="M28 57 21 60v17l10 4m41-24 7 3v17l-10 4" fill="#253950" stroke="${accent}" stroke-width="1.5"/>`)
       + gear(9, 'signal-fins', `<path d="m24 57-14-9 7 20m59-11 14-9-7 20" fill="#23334b" stroke="${accent}" stroke-width="1.8"/>`)
