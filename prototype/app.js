@@ -293,7 +293,7 @@ function renderPath(append = false) {
       if (state === 'current') { const tip = el('div', 'start-tip', n.kind === 'chest' ? t('open') : t('start')); li.append(tip); li.classList.add('tipped'); }
       li.append(b);
       if (n.kind === 'lesson' && (state === 'done' || state === 'current') && powerOf(unit, n.i)) li.append(Object.assign(el('span', 'node-power', powerOf(unit, n.i)), { dir: 'ltr' }));
-      if (i === 2 && !unit.locked) { const m = el('div', 'path-mascot'); m.innerHTML = mascot(S.done.includes(n.key) ? 'happy' : 'idle'); li.append(m); }
+      if (i === 2 && !unit.locked) { const m = el('div', 'path-mascot'); m.innerHTML = window.worldCharacter(unit); li.append(m); }
       list.append(li);
     });
     region.append(list);

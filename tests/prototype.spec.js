@@ -966,3 +966,11 @@ for (const file of ['parts/p1.js', 'course-ready.js']) test(`loading: a failed $
   await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
   await expect(page.locator('#lesson')).toBeVisible();
 });
+
+test('world characters match the first six learning topics without replacing the learner', async ({ page }) => {
+  await page.goto('/prototype/');
+  await expect(page.locator('.hero-face .character-hero')).toBeVisible();
+  const characters = await page.locator('.path-mascot svg').evaluateAll(nodes => nodes.slice(0, 6).map(node => node.outerHTML));
+  expect(characters).toHaveLength(6);
+  expect(new Set(characters).size).toBe(6);
+});
