@@ -21,7 +21,7 @@ async function solve(page, lang = 'he') {
   }
   if (ex.type === 'terminal') {
     for (const c of await page.evaluate(() => L.ex.solve)) { await page.fill('.term-input textarea', c); await page.press('.term-input textarea', 'Enter'); }
-    if (await page.evaluate(() => !!L.ex.ask)) await page.fill('#askAnswer', await page.evaluate(() => L.expected));
+    if (await page.evaluate(() => !!L.ex.ask)) await page.locator(`[data-ask="${await page.evaluate(() => L.expected)}"]`).click();
   }
   if (ex.type === 'scenario') await page.fill('#scenarioCmd', await page.evaluate(() => L.ex.accept[0]));
   if (ex.type === 'boss') {

@@ -594,11 +594,14 @@ const RENDER = {
     // Counting tasks end with typing the number, so a learner has to read the result, not only run a command.
     const sh = new Shell(ex.fx()); for (const c of [...(ex.setup || []), ...ex.solve]) L.expected = sh.run(c).out;
     L.expected = L.expected.match(/\d+/)[0]; L.ask = '';
-    const row = el('div', 'code-row'); const lab = el('label', '', tr(ex.ask)); lab.htmlFor = 'askAnswer';
-    const input = el('input'); input.id = 'askAnswer'; input.dir = 'ltr'; input.inputMode = 'numeric'; input.autocomplete = 'off';
-    input.oninput = () => { L.ask = input.value.trim(); setCan(!!L.ask); };
-    input.onkeydown = e => { if (e.key === 'Enter' && L.ask) { e.preventDefault(); onFootButton(); } };
-    row.append(lab, input); inTerminal(root, row);
+    const n = +L.expected, wrong = shuffle([n + 1, n + 2, n - 1, n + 3].filter(v => v >= 0)).slice(0, 2);
+    const row = el('div', 'code-row ask-row'), picks = el('div', 'ask-picks');
+    for (const v of shuffle([n, ...wrong])) {
+      const b = el('button', 'term-key', String(v)); b.type = 'button'; b.dataset.ask = v;
+      b.onclick = () => { L.ask = String(v); for (const o of picks.children) o.classList.toggle('on', o === b); setCan(true); };
+      picks.append(b);
+    }
+    row.append(el('span', '', tr(ex.ask)), picks); inTerminal(root, row);
   },
   boss(root, ex) {
     const goals = el('ul', 'goals');
