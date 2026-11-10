@@ -842,7 +842,7 @@ test('Pages deploys every file Learn mode loads', () => {
   const local = [...html.matchAll(/(?:src|href)="([^"#:]+?)(?:\?[^"]*)?"/g)].map(m => m[1]).filter(f => !f.startsWith('..') && f !== './');
   const deploy = fs.readFileSync(path.join(root, '.github/workflows/pages.yml'), 'utf8').match(/cp (?:-r )?(prototype\/.*) _site\/prototype\//)[1].split(/\s+/);
   expect(local.length).toBeGreaterThan(3);
-  for (const file of local) expect(deploy, file).toContain(/^(parts|recorded)\//.test(file) ? `prototype/${file.split('/')[0]}` : `prototype/${file}`);
+  for (const file of local) expect(deploy, file).toContain(/^(parts|recorded|fonts)\//.test(file) ? `prototype/${file.split('/')[0]}` : `prototype/${file}`);
 });
 
 test('character: the new hero keeps rank upgrades and reacts to feedback without revealing exam answers', async ({ page }) => {
@@ -900,4 +900,69 @@ for (const pixelRatio of [1.25, 3]) test(`retina background clears its full surf
       }, id)).toBe(true);
     }
   } finally { await context.close(); }
+});
+
+test('loading: the first lesson works before later course files finish and stays open afterward', async ({ page }) => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  await page.route('**/parts/p1.js?*', async route => { await gate; await route.continue(); });
+  const navigation = page.goto('./prototype/');
+  try {
+    await expect(page.locator('.stage-moon')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.node.current')).toBeVisible();
+    expect(await page.evaluate(() => COURSE.length)).toBe(6);
+    await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+    await expect(page.locator('#lesson')).toBeVisible();
+    await expect(page.locator('#exBody')).toContainText('pwd');
+  } finally { release(); await navigation; }
+  await expect(page.locator('#lesson')).toBeVisible();
+  await expect(page.locator('#exBody')).toContainText('pwd');
+  expect(await page.evaluate(() => COURSE.length)).toBeGreaterThanOrEqual(83);
+  await page.evaluate(() => closeOverlays());
+  await expect(page.locator('.unit-banner')).toHaveCount(await page.evaluate(() => COURSE.length));
+});
+
+test('loading: saved progress beyond the first six units resumes without changing it', async ({ page }) => {
+  await page.addInitScript(() => {
+    const done = Array.from({ length: 6 }, (_, i) => ['L0', 'L1', 'c1', 'L2', 'L3', 'boss'].map(k => i ? `u${i + 1}-${k}` : k)).flat();
+    localStorage.setItem('linux-master-proto', JSON.stringify({ done, xp: 300, gems: 80 }));
+  });
+  await page.goto('./prototype/');
+  await expect(page.locator('.node.current')).toHaveAttribute('aria-label', await page.evaluate(() => t('lessonN', 1, tr(COURSE.find(u => u.unit === 7).lessons[0].title))));
+  expect(await page.evaluate(() => ({ xp: S.xp, gems: S.gems, completed: S.done.length }))).toEqual({ xp: 300, gems: 80, completed: 36 });
+});
+
+test('loading: partially downloaded later units stay unavailable in the path and practice', async ({ page }) => {
+  let release; const gate = new Promise(resolve => { release = resolve; });
+  await page.route('**/parts/p11.js?*', async route => { await gate; await route.continue(); });
+  const navigation = page.goto('./prototype/');
+  try {
+    await page.waitForFunction(() => typeof COURSE !== 'undefined' && COURSE.some(u => u.unit === 11));
+    await page.click('[data-tab="profile"]'); await page.click('[data-tab="learn"]');
+    await expect(page.locator('.unit-banner')).toHaveCount(6);
+    expect(await page.evaluate(() => allExercises().some(ex => /^u(?:[7-9]|\d{2,})-/.test(ex.uid)))).toBe(false);
+  } finally { release(); await navigation; }
+  await expect(page.locator('.unit-banner')).toHaveCount(await page.evaluate(() => COURSE.length));
+});
+
+test('loading: finishing the download preserves the visible first world', async ({ page }) => {
+  let release; const gate = new Promise(resolve => { release = resolve; });
+  await page.route('**/parts/p1.js?*', async route => { await gate; await route.continue(); });
+  const navigation = page.goto('./prototype/');
+  try {
+    await expect(page.locator('.stage-moon')).toBeVisible();
+    await page.evaluate(() => { window.firstStage = document.getElementById('stage'); });
+  } finally { release(); await navigation; }
+  expect(await page.evaluate(() => window.firstStage === document.getElementById('stage'))).toBe(true);
+});
+
+for (const file of ['parts/p1.js', 'course-ready.js']) test(`loading: a failed ${file} keeps the starter playable and never claims offline readiness`, async ({ page }) => {
+  await page.route(`**/${file}?*`, route => route.abort());
+  await page.goto('./prototype/');
+  await expect(page.locator('#toast')).toContainText(await page.evaluate(() => t('triviaFailed')));
+  await expect(page.locator('.node.current')).toBeVisible();
+  expect(await page.evaluate(() => window.courseReady)).toBe(false);
+  expect(await page.evaluate(() => !!window.learnKept)).toBe(false);
+  await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+  await expect(page.locator('#lesson')).toBeVisible();
 });

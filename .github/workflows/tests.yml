@@ -13,6 +13,10 @@ jobs:
   browser:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, iphone-webkit, android-chrome, iphone-se]
     # Browsers and their system libraries come preinstalled in the official image for our
     # Playwright version, so no apt step can hang or fight over the dpkg lock.
     container:
@@ -25,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm ci
-      - run: npx playwright test --grep-invert @part
+      - run: npx playwright test --project=${{ matrix.project }} --grep-invert @part
 
   # Plays the course part by part, in parallel, so adding units does not slow the browser job.
   course:
