@@ -842,5 +842,127 @@ test('Pages deploys every file Learn mode loads', () => {
   const local = [...html.matchAll(/(?:src|href)="([^"#:]+?)(?:\?[^"]*)?"/g)].map(m => m[1]).filter(f => !f.startsWith('..') && f !== './');
   const deploy = fs.readFileSync(path.join(root, '.github/workflows/pages.yml'), 'utf8').match(/cp (?:-r )?(prototype\/.*) _site\/prototype\//)[1].split(/\s+/);
   expect(local.length).toBeGreaterThan(3);
-  for (const file of local) expect(deploy, file).toContain(/^(parts|recorded)\//.test(file) ? `prototype/${file.split('/')[0]}` : `prototype/${file}`);
+  for (const file of local) expect(deploy, file).toContain(/^(parts|recorded|fonts)\//.test(file) ? `prototype/${file.split('/')[0]}` : `prototype/${file}`);
+});
+
+test('character: the new hero keeps rank upgrades and reacts to feedback without revealing exam answers', async ({ page }) => {
+  await page.goto('./prototype/');
+  await expect(page.locator('.hero-face .character-hero')).toBeVisible();
+  const tiers = await page.evaluate(() => [1, 4, 8, 12].map(level => {
+    const node = document.createElement('div'); node.innerHTML = mascot('happy', level);
+    return { rank: node.querySelector('svg').dataset.rank, equipment: node.querySelectorAll('[data-equipment]').length };
+  }));
+  expect(tiers.map(x => x.rank)).toEqual(['1', '4', '8', '12']);
+  for (let i = 1; i < tiers.length; i++) expect(tiers[i].equipment).toBeGreaterThan(tiers[i - 1].equipment);
+  await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+  await page.click('#checkBtn');
+  await page.locator('.opt[data-value="ls"]').click(); await page.click('#checkBtn');
+  await expect(page.locator('#fbBox .character-hero')).toHaveAttribute('data-mood', 'sad');
+  await page.evaluate(() => setFoot('good', 'Correct'));
+  await expect(page.locator('#fbBox .character-hero')).toHaveAttribute('data-mood', 'happy');
+  await page.evaluate(() => setFoot('saved', 'Answer saved'));
+  await expect(page.locator('#fbBox .character-hero')).toHaveAttribute('data-mood', 'idle');
+});
+
+test('character: original moon and animated backgrounds stay intact on iPhone', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('./prototype/');
+  await expect(page.locator('#pathField')).toBeAttached();
+  await expect(page.locator('#pathBolts')).toBeAttached();
+  await expect(page.locator('.stage-moon')).toBeVisible();
+  await expect(page.locator('.hero-face .character-hero')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
+  const before = await page.locator('.stage').boundingBox();
+  await page.evaluate(() => { document.querySelectorAll('.character-hero').forEach(e => e.style.visibility = 'hidden'); });
+  expect(await page.locator('.stage').boundingBox()).toEqual(before);
+});
+
+for (const pixelRatio of [1.25, 3]) test(`retina background clears its full surface after a canvas state reset (${pixelRatio}x)`, async ({ browser, baseURL }) => {
+  const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, deviceScaleFactor: pixelRatio, reducedMotion: 'no-preference' });
+  const page = await context.newPage();
+  try {
+    await page.goto('./prototype/');
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForFunction(dpr => ['pathField', 'pathBolts'].every(id => { const c = document.getElementById(id); return c.width >= Math.floor(390 * dpr) && c.height >= Math.floor(844 * dpr); }), pixelRatio);
+    for (const id of ['pathField', 'pathBolts']) {
+      await page.evaluate(id => {
+        const c = document.getElementById(id), ctx = c.getContext('2d');
+        ctx.resetTransform(); ctx.fillStyle = '#ff00ff'; ctx.fillRect(c.width - 10, c.height - 10, 10, 10);
+        FIELD.tint('#ffb347');
+      }, id);
+      await expect.poll(() => page.evaluate(id => {
+        const c = document.getElementById(id);
+        return [...c.getContext('2d').getImageData(c.width - 5, c.height - 5, 1, 1).data];
+      }, id), { timeout: 1500 }).not.toEqual([255, 0, 255, 255]);
+      await expect.poll(() => page.evaluate(id => {
+        const c = document.getElementById(id), m = c.getContext('2d').getTransform(), box = c.getBoundingClientRect();
+        return Math.abs(m.a - c.width / box.width) < 0.000001 && Math.abs(m.d - c.height / box.height) < 0.000001;
+      }, id)).toBe(true);
+    }
+  } finally { await context.close(); }
+});
+
+test('loading: the first lesson works before later course files finish and stays open afterward', async ({ page }) => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  await page.route('**/parts/p1.js?*', async route => { await gate; await route.continue(); });
+  const navigation = page.goto('./prototype/');
+  try {
+    await expect(page.locator('.stage-moon')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.node.current')).toBeVisible();
+    expect(await page.evaluate(() => COURSE.length)).toBe(6);
+    await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+    await expect(page.locator('#lesson')).toBeVisible();
+    await expect(page.locator('#exBody')).toContainText('pwd');
+  } finally { release(); await navigation; }
+  await expect(page.locator('#lesson')).toBeVisible();
+  await expect(page.locator('#exBody')).toContainText('pwd');
+  expect(await page.evaluate(() => COURSE.length)).toBeGreaterThanOrEqual(83);
+  await page.evaluate(() => closeOverlays());
+  await expect(page.locator('.unit-banner')).toHaveCount(await page.evaluate(() => COURSE.length));
+});
+
+test('loading: saved progress beyond the first six units resumes without changing it', async ({ page }) => {
+  await page.addInitScript(() => {
+    const done = Array.from({ length: 6 }, (_, i) => ['L0', 'L1', 'c1', 'L2', 'L3', 'boss'].map(k => i ? `u${i + 1}-${k}` : k)).flat();
+    localStorage.setItem('linux-master-proto', JSON.stringify({ done, xp: 300, gems: 80 }));
+  });
+  await page.goto('./prototype/');
+  await expect(page.locator('.node.current')).toHaveAttribute('aria-label', await page.evaluate(() => t('lessonN', 1, tr(COURSE.find(u => u.unit === 7).lessons[0].title))));
+  expect(await page.evaluate(() => ({ xp: S.xp, gems: S.gems, completed: S.done.length }))).toEqual({ xp: 300, gems: 80, completed: 36 });
+});
+
+test('loading: partially downloaded later units stay unavailable in the path and practice', async ({ page }) => {
+  let release; const gate = new Promise(resolve => { release = resolve; });
+  await page.route('**/parts/p11.js?*', async route => { await gate; await route.continue(); });
+  const navigation = page.goto('./prototype/');
+  try {
+    await page.waitForFunction(() => typeof COURSE !== 'undefined' && COURSE.some(u => u.unit === 11));
+    await page.click('[data-tab="profile"]'); await page.click('[data-tab="learn"]');
+    await expect(page.locator('.unit-banner')).toHaveCount(6);
+    expect(await page.evaluate(() => allExercises().some(ex => /^u(?:[7-9]|\d{2,})-/.test(ex.uid)))).toBe(false);
+  } finally { release(); await navigation; }
+  await expect(page.locator('.unit-banner')).toHaveCount(await page.evaluate(() => COURSE.length));
+});
+
+test('loading: finishing the download preserves the visible first world', async ({ page }) => {
+  let release; const gate = new Promise(resolve => { release = resolve; });
+  await page.route('**/parts/p1.js?*', async route => { await gate; await route.continue(); });
+  const navigation = page.goto('./prototype/');
+  try {
+    await expect(page.locator('.stage-moon')).toBeVisible();
+    await page.evaluate(() => { window.firstStage = document.getElementById('stage'); });
+  } finally { release(); await navigation; }
+  expect(await page.evaluate(() => window.firstStage === document.getElementById('stage'))).toBe(true);
+});
+
+for (const file of ['parts/p1.js', 'course-ready.js']) test(`loading: a failed ${file} keeps the starter playable and never claims offline readiness`, async ({ page }) => {
+  await page.route(`**/${file}?*`, route => route.abort());
+  await page.goto('./prototype/');
+  await expect(page.locator('#toast')).toContainText(await page.evaluate(() => t('triviaFailed')));
+  await expect(page.locator('.node.current')).toBeVisible();
+  expect(await page.evaluate(() => window.courseReady)).toBe(false);
+  expect(await page.evaluate(() => !!window.learnKept)).toBe(false);
+  await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+  await expect(page.locator('#lesson')).toBeVisible();
 });

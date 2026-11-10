@@ -1,0 +1,17 @@
+.character-hero { display: block; aspect-ratio: 1; isolation: isolate; }
+.mascot.character-hero.happy, .mascot.character-hero.party { animation: none; }
+.character-hero .hero-head { transform-origin: 50px 43px; }
+.character-hero .hero-arm { transform-box: fill-box; transform-origin: 50% 10%; }
+.character-hero[data-mood="sad"] .hero-head { transform: rotate(-5deg); }
+.character-hero[data-mood="happy"] .hero-head { animation: hero-nod 360ms cubic-bezier(.23, 1, .32, 1) both; }
+.character-hero[data-mood="party"] .hero-arm-right { transform: rotate(-65deg); }
+.character-hero[data-mood="party"] .hero-arm-left { transform: rotate(45deg); }
+.character-hero[data-mood="party"] .hero-torso { animation: hero-win 520ms cubic-bezier(.23, 1, .32, 1) both; transform-origin: 50px 78px; }
+.character-hero[data-mood="idle"] .hero-expression { transform-box: fill-box; transform-origin: center; animation: hero-blink 6s linear infinite; }
+#fbBox .fb-icon.character-feedback { background: transparent; border-radius: 0; }
+#fbBox .fb-icon.character-feedback::before { content: none; }
+.character-feedback .character-hero { width: 44px; height: 44px; }
+@keyframes hero-nod { 0% { transform: rotate(-5deg); } 45% { transform: rotate(4deg); } 100% { transform: rotate(0); } }
+@keyframes hero-win { 0% { transform: translateY(3px) scale(.97); } 55% { transform: translateY(-3px) scale(1.02); } 100% { transform: none; } }
+@keyframes hero-blink { 0%, 94%, 98%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.08); } }
+@media (prefers-reduced-motion: reduce) { .character-hero *, .character-hero[data-mood] * { animation: none !important; } }

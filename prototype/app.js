@@ -74,6 +74,8 @@ function loadState(raw) {
   return S;
 }
 COURSE.sort((a, b) => a.section - b.section || a.unit - b.unit);
+const starterCourse = [...COURSE];
+const availableCourse = () => window.courseReady ? COURSE : starterCourse;
 let S;
 try { S = loadState(localStorage.getItem(STORE)); } catch { S = loadState(null); }
 const save = () => { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch { /* not persisted */ } };
@@ -196,7 +198,7 @@ function paintRegion(part) {
   const r = REGIONS[part] || REGIONS[3];
   for (const id of ['lesson', 'end']) for (const [k, v] of Object.entries({ '--r-ground': r.ground, '--r-panel': r.panel, '--r-accent': r.accent, '--accent': r.accent, '--on-accent': REGION_ON_ACCENT, '--bg': r.ground, '--surface': r.panel, '--soft': r.panel, '--muted': REGION_MUTE, '--ink': REGION_INK, '--line': '#ffffff33', '--line-strong': '#ffffff55' })) $(id).style.setProperty(k, v);
 }
-const unitOfKey = key => { const m = /^u(\d+)-/.exec(key); return COURSE.find(u => u.unit === (m ? +m[1] : /^(L\d|c1|boss)$/.test(key) ? 1 : -1)); };
+const unitOfKey = key => { const m = /^u(\d+)-/.exec(key); return availableCourse().find(u => u.unit === (m ? +m[1] : /^(L\d|c1|boss)$/.test(key) ? 1 : -1)); };
 // The command a lesson teaches first is the power it gives.
 const powerOf = (unit, lesson) => { const cmd = unit?.lessons?.[lesson]?.exercises.find(e => e.type === 'teach')?.cmd; return cmd && cmd.length <= 12 ? cmd : ''; };
 function regionBlock(part, first) {
@@ -256,18 +258,22 @@ function drawTraces() {
   }
 }
 addEventListener('resize', () => drawTraces());
-function renderPath() {
-  document.querySelector('.app').prepend(document.querySelector('.topbar'));
-  const root = $('path'); root.innerHTML = '';
+function renderPath(append = false) {
+  const root = $('path'), units = availableCourse().filter(u => inTrack(u));
+  const mounted = append ? [...root.querySelectorAll('.unit-banner')].map(b => +b.dataset.unit) : [];
+  append = append && mounted.every((id, i) => units[i]?.unit === id);
+  if (!append) {
+    document.querySelector('.app').prepend(document.querySelector('.topbar'));
+    root.innerHTML = ''; root.append(worldStage());
+  }
   $('trackName').textContent = TRACK_SHORT[S.track] || t('trackAll');
-  const units = COURSE.filter(u => inTrack(u));
   const order = units.filter(u => !u.locked).flatMap(unitNodes);
   const current = order.find(n => !S.done.includes(n.key))?.key;
-  root.append(worldStage());
-  let part, region;
-  for (const unit of units) {
+  let region = append ? root.querySelector('.region:last-child') : null, part = +region?.dataset.part;
+  for (const unit of units.slice(append ? mounted.length : 0)) {
     if (unit.section !== part) { part = unit.section; region = regionBlock(part, !region); root.append(region); }
     const banner = el('div', `unit-banner ${unit.color}${unit.locked ? ' locked' : ''}`);
+    banner.dataset.unit = unit.unit;
     const txt = el('div'); txt.append(el('div', 'unit-kicker', t('kicker', unit.section, unit.unit)), el('h2', '', tr(unit.title)), el('div', 'unit-sub', tr(unit.subtitle)));
     const exams = [['L', 'LPIC-1'], ['R', 'RHCSA'], ['F', 'LFCS']].filter(([k]) => unit.exams?.some(e => e.startsWith(k)));
     if (exams.length) { const chips = el('div', 'exam-chips'); for (const [, name] of exams) chips.append(el('span', 'exam-chip', name)); txt.append(chips); }
@@ -294,7 +300,8 @@ function renderPath() {
   }
   drawTraces();
   renderTop();
-  paintStage(+root.querySelector('.region')?.dataset.part, false); dockBar(); syncStage(false);
+  if (!append) { paintStage(+root.querySelector('.region')?.dataset.part, false); dockBar(); }
+  syncStage(false);
 }
 function openPop(anchor, n, state) {
   closePop(); SFX.tap();
@@ -340,7 +347,7 @@ function startBoss(unit, key) {
 // A mock exam draws questions from every unit tagged for the exam. It first takes one question per objective tag
 // (L101.1, E013.2, C1.3 ...) so every objective is asked, then fills up at random. No teach cards and no live terminals.
 function buildExam(tag, count) {
-  const units = COURSE.filter(u => !u.locked && !u.exam && u.exams?.some(e => e.startsWith(tag)));
+  const units = availableCourse().filter(u => !u.locked && !u.exam && u.exams?.some(e => e.startsWith(tag)));
   const pool = units.flatMap(u => withFixture(u, [...u.lessons.flatMap(l => l.exercises), ...(u.boss.exercises || [])]).filter(ex => !['teach', 'terminal', 'boss'].includes(ex.type)).map(ex => ({ ...ex, topic: u.title, objs: u.exams.filter(e => e.startsWith(tag)) })));
   const picked = new Set();
   for (const obj of [...new Set(pool.flatMap(ex => ex.objs))]) { const options = shuffle(pool.filter(ex => ex.objs.includes(obj) && !picked.has(ex))); if (options.length) picked.add(options[0]); }
@@ -797,7 +804,7 @@ function showStreak() {
 }
 
 // ---------- Other tabs ----------
-function allExercises() { return COURSE.filter(u => !u.locked && !u.exam).flatMap(u => u.lessons.flatMap((ls, li) => withFixture(u, ls.exercises).map((ex, i) => ({ ...ex, uid: `${unitKey(u, `L${li}`)}.${i}` })))).filter(e => e.type !== 'teach'); }
+function allExercises() { return availableCourse().filter(u => !u.locked && !u.exam).flatMap(u => u.lessons.flatMap((ls, li) => withFixture(u, ls.exercises).map((ex, i) => ({ ...ex, uid: `${unitKey(u, `L${li}`)}.${i}` })))).filter(e => e.type !== 'teach'); }
 function renderPractice() {
   const n = S.mistakes.length; $('mistakesCount').textContent = n ? t('mistakesN', n) : t('noMistakes');
   $('practiceMistakes').disabled = !n;
@@ -875,7 +882,7 @@ async function restoreBackup(file) {
 const toHere = (behavior = 'smooth') => $('path').querySelector('.node.current')?.scrollIntoView({ block: 'center', behavior });
 function openTracks() {
   for (const b of document.querySelectorAll('.track-pick button')) {
-    const n = COURSE.filter(u => inTrack(u, b.dataset.track)).length;
+    const n = availableCourse().filter(u => inTrack(u, b.dataset.track)).length;
     b.replaceChildren(el('b', '', TRACK_NAMES[b.dataset.track] || t('trackAll')), el('span', '', t('trackUnits', n)));
     b.setAttribute('aria-pressed', String(b.dataset.track === S.track));
   }
@@ -918,11 +925,14 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   navigator.serviceWorker.register('../sw.js').catch(() => {});
   // Loaded through the worker means every file is kept, so the main page may send learners here offline too.
   const kept = () => { try { localStorage.setItem('learnOffline', '1'); } catch { /* not kept */ } window.learnKept = true; };
-  if (navigator.serviceWorker.controller) kept();
-  // The first visit loads before the worker controls the page, so its files are fetched once more through the
-  // worker to be kept for offline use.
-  else navigator.serviceWorker.addEventListener('controllerchange', () => {
+  const cacheCourse = () => {
+    if (!window.courseReady || window.courseLoadFailed) return;
     const files = [location.href, ...performance.getEntriesByType('resource').map(e => e.name)].filter(u => new URL(u).pathname.includes('/prototype/'));
-    Promise.all(files.map(u => fetch(u))).then(kept).catch(() => { /* not all kept: the next visit tries again */ });
-  }, { once: true });
+    Promise.all(files.map(u => fetch(u))).then(kept).catch(() => { /* The next visit retries an incomplete cache. */ });
+  };
+  const whenLoaded = () => {
+    if (document.readyState === 'complete') cacheCourse(); else addEventListener('load', cacheCourse, { once: true });
+  };
+  if (navigator.serviceWorker.controller) whenLoaded();
+  else navigator.serviceWorker.addEventListener('controllerchange', whenLoaded, { once: true });
 }

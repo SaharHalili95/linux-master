@@ -105,7 +105,8 @@ function startField(cv) {
     if (!w) return;
     const shift = pos * 0.22, z = pos * 0.00085;
     for (let j = 0; j <= rows; j++) for (let i = 0; i <= cols; i++) grid[j * (cols + 1) + i] = terrain((i * cell) / SCALE, (j * cell + shift) / SCALE, z);
-    ctx.clearRect(0, 0, w, h); ctx.lineCap = 'round'; contours(false); contours(true); rings();
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(cv.width / w, 0, 0, cv.height / h, 0, 0); ctx.lineCap = 'round'; contours(false); contours(true); rings();
   };
   const frame = now => {
     raf = 0;
@@ -151,7 +152,8 @@ function startBolts(cv) {
     requestAnimationFrame(frame);
     if (now - last < 33 || !w || document.hidden || document.body.classList.contains('in-lesson') || !document.getElementById('learn').classList.contains('active')) { if (now - last >= 33) last = now; return; }
     const dt = Math.min(now - last, 80); last = now;
-    ctx.clearRect(0, 0, w, h); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(cv.width / w, 0, 0, cv.height / h, 0, 0); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     const hue = color.join(','), hot = bright();
     for (const s of streams) {
       s.t += (s.speed * dt) / 1000; if (s.t > 1.05) { s.t = -0.05; s.y = R(); }
