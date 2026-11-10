@@ -24,7 +24,7 @@ Verification:
 - Failed-download tests keep the starter usable and never mark an incomplete course as offline-ready.
 - Existing offline, course play-through, exam, backup, language, accessibility and mobile-layout coverage was exercised.
 - Independent review found premature exposure of partial units. A failing regression reproduced it, and starter-course gating fixed it.
-- Three local simulated-mobile Lighthouse runs: median performance 77 versus the recorded baseline 45; accessibility, best practices and SEO 100. Some trace diagnostic audits are unavailable with the installed Lighthouse/Chrome pair, so the scores are not field-performance guarantees.
+- Three local simulated-mobile Lighthouse runs: final median performance 73 versus the recorded baseline 45; accessibility, best practices and SEO 100. Some trace diagnostic audits are unavailable with the installed Lighthouse/Chrome pair, so the scores are not field-performance guarantees.
 - Direct CDP network/CPU throttling (200 KiB/s, 150ms latency, 4x CPU) observed the first world at about 1.8 seconds, before full-course readiness.
 - Final screenshots at 390x844 and 1440x1000: all 99 units rendered, no horizontal overflow and no page errors.
 - Original scenery, character art/styles, curriculum files, translations and simulator are unchanged.
