@@ -149,10 +149,13 @@ button { cursor: pointer; }
 .term-input textarea { display: block; width: 100%; box-sizing: border-box; margin: 0; padding: 0; background: transparent; border: 0; outline: 0; resize: none; overflow: hidden; color: #fff; font: 700 16px/24px var(--mono); overflow-wrap: anywhere; caret-color: var(--term-green); }
 .term .code-row { margin-top: 10px; font: 500 14px var(--font); color: #fff; }
 .term .code-row input { padding: 6px 10px; border: 1px solid #ffffff44; border-radius: 8px; background: #ffffff14; color: #fff; font: 700 16px var(--mono); caret-color: var(--term-green); }
-.ask-row { flex-wrap: wrap; }
-.ask-picks { display: flex; gap: 8px; }
-.ask-picks .term-key { min-width: 48px; font-size: 16px; }
-.ask-picks .term-key.on { background: var(--term-green); border-color: var(--term-green); color: #06120a; }
+.term-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: -6px; }
+.term-foot .hint-link { margin: 0; margin-inline-start: auto; }
+.term-foot .hint { flex-basis: 100%; margin: 0; }
+.term-foot .ask-row { margin: 0; gap: 10px; font: 600 15px var(--font); color: var(--ink); }
+.ask-picks { display: flex; gap: 6px; }
+.ask-picks .term-key { min-width: 46px; min-height: 40px; padding: 6px 10px; font-size: 16px; }
+.ask-picks .term-key.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .term-keys { display: flex; gap: 8px; margin-top: 8px; }
 .term-key { background: #ffffff14; color: #fff; border: 1px solid #ffffff2a; border-radius: 8px; font: 700 14px var(--mono); padding: 6px 12px; min-height: 34px; cursor: pointer; }
 .term-keys .restart { margin-inline: auto; }
@@ -317,6 +320,8 @@ button { cursor: pointer; }
 .lesson.typing .lesson-main { display: flex; flex-direction: column; overflow: hidden; padding-top: 4px; padding-bottom: 8px; }
 .lesson.typing #exPrompt { flex: none; margin-bottom: 8px; font-size: 18px; }
 .lesson.typing #exBody { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; }
+.lesson.typing .term-foot { flex: none; margin-top: 8px; }
+.lesson.typing .term-foot .hint-link { order: 0; align-self: center; margin-bottom: 0; }
 .lesson.typing .term.live { flex: 0 1 auto; max-height: none; margin-bottom: 0; justify-content: flex-start; }
 .lesson.typing .hint-link, .lesson.typing .hint { order: -1; align-self: flex-start; margin-bottom: 8px; }
 .lesson.typing #foot { padding: 8px 16px; }

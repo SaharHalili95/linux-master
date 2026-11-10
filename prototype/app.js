@@ -601,7 +601,10 @@ const RENDER = {
       b.onclick = () => { L.ask = String(v); for (const o of picks.children) o.classList.toggle('on', o === b); setCan(true); };
       picks.append(b);
     }
-    row.append(el('span', '', tr(ex.ask)), picks); inTerminal(root, row);
+    row.append(el('span', '', tr(ex.ask)), picks);
+    const foot = el('div', 'term-foot'), hint = root.querySelector('.hint-link');
+    foot.append(row); if (hint) foot.append(hint);
+    root.append(foot);
   },
   boss(root, ex) {
     const goals = el('ul', 'goals');
