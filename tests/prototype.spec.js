@@ -876,3 +876,28 @@ test('character: original moon and animated backgrounds stay intact on iPhone', 
   await page.evaluate(() => { document.querySelectorAll('.character-hero').forEach(e => e.style.visibility = 'hidden'); });
   expect(await page.locator('.stage').boundingBox()).toEqual(before);
 });
+
+for (const pixelRatio of [1.25, 3]) test(`retina background clears its full surface after a canvas state reset (${pixelRatio}x)`, async ({ browser, baseURL }) => {
+  const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, deviceScaleFactor: pixelRatio, reducedMotion: 'no-preference' });
+  const page = await context.newPage();
+  try {
+    await page.goto('./prototype/');
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForFunction(dpr => ['pathField', 'pathBolts'].every(id => { const c = document.getElementById(id); return c.width >= Math.floor(390 * dpr) && c.height >= Math.floor(844 * dpr); }), pixelRatio);
+    for (const id of ['pathField', 'pathBolts']) {
+      await page.evaluate(id => {
+        const c = document.getElementById(id), ctx = c.getContext('2d');
+        ctx.resetTransform(); ctx.fillStyle = '#ff00ff'; ctx.fillRect(c.width - 10, c.height - 10, 10, 10);
+        FIELD.tint('#ffb347');
+      }, id);
+      await expect.poll(() => page.evaluate(id => {
+        const c = document.getElementById(id);
+        return [...c.getContext('2d').getImageData(c.width - 5, c.height - 5, 1, 1).data];
+      }, id), { timeout: 1500 }).not.toEqual([255, 0, 255, 255]);
+      await expect.poll(() => page.evaluate(id => {
+        const c = document.getElementById(id), m = c.getContext('2d').getTransform(), box = c.getBoundingClientRect();
+        return Math.abs(m.a - c.width / box.width) < 0.000001 && Math.abs(m.d - c.height / box.height) < 0.000001;
+      }, id)).toBe(true);
+    }
+  } finally { await context.close(); }
+});
