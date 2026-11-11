@@ -927,7 +927,8 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   const kept = () => { try { localStorage.setItem('learnOffline', '1'); } catch { /* not kept */ } window.learnKept = true; };
   const cacheCourse = () => {
     if (!window.courseReady || window.courseLoadFailed) return;
-    const files = [location.href, ...performance.getEntriesByType('resource').map(e => e.name)].filter(u => new URL(u).pathname.includes('/prototype/'));
+    const art = ['explorer', 'reader', 'courier', 'scout', 'engineer', 'analyst'].map(name => new URL(`character-art/${name}.webp`, location.href).href);
+    const files = [location.href, ...art, ...performance.getEntriesByType('resource').map(e => e.name)].filter(u => new URL(u).pathname.includes('/prototype/'));
     Promise.all(files.map(u => fetch(u))).then(kept).catch(() => { /* The next visit retries an incomplete cache. */ });
   };
   const whenLoaded = () => {
