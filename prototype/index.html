@@ -18,6 +18,8 @@
   <link rel="stylesheet" href="fonts.css?v=p91">
   <link rel="stylesheet" href="styles.css?v=characterart1">
   <link rel="stylesheet" href="character.css?v=character1">
+  <link rel="stylesheet" href="avatar-options.css?v=1">
+  <link rel="stylesheet" href="gameplay.css?v=2">
   <link rel="stylesheet" href="loading.css?v=loading2">
   <link rel="preload" href="fonts/rubik-hebrew.woff2" as="font" type="font/woff2" crossorigin="anonymous">
   <link rel="preload" href="fonts/rubik-latin.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -56,6 +58,10 @@
           <div class="stat"><span class="ic ic-book" aria-hidden="true"></span><b id="pLessons">0</b><span data-i18n="pLessons">שיעורים</span></div>
           <div class="stat"><span class="ic ic-gem" aria-hidden="true"></span><b id="pGems">0</b><span data-i18n="pGems">יהלומים</span></div>
         </div>
+        <div class="card game-panel" id="avatarForm"></div>
+        <div class="card game-panel" id="avatarPicker"></div>
+        <section class="card game-panel" aria-labelledby="worldProgressTitle"><h2 id="worldProgressTitle">התקדמות בעולמות</h2><div id="worldProgress" class="game-worlds"></div></section>
+        <section class="card game-panel" aria-labelledby="mockMedalsTitle"><h2 id="mockMedalsTitle">מדליות מבחני דמה</h2><p id="mockMedalsHelp"></p><div id="mockMedals" class="game-medals"></div></section>
         <div class="card settings">
           <label class="switch"><input type="checkbox" id="soundToggle"><span data-i18n="sound">צלילים</span></label>
           <button type="button" class="btn ghost" id="backupBtn" data-i18n="backup">שמירת גיבוי</button>
@@ -151,15 +157,18 @@
   <canvas id="confetti" class="confetti" hidden></canvas>
   <div id="toast" class="toast" role="status"></div>
   <script src="../shell.js?v=30"></script>
-  <script src="i18n.js?v=p91"></script>
+  <script src="i18n.js?v=gameplay3"></script>
   <script src="units.js?v=p91"></script>
   <script src="lessons.js?v=p91"></script>
   <script src="world.js?v=retina1"></script>
-  <script src="sync.js?v=p91"></script>
+  <script src="sync.js?v=gameplay3"></script>
   <script src="world-characters.js?v=1"></script>
-  <script src="character-art.js?v=1"></script>
-  <script src="app.js?v=characterart1"></script>
-  <script src="character.js?v=character1"></script>
+  <script src="character-art.js?v=catalog1"></script>
+  <script src="avatar-options.js?v=2"></script>
+  <script src="game-progress.js?v=2"></script>
+  <script src="story-missions.js?v=1"></script>
+  <script src="app.js?v=gameplay5"></script>
+  <script src="character.js?v=gameplay3"></script>
   <script src="course-start.js?v=loading2"></script>
   <script defer data-course src="recorded.js?v=p91"></script>
   <script defer data-course src="parts/p1.js?v=p91"></script>
@@ -187,6 +196,6 @@
   <script defer data-course src="parts/p13.js?v=p91"></script>
   <script defer data-course src="parts/p14.js?v=p91"></script>
   <script defer data-course src="parts/p15.js?v=p91"></script>
-  <script defer data-course src="course-ready.js?v=loading2"></script>
+  <script defer data-course src="course-ready.js?v=gameplay2"></script>
 </body>
 </html>

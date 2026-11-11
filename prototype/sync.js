@@ -7,7 +7,18 @@ function mergeQuests(a = {}, b = {}) {
 function mergeProgress(a, b) {
   const latest = (b.lastDay || '') > (a.lastDay || '') ? b : a;
   const sameDay = (a.lastDay || '') === (b.lastDay || '');
+  const validAvatar = value => ['auto', 'mint', 'cyan', 'violet'].includes(value) ? value : 'auto';
+  const stamp = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+  const aa = { style: validAvatar(a.avatarStyle), at: validAvatar(a.avatarStyle) === a.avatarStyle ? stamp(a.avatarUpdatedAt) : 0 }, bb = { style: validAvatar(b.avatarStyle), at: validAvatar(b.avatarStyle) === b.avatarStyle ? stamp(b.avatarUpdatedAt) : 0 };
+  const avatar = aa.at === bb.at ? (aa.style >= bb.style ? aa : bb) : aa.at > bb.at ? aa : bb;
+  const validForm = value => ['core', 'scout', 'guardian'].includes(value) ? value : 'core';
+  const fa = { form: validForm(a.avatarForm), at: validForm(a.avatarForm) === a.avatarForm ? stamp(a.avatarFormUpdatedAt) : 0 }, fb = { form: validForm(b.avatarForm), at: validForm(b.avatarForm) === b.avatarForm ? stamp(b.avatarFormUpdatedAt) : 0 };
+  const form = fa.at === fb.at ? (fa.form >= fb.form ? fa : fb) : fa.at > fb.at ? fa : fb;
   return {
+    avatarForm: form.form,
+    avatarFormUpdatedAt: form.at,
+    avatarStyle: avatar.style,
+    avatarUpdatedAt: avatar.at,
     xp: Math.max(a.xp || 0, b.xp || 0),
     gems: Math.max(a.gems || 0, b.gems || 0),
     done: union(a.done, b.done),

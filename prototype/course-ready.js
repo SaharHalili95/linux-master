@@ -1,12 +1,14 @@
-/* global COURSE, inTrack, renderPath, toHere, scrollMoved, openTracks, t */
+/* global COURSE, inTrack, renderPath, toHere, scrollMoved, openTracks, renderAchievements, t */
 (() => {
   document.documentElement.classList.add('learn-ready');
   if (window.courseLoadFailed) {
+    if (document.getElementById('profile').classList.contains('active')) renderAchievements();
     const message = document.getElementById('toast'); message.textContent = t('triviaFailed'); message.classList.add('show');
     return;
   }
   COURSE.sort((a, b) => a.section - b.section || a.unit - b.unit);
   window.courseReady = true;
+  if (document.getElementById('profile').classList.contains('active')) renderAchievements();
   const path = document.getElementById('path');
   let observer;
   function refresh() {

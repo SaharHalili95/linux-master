@@ -1,0 +1,21 @@
+.game-panel { margin-top: 14px; }
+.game-panel h2 { margin: 0 0 8px; font-size: 1.1rem; }
+.game-panel p { margin: 0 0 12px; }
+.game-worlds, .game-medals { display: grid; gap: 8px; }
+.game-world, .game-medal { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.game-world strong, .game-medal strong { min-width: 0; }
+.game-world span, .game-medal span { text-align: end; }
+.game-medal[data-passed="true"] { border-color: var(--green); }
+.game-world-progress { font-size: .8rem; line-height: 1.3; text-align: end; color: var(--ink); }
+.story-mission { margin: 10px 0; padding: 10px; border: 1px solid currentColor; border-radius: 10px; }
+.story-mission-title { font-size: .9rem; }
+.pop .story-mission-text { margin: 4px 0 0; font-size: .85rem; line-height: 1.4; }
+
+.game-sigil { display: inline-grid; place-items: center; flex: none; width: 30px; height: 30px; border: 2px solid var(--line-strong); border-radius: 50%; color: var(--ink); font-weight: 800; }
+.game-world[data-level="2"] .game-sigil { border-color: #69d6d1; }
+.game-world[data-level="3"] .game-sigil { border-color: #6de5ff; background: #123953; }
+.game-world[data-level="4"] .game-sigil { border-color: #c0a2ff; background: #30264e; }
+.game-world[data-level="5"] .game-sigil { border-color: #ffd36e; background: #493817; color: #fff0bd; }
+.game-medal-icon { flex: none; opacity: .45; }
+.game-medal[data-passed="true"] .game-medal-icon { color: #ffd36e; opacity: 1; }
+.pop .story-mission-progress { margin: 6px 0 0; font-size: .8rem; font-weight: 700; }
