@@ -54,7 +54,7 @@ const code = text => { const c = el('code', 'cmd', text); c.dir = 'ltr'; return 
 const TRACK_NAMES = { L: 'LPIC-1', R: 'RHCSA', F: 'LFCS', E: 'Linux Essentials', S: 'SUSE SCA', C: 'CompTIA Linux+' };
 const TRACK_SHORT = { ...TRACK_NAMES, E: 'Essentials', C: 'Linux+' };
 const MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, LIFE_GEMS = 20;
-const DEFAULTS = { xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
+const DEFAULTS = { avatarForm: 'core', avatarFormUpdatedAt: 0, avatarStyle: 'auto', avatarUpdatedAt: 0, xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
 // Saved state can be stale or hand-edited; keep only fields of the expected type.
 function loadState(raw) {
   const S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
@@ -64,6 +64,10 @@ function loadState(raw) {
   for (const key of ['done', 'days', 'mistakes']) if (Array.isArray(saved[key])) S[key] = saved[key].filter(x => typeof x === 'string');
   if (typeof saved.lastDay === 'string') S.lastDay = saved.lastDay;
   if (typeof saved.sound === 'boolean') S.sound = saved.sound;
+  S.avatarForm = ['core', 'scout', 'guardian'].includes(saved.avatarForm) ? saved.avatarForm : 'core';
+  if (S.avatarForm === saved.avatarForm && Number.isSafeInteger(saved.avatarFormUpdatedAt) && saved.avatarFormUpdatedAt >= 0) S.avatarFormUpdatedAt = saved.avatarFormUpdatedAt;
+  S.avatarStyle = ['auto', 'mint', 'cyan', 'violet'].includes(saved.avatarStyle) ? saved.avatarStyle : 'auto';
+  if (S.avatarStyle === saved.avatarStyle && Number.isSafeInteger(saved.avatarUpdatedAt) && saved.avatarUpdatedAt >= 0) S.avatarUpdatedAt = saved.avatarUpdatedAt;
   if (saved.layout && typeof saved.layout === 'object') for (const [k, v] of Object.entries(saved.layout)) if (typeof v === 'string') S.layout[k] = v;
   if (Object.hasOwn(TRACK_NAMES, saved.track)) S.track = saved.track;
   if (Number.isInteger(saved.lives) && saved.lives >= 0 && saved.lives <= MAX_LIVES) S.lives = saved.lives;
@@ -214,7 +218,7 @@ function worldStage() {
   const box = el('div', 'stage'), copy = el('div', 'stage-copy'), rows = el('div', 'stage-rows');
   box.id = 'stage';
   copy.append(Object.assign(el('div', 'stage-name'), { ariaHidden: 'true' }), el('p', 'stage-blurb'));
-  rows.append(heroBar());
+  rows.append(heroBar(), el('div', 'game-world-progress'));
   box.append(el('div', 'stage-scenes'), copy, rows);
   return box;
 }
@@ -222,6 +226,7 @@ function paintStage(part, fade) {
   const box = $('stage'); if (!box || +box.dataset.part === part) return;
   const r = REGIONS[part], scenes = box.querySelector('.stage-scenes'), copy = box.querySelector('.stage-copy'), layer = el('div', 'stage-layer'), name = copy.firstChild;
   box.dataset.part = part;
+  updateWorldProgress(part);
   box.style.setProperty('--r-ground', r.ground); box.style.setProperty('--accent', r.accent); FIELD.tint(r.accent); BOLTS.tint(r.accent);
   name.textContent = tr(r.name); name.classList.toggle('long', tr(r.name).length > 11); copy.lastChild.textContent = tr(r.blurb);
   layer.innerHTML = regionScene(part);
@@ -302,6 +307,7 @@ function renderPath(append = false) {
   renderTop();
   if (!append) { paintStage(+root.querySelector('.region')?.dataset.part, false); dockBar(); }
   syncStage(false);
+  updateWorldProgress();
 }
 function openPop(anchor, n, state) {
   closePop(); SFX.tap();
@@ -317,13 +323,26 @@ function openPop(anchor, n, state) {
     go.onclick = () => { closePop(); startExam(unit, n.key); };
     pop.append(go);
   } else {
+    if (n.kind === 'lesson' && state === 'current') {
+      const story = window.StoryMissions?.render(pop, unit, LANG), mission = window.GameProgress?.mission(unit, S.done, unitNodes);
+      if (story && mission?.total) story.append(el('p', 'story-mission-progress', t('missionProgress', mission.completed, mission.total)));
+    }
     const title = tr(n.kind === 'boss' ? unit.boss.title : unit.lessons[n.i].title);
     pop.append(el('h3', '', title), el('p', '', n.kind === 'boss' ? tr(unit.boss.intro || unit.boss.text) : t('lessonOf', n.i + 1, unit.lessons.length)));
     const go = el('button', 'btn primary', state === 'done' ? t('again') : n.kind === 'boss' ? t('toBoss') : t('startXp'));
     go.onclick = () => { closePop(); syncLives(); if (S.lives === 0 && state !== 'done') return openLives(); n.kind === 'boss' ? startBoss(unit, n.key) : startLesson(n.key, withFixture(unit, unit.lessons[n.i].exercises), { title, replay: state === 'done' }); };
     pop.append(go);
   }
-  anchor.parentElement.append(pop); anchor.parentElement.classList.add('open'); setTimeout(() => document.addEventListener('click', outside), 0);
+  pop.setAttribute('aria-label', pop.querySelector('h3')?.textContent || t('pathLabel'));
+  anchor.parentElement.append(pop); anchor.parentElement.classList.add('open');
+  requestAnimationFrame(() => {
+    if (!pop.isConnected) return;
+    const action = pop.querySelector('.btn.primary'), nav = document.querySelector('.tabbar');
+    if (!action || !nav) return;
+    const overlap = action.getBoundingClientRect().bottom - nav.getBoundingClientRect().top + 12;
+    if (overlap > 0) scrollBy({ top: overlap, behavior: 'instant' });
+  });
+  setTimeout(() => document.addEventListener('click', outside), 0);
 }
 function outside(e) { if (!e.target.closest('#pop') && !e.target.closest('.node')) closePop(); }
 function closePop() { $('pop')?.parentElement.classList.remove('open'); $('pop')?.remove(); document.removeEventListener('click', outside); }
@@ -774,6 +793,7 @@ function finishExam() {
 function finishLesson() {
   if (L.opts.exam) return finishExam();
   const rankBefore = rankOf(S.xp).level, wasDone = S.done.includes(L.key);
+  const missionUnit = unitOfKey(L.key), beforeMission = !L.opts.practice && window.GameProgress?.mission(missionUnit, S.done, unitNodes);
   const perfect = L.mistakes === 0 && !L.matchMiss, secs = Math.round((Date.now() - L.start) / 1000);
   const xp = L.opts.boss ? 25 : L.opts.replay || L.opts.practice ? 5 : 10 + (perfect ? 5 : 0);
   const firstToday = S.lastDay !== dayKey();
@@ -791,6 +811,8 @@ function finishLesson() {
   $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
   const earned = L.opts.earnLife && L.correct >= 3; if (earned) addLife();
   $('endQuests').textContent = L.opts.earnLife ? t(earned ? 'lifeEarned' : 'lifeNotEarned') : newly.length ? t('questsDone', newly.length) : '';
+  const afterMission = !L.opts.practice && window.GameProgress?.mission(missionUnit, S.done, unitNodes);
+  if (beforeMission && !beforeMission.complete && afterMission?.complete) $('endQuests').textContent = [$('endQuests').textContent, t('missionComplete')].filter(Boolean).join(' · ');
   $('endBtn').onclick = () => firstToday ? showStreak() : closeOverlays();
   SFX.win(); confetti(); $('endBtn').focus();
 }
@@ -824,7 +846,47 @@ function renderQuests() {
     const qi = el('div', 'qicon'); qi.append(icon(x.icon)); const reward = el('div', 'qreward'); reward.append(icon(val >= x.goal ? 'check' : 'gem'), val >= x.goal ? '' : '10'); li.append(qi, body, reward); list.append(li);
   }
 }
+function updateWorldProgress(part = Number($('stage')?.dataset.part)) {
+  const target = $('stage')?.querySelector('.game-world-progress');
+  if (!target || !part) return;
+  if (!window.GameProgress) { target.textContent = ''; return; }
+  const progress = window.GameProgress.world(COURSE, S.done, part, !!window.courseReady, unitNodes);
+  target.textContent = !progress.ready ? '' : !progress.total ? t('noWorldTasks') : t('worldLevel', progress.level, progress.completed, progress.total, progress.kind);
+  target.dataset.level = progress.ready && progress.total ? progress.level : '';
+}
+function renderAchievements() {
+  const worlds = $('worldProgress'), medals = $('mockMedals');
+  $('worldProgressTitle').textContent = t('worldLevels'); $('mockMedalsTitle').textContent = t('mockMedals'); $('mockMedalsHelp').textContent = t('mockHelp');
+  worlds.replaceChildren(); medals.replaceChildren();
+  if (window.courseLoadFailed || !window.GameProgress) { worlds.textContent = t('progressError'); medals.textContent = t('progressError'); return; }
+  if (!window.courseReady) { worlds.textContent = t('progressLoading'); medals.textContent = t('progressLoading'); return; }
+  for (const [id, region] of Object.entries(REGIONS)) {
+    const progress = window.GameProgress.world(COURSE, S.done, Number(id), true, unitNodes);
+    const row = el('div', 'game-world'); row.dataset.world = id; row.dataset.level = progress.level; row.dataset.complete = String(progress.complete);
+    const name = el('strong', '', tr(region.name)), sigil = el('span', 'game-sigil', String(progress.level)); sigil.setAttribute('aria-hidden', 'true');
+    row.append(name, el('span', '', progress.total ? t('worldLevel', progress.level, progress.completed, progress.total, progress.kind) : t('noWorldTasks')), sigil); worlds.append(row);
+  }
+  for (const exam of window.GameProgress.mockExams(COURSE, S.done, true, unitNodes)) {
+    const unit = COURSE.find(u => u.unit === exam.unit), row = el('div', 'game-medal'); row.dataset.exam = exam.unit; row.dataset.passed = String(exam.passed);
+    const badge = icon('star'); badge.classList.add('game-medal-icon');
+    row.append(badge, el('strong', '', tr(unit.title)), el('span', '', t(exam.passed ? 'medalPassed' : 'medalLocked'))); medals.append(row);
+  }
+}
+function repaintAvatar() {
+  document.querySelectorAll('.character-hero').forEach(node => { node.outerHTML = mascot(node.dataset.mood, Number(node.dataset.rank)); });
+}
+function selectAvatar(value) {
+  S.avatarStyle = window.AvatarOptions.normalize(value); S.avatarUpdatedAt = Date.now(); save(); repaintAvatar();
+}
+function selectAvatarForm(value) {
+  S.avatarForm = window.AvatarOptions.normalizeForm(value); S.avatarFormUpdatedAt = Date.now(); save(); repaintAvatar();
+}
 function renderProfile() {
+  if (window.AvatarOptions) {
+    window.AvatarOptions.renderForms($('avatarForm'), S.avatarForm, LANG, selectAvatarForm);
+    window.AvatarOptions.render($('avatarPicker'), S.avatarStyle, LANG, selectAvatar);
+  } else { $('avatarForm').textContent = t('featureUnavailable'); $('avatarPicker').textContent = ''; }
+  renderAchievements();
   $('pXp').textContent = S.xp; $('pStreak').textContent = liveStreak(); $('pLessons').textContent = S.done.filter(k => /(^|-)L\d$/.test(k)).length; $('pGems').textContent = S.gems;
   $('soundToggle').checked = S.sound; $('profileMascot').innerHTML = mascot('happy');
 }

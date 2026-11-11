@@ -10,14 +10,16 @@ The original moon represents Sahar, is independent of the learner and changes wi
 
 | Concern | Current source | Responsibility |
 | --- | --- | --- |
-| Learner identity | `prototype/character.js`, existing XP and rank | Player appearance, expression and existing upgrades. Not the NPC. |
+| Learner identity | `prototype/character.js`, `prototype/avatar-options.js`, existing XP and rank | Three player forms, four palette choices, expression and existing rank equipment. Independent from the NPC. |
+| World and mission progression | `prototype/game-progress.js` | Derives five world levels, unit completion and mock-exam medals from unique saved completion keys. |
+| Contextual introductions | `prototype/story-missions.js` | Bilingual introductions to existing learning tasks; no alternate answers or scoring. |
 | Worlds and Sahar's moon | `prototype/world.js` | Current eleven regions, moon, backgrounds and motion. |
 | Learning and progress | `prototype/lessons.js`, `prototype/units.js`, `prototype/parts/`, `prototype/app.js` | Lessons, objectives, exercises, scoring, certification tracks and saved progress. |
 | World character roles | `prototype/character-art.js` | Catalog of available visual roles, stable world defaults and unit-specific assignments. |
 | Rendering and layout | `prototype/app.js`, `prototype/styles.css` | Placement in the path. Decorative world characters do not act as controls or replace the learner. |
 | Offline delivery | `prototype/app.js`, `sw.js` | Cache catalog assets after the full course is ready; keep network-first Learn behavior. |
 
-The earlier `world-characters.js` and its vector assets remain in the repository. Its global is currently superseded by `character-art.js`; consolidate the renderers only in a separately verified change that preserves those assets. Likewise the player's existing `mascot` replacement and feedback observer are current behavior, not a finalized player-customization architecture.
+The earlier `world-characters.js` and its vector assets remain in the repository. Its global is currently superseded by `character-art.js`; consolidate the renderers only in a separately verified change that preserves those assets. The player's existing `mascot` replacement and feedback observer remain in use; appearance selection is a separate, replaceable module.
 
 ## Character catalog contract
 
@@ -25,15 +27,18 @@ The earlier `world-characters.js` and its vector assets remain in the repository
 
 Keep asset filenames unique and version changed assets so a returning user's cache can update. No user data or course content should be added to this catalog. The present six illustrated roles are a starting library, not an individual design for each unit or a complete character universe.
 
-## Experience design proposal, not implemented
+## Implemented gameplay foundation
 
-1. The player enters a world under Sahar's original moon. The player character remains visually distinct from characters met in the world.
-2. A world character introduces a relevant objective at a meaningful moment, not automatically at every node. The user practices an actual Linux task with existing exercises and terminal behavior.
-3. A clear result, constructive feedback and the next appropriate challenge follow. Failure should not be represented by an angry or shaming character.
-4. World-specific visual progression, cosmetics and medals can be designed after the prototype is tested. A practice completion, mock exam completion and externally verified certification must be labeled distinctly. Never imply a mock exam is an official certification.
-5. An experienced learner should reach practice without forced repetition; a beginner needs a legible objective and optional help. Children and experienced developers are overlapping audiences, not assumed personas.
+1. The player enters a world under Sahar's original moon. The player character stays separate from the world characters. Profile controls select Core, Scout or Guardian and the automatic rank palette, Mint, Cyan or Violet. The forms vary head and body silhouettes; they are variations within the existing robot family, not three newly illustrated character assets.
+2. The current lesson's popover offers a bilingual contextual introduction and unit completion count. Finishing the last distinct lesson announces unit completion once. Replaying a lesson, collecting a chest or defeating a boss does not duplicate that completion. This is a narrative layer around existing lessons, not a branching story campaign.
+3. World levels are derived from unique completed lessons against the full loaded course. Levels 1–5 correspond to starting, quarter, half, three-quarter and full completion. Exam-only worlds count mock exams instead. Loading or unavailable data never awards a level or medal. Existing earned XP and rank equipment are unchanged; the world-level sigils are visual progress markers, not new equipment unlocks.
+4. Profile medals distinguish six mock-exam passes from attempts not yet passed. Existing tagged question pools create varied practice attempts. These are not newly authored fixed exam papers, and no official certification or external verification is claimed.
+5. Appearance fields survive reload and the existing file backup/restore flow. The merge helper resolves each valid selection by its timestamp, with a stable tie-break. Invalid selections cannot override valid ones using a corrupt timestamp. The app still saves on this device; no account or cloud synchronization UI is introduced.
+6. Optional gameplay modules can fail to load without blocking existing lessons or resetting earned progress. The new assets are included in deployment and the existing offline caching path. Progress calculations, appearance choices, story text and rendering remain separate so later visual changes do not require changing the course.
 
-These are concepts to prototype and validate, not claims that new gameplay, customization, badges or certification verification already exist. Do not add mechanics or change content without a specific approved scope.
+## Remaining product validation
+
+An experienced learner should reach practice without forced repetition; a beginner needs a legible objective and optional help. Children and experienced developers are overlapping audiences, not established personas. Compare the learning loop with representative users before expanding narrative or art production. A practice pass, a course completion and an externally verified certification must remain distinct.
 
 ## Visual system and scaling principles
 
@@ -44,7 +49,7 @@ These are concepts to prototype and validate, not claims that new gameplay, cust
 - Preserve existing motion as the default. Respect reduced-motion preferences and provide appropriate pause controls where required. Test actual lightning flashes and contrast; do not claim accessibility conformance without measurements.
 - Add characters progressively; avoid loading high-resolution assets at startup, preserve offline readiness, and measure mobile performance.
 
-## Validation gates for future changes
+## Validation gates
 
 1. Unit and world IDs resolve to catalog roles, regardless of title wording or language. Every catalog asset exists, is deployed and is available when Learn is marked offline-ready.
 2. Player appearance and world characters are independently testable. A character theme or asset change cannot alter saved progress, questions, answers or certification logic.
@@ -54,22 +59,22 @@ These are concepts to prototype and validate, not claims that new gameplay, cust
 
 ## Known limitations and decisions
 
-The existing stage layout shows a character once per unlocked unit and currently has no authored narrative interactions, gameplay events or per-world customization. The catalog only selects presentation and has no persistence. Choosing when NPCs appear, designing actual mission interactions, player customization, world-specific rewards and proof of external certifications are future product decisions. Existing CSS and player rendering still have historical overrides; avoid broad rewrites without a separate migration plan and regression coverage. The implementation does not claim full accessibility, complete performance coverage, or a 10/10 outcome.
+The map still presents a contextual character once per unlocked unit. The catalog chooses presentation and has no persistence. Story introductions and completion feedback do not constitute authored NPC conversations or a branching quest engine. World levels expose progress rather than unlocking new equipment; player equipment continues to follow existing XP ranks. Proof of external certifications is outside this implementation. Existing CSS and player rendering retain historical overrides; broad rewrites require a separate migration plan and regression coverage. Automated tests and visual inspection do not establish physical-device coverage, long-term learning retention, commercial success or a 10/10 outcome.
 
 ## Screen and system blueprint
 
-The following is an intended structure for a later visual prototype, not a representation of currently implemented interactions:
+The current structure keeps presentation and learning state independent:
 
 ```text
 WORLD MAP                         LEARNING MOMENT
 Sahar's world-specific moon       Existing lesson heading and progress
-Existing animated scenery         World character: optional objective
+Existing animated scenery         Contextual introduction and unit progress
 Player identity and progress      Existing prompt and terminal
 World entrance and context        Check, hint and respectful feedback
 Path and current objective        Result and return to the same map
 ```
 
-On small screens, the moon and scenery remain recognizable while lesson content and controls stay readable and unobstructed. The learner can identify their own character separately from the world guide. The map and exercise already exist; character introductions and contextual interactions in this sketch require further design and authorization.
+On small screens, the moon and scenery remain recognizable while lesson content and controls stay readable and unobstructed. The learner can identify their own character separately from the world guide. The map, exercise and lesson introductions are implemented. Authored NPC interactions would need separate design and validation.
 
 ```mermaid
 flowchart LR
