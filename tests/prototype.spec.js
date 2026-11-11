@@ -166,6 +166,8 @@ test('Learn mode works offline after a first visit, fonts and every unit include
   await page.reload();
   await expect(page.locator('.node.current')).toBeVisible();
   expect(await page.evaluate(() => COURSE.length)).toBeGreaterThanOrEqual(83);
+  const artCached = await page.evaluate(async () => Promise.all(window.worldCharacterCatalog.assetPaths().map(async path => (await fetch(path)).ok)));
+  expect(artCached).toEqual(Array(6).fill(true));
   const faces = await page.evaluate(async () => [...await document.fonts.load('700 16px Rubik', 'שלום'), ...await document.fonts.load('16px "JetBrains Mono"', 'ls')].map(f => `${f.family} ${f.status}`));
   expect(faces).toEqual(expect.arrayContaining(['Rubik loaded', 'JetBrains Mono loaded']));
   await page.goto('./');
@@ -973,4 +975,45 @@ test('world characters match the first six learning topics without replacing the
   const characters = await page.locator('.path-mascot img').evaluateAll(nodes => nodes.slice(0, 6).map(node => node.getAttribute('src')));
   expect(characters).toHaveLength(6);
   expect(new Set(characters).size).toBe(6);
+});
+
+test('character catalog covers the course independently of lesson text', async ({ page }) => {
+  await page.goto('/prototype/');
+  await page.waitForFunction(() => window.courseReady);
+  const result = await page.evaluate(() => {
+    const catalog = window.worldCharacterCatalog;
+    const units = COURSE.map(unit => ({
+      unit: unit.unit,
+      role: catalog.roleFor(unit),
+      renamedRole: catalog.roleFor({ ...unit, title: { en: 'Different wording' }, subtitle: { en: 'Different wording' } })
+    }));
+    return { units, roles: Object.keys(catalog.characters), assets: catalog.assetPaths(), unknown: catalog.roleFor({ unit: 10000, section: 1 }) };
+  });
+  expect(result.units).toHaveLength(99);
+  for (const unit of result.units) {
+    expect(result.roles).toContain(unit.role);
+    expect(unit.role).toBe(unit.renamedRole);
+  }
+  expect(result.assets).toHaveLength(result.roles.length);
+  expect(new Set(result.assets).size).toBe(result.roles.length);
+  expect(result.roles).toContain(result.unknown);
+  expect(Object.fromEntries(result.units.filter(unit => [1, 2, 3, 4, 5, 6, 22, 35, 50, 51, 62, 69, 78].includes(unit.unit)).map(unit => [unit.unit, unit.role]))).toEqual({ 1: 'explorer', 2: 'reader', 3: 'courier', 4: 'scout', 5: 'engineer', 6: 'analyst', 22: 'scout', 35: 'scout', 50: 'engineer', 51: 'scout', 62: 'engineer', 69: 'scout', 78: 'reader' });
+});
+
+test('a missing character asset never marks a first visit offline-ready', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'Playwright WebKit does not support service workers');
+  await page.addInitScript(() => {
+    const originalFetch = window.fetch;
+    window.fetch = (input, ...options) => {
+      if (String(input).includes('/character-art/analyst.webp')) {
+        window.missingCharacterAsset = true;
+        return Promise.resolve(new Response('', { status: 404 }));
+      }
+      return originalFetch(input, ...options);
+    };
+  });
+  await page.goto('./prototype/');
+  await page.waitForFunction(() => window.missingCharacterAsset);
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => [!!window.learnKept, localStorage.getItem('learnOffline')])).toEqual([false, null]);
 });
