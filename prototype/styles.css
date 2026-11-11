@@ -91,6 +91,7 @@ button { cursor: pointer; }
 .start-tip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 8px solid transparent; border-top-color: var(--line); }
 @keyframes bob { 50% { transform: translateY(-6px); } }
 .path-mascot { position: absolute; right: calc(100% + 40px); top: -10px; width: 110px; }
+.path-mascot .world-character-art { display: block; width: 100%; height: auto; }
 .node-row.open { z-index: 5; }
 /* Room for the start bubble, so it never covers the node above. */
 .node-row.tipped { margin-top: 48px; }

@@ -970,7 +970,7 @@ for (const file of ['parts/p1.js', 'course-ready.js']) test(`loading: a failed $
 test('world characters match the first six learning topics without replacing the learner', async ({ page }) => {
   await page.goto('/prototype/');
   await expect(page.locator('.hero-face .character-hero')).toBeVisible();
-  const characters = await page.locator('.path-mascot svg').evaluateAll(nodes => nodes.slice(0, 6).map(node => node.outerHTML));
+  const characters = await page.locator('.path-mascot img').evaluateAll(nodes => nodes.slice(0, 6).map(node => node.getAttribute('src')));
   expect(characters).toHaveLength(6);
   expect(new Set(characters).size).toBe(6);
 });
