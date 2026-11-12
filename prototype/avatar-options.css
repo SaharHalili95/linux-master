@@ -8,3 +8,12 @@
 .avatar-options__marker { width: 14px; height: 14px; flex: none; border: 1px solid currentColor; border-radius: 50%; background: var(--avatar-option-color); }
 
 .avatar-options__marker--auto { background: linear-gradient(135deg, #8bf0cf, #6de5ff, #c0a2ff); }
+
+.avatar-options--forms .avatar-options__list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.avatar-options--forms .avatar-options__choice { position: relative; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; padding: 12px 4px 10px; border-color: #637c91; color: #dceaf6; }
+.avatar-options--forms .avatar-options__choice:has(input:checked) { padding: 11px 3px 9px; border-color: #8bf0cf; background: #152f32; }
+.avatar-options--forms .avatar-options__choice:hover { background: #1d3040; }
+.avatar-options--forms .avatar-options__choice input { align-self: flex-start; }
+.avatar-options__preview { display: block; width: min(100%, 80px); aspect-ratio: 1; pointer-events: none; }
+.avatar-options__preview .character-hero { width: 100%; height: auto; }
+.avatar-options__preview .character-hero * { animation: none !important; }

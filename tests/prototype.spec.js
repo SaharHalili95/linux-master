@@ -615,7 +615,7 @@ test('the terminal completes names with Tab, brings commands back, and can start
 
 test('progress can be saved to a backup file and restored on a fresh device', async ({ page }) => {
   await page.goto('./prototype/');
-  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, xp: 345, done: ['L0', 'L1'], streak: 3, lastDay: dayKey(), avatarStyle: 'violet', avatarUpdatedAt: 20, avatarForm: 'guardian', avatarFormUpdatedAt: 30 })); });
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, xp: 345, done: ['L0', 'L1'], streak: 3, lastDay: dayKey(), avatarStyle: 'violet', avatarUpdatedAt: 20, avatarForm: 'guardian', avatarFormUpdatedAt: 30, worldGear: 1, worldGearUpdatedAt: 40, expeditionBests: { '1:explore': 2 } })); });
   await page.reload();
   await page.click('[data-tab="profile"]');
   await page.evaluate(() => { navigator.canShare = () => true; navigator.share = async ({ files }) => { window.shared = { name: files[0].name, text: await files[0].text() }; }; });
@@ -635,6 +635,7 @@ test('progress can be saved to a backup file and restored on a fresh device', as
   await expect(page.locator('#pXp')).toHaveText('345');
   await expect(page.locator('#avatarPicker input[value="violet"]')).toBeChecked();
   await expect(page.locator('#avatarForm input[value="guardian"]')).toBeChecked();
+  expect(await page.evaluate(() => [S.worldGear, S.expeditionBests])).toEqual([1, { '1:explore': 2 }]);
 
   const [refused] = await Promise.all([page.waitForEvent('dialog'), page.setInputFiles('#restoreFile', { name: 'x.json', mimeType: 'application/json', buffer: Buffer.from('{"app":"other"}') })]);
   expect(refused.message()).toContain('Linux Master');

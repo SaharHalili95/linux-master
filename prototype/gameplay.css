@@ -19,3 +19,9 @@
 .game-medal-icon { flex: none; opacity: .45; }
 .game-medal[data-passed="true"] .game-medal-icon { color: #ffd36e; opacity: 1; }
 .pop .story-mission-progress { margin: 6px 0 0; font-size: .8rem; font-weight: 700; }
+
+.expedition-hud { margin-bottom: 12px; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 12px; font-size: .9rem; line-height: 1.5; }
+.expedition-result { text-align: center; margin: 12px 0; }
+.expedition-stars { display: flex; justify-content: center; gap: 12px; font-size: 28px; color: var(--muted); }
+.expedition-stars .earned { color: var(--accent); }
+#quests > .tab-title:not(:first-child) { margin-top: 32px; }
