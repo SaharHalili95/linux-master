@@ -6,6 +6,7 @@ const tr = v => (v && typeof v === 'object' && 'he' in v ? v[LANG] : v);
 
 const I18N = {
   he: {
+    expeditionsUnavailable: 'המסעות אינם זמינים כרגע. רעננו את הדף כדי לנסות שוב.', gearUnavailable: 'הציוד אינו זמין כרגע. הבחירה השמורה נשמרת. רעננו כדי לנסות שוב.',
     title: 'Linux Master · מצב למידה', mode: 'מצב', trivia: 'טריוויה', learn: 'למידה', langBtn: 'EN', langLabel: 'Switch to English',
     streak: 'ימי רצף', gems: 'יהלומים', pathLabel: 'מסלול הלימוד', nav: 'ניווט', tabLearn: 'לימוד', tabPractice: 'תרגול', tabQuests: 'משימות', tabProfile: 'פרופיל',
     practiceTitle: 'תרגול', mistakesTitle: 'חזרה על טעויות', practiceBtn: 'תרגול', mixTitle: 'תרגול מעורב', mixText: '8 תרגילים מהשיעורים שסיימתם', startBtn: 'התחלה',
@@ -33,6 +34,7 @@ const I18N = {
     qXp: 'צברו 30 XP', qPerfect: 'סיימו שיעור בלי טעויות', qCombo: '5 תשובות נכונות ברצף',
   },
   en: {
+    expeditionsUnavailable: 'Expeditions are unavailable. Refresh the page to try again.', gearUnavailable: 'Equipment is unavailable. Your saved choice is kept. Refresh to try again.',
     title: 'Linux Master · Learn mode', mode: 'Mode', trivia: 'Trivia', learn: 'Learn', langBtn: 'עב', langLabel: 'עברו לעברית',
     streak: 'day streak', gems: 'gems', pathLabel: 'Learning path', nav: 'Navigation', tabLearn: 'Learn', tabPractice: 'Practice', tabQuests: 'Quests', tabProfile: 'Profile',
     practiceTitle: 'Practice', mistakesTitle: 'Review mistakes', practiceBtn: 'Practice', mixTitle: 'Mixed practice', mixText: '8 exercises from lessons you finished', startBtn: 'Start',

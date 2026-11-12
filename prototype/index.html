@@ -17,9 +17,10 @@
   <link rel="icon" href="../icon-192.png">
   <link rel="stylesheet" href="fonts.css?v=p91">
   <link rel="stylesheet" href="styles.css?v=characterart1">
-  <link rel="stylesheet" href="character.css?v=character1">
-  <link rel="stylesheet" href="avatar-options.css?v=1">
-  <link rel="stylesheet" href="gameplay.css?v=2">
+  <link rel="stylesheet" href="character.css?v=expeditions1">
+  <link rel="stylesheet" href="avatar-options.css?v=expeditions1">
+  <link rel="stylesheet" href="gameplay.css?v=expeditions1">
+  <link rel="stylesheet" href="expedition-ui.css?v=1">
   <link rel="stylesheet" href="loading.css?v=loading2">
   <link rel="preload" href="fonts/rubik-hebrew.woff2" as="font" type="font/woff2" crossorigin="anonymous">
   <link rel="preload" href="fonts/rubik-latin.woff2" as="font" type="font/woff2" crossorigin="anonymous">
@@ -46,7 +47,9 @@
         <div class="card practice-card"><div class="pc-icon blue"><span class="ic ic-bolt"></span></div><div><h2 data-i18n="mixTitle">תרגול מעורב</h2><p data-i18n="mixText">8 תרגילים מהשיעורים שסיימתם</p></div><button type="button" class="btn blue" id="practiceMix" data-i18n="startBtn">התחלה</button></div>
       </section>
       <section id="quests" class="tab">
-        <h1 class="tab-title" data-i18n="questsTitle">משימות יומיות</h1>
+        <h1 class="tab-title" data-i18n="tabQuests">משימות</h1>
+        <div id="expeditionBoard"></div>
+        <h2 class="tab-title" data-i18n="questsTitle">משימות יומיות</h2>
         <p class="tab-sub" data-i18n="questsSub">מתחדשות כל יום. כל משימה שווה 10 יהלומים.</p>
         <ul id="questList" class="quests"></ul>
       </section>
@@ -60,6 +63,7 @@
         </div>
         <div class="card game-panel" id="avatarForm"></div>
         <div class="card game-panel" id="avatarPicker"></div>
+        <div class="card game-panel" id="worldEquipment"></div>
         <section class="card game-panel" aria-labelledby="worldProgressTitle"><h2 id="worldProgressTitle">התקדמות בעולמות</h2><div id="worldProgress" class="game-worlds"></div></section>
         <section class="card game-panel" aria-labelledby="mockMedalsTitle"><h2 id="mockMedalsTitle">מדליות מבחני דמה</h2><p id="mockMedalsHelp"></p><div id="mockMedals" class="game-medals"></div></section>
         <div class="card settings">
@@ -84,7 +88,7 @@
 
   <div id="lesson" class="overlay lesson" hidden>
     <div class="lesson-top"><button type="button" id="quitBtn" class="quit" aria-label="יציאה מהשיעור" data-i18n-aria="quit"><span class="ic ic-x" aria-hidden="true"></span></button><button type="button" id="editBtn" class="quit" aria-label="עריכה ודיווח" data-i18n-aria="editQ"><span class="ic ic-pen" aria-hidden="true"></span></button><div class="bar" aria-hidden="true"><div id="bar"></div></div><span id="comboTag" class="combo-tag"></span></div>
-    <div class="lesson-main" id="lessonMain"><div id="exTag" class="ex-tag"></div><!-- [html-validate-disable-next empty-heading -- filled with the exercise prompt when it renders] --><h2 id="exPrompt" class="ex-prompt"></h2><div id="exBody" class="ex-body"></div></div>
+    <div class="lesson-main" id="lessonMain"><div id="expeditionHud" class="expedition-hud" role="status" hidden></div><div id="exTag" class="ex-tag"></div><!-- [html-validate-disable-next empty-heading -- filled with the exercise prompt when it renders] --><h2 id="exPrompt" class="ex-prompt"></h2><div id="exBody" class="ex-body"></div></div>
     <div id="foot" class="lesson-foot idle">
       <div class="foot-inner">
         <div id="fbBox" class="fb" aria-live="polite" hidden><div class="fb-icon" aria-hidden="true"></div><div><div id="fbTitle" class="fb-title"></div><div id="fbDetail" class="fb-detail"></div><a id="reportLink" class="report" href="https://github.com/SaharHalili95/linux-master/issues/new" target="_blank" rel="noopener" data-i18n="report" hidden>דיווח על תקלה</a></div></div>
@@ -138,6 +142,7 @@
         <div class="es green"><div class="es-h" data-i18n="endAcc">דיוק</div><div class="es-v"><span class="ic ic-target" aria-hidden="true"></span><span id="endAcc" dir="ltr">0%</span></div></div>
         <div class="es blue"><div class="es-h" data-i18n="endTime">זמן</div><div class="es-v"><span class="ic ic-clock" aria-hidden="true"></span><span id="endTime" dir="ltr">0:00</span></div></div>
       </div>
+      <div id="expeditionResult" class="expedition-result" hidden></div>
       <p id="endQuests" class="end-quests"></p>
     </div>
     <div class="end-foot"><button type="button" id="endBtn" class="btn primary big" data-i18n="continue">המשך</button></div>
@@ -157,18 +162,21 @@
   <canvas id="confetti" class="confetti" hidden></canvas>
   <div id="toast" class="toast" role="status"></div>
   <script src="../shell.js?v=30"></script>
-  <script src="i18n.js?v=gameplay3"></script>
+  <script src="i18n.js?v=expeditions1"></script>
   <script src="units.js?v=p91"></script>
   <script src="lessons.js?v=p91"></script>
   <script src="world.js?v=retina1"></script>
-  <script src="sync.js?v=gameplay3"></script>
+  <script src="sync.js?v=expeditions1"></script>
   <script src="world-characters.js?v=1"></script>
   <script src="character-art.js?v=catalog1"></script>
-  <script src="avatar-options.js?v=2"></script>
+  <script src="avatar-options.js?v=expeditions1"></script>
   <script src="game-progress.js?v=2"></script>
   <script src="story-missions.js?v=1"></script>
-  <script src="app.js?v=gameplay5"></script>
-  <script src="character.js?v=gameplay3"></script>
+  <script src="world-expeditions.js?v=1"></script>
+  <script src="expedition-ui.js?v=1"></script>
+  <script src="expedition-play.js?v=1"></script>
+  <script src="app.js?v=expeditions1"></script>
+  <script src="character.js?v=expeditions1"></script>
   <script src="course-start.js?v=loading2"></script>
   <script defer data-course src="recorded.js?v=p91"></script>
   <script defer data-course src="parts/p1.js?v=p91"></script>
@@ -196,6 +204,6 @@
   <script defer data-course src="parts/p13.js?v=p91"></script>
   <script defer data-course src="parts/p14.js?v=p91"></script>
   <script defer data-course src="parts/p15.js?v=p91"></script>
-  <script defer data-course src="course-ready.js?v=gameplay2"></script>
+  <script defer data-course src="course-ready.js?v=expeditions1"></script>
 </body>
 </html>

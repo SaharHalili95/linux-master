@@ -1,3 +1,4 @@
+/* global normalizeExpeditionBests, normalizeWorldGear */
 const $ = id => document.getElementById(id);
 const STORE = 'linux-master-proto';
 const dayKey = (offset = 0) => { const d = new Date(); d.setDate(d.getDate() + offset); return d.toLocaleDateString('en-CA'); };
@@ -54,16 +55,19 @@ const code = text => { const c = el('code', 'cmd', text); c.dir = 'ltr'; return 
 const TRACK_NAMES = { L: 'LPIC-1', R: 'RHCSA', F: 'LFCS', E: 'Linux Essentials', S: 'SUSE SCA', C: 'CompTIA Linux+' };
 const TRACK_SHORT = { ...TRACK_NAMES, E: 'Essentials', C: 'Linux+' };
 const MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, LIFE_GEMS = 20;
-const DEFAULTS = { avatarForm: 'core', avatarFormUpdatedAt: 0, avatarStyle: 'auto', avatarUpdatedAt: 0, xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
+const DEFAULTS = { worldGear: 0, worldGearUpdatedAt: 0, expeditionBests: {}, avatarForm: 'core', avatarFormUpdatedAt: 0, avatarStyle: 'auto', avatarUpdatedAt: 0, xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
 // Saved state can be stale or hand-edited; keep only fields of the expected type.
 function loadState(raw) {
-  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
+  const S = { ...DEFAULTS, expeditionBests: {}, done: [], days: [], mistakes: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
   let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
   if (!saved || typeof saved !== 'object') return S;
   for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
   for (const key of ['done', 'days', 'mistakes']) if (Array.isArray(saved[key])) S[key] = saved[key].filter(x => typeof x === 'string');
   if (typeof saved.lastDay === 'string') S.lastDay = saved.lastDay;
   if (typeof saved.sound === 'boolean') S.sound = saved.sound;
+  const worldGear = normalizeWorldGear(saved.worldGear, saved.worldGearUpdatedAt);
+  S.worldGear = worldGear.value; S.worldGearUpdatedAt = worldGear.at;
+  S.expeditionBests = normalizeExpeditionBests(saved.expeditionBests);
   S.avatarForm = ['core', 'scout', 'guardian'].includes(saved.avatarForm) ? saved.avatarForm : 'core';
   if (S.avatarForm === saved.avatarForm && Number.isSafeInteger(saved.avatarFormUpdatedAt) && saved.avatarFormUpdatedAt >= 0) S.avatarFormUpdatedAt = saved.avatarFormUpdatedAt;
   S.avatarStyle = ['auto', 'mint', 'cyan', 'violet'].includes(saved.avatarStyle) ? saved.avatarStyle : 'auto';
@@ -353,9 +357,10 @@ function openChest(key) {
 // ---------- Lesson engine ----------
 let L = null;
 function startLesson(key, exercises, opts = {}) {
-  const queue = exercises.map((ex, i) => ({ ...ex, uid: `${key}.${i}` }));
+  const queue = exercises.map((ex, i) => ({ ...ex, uid: opts.expedition ? ex.uid : `${key}.${i}` }));
+  $('expeditionResult').hidden = true; $('expeditionHud').hidden = !opts.expedition; $('endBtn').textContent = t('continue');
   L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
-  paintRegion(unitOfKey(key)?.section);
+  paintRegion(opts.expedition?.section || unitOfKey(key)?.section);
   $('lesson').hidden = false; document.body.classList.add('in-lesson'); next();
 }
 function startBoss(unit, key) {
@@ -385,6 +390,7 @@ function next() {
   if (!L.queue.length) return finishLesson();
   L.ex = L.queue.shift(); L.answered = false; L.value = null;
   const ex = L.ex;
+  window.ExpeditionPlay?.updateHud();
   $('bar').style.width = `${((L.opts.exam ? L.correct + L.mistakes : L.correct) / Math.max(1, L.total)) * 100}%`;
   $('exTag').textContent = L.opts.exam ? t('examQ', L.total - L.queue.length, L.total) : ex.type === 'teach' ? t(ex.known ? 'knownCmd' : 'newCmd') : ex.retry ? t('retry') : '';
   $('exTag').className = `ex-tag${ex.type === 'teach' ? ' new' : ex.retry ? ' retry' : ''}`;
@@ -460,6 +466,8 @@ function onFootButton() {
   answer(r.ok, r.solution, r.why);
 }
 function answer(ok, solution = '', why = '') {
+  if (!L || (L.opts.expedition && L.answered)) return;
+  window.ExpeditionPlay?.record(ok);
   L.answered = true;
   // In an exam nothing is revealed until the end, and wrong answers do not come back or go to practice.
   if (L.opts.exam) {
@@ -485,7 +493,7 @@ function answer(ok, solution = '', why = '') {
   setCan(true); $('checkBtn').focus({ preventScroll: true }); save();
 }
 function quitLesson() { if (L && (L.correct || L.mistakes) && !confirm(t('quitConfirm'))) return; closeOverlays(); }
-function closeOverlays() { clearInterval(L?.timer); ['lesson', 'end', 'streakScreen', 'editor'].forEach(id => { $(id).hidden = true; }); document.body.classList.remove('in-lesson'); $('comboTag').textContent = ''; L = null; showTab('learn'); }
+function closeOverlays() { const destination = L?.opts.expedition ? 'quests' : 'learn'; clearInterval(L?.timer); ['lesson', 'end', 'streakScreen', 'editor'].forEach(id => { $(id).hidden = true; }); document.body.classList.remove('in-lesson'); $('comboTag').textContent = ''; L = null; showTab(destination); }
 
 // ---------- Exercise renderers ----------
 function optionButton(label, value, mono, onPick, index) {
@@ -606,7 +614,7 @@ const RENDER = {
       if (a.dataset.key === b.dataset.key) {
         [a, b].forEach(x => { x.classList.add('ok'); x.disabled = true; }); matched++; SFX.good();
         if (matched === ex.pairs.length) { L.value = 'all'; answer(true); }
-      } else { [a, b].forEach(x => { x.classList.add('no'); setTimeout(() => x.classList.remove('no'), 450); }); L.matchMiss = true; SFX.bad(); }
+      } else { [a, b].forEach(x => { x.classList.add('no'); setTimeout(() => x.classList.remove('no'), 450); }); L.matchMiss = true; window.ExpeditionPlay?.record(false); SFX.bad(); }
     };
     shuffle(ex.pairs).forEach(([c]) => left.append(mk(c, 'cmd', c)));
     shuffle(ex.pairs).forEach(([c, m]) => right.append(mk(tr(m), 'mean', c)));
@@ -791,6 +799,8 @@ function finishExam() {
   $('endBtn').focus();
 }
 function finishLesson() {
+  if (L.opts.expedition) return window.ExpeditionPlay?.finish();
+  const gearBefore = window.WorldExpeditions?.unlockedGear(COURSE, S.done, !!window.courseReady && !window.courseLoadFailed, unitNodes).map(item => item.section) || [];
   if (L.opts.exam) return finishExam();
   const rankBefore = rankOf(S.xp).level, wasDone = S.done.includes(L.key);
   const missionUnit = unitOfKey(L.key), beforeMission = !L.opts.practice && window.GameProgress?.mission(missionUnit, S.done, unitNodes);
@@ -813,6 +823,8 @@ function finishLesson() {
   $('endQuests').textContent = L.opts.earnLife ? t(earned ? 'lifeEarned' : 'lifeNotEarned') : newly.length ? t('questsDone', newly.length) : '';
   const afterMission = !L.opts.practice && window.GameProgress?.mission(missionUnit, S.done, unitNodes);
   if (beforeMission && !beforeMission.complete && afterMission?.complete) $('endQuests').textContent = [$('endQuests').textContent, t('missionComplete')].filter(Boolean).join(' · ');
+  const gearMessage = window.ExpeditionPlay?.unlockMessage(gearBefore);
+  if (gearMessage) $('endQuests').textContent = [$('endQuests').textContent, gearMessage].filter(Boolean).join(' · ');
   $('endBtn').onclick = () => firstToday ? showStreak() : closeOverlays();
   SFX.win(); confetti(); $('endBtn').focus();
 }
@@ -838,6 +850,7 @@ function practice(kind) {
   L.queue.forEach((e, i) => { e.uid = items[i].uid; });
 }
 function renderQuests() {
+  renderExpeditions();
   const q = questDay(), list = $('questList'); list.innerHTML = '';
   for (const x of QUESTS) {
     const val = Math.min(x.goal, q[x.id] || 0), li = el('li', `quest${val >= x.goal ? ' done' : ''}`);
@@ -872,8 +885,16 @@ function renderAchievements() {
     row.append(badge, el('strong', '', tr(unit.title)), el('span', '', t(exam.passed ? 'medalPassed' : 'medalLocked'))); medals.append(row);
   }
 }
+function startExpedition(section, mode) { return window.ExpeditionPlay?.start(section, mode); }
+function renderExpeditions() { if (window.ExpeditionPlay) window.ExpeditionPlay.renderBoard(); else $('expeditionBoard').textContent = t('expeditionsUnavailable'); }
+function renderEquipment() { if (window.ExpeditionPlay) window.ExpeditionPlay.renderGear(); else $('worldEquipment').textContent = t('gearUnavailable'); }
+function refreshGameplay() {
+  if ($('profile').classList.contains('active')) { renderAchievements(); renderEquipment(); }
+  if ($('quests').classList.contains('active')) renderExpeditions();
+  repaintAvatar();
+}
 function repaintAvatar() {
-  document.querySelectorAll('.character-hero').forEach(node => { node.outerHTML = mascot(node.dataset.mood, Number(node.dataset.rank)); });
+  document.querySelectorAll('.character-hero').forEach(node => { node.outerHTML = mascot(node.dataset.mood, Number(node.dataset.rank), node.closest('[data-form-preview]')?.dataset.formPreview); });
 }
 function selectAvatar(value) {
   S.avatarStyle = window.AvatarOptions.normalize(value); S.avatarUpdatedAt = Date.now(); save(); repaintAvatar();
@@ -883,10 +904,10 @@ function selectAvatarForm(value) {
 }
 function renderProfile() {
   if (window.AvatarOptions) {
-    window.AvatarOptions.renderForms($('avatarForm'), S.avatarForm, LANG, selectAvatarForm);
+    window.AvatarOptions.renderForms($('avatarForm'), S.avatarForm, LANG, selectAvatarForm, form => mascot('happy', rankOf(S.xp).level, form));
     window.AvatarOptions.render($('avatarPicker'), S.avatarStyle, LANG, selectAvatar);
   } else { $('avatarForm').textContent = t('featureUnavailable'); $('avatarPicker').textContent = ''; }
-  renderAchievements();
+  renderAchievements(); renderEquipment();
   $('pXp').textContent = S.xp; $('pStreak').textContent = liveStreak(); $('pLessons').textContent = S.done.filter(k => /(^|-)L\d$/.test(k)).length; $('pGems').textContent = S.gems;
   $('soundToggle').checked = S.sound; $('profileMascot').innerHTML = mascot('happy');
 }

@@ -15,3 +15,11 @@
 @keyframes hero-win { 0% { transform: translateY(3px) scale(.97); } 55% { transform: translateY(-3px) scale(1.02); } 100% { transform: none; } }
 @keyframes hero-blink { 0%, 94%, 98%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.08); } }
 @media (prefers-reduced-motion: reduce) { .character-hero *, .character-hero[data-mood] * { animation: none !important; } }
+
+.character-hero[data-form="scout"]:not([data-mood="party"]) .hero-arm-left { transform: translateX(6px); }
+.character-hero[data-form="scout"]:not([data-mood="party"]) .hero-arm-right { transform: translateX(-6px); }
+.character-hero[data-form="guardian"]:not([data-mood="party"]) .hero-arm { transform: translateY(3px); }
+.world-gear-icon { display: block; width: 28px; height: 28px; flex: none; }
+
+.character-hero[data-form="scout"]:not([data-mood="party"]) [data-equipment="gauntlets"] path:first-child { transform: translateX(6px); }
+.character-hero[data-form="scout"]:not([data-mood="party"]) [data-equipment="gauntlets"] path:last-child { transform: translateX(-6px); }

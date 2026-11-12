@@ -64,3 +64,27 @@ test('keyboard form selection preserves focus and does not write state', async (
   expect(await page.evaluate(() => selectionLog)).toEqual(['scout']);
   expect(await page.evaluate(() => localStorage.getItem('linux-master-proto'))).toEqual(await page.evaluate(() => beforeFormsStorage));
 });
+
+for (const lang of ['en', 'he']) {
+  test(`real previews keep keyboard selection and fit 320px in ${lang}`, async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 720 });
+    await page.evaluate(lang => {
+      const slot = document.getElementById('avatarOptionsTest');
+      slot.style.width = '280px'; slot.dir = lang === 'he' ? 'rtl' : 'ltr';
+      AvatarOptions.renderForms(slot, 'core', lang, value => selectionLog.push(value), form => mascot('happy', 1, form));
+    }, lang);
+    const slot = page.locator('#avatarOptionsTest');
+    await expect(slot.locator('.avatar-options__preview .character-hero')).toHaveCount(3);
+    expect(await slot.locator('.character-hero').evaluateAll(nodes => nodes.map(node => node.dataset.form))).toEqual(['core', 'scout', 'guardian']);
+    const choices = slot.getByRole('radio');
+    await choices.first().focus(); await page.keyboard.press('ArrowDown');
+    await expect(choices.nth(1)).toBeFocused(); await expect(choices.nth(1)).toBeChecked();
+    expect(await page.evaluate(() => selectionLog)).toEqual(['scout']);
+    for (const label of await slot.locator('label').all()) {
+      const box = await label.boundingBox();
+      expect(box.width).toBeGreaterThanOrEqual(44); expect(box.height).toBeGreaterThanOrEqual(44);
+      expect(box.width).toBeLessThanOrEqual(94);
+    }
+    expect(await slot.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+  });
+}

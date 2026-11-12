@@ -50,7 +50,7 @@
     group.append(list);
     container.replaceChildren(group);
   }
-  function renderForms(container, selected, lang, onSelect) {
+  function renderForms(container, selected, lang, onSelect, preview) {
     const language = lang === 'he' ? 'he' : 'en';
     const current = normalizeForm(selected);
     const group = document.createElement('fieldset');
@@ -72,7 +72,16 @@
       input.addEventListener('change', () => { if (input.checked) onSelect(form.id); });
       const text = document.createElement('span');
       text.textContent = form.label[language];
-      label.append(input, text);
+      label.append(input);
+      if (typeof preview === 'function') {
+        const art = document.createElement('span');
+        art.className = 'avatar-options__preview';
+        art.dataset.formPreview = form.id;
+        art.setAttribute('aria-hidden', 'true');
+        art.innerHTML = preview(form.id);
+        label.append(art);
+      }
+      label.append(text);
       list.append(label);
     }
     group.append(list);
