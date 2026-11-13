@@ -24,6 +24,7 @@ function mergeProgress(a, b) {
     done: union(a.done, b.done),
     days: union(a.days, b.days),
     mistakes: union(a.mistakes, b.mistakes),
+    skipped: union(a.skipped, b.skipped),
     lastDay: latest.lastDay ?? null,
     streak: sameDay ? Math.max(a.streak || 0, b.streak || 0) : latest.streak || 0,
     track: latest.track || a.track || b.track || '',

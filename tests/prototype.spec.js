@@ -1047,3 +1047,92 @@ test('a pattern that opens with question marks stays one left-to-right run, and 
   expect(order[0]).toBeGreaterThan(-1);
   expect(order[0]).toBeLessThan(order[1]);
 });
+
+const freshCourse = async page => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
+  await page.reload();
+  await page.waitForFunction(() => window.courseReady);
+};
+
+test('a jump test at the start of a later part marks the earlier stages as skipped, and they stay open to learn', async ({ page }) => {
+  test.setTimeout(180000);
+  await freshCourse(page);
+  await expect(page.locator('.region').first().locator('.skip-btn')).toHaveCount(0);
+  const target = await page.evaluate(() => { const x = skipTarget(3); return { units: x.units.length, keys: x.keys.length, count: x.count, parts: x.parts }; });
+  expect(target.count).toBe(12);
+  await page.locator('.region[data-part="3"] .skip-btn').click();
+  await expect(page.locator('#pop')).toContainText(String(target.units));
+  await page.locator('#pop .btn.primary').click();
+  await expect(page.locator('#comboTag')).toBeEmpty();
+  for (let i = 0; i < target.count; i++) {
+    await expect(page.locator('.hint-link')).toHaveCount(0);
+    await solve(page);
+  }
+  await expect(page.locator('#end')).toBeVisible();
+  await expect(page.locator('#endTitle')).toContainText(String(target.units));
+  await expect(page.locator('#endXp')).toHaveText(String(30 * target.parts));
+  await expect(page.locator('#endAlt')).toBeHidden();
+  await page.click('#endBtn');
+  const state = await page.evaluate(() => ({ ...JSON.parse(localStorage.getItem('linux-master-proto')), part: document.querySelector('.node.current').closest('.region').dataset.part }));
+  expect(state.skipped.length).toBe(target.keys);
+  expect(state.done.length).toBe(target.keys);
+  expect(state.lives ?? 5).toBe(5);
+  expect(state.part).toBe('3');
+  await expect(page.locator('.region[data-part="3"] .skip-btn')).toHaveCount(0);
+  await expect(page.locator('.node.skipped')).toHaveCount(target.keys);
+  // A skipped lesson is still a full lesson: learning it removes the mark.
+  await page.locator('.node.lesson.skipped').first().click();
+  await expect(page.locator('#pop')).toContainText('דילגתם');
+  await page.locator('#pop .btn.primary').click();
+  while (await page.locator('#lesson').isVisible()) await solve(page);
+  expect(await page.evaluate(() => S.skipped.includes('L0'))).toBe(false);
+  expect(await page.evaluate(() => S.done.includes('L0'))).toBe(true);
+});
+
+test('a failed jump test changes nothing, names what to review, and the retry asks other questions', async ({ page }) => {
+  await freshCourse(page);
+  await page.evaluate(() => startSkip(2));
+  const asked = async () => page.evaluate(() => [L.ex, ...L.queue].map(ex => tr(ex.prompt)));
+  const first = await asked();
+  expect(first.length).toBe(12);
+  for (let i = 0; i < 12; i++) { await page.evaluate(() => answer(false)); await expect(page.locator('#fbDetail')).toBeEmpty(); await page.click('#checkBtn'); }
+  await expect(page.locator('#end')).toBeVisible();
+  await expect(page.locator('#endXp')).toHaveText('0');
+  await expect(page.locator('#endQuests')).not.toBeEmpty();
+  await expect(page.locator('#endAlt')).toBeVisible();
+  const state = await page.evaluate(() => JSON.parse(localStorage.getItem('linux-master-proto')));
+  expect(state.done || []).toEqual([]);
+  expect(state.skipped || []).toEqual([]);
+  expect(state.mistakes || []).toEqual([]);
+  expect(state.lives ?? 5).toBe(5);
+  await page.click('#endBtn');
+  await expect(page.locator('#lesson')).toBeVisible();
+  const second = await asked();
+  expect(second.filter(q => first.includes(q))).toEqual([]);
+  page.on('dialog', d => d.accept());
+  await page.click('#quitBtn');
+  await expect(page.locator('#endAlt')).toBeHidden();
+});
+
+test('a jump test covers every skipped unit of the chosen track, with live terminals, and its mark survives a sync', async ({ page }) => {
+  await freshCourse(page);
+  const r = await page.evaluate(() => {
+    const far = skipTarget(10), qs = buildSkip(far.units, far.count);
+    S.track = 'R'; const track = skipTarget(10);
+    const merged = mergeProgress({ done: ['L0'], skipped: ['L0'] }, { done: ['L1'], skipped: ['L1'] });
+    return { count: far.count, n: qs.length, types: [...new Set(qs.map(q => q.type))], topics: new Set(qs.map(q => tr(q.topic))).size,
+      foreign: track.units.filter(u => !u.exams?.some(e => e.startsWith('R'))).length, fewer: track.units.length < far.units.length,
+      merged: merged.skipped, loaded: loadState(JSON.stringify({ skipped: ['L0', 7] })).skipped };
+  });
+  expect(r.count).toBeLessThanOrEqual(40);
+  expect(r.n).toBe(r.count);
+  expect(r.topics).toBe(r.count);
+  expect(r.types).toContain('terminal');
+  expect(r.types).not.toContain('teach');
+  expect(r.types).not.toContain('boss');
+  expect(r.foreign).toBe(0);
+  expect(r.fewer).toBe(true);
+  expect(r.merged.sort()).toEqual(['L0', 'L1']);
+  expect(r.loaded).toEqual(['L0']);
+});

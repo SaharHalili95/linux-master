@@ -463,3 +463,14 @@ input, textarea { caret-color: var(--accent); }
 .chip.lives { background: none; border: 0; color: #ff7b8a; cursor: pointer; min-height: 40px; }
 .chip.lives b { color: #ff7b8a; }
 .lives-count { margin: 0; font: 400 34px var(--display); color: #ff7b8a; }
+
+/* Jump test: a quiet invitation at the start of a part, and a distinct mark on the stages it skipped. */
+.skip-row { position: relative; z-index: 1; display: flex; justify-content: center; margin: 10px 0 0; --x: 0px; }
+.skip-row.open { z-index: 5; }
+.skip-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border: 2px solid var(--r-accent); border-radius: 8px; background: #0a0d1a99; color: #f5f8ff; font: 700 15px/1 inherit; transition: transform 100ms var(--ease); }
+.skip-btn:active { transform: scale(0.97); }
+.skip-btn .ic { color: var(--r-accent); }
+.node.done.skipped, .node.boss.done.skipped { --n-fill: #0a0d1a; color: var(--r-accent); }
+.end-foot { display: grid; gap: 10px; }
+.end-foot .btn.ghost { background: none; border: 2px solid var(--line); color: var(--ink); }
+.ic-skip { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 5l7 7-7 7M13 5l7 7-7 7'/%3E%3C/svg%3E"); }
