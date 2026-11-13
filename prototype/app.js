@@ -5,9 +5,9 @@ const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 // Hebrew text with commands inside: each command run becomes a left-to-right island, so it stays in one
 // piece and the punctuation around it (like a final ?) stays on the Hebrew side.
-// A run may open with dots or a colon when a name follows (.deb, ../logs, :wq), and a vi command keeps its ! (:q!).
+// A run may open with dots, question marks or a colon when a name follows (.deb, ../logs, ?????.txt, :wq), and a vi command keeps its ! (:q!).
 // A quote opens a run only when a command follows, so the closing quote of a Hebrew phrase never swallows what comes next.
-const CODE_RUN = /:[A-Za-z0-9%/]+!?|(?:\.+(?=[A-Za-z0-9/~_-]))?(?:["'](?=\.?[A-Za-z0-9~/$_^*[(\\-])|[\^A-Za-z0-9~/$_<>|*={}[\]#%+&@\\-])(?:[\^A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\ .,:!?()-]*[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\-])?/g;
+const CODE_RUN = /:[A-Za-z0-9%/]+!?|(?:[.?]+(?=[A-Za-z0-9/~_-]))?(?:["'](?=\.?[A-Za-z0-9~/$_^*[(\\-])|[\^A-Za-z0-9~/$_<>|*={}[\]#%+&@\\-])(?:[\^A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\ .,:!?()-]*[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\-])?/g;
 // A run must not carry half a pair: "builtin), alias" is two commands around a bracket that belongs to the sentence.
 function balancedPieces(run) {
   const cuts = new Set(), open = [], quotes = [...run.matchAll(/"/g)].map(q => q.index);
@@ -510,11 +510,8 @@ function outputOptions(root, right, wrong) {
   options.forEach((o, i) => { const b = optionButton('', o, false, pick, i); b.lastChild.replaceWith(Object.assign(el('pre', 'out-opt', o || t('noOutput')), { dir: 'ltr' })); list.append(b); });
   root.append(list);
 }
-function termBlock(lines) {
-  const t = el('div', 'term'); t.dir = 'ltr';
-  for (const [prompt, cmd, out] of lines) { const row = el('div', 'term-line'); row.append(el('span', 'ps1', prompt), el('span', 'typed', cmd)); t.append(row); if (out) t.append(el('pre', 'term-out', out)); }
-  return t;
-}
+const termRows = lines => lines.flatMap(([prompt, cmd, out]) => { const row = el('div', 'term-line'); row.append(el('span', 'ps1', prompt), el('span', 'typed', cmd)); return out ? [row, el('pre', 'term-out', out)] : [row]; });
+function termBlock(lines) { const t = el('div', 'term'); t.dir = 'ltr'; t.append(...termRows(lines)); return t; }
 // An answer box sits inside the terminal, above its keys.
 const inTerminal = (root, row) => { const box = root.querySelector('.term.live'); row.dir = document.documentElement.dir; box.insertBefore(row, box.querySelector('.term-keys')); };
 const RENDER = {
@@ -529,7 +526,9 @@ const RENDER = {
       const ps1 = promptFor(sh.cwd), r = sh.run(cmd); lines.push([ps1, cmd, (r.out + r.err).replace(/\n$/, '')]);
       const before = filePeeks(ex.fx, [...setup, cmd]);
       if (before.length) card.append(el('div', 'demo-label', t('before')), ...before);
-      card.append(el('div', 'demo-label', before.length ? t('after') : t('tryIt')), termBlock(lines));
+      card.append(el('div', 'demo-label', before.length ? t('after') : t('tryIt')));
+      // The example has already run in this terminal, and the learner can go on typing in it.
+      mountTerminal(card, { type: 'teach', fx: ex.fx, setup: [...setup, cmd] }, new Shell(ex.fx()), undefined, lines);
     } else if (ex.sample) card.append(el('div', 'demo-label', t('sampleLine')), termBlock([['user@linux:~$ ', ex.cmd, ex.sample]]));
     root.append(card);
   },
@@ -680,11 +679,12 @@ function termField(prompt, box) {
   return { form, ps, input, grow };
 }
 const focusField = input => setTimeout(() => { if (!['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) input.focus({ preventScroll: true }); }, 50);
-function mountTerminal(root, ex, sh, onRun = () => {}) {
+function mountTerminal(root, ex, sh, onRun = () => {}, shown = []) {
   for (const c of ex.setup || []) sh.run(c);
   const log = []; L.term = { sh, log };
   const box = el('div', 'term live'); box.dir = 'ltr'; const out = el('div', 'term-scroll');
   const { form, ps, input, grow } = termField(promptFor(sh.cwd), box);
+  out.append(...termRows(shown)); if (shown.length) input.placeholder = t('tryYourself');
   box.append(out, form);
   let back = TERM_HISTORY.length;
   const recall = step => {
@@ -710,7 +710,7 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
   // Phone keyboards have no Tab or arrow keys. pointerdown is cancelled so the keyboard stays open.
   const keys = el('div', 'term-keys');
   const key = (cls, label, act, name) => {
-    const b = el('button', cls, label); b.type = 'button'; b.setAttribute('aria-label', t(name));
+    const b = el('button', cls, label); b.type = 'button'; b.setAttribute('aria-label', label === 'Tab' ? `Tab: ${t(name)}` : t(name));
     b.onpointerdown = e => e.preventDefault(); b.onclick = () => { act(); input.focus({ preventScroll: true }); };
     return b;
   };
@@ -718,7 +718,7 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
   const restart = key('term-key restart', t('termRestart'), () => {
     if (L.answered) return;
     sh = new Shell(ex.fx()); for (const c of ex.setup || []) sh.run(c);
-    L.term.sh = sh; log.length = 0; out.replaceChildren(); input.value = ''; ps.textContent = promptFor(sh.cwd); grow();
+    L.term.sh = sh; log.length = 0; out.replaceChildren(...termRows(shown)); input.value = ''; ps.textContent = promptFor(sh.cwd); grow();
     L.value = ''; restart.hidden = true; if (ex.type === 'terminal' && !ex.ask) setCan(false); onRun(log);
   }, 'termRestart');
   restart.hidden = true;
@@ -729,7 +729,7 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
     const cmd = straightQuotes(input.value).trim(); input.value = ''; grow(); if (!cmd || L.answered) return;
     const row = el('div', 'term-line'); row.append(el('span', 'ps1', promptFor(sh.cwd)), el('span', 'typed', cmd)); out.append(row);
     let text;
-    try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { text = err instanceof ShellUnsupported ? t('unsupported', cmd.split(/\s+/)[0]) : String(err.message); }
+    try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { const opt = err.message.match(/^option (\S+)$/)?.[1]; text = !(err instanceof ShellUnsupported) ? String(err.message) : opt ? t('unsupportedOpt', cmd.split(/\s+/)[0], opt) : t('unsupported', cmd.split(/\s+/)[0]); }
     if (text) out.append(el('pre', 'term-out', text));
     log.push({ cmd, out: text }); if (TERM_HISTORY.at(-1) !== cmd) TERM_HISTORY.push(cmd); back = TERM_HISTORY.length;
     ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
@@ -737,8 +737,8 @@ function mountTerminal(root, ex, sh, onRun = () => {}) {
     L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal' && !ex.ask) setCan(true); onRun(log);
   }
   if (ex.hint) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(box, h); } else root.append(box);
-  // Never steal focus from a field the learner already moved to.
-  focusField(input);
+  // Never steal focus from a field the learner already moved to. A teach card only invites typing, so it opens no keyboard.
+  if (!shown.length) focusField(input);
 }
 // iPhone keeps the page under the keyboard: while typing in the terminal the lesson takes only the visible part, so the terminal sits right above the keys.
 function fitLesson() {
@@ -747,7 +747,7 @@ function fitLesson() {
   box.classList.toggle('typing', on);
   box.style.height = on ? `${vv.height}px` : ''; box.style.top = on ? `${vv.offsetTop}px` : ''; box.style.bottom = on ? 'auto' : '';
   if (on) {
-    const term = box.querySelector('.term.live'), field = document.activeElement; term.scrollTop = term.scrollHeight;
+    const term = box.querySelector('.term.live'), field = document.activeElement; term.scrollTop = term.scrollHeight; $('exBody').scrollTop = $('exBody').scrollHeight;
     // iPhone leaves the caret where it was before the page moved, until the selection is set again.
     requestAnimationFrame(() => field.setSelectionRange?.(field.selectionStart, field.selectionEnd));
   }

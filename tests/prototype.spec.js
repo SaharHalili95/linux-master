@@ -1019,3 +1019,31 @@ test('a missing character asset never marks a first visit offline-ready', async 
   await page.waitForTimeout(300);
   expect(await page.evaluate(() => [!!window.learnKept, localStorage.getItem('learnOffline')])).toEqual([false, null]);
 });
+
+test('a teach card with an example lets the learner go on typing in the same terminal', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { const ex = UNIT_9.lessons[1].exercises.find(e => e.cmd === 'img{1..3}'); startLesson('u9-L1', [{ ...ex, fx: homeFixture }]); });
+  const term = page.locator('.teach-card .term.live'), input = term.locator('textarea');
+  await expect(term).toContainText('year2025');
+  expect(await page.evaluate(() => document.activeElement.tagName), 'a teach card must not open the keyboard by itself').not.toBe('TEXTAREA');
+  await expect(page.locator('#checkBtn')).toBeEnabled();
+  await input.fill('echo a{1..3}.txt'); await input.press('Enter');
+  await expect(term).toContainText('a1.txt a2.txt a3.txt');
+  await input.fill('mkdir -v demo'); await input.press('Enter');
+  await expect(term).toContainText('-v');
+  await expect(term).not.toContainText('הפקודה לא זמינה');
+  await term.locator('.restart').click();
+  await expect(term).toContainText('year2025');
+  await expect(term).not.toContainText('a1.txt');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('a pattern that opens with question marks stays one left-to-right run, and unit 9 teaches text next to braces before asking for it', async ({ page }) => {
+  await page.goto('./prototype/');
+  const runs = await page.evaluate(() => [...bidi('התבנית ?????.txt מתאימה').querySelectorAll('bdi')].map(b => b.textContent));
+  expect(runs).toEqual(['?????.txt']);
+  expect(await page.evaluate(() => [...bidi('מה ידפיס ls?').querySelectorAll('bdi')].map(b => b.textContent))).toEqual(['ls']);
+  const order = await page.evaluate(() => { const list = UNIT_9.lessons[1].exercises; return [list.findIndex(e => e.type === 'teach' && /^\w+\{/.test(e.cmd)), list.findIndex(e => e.type === 'terminal' && e.solve[0] === 'mkdir projects/v{1..3}')]; });
+  expect(order[0]).toBeGreaterThan(-1);
+  expect(order[0]).toBeLessThan(order[1]);
+});
