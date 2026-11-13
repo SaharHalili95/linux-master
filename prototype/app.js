@@ -54,14 +54,14 @@ const code = text => { const c = el('code', 'cmd', text); c.dir = 'ltr'; return 
 const TRACK_NAMES = { L: 'LPIC-1', R: 'RHCSA', F: 'LFCS', E: 'Linux Essentials', S: 'SUSE SCA', C: 'CompTIA Linux+' };
 const TRACK_SHORT = { ...TRACK_NAMES, E: 'Essentials', C: 'Linux+' };
 const MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, LIFE_GEMS = 20;
-const DEFAULTS = { avatarForm: 'core', avatarFormUpdatedAt: 0, avatarStyle: 'auto', avatarUpdatedAt: 0, xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], sound: true, quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
+const DEFAULTS = { avatarForm: 'core', avatarFormUpdatedAt: 0, avatarStyle: 'auto', avatarUpdatedAt: 0, xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], skipped: [], sound: true, quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
 // Saved state can be stale or hand-edited; keep only fields of the expected type.
 function loadState(raw) {
-  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
+  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], skipped: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
   let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
   if (!saved || typeof saved !== 'object') return S;
   for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
-  for (const key of ['done', 'days', 'mistakes']) if (Array.isArray(saved[key])) S[key] = saved[key].filter(x => typeof x === 'string');
+  for (const key of ['done', 'days', 'mistakes', 'skipped']) if (Array.isArray(saved[key])) S[key] = saved[key].filter(x => typeof x === 'string');
   if (typeof saved.lastDay === 'string') S.lastDay = saved.lastDay;
   if (typeof saved.sound === 'boolean') S.sound = saved.sound;
   S.avatarForm = ['core', 'scout', 'guardian'].includes(saved.avatarForm) ? saved.avatarForm : 'core';
@@ -150,7 +150,7 @@ const unitNodes = unit => unit.exam ? [{ key: unitKey(unit, 'exam'), kind: 'exam
 const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: unit.fixture || unitFixture }));
 const OFFSETS = [0, 66, 66, 0, -66, -66];
 const icon = name => { const i = el('span', `ic ic-${name}`); i.setAttribute('aria-hidden', 'true'); return i; };
-const ICONS = { lesson: 'star', chest: 'gift', exam: 'note', done: 'check', lock: 'lock' };
+const ICONS = { lesson: 'star', chest: 'gift', exam: 'note', done: 'check', lock: 'lock', skipped: 'skip' };
 // A certification track keeps only the units tagged for that exam, so a learner who already holds another
 // certification skips the rest. Progress is shared, so switching tracks loses nothing.
 const inTrack = (u, track = S.track) => !track || u.exams?.some(e => e.startsWith(track));
@@ -276,7 +276,11 @@ function renderPath(append = false) {
   const current = order.find(n => !S.done.includes(n.key))?.key;
   let region = append ? root.querySelector('.region:last-child') : null, part = +region?.dataset.part;
   for (const unit of units.slice(append ? mounted.length : 0)) {
-    if (unit.section !== part) { part = unit.section; region = regionBlock(part, !region); root.append(region); }
+    if (unit.section !== part) {
+      part = unit.section; region = regionBlock(part, !region); root.append(region);
+      const target = !unit.locked && !unit.exam && skipTarget(part);
+      if (target && target.keys.length) region.append(skipRow(target));
+    }
     const banner = el('div', `unit-banner ${unit.color}${unit.locked ? ' locked' : ''}`);
     banner.dataset.unit = unit.unit;
     const txt = el('div'); txt.append(el('div', 'unit-kicker', t('kicker', unit.section, unit.unit)), el('h2', '', tr(unit.title)), el('div', 'unit-sub', tr(unit.subtitle)));
@@ -289,11 +293,13 @@ function renderPath(append = false) {
     nodes.forEach((n, i) => {
       const li = el('li', 'node-row'); li.style.setProperty('--x', `${OFFSETS[i % OFFSETS.length]}px`);
       const state = n.lockedUnit ? 'locked' : S.done.includes(n.key) ? 'done' : n.key === current ? 'current' : 'locked';
-      const b = el('button', `node ${n.kind} ${state}`); b.type = 'button';
-      if (n.kind === 'boss' && state !== 'done') b.textContent = '$_'; else b.replaceChildren(icon(state === 'done' && n.kind !== 'chest' ? ICONS.done : state === 'locked' && n.kind === 'lesson' ? ICONS.lock : ICONS[n.kind]));
+      const skipped = state === 'done' && S.skipped.includes(n.key);
+      const b = el('button', `node ${n.kind} ${state}${skipped ? ' skipped' : ''}`); b.type = 'button';
+      if (n.kind === 'boss' && state !== 'done') b.textContent = '$_'; else b.replaceChildren(icon(skipped ? ICONS.skipped : state === 'done' && n.kind !== 'chest' ? ICONS.done : state === 'locked' && n.kind === 'lesson' ? ICONS.lock : ICONS[n.kind]));
       if (n.kind === 'boss') b.dir = 'ltr';
       if (n.kind === 'lesson') b.append(el('span', 'node-num', String(++lessonNo)));
       b.setAttribute('aria-label', n.lockedUnit ? (n.kind === 'lesson' ? `${lessonNo} · ${t('locked')}` : t('locked')) : n.kind === 'lesson' ? t('lessonN', n.i + 1, tr(unit.lessons[n.i].title)) : n.kind === 'chest' ? t('chest') : n.kind === 'exam' ? tr(unit.title) : tr(unit.boss.title));
+      if (skipped) b.setAttribute('aria-label', `${b.getAttribute('aria-label')} · ${t('skippedMark')}`);
       b.onclick = () => openPop(b, n, state);
       if (state === 'current') { const tip = el('div', 'start-tip', n.kind === 'chest' ? t('open') : t('start')); li.append(tip); li.classList.add('tipped'); }
       li.append(b);
@@ -311,11 +317,12 @@ function renderPath(append = false) {
 }
 function openPop(anchor, n, state) {
   closePop(); SFX.tap();
-  const unit = n.unit, pop = el('div', `pop ${state}`); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
+  const unit = n.unit, skipped = state === 'done' && S.skipped.includes(n.key), pop = el('div', `pop ${state}`); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
   if (state === 'locked') { pop.append(el('h3', '', n.lockedUnit ? tr(unit.title) : t('notYet')), el('p', '', n.lockedUnit ? t('lockedUnitText') : t('notYetText'))); }
   else if (n.kind === 'chest') {
-    pop.append(el('h3', '', state === 'done' ? t('chestOpened') : t('chest')), el('p', '', state === 'done' ? t('chestDone') : t('chestText')));
-    if (state === 'current') { const go = el('button', 'btn primary', t('chestBtn')); go.onclick = () => openChest(n.key); pop.append(go); }
+    const opened = state === 'done' && !skipped;
+    pop.append(el('h3', '', opened ? t('chestOpened') : t('chest')), el('p', '', opened ? t('chestDone') : t('chestText')));
+    if (state === 'current' || skipped) { const go = el('button', 'btn primary', t('chestBtn')); go.onclick = () => openChest(n.key); pop.append(go); }
   } else if (n.kind === 'exam') {
     const x = unit.exam;
     pop.append(el('h3', '', tr(unit.title)), el('p', '', t('examInfo', x.count, x.minutes, Math.round(x.pass * 100))));
@@ -328,11 +335,14 @@ function openPop(anchor, n, state) {
       if (story && mission?.total) story.append(el('p', 'story-mission-progress', t('missionProgress', mission.completed, mission.total)));
     }
     const title = tr(n.kind === 'boss' ? unit.boss.title : unit.lessons[n.i].title);
-    pop.append(el('h3', '', title), el('p', '', n.kind === 'boss' ? tr(unit.boss.intro || unit.boss.text) : t('lessonOf', n.i + 1, unit.lessons.length)));
-    const go = el('button', 'btn primary', state === 'done' ? t('again') : n.kind === 'boss' ? t('toBoss') : t('startXp'));
-    go.onclick = () => { closePop(); syncLives(); if (S.lives === 0 && state !== 'done') return openLives(); n.kind === 'boss' ? startBoss(unit, n.key) : startLesson(n.key, withFixture(unit, unit.lessons[n.i].exercises), { title, replay: state === 'done' }); };
+    pop.append(el('h3', '', title), el('p', '', skipped ? t('skippedText') : n.kind === 'boss' ? tr(unit.boss.intro || unit.boss.text) : t('lessonOf', n.i + 1, unit.lessons.length)));
+    const go = el('button', 'btn primary', skipped ? t('learnIt') : state === 'done' ? t('again') : n.kind === 'boss' ? t('toBoss') : t('startXp'));
+    go.onclick = () => { closePop(); syncLives(); if (S.lives === 0 && (state !== 'done' || skipped)) return openLives(); n.kind === 'boss' ? startBoss(unit, n.key) : startLesson(n.key, withFixture(unit, unit.lessons[n.i].exercises), { title, replay: state === 'done' && !skipped }); };
     pop.append(go);
   }
+  showPop(anchor, pop);
+}
+function showPop(anchor, pop) {
   pop.setAttribute('aria-label', pop.querySelector('h3')?.textContent || t('pathLabel'));
   anchor.parentElement.append(pop); anchor.parentElement.classList.add('open');
   requestAnimationFrame(() => {
@@ -344,10 +354,10 @@ function openPop(anchor, n, state) {
   });
   setTimeout(() => document.addEventListener('click', outside), 0);
 }
-function outside(e) { if (!e.target.closest('#pop') && !e.target.closest('.node')) closePop(); }
+function outside(e) { if (!e.target.closest('#pop') && !e.target.closest('.node, .skip-btn')) closePop(); }
 function closePop() { $('pop')?.parentElement.classList.remove('open'); $('pop')?.remove(); document.removeEventListener('click', outside); }
 function openChest(key) {
-  closePop(); S.gems += 15; S.done.push(key); save(); SFX.win(); confetti(); toast(t('gemsToast')); renderPath();
+  closePop(); S.gems += 15; if (!S.done.includes(key)) S.done.push(key); S.skipped = S.skipped.filter(k => k !== key); save(); SFX.win(); confetti(); toast(t('gemsToast')); renderPath();
 }
 
 // ---------- Lesson engine ----------
@@ -355,7 +365,7 @@ let L = null;
 function startLesson(key, exercises, opts = {}) {
   const queue = exercises.map((ex, i) => ({ ...ex, uid: `${key}.${i}` }));
   L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
-  paintRegion(unitOfKey(key)?.section);
+  paintRegion(opts.exam?.skip?.part ?? unitOfKey(key)?.section);
   $('lesson').hidden = false; document.body.classList.add('in-lesson'); next();
 }
 function startBoss(unit, key) {
@@ -380,6 +390,37 @@ function startExam(unit, key, count = unit.exam.count) {
     const tick = () => { if (!L?.opts.exam) return clearInterval(L?.timer); const left = Math.max(0, Math.round((end - Date.now()) / 1000)); $('comboTag').textContent = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; if (!left) finishLesson(); };
     L.timer = setInterval(tick, 1000); tick();
   }
+}
+// A learner who already knows Linux can jump to the start of a later part. The test asks about every unit it would
+// skip, live terminals included, with no hints, no timer and no lives at stake. Passing marks those stages as skipped.
+const SKIP_PASS = 0.8, SKIP_ASKED = new Set();
+function skipTarget(part) {
+  const units = availableCourse().filter(u => inTrack(u) && !u.locked && !u.exam && u.section < part && unitNodes(u).some(n => !S.done.includes(n.key)));
+  const parts = new Set(units.map(u => u.section)).size;
+  return { part, units, parts, keys: units.flatMap(unitNodes).map(n => n.key).filter(k => !S.done.includes(k)), count: Math.min(40, Math.max(12, parts * 4)) };
+}
+function buildSkip(units, count) {
+  const fresh = ex => !SKIP_ASKED.has(tr(ex.prompt));
+  const pools = shuffle(units).map(u => { const all = shuffle(withFixture(u, u.lessons.flatMap(l => l.exercises)).filter(ex => !['teach', 'boss'].includes(ex.type)).map(ex => ({ ...ex, topic: u.title }))); return [...all.filter(fresh), ...all.filter(ex => !fresh(ex))]; });
+  const picked = [];
+  for (let i = 0; picked.length < count && pools.some(p => p.length > i); i++) for (const p of pools) if (p[i] && picked.length < count) picked.push(p[i]);
+  for (const ex of picked) SKIP_ASKED.add(tr(ex.prompt));
+  return shuffle(picked);
+}
+function startSkip(part) {
+  const target = skipTarget(part);
+  closePop(); startLesson(`skip-${part}`, buildSkip(target.units, target.count), { exam: { pass: SKIP_PASS, skip: target }, results: [] });
+}
+function skipRow(target) {
+  const row = el('div', 'skip-row'), b = el('button', 'skip-btn'); b.type = 'button'; b.append(icon('skip'), ` ${t('skipHere')}`);
+  b.onclick = () => {
+    closePop(); SFX.tap();
+    const pop = el('div', 'pop'); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
+    const go = el('button', 'btn primary', t('skipStart')); go.onclick = () => startSkip(target.part);
+    pop.append(el('h3', '', t('skipTitle', tr(REGIONS[target.part].name))), el('p', '', t('skipInfo', target.units.length, target.count, Math.round(SKIP_PASS * 100))), go);
+    showPop(b, pop);
+  };
+  row.append(b); return row;
 }
 function next() {
   if (!L.queue.length) return finishLesson();
@@ -736,7 +777,7 @@ function mountTerminal(root, ex, sh, onRun = () => {}, shown = []) {
     restart.hidden = !ex.fx;
     L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal' && !ex.ask) setCan(true); onRun(log);
   }
-  if (ex.hint) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(box, h); } else root.append(box);
+  if (ex.hint && !L.opts.exam) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(box, h); } else root.append(box);
   // Never steal focus from a field the learner already moved to. A teach card only invites typing, so it opens no keyboard.
   if (!shown.length) focusField(input);
 }
@@ -777,18 +818,28 @@ function finishExam() {
   const x = L.opts.exam, score = L.correct / Math.max(1, L.total), passed = score >= x.pass, secs = Math.round((Date.now() - L.start) / 1000);
   const misses = {}; for (const r of L.opts.results) if (!r.ok) misses[tr(r.topic)] = (misses[tr(r.topic)] || 0) + 1;
   const weakest = Object.entries(misses).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name);
-  if (passed) { S.xp += 50; if (!S.done.includes(L.key)) S.done.push(L.key); }
+  const skip = x.skip, gain = !passed ? 0 : skip ? 30 * skip.parts : 50;
+  if (passed) {
+    S.xp += gain;
+    if (skip) { const keys = skip.keys.filter(k => !S.done.includes(k)); S.done.push(...keys); S.skipped.push(...keys); }
+    else if (!S.done.includes(L.key)) S.done.push(L.key);
+  }
   save();
   $('lesson').hidden = true; $('end').hidden = false; $('comboTag').textContent = '';
   $('endMascot').innerHTML = mascot(passed ? 'party' : 'idle');
-  winMoment(unitOfKey(L.key)?.section, rankBefore, '');
-  $('endTitle').textContent = passed ? t('examPassed') : t('examFailed');
-  $('endXp').textContent = passed ? 50 : 0; $('endAcc').textContent = `${Math.round(score * 100)}%`;
+  winMoment(skip?.part ?? unitOfKey(L.key)?.section, rankBefore, '');
+  $('endTitle').textContent = skip ? (passed ? t('skipPassed', skip.units.length) : t('skipFailed')) : passed ? t('examPassed') : t('examFailed');
+  $('endXp').textContent = gain; $('endAcc').textContent = `${Math.round(score * 100)}%`;
   $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
   $('endQuests').textContent = weakest.length ? t('examReview', weakest.join(', ')) : '';
-  $('endBtn').onclick = closeOverlays;
+  endButtons(closeOverlays);
+  if (skip && passed) endButtons(() => { closeOverlays(); toHere('instant'); });
+  if (skip && !passed) endButtons(() => { const part = skip.part; closeOverlays(); startSkip(part); }, t('skipRetry'), closeOverlays);
   if (passed) { SFX.win(); confetti(); }
   $('endBtn').focus();
+}
+function endButtons(main, label = t('continue'), alt = null) {
+  $('endBtn').textContent = label; $('endBtn').onclick = main; $('endAlt').hidden = !alt; $('endAlt').onclick = alt;
 }
 function finishLesson() {
   if (L.opts.exam) return finishExam();
@@ -800,6 +851,7 @@ function finishLesson() {
   if (firstToday) { S.streak = S.lastDay === dayKey(-1) ? S.streak + 1 : 1; S.lastDay = dayKey(); }
   if (!S.days.includes(dayKey())) S.days = [...S.days, dayKey()].slice(-30);
   S.xp += xp; if (!L.opts.practice && !S.done.includes(L.key)) S.done.push(L.key);
+  if (!L.opts.practice) S.skipped = S.skipped.filter(k => k !== L.key);
   const q = questDay(); q.xp += xp; if (perfect) q.perfect++; q.combo = Math.max(q.combo, L.best);
   const newly = QUESTS.filter(x => !q.claimed.includes(x.id) && q[x.id] >= x.goal); newly.forEach(x => { q.claimed.push(x.id); S.gems += 10; });
   save();
@@ -813,7 +865,7 @@ function finishLesson() {
   $('endQuests').textContent = L.opts.earnLife ? t(earned ? 'lifeEarned' : 'lifeNotEarned') : newly.length ? t('questsDone', newly.length) : '';
   const afterMission = !L.opts.practice && window.GameProgress?.mission(missionUnit, S.done, unitNodes);
   if (beforeMission && !beforeMission.complete && afterMission?.complete) $('endQuests').textContent = [$('endQuests').textContent, t('missionComplete')].filter(Boolean).join(' · ');
-  $('endBtn').onclick = () => firstToday ? showStreak() : closeOverlays();
+  endButtons(() => firstToday ? showStreak() : closeOverlays());
   SFX.win(); confetti(); $('endBtn').focus();
 }
 function showStreak() {
