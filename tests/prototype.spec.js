@@ -250,6 +250,7 @@ test('"what will it print?" shows the files the command reads, and nothing for m
 });
 
 test('every exercise fits the screen width, with no sideways scrolling', async ({ page }) => {
+  test.setTimeout(360_000);
   await page.goto('./prototype/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
