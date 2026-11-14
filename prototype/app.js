@@ -318,7 +318,11 @@ function renderPath(append = false) {
 function openPop(anchor, n, state) {
   closePop(); SFX.tap();
   const unit = n.unit, skipped = state === 'done' && S.skipped.includes(n.key), pop = el('div', `pop ${state}`); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
-  if (state === 'locked') { pop.append(el('h3', '', n.lockedUnit ? tr(unit.title) : t('notYet')), el('p', '', n.lockedUnit ? t('lockedUnitText') : t('notYetText'))); }
+  if (state === 'locked') {
+    const target = !n.lockedUnit && n.kind !== 'exam' && skipTarget(n.key);
+    if (target && target.keys.length) return skipPop(anchor, target, n.kind === 'chest' ? t('chest') : tr(n.kind === 'boss' ? unit.boss.title : unit.lessons[n.i].title), t('skipLocked'));
+    pop.append(el('h3', '', n.lockedUnit ? tr(unit.title) : t('notYet')), el('p', '', n.lockedUnit ? t('lockedUnitText') : t('notYetText')));
+  }
   else if (n.kind === 'chest') {
     const opened = state === 'done' && !skipped;
     pop.append(el('h3', '', opened ? t('chestOpened') : t('chest')), el('p', '', opened ? t('chestDone') : t('chestText')));
@@ -391,35 +395,45 @@ function startExam(unit, key, count = unit.exam.count) {
     L.timer = setInterval(tick, 1000); tick();
   }
 }
-// A learner who already knows Linux can jump to the start of a later part. The test asks about every unit it would
-// skip, live terminals included, with no hints, no timer and no lives at stake. Passing marks those stages as skipped.
+// A learner who already knows Linux can jump to any stage: the start of a later part, or any stage that is still
+// closed. The test asks about every stage it would skip, live terminals included, with no hints, no timer and no
+// lives at stake. Passing marks those stages as skipped.
 const SKIP_PASS = 0.8, SKIP_ASKED = new Set();
-function skipTarget(part) {
-  const units = availableCourse().filter(u => inTrack(u) && !u.locked && !u.exam && u.section < part && unitNodes(u).some(n => !S.done.includes(n.key)));
-  const parts = new Set(units.map(u => u.section)).size;
-  return { part, units, parts, keys: units.flatMap(unitNodes).map(n => n.key).filter(k => !S.done.includes(k)), count: Math.min(40, Math.max(12, parts * 4)) };
+function skipTarget(to) {
+  const order = availableCourse().filter(u => inTrack(u) && !u.locked).flatMap(unitNodes), byPart = typeof to === 'number';
+  const cut = byPart ? order.findIndex(n => n.unit.section >= to) : order.findIndex(n => n.key === to);
+  const nodes = (cut < 0 ? (byPart ? order : []) : order.slice(0, cut)).filter(n => !n.unit.exam && !S.done.includes(n.key));
+  const units = [...new Set(nodes.map(n => n.unit))], parts = new Set(units.map(u => u.section)).size;
+  const lessons = nodes.filter(n => n.kind === 'lesson').length;
+  return { to, part: byPart ? to : order[cut]?.unit.section, units, parts, keys: nodes.map(n => n.key), count: Math.min(40, Math.max(12, parts * 4), Math.max(4, lessons * 2)) };
 }
-function buildSkip(units, count) {
+function buildSkip(units, count, keys = null) {
   const fresh = ex => !SKIP_ASKED.has(tr(ex.prompt));
-  const pools = shuffle(units).map(u => { const all = shuffle(withFixture(u, u.lessons.flatMap(l => l.exercises)).filter(ex => !['teach', 'boss'].includes(ex.type)).map(ex => ({ ...ex, topic: u.title }))); return [...all.filter(fresh), ...all.filter(ex => !fresh(ex))]; });
+  const pools = shuffle(units).map(u => {
+    const skipped = u.lessons.filter((l, i) => !keys || keys.includes(unitKey(u, `L${i}`)));
+    const all = shuffle(withFixture(u, (skipped.length ? skipped : u.lessons).flatMap(l => l.exercises)).filter(ex => !['teach', 'boss'].includes(ex.type)).map(ex => ({ ...ex, topic: u.title })));
+    return [...all.filter(fresh), ...all.filter(ex => !fresh(ex))];
+  });
   const picked = [];
   for (let i = 0; picked.length < count && pools.some(p => p.length > i); i++) for (const p of pools) if (p[i] && picked.length < count) picked.push(p[i]);
   for (const ex of picked) SKIP_ASKED.add(tr(ex.prompt));
   return shuffle(picked);
 }
-function startSkip(part) {
-  const target = skipTarget(part);
-  closePop(); startLesson(`skip-${part}`, buildSkip(target.units, target.count), { exam: { pass: SKIP_PASS, skip: target }, results: [] });
+function startSkip(to) {
+  const target = skipTarget(to);
+  closePop(); startLesson(`skip-${target.part}`, buildSkip(target.units, target.count, target.keys), { exam: { pass: SKIP_PASS, skip: target }, results: [] });
+}
+function skipPop(anchor, target, name, lead = '') {
+  const pop = el('div', 'pop jump'); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
+  const go = el('button', 'btn primary', t('skipStart')); go.onclick = () => startSkip(target.to);
+  pop.append(el('h3', '', t('skipTitle', name)));
+  if (lead) pop.append(el('p', 'pop-lead', lead));
+  pop.append(el('p', '', t('skipInfo', target.count, Math.round(SKIP_PASS * 100))), go);
+  showPop(anchor, pop);
 }
 function skipRow(target) {
   const row = el('div', 'skip-row'), b = el('button', 'skip-btn'); b.type = 'button'; b.append(icon('skip'), ` ${t('skipHere')}`);
-  b.onclick = () => {
-    closePop(); SFX.tap();
-    const pop = el('div', 'pop'); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
-    const go = el('button', 'btn primary', t('skipStart')); go.onclick = () => startSkip(target.part);
-    pop.append(el('h3', '', t('skipTitle', tr(REGIONS[target.part].name))), el('p', '', t('skipInfo', target.units.length, target.count, Math.round(SKIP_PASS * 100))), go);
-    showPop(b, pop);
-  };
+  b.onclick = () => { closePop(); SFX.tap(); skipPop(b, target, tr(REGIONS[target.part].name)); };
   row.append(b); return row;
 }
 function next() {
@@ -818,7 +832,7 @@ function finishExam() {
   const x = L.opts.exam, score = L.correct / Math.max(1, L.total), passed = score >= x.pass, secs = Math.round((Date.now() - L.start) / 1000);
   const misses = {}; for (const r of L.opts.results) if (!r.ok) misses[tr(r.topic)] = (misses[tr(r.topic)] || 0) + 1;
   const weakest = Object.entries(misses).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name);
-  const skip = x.skip, gain = !passed ? 0 : skip ? 30 * skip.parts : 50;
+  const skip = x.skip, gain = !passed ? 0 : skip ? Math.min(30 * skip.parts, 5 * skip.keys.length) : 50;
   if (passed) {
     S.xp += gain;
     if (skip) { const keys = skip.keys.filter(k => !S.done.includes(k)); S.done.push(...keys); S.skipped.push(...keys); }
@@ -828,13 +842,13 @@ function finishExam() {
   $('lesson').hidden = true; $('end').hidden = false; $('comboTag').textContent = '';
   $('endMascot').innerHTML = mascot(passed ? 'party' : 'idle');
   winMoment(skip?.part ?? unitOfKey(L.key)?.section, rankBefore, '');
-  $('endTitle').textContent = skip ? (passed ? t('skipPassed', skip.units.length) : t('skipFailed')) : passed ? t('examPassed') : t('examFailed');
+  $('endTitle').textContent = skip ? (passed ? t('skipPassed', skip.keys.length) : t('skipFailed')) : passed ? t('examPassed') : t('examFailed');
   $('endXp').textContent = gain; $('endAcc').textContent = `${Math.round(score * 100)}%`;
   $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
   $('endQuests').textContent = weakest.length ? t('examReview', weakest.join(', ')) : '';
   endButtons(closeOverlays);
   if (skip && passed) endButtons(() => { closeOverlays(); toHere('instant'); });
-  if (skip && !passed) endButtons(() => { const part = skip.part; closeOverlays(); startSkip(part); }, t('skipRetry'), closeOverlays);
+  if (skip && !passed) endButtons(() => { const to = skip.to; closeOverlays(); startSkip(to); }, t('skipRetry'), closeOverlays);
   if (passed) { SFX.win(); confetti(); }
   $('endBtn').focus();
 }
