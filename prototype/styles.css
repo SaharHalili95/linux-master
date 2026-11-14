@@ -467,6 +467,7 @@ input, textarea { caret-color: var(--accent); }
 /* Jump test: a quiet invitation at the start of a part, and a distinct mark on the stages it skipped. */
 .skip-row { position: relative; z-index: 1; display: flex; justify-content: center; margin: 10px 0 0; --x: 0px; }
 .skip-row.open { z-index: 5; }
+.pop .pop-lead { margin-bottom: 6px; opacity: .78; }
 .skip-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border: 2px solid var(--r-accent); border-radius: 8px; background: #0a0d1a99; color: #f5f8ff; font: 700 15px/1 inherit; transition: transform 100ms var(--ease); }
 .skip-btn:active { transform: scale(0.97); }
 .skip-btn .ic { color: var(--r-accent); }

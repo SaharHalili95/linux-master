@@ -1063,7 +1063,7 @@ test('a jump test at the start of a later part marks the earlier stages as skipp
   const target = await page.evaluate(() => { const x = skipTarget(3); return { units: x.units.length, keys: x.keys.length, count: x.count, parts: x.parts }; });
   expect(target.count).toBe(12);
   await page.locator('.region[data-part="3"] .skip-btn').click();
-  await expect(page.locator('#pop')).toContainText(String(target.units));
+  await expect(page.locator('#pop')).toContainText(String(target.count));
   await page.locator('#pop .btn.primary').click();
   await expect(page.locator('#comboTag')).toBeEmpty();
   for (let i = 0; i < target.count; i++) {
@@ -1071,7 +1071,7 @@ test('a jump test at the start of a later part marks the earlier stages as skipp
     await solve(page);
   }
   await expect(page.locator('#end')).toBeVisible();
-  await expect(page.locator('#endTitle')).toContainText(String(target.units));
+  await expect(page.locator('#endTitle')).toContainText(String(target.keys));
   await expect(page.locator('#endXp')).toHaveText(String(30 * target.parts));
   await expect(page.locator('#endAlt')).toBeHidden();
   await page.click('#endBtn');
@@ -1116,13 +1116,43 @@ test('a failed jump test changes nothing, names what to review, and the retry as
   await expect(page.locator('#endAlt')).toBeHidden();
 });
 
+test('any closed stage offers a jump: the test asks only about the stages before it, and passing opens that stage', async ({ page }) => {
+  await freshCourse(page);
+  // The stage right after the current one skips a single lesson, so the test is short and asks only about that lesson.
+  const near = await page.evaluate(() => { const x = skipTarget('L1'), own = COURSE[0].lessons[0].exercises.map(ex => tr(ex.prompt)); const qs = buildSkip(x.units, x.count, x.keys); return { keys: x.keys, count: x.count, n: qs.length, foreign: qs.filter(q => !own.includes(tr(q.prompt))).length }; });
+  expect(near.keys).toEqual(['L0']);
+  expect(near.count).toBe(4);
+  expect(near.n).toBeGreaterThan(0);
+  expect(near.foreign).toBe(0);
+  // A lesson in the middle of the second unit: everything before it is skipped, the rest of the unit is not.
+  const key = await page.evaluate(() => unitNodes(COURSE.filter(u => inTrack(u) && !u.locked)[1])[3].key);
+  const target = await page.evaluate(k => { const x = skipTarget(k); return { keys: x.keys, count: x.count }; }, key);
+  expect(target.keys.length).toBe(9);
+  const node = page.locator('.node.locked').nth(8);
+  await node.click();
+  await expect(page.locator('#pop.jump')).toContainText(String(target.count));
+  await expect(page.locator('#pop .pop-lead')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.locator('#pop .btn.primary').click();
+  while (await page.locator('#lesson').isVisible()) await solve(page);
+  await expect(page.locator('#end')).toBeVisible();
+  await expect(page.locator('#endTitle')).toContainText('9');
+  await page.click('#endBtn');
+  const state = await page.evaluate(() => ({ done: S.done, skipped: S.skipped, current: unitNodes(COURSE.filter(u => inTrack(u) && !u.locked)[1])[3].key, xp: S.xp }));
+  expect([...state.done].sort()).toEqual([...target.keys].sort());
+  expect(state.skipped.length).toBe(9);
+  expect(state.xp).toBe(30);
+  await expect(page.locator('.node.current')).toHaveAttribute('aria-label', await page.evaluate(k => { const u = unitOfKey(k); return t('lessonN', 3, tr(u.lessons[2].title)); }, key));
+  await expect(page.locator('.node.current')).toBeInViewport();
+});
+
 test('a jump test covers every skipped unit of the chosen track, with live terminals, and its mark survives a sync', async ({ page }) => {
   await freshCourse(page);
   const r = await page.evaluate(() => {
     const far = skipTarget(10), qs = buildSkip(far.units, far.count);
     S.track = 'R'; const track = skipTarget(10);
     const merged = mergeProgress({ done: ['L0'], skipped: ['L0'] }, { done: ['L1'], skipped: ['L1'] });
-    return { count: far.count, n: qs.length, types: [...new Set(qs.map(q => q.type))], topics: new Set(qs.map(q => tr(q.topic))).size,
+    return { count: far.count, n: qs.length, types: [...new Set(buildSkip(far.units, 99999).map(q => q.type))], topics: new Set(qs.map(q => tr(q.topic))).size,
       foreign: track.units.filter(u => !u.exams?.some(e => e.startsWith('R'))).length, fewer: track.units.length < far.units.length,
       merged: merged.skipped, loaded: loadState(JSON.stringify({ skipped: ['L0', 7] })).skipped };
   });
