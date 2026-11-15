@@ -19,7 +19,7 @@ function homeFixture() {
       ['/home/user/photos/cat.jpg', { content: 'jpg\n' }],
       ['/home/user/photos/dog.jpg', { content: 'jpg\n' }],
     ],
-    history: [],
+    history: [], aliases: { ll: 'ls -l' },
   };
 }
 // Terminal goals compare against what the simulator itself prints, never a hand-written answer.

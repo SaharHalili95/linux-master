@@ -727,12 +727,31 @@ const straightQuotes = v => v.replace(/[\u201c\u201d\u201e]/g, '"').replace(/[\u
 function termField(prompt, box) {
   const form = el('form', 'term-input'), ps = el('span', 'ps1', prompt), input = el('textarea');
   input.rows = 1; input.setAttribute('aria-label', t('command')); input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off'); input.setAttribute('autocorrect', 'off'); input.enterKeyHint = 'send'; input.placeholder = t('command');
-  form.append(ps, input);
-  const grow = () => { input.style.height = 'auto'; input.style.height = `${input.scrollHeight}px`; box.scrollTop = box.scrollHeight; };
-  const fit = () => { input.style.textIndent = `${ps.offsetWidth + 8}px`; grow(); };
+  // iPhone can leave its own caret where the line was before the keyboard moved the page, so the caret is drawn here.
+  const mirror = el('div', 'term-mirror'), caret = el('i', 'term-caret'); mirror.setAttribute('aria-hidden', 'true'); caret.setAttribute('aria-hidden', 'true');
+  form.append(ps, input, mirror, caret);
+  const place = () => {
+    const on = document.activeElement === input && input.selectionStart === input.selectionEnd; caret.hidden = !on; if (!on) return;
+    const at = el('span', '', '\u200b'); mirror.replaceChildren(input.value.slice(0, input.selectionStart), at);
+    caret.style.transform = `translate(${at.offsetLeft}px, ${at.offsetTop}px)`;
+    caret.style.animation = 'none'; void caret.offsetWidth; caret.style.animation = '';
+  };
+  caret.hidden = true;
+  for (const ev of ['input', 'focus', 'blur', 'keyup', 'click', 'select']) input.addEventListener(ev, place);
+  input.placeCaret = place;
+  const grow = () => { input.style.height = 'auto'; input.style.height = `${input.scrollHeight}px`; box.scrollTop = box.scrollHeight; place(); };
+  const fit = () => { const indent = `${ps.offsetWidth + 8}px`; input.style.textIndent = indent; mirror.style.textIndent = indent; grow(); };
   const seen = new ResizeObserver(() => requestAnimationFrame(fit)); seen.observe(ps); seen.observe(box);
   return { form, ps, input, grow };
 }
+// A name that is no Linux command the course knows gets bash's own answer; a real command the simulator lacks says so.
+const REAL_COMMANDS = new Set('nano vim vi less more man top htop apt apt-get dnf yum zypper rpm dpkg git python python3 pip curl wget ssh scp ping clear tar gzip zip unzip kill df free mount su passwd date cal uname hostname id groups diff ip systemctl journalctl make gcc node docker'.split(' '));
+function missingCommand(message) {
+  const name = message.match(/^command (\S+)$/)?.[1]; if (!name || REAL_COMMANDS.has(name)) return '';
+  const taught = availableCourse().some(u => (u.lessons || []).some(ls => ls.exercises.some(ex => ex.type === 'teach' && String(ex.cmd).split(/\s+/).includes(name))));
+  return taught ? '' : name;
+}
+document.addEventListener('selectionchange', () => document.activeElement?.placeCaret?.());
 const focusField = input => setTimeout(() => { if (!['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) input.focus({ preventScroll: true }); }, 50);
 function mountTerminal(root, ex, sh, onRun = () => {}, shown = []) {
   for (const c of ex.setup || []) sh.run(c);
@@ -784,11 +803,11 @@ function mountTerminal(root, ex, sh, onRun = () => {}, shown = []) {
     const cmd = straightQuotes(input.value).trim(); input.value = ''; grow(); if (!cmd || L.answered) return;
     const row = el('div', 'term-line'); row.append(el('span', 'ps1', promptFor(sh.cwd)), el('span', 'typed', cmd)); out.append(row);
     let text;
-    try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { const opt = err.message.match(/^option (\S+)$/)?.[1]; text = !(err instanceof ShellUnsupported) ? String(err.message) : opt ? t('unsupportedOpt', cmd.split(/\s+/)[0], opt) : t('unsupported', cmd.split(/\s+/)[0]); }
+    try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { const opt = err.message.match(/^option (\S+)$/)?.[1]; text = !(err instanceof ShellUnsupported) ? String(err.message) : opt ? t('unsupportedOpt', cmd.split(/\s+/)[0], opt) : missingCommand(err.message) ? `bash: ${missingCommand(err.message)}: command not found` : t('unsupported', cmd.split(/\s+/)[0]); }
     if (text) out.append(el('pre', 'term-out', text));
     log.push({ cmd, out: text }); if (TERM_HISTORY.at(-1) !== cmd) TERM_HISTORY.push(cmd); back = TERM_HISTORY.length;
     ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
-    restart.hidden = !ex.fx;
+    restart.hidden = !ex.fx; requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
     L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal' && !ex.ask) setCan(true); onRun(log);
   }
   if (ex.hint && !L.opts.exam) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(box, h); } else root.append(box);
