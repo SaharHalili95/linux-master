@@ -494,11 +494,46 @@ function showPrompt(ex) {
   const teachText = document.querySelector('.bubble p'); if (ex.type === 'teach' && teachText) teachText.replaceChildren(bidi(laidOut(ex, tr(ex.text))));
 }
 function setCan(ok) { $('checkBtn').disabled = !ok; }
-function setFoot(mode, title = '', { label = '', sol = '', note = '' } = {}) {
+function editDistance(a, b) {
+  let row = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const next = [i];
+    for (let j = 1; j <= b.length; j++) next[j] = Math.min(row[j] + 1, next[j - 1] + 1, row[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    row = next;
+  }
+  return row[b.length];
+}
+// A command the learner typed that is almost one of the solution lines: the word that differs on each side, to show them.
+function typoIn(typed, solve) {
+  let best;
+  for (const [line, want] of solve.entries()) {
+    if (typed.includes(want)) continue;
+    for (const got of typed) {
+      const d = editDistance(got, want);
+      if (d && d <= Math.max(2, Math.floor(want.length * 0.2)) && (!best || d < best.d)) best = { d, got, want, line };
+    }
+  }
+  if (!best) return null;
+  const { got, want } = best;
+  let from = 0; while (from < got.length && got[from] === want[from]) from++;
+  let back = 0; while (back < got.length - from && back < want.length - from && got[got.length - 1 - back] === want[want.length - 1 - back]) back++;
+  const word = /[^\s"']/, start = s => { let i = from; while (i > 0 && word.test(s[i - 1])) i--; return i; };
+  const end = s => { let i = s.length - back; while (i < s.length && word.test(s[i])) i++; return i; };
+  const g = got.slice(start(got), end(got)), w = want.slice(start(want), end(want));
+  return g && w ? { got: g, want: w, line: best.line, at: [start(want), end(want)] } : null;
+}
+function setFoot(mode, title = '', { label = '', sol = '', note = '', mark = null } = {}) {
   const foot = $('foot'); foot.className = `lesson-foot ${mode}`;
   $('fbTitle').textContent = title; $('fbBox').hidden = mode === 'idle';
   const detail = $('fbDetail'); detail.innerHTML = '';
-  if (sol) { const row = el('div', 'fb-sol', label); const c = el('pre', 'cmd', sol); c.dir = 'ltr'; row.append(c); detail.append(row); }
+  if (sol) {
+    const row = el('div', 'fb-sol', label); const c = el('pre', 'cmd'); c.dir = 'ltr';
+    if (mark) {
+      const lines = sol.split('\n'), s = lines[mark.line], [a, b] = mark.at;
+      c.append([...lines.slice(0, mark.line), s.slice(0, a)].join('\n'), el('mark', 'fb-diff', s.slice(a, b)), [s.slice(b), ...lines.slice(mark.line + 1)].join('\n'));
+    } else c.textContent = sol;
+    row.append(c); detail.append(row);
+  }
   if (note) { const n = el('div', 'fb-note'); n.append(bidi(note)); detail.append(n); }
   $('checkBtn').textContent = mode === 'idle' ? (L.ex?.type === 'teach' ? t('gotIt') : t('check')) : t('continue');
   $('reportLink').hidden = mode === 'idle';
@@ -531,7 +566,8 @@ function answer(ok, solution = '', why = '') {
     L.mistakes++; L.combo = 0; SFX.bad(); if (!L.opts.practice && !L.opts.replay) loseLife();
     L.queue.push({ ...L.ex, retry: true });
     if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss) S.mistakes.push(L.ex.uid);
-    setFoot('bad', t('correctAnswer'), ['terminal', 'scenario'].includes(L.ex.type) ? { sol: solution } : L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
+    const typo = L.ex.type === 'terminal' && L.term ? typoIn(L.term.log.map(l => l.cmd.trim()), L.ex.solve) : null;
+    setFoot('bad', t('correctAnswer'), typo ? { sol: solution, mark: typo, note: t('typo', typo.got, typo.want) } : ['terminal', 'scenario'].includes(L.ex.type) ? { sol: solution } :L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
     $('lessonMain').classList.remove('shake'); void $('lessonMain').offsetWidth; $('lessonMain').classList.add('shake');
   }
   if (ok && L.ex.retry) S.mistakes = S.mistakes.filter(id => id !== L.ex.uid);

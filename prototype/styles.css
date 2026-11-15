@@ -233,6 +233,7 @@ button { cursor: pointer; }
 .fb-sol { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
 .fb-sol pre { margin: 0; font-size: 16px; white-space: pre-wrap; text-align: left; }
 .fb-note { margin-top: 4px; }
+.fb-diff { background: none; color: inherit; font-weight: 800; text-decoration: underline 2px; text-underline-offset: 4px; }
 .report { display: inline-block; margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--ink); text-decoration: none; }
 
 /* End screens */
