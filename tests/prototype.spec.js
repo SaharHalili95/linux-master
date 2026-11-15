@@ -1209,3 +1209,15 @@ test('an alias that is not set answers like bash, and the task passes only once 
   await run(`echo 'alias up="cd .."' >> .bashrc`); await run('source .bashrc'); await run('cd docs'); await run('up');
   expect(await page.evaluate(() => { return !!L.ex.goal(L.term.sh, L.term.log); }), 'loading .bashrc again is a right answer too').toBe(true);
 });
+
+test('a card that explains a repeat sign shows that sign at work in its own example', async ({ page }) => {
+  await freshCourse(page);
+  const cards = await page.evaluate(() => [UNIT_7, UNIT_11].flatMap(u => withFixture(u, u.lessons.flatMap(l => l.exercises)))
+    .filter(ex => ex.type === 'teach' && ['+', '?', '{3}'].includes(ex.cmd))
+    .map(ex => { const r = new Shell(ex.fx()).run(ex.demo[1]); return { cmd: ex.cmd, demo: ex.demo[1], out: r.out.trim().split('\n'), he: ex.text.he }; }));
+  expect(cards.map(c => c.cmd)).toEqual(['+', '?', '+', '?', '{3}']);
+  for (const c of cards) expect(c.demo.replace(/\[0-9\]/g, ''), c.demo).toContain(c.cmd === '{3}' ? '{3}' : c.cmd);
+  expect(cards.map(c => c.out)).toEqual([['aple', 'apple'], ['ale', 'aple'], ['dana: 050-1234567', 'yossi: 054-1112223'], ['dana: 050-1234567'],
+    ['dana: 050-1234567', 'omer: 052-7654321', 'yossi: 054-1112223']]);
+  for (const c of cards) for (const other of ['+', '?', '{'].filter(s => !c.cmd.startsWith(s))) expect(c.he.replace(/grep -E/g, ''), c.cmd).not.toContain(other);
+});
