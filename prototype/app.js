@@ -292,7 +292,8 @@ function renderPath(append = false) {
     let lessonNo = 0;
     nodes.forEach((n, i) => {
       const li = el('li', 'node-row'); li.style.setProperty('--x', `${OFFSETS[i % OFFSETS.length]}px`);
-      const state = n.lockedUnit ? 'locked' : S.done.includes(n.key) ? 'done' : n.key === current ? 'current' : 'locked';
+      // A mock exam is open from day one, so a learner can measure where they stand before the path gets there.
+      const state = n.lockedUnit ? 'locked' : S.done.includes(n.key) ? 'done' : n.key === current ? 'current' : n.kind === 'exam' ? 'open' : 'locked';
       const skipped = state === 'done' && S.skipped.includes(n.key);
       const b = el('button', `node ${n.kind} ${state}${skipped ? ' skipped' : ''}`); b.type = 'button';
       if (n.kind === 'boss' && state !== 'done') b.textContent = '$_'; else b.replaceChildren(icon(skipped ? ICONS.skipped : state === 'done' && n.kind !== 'chest' ? ICONS.done : state === 'locked' && n.kind === 'lesson' ? ICONS.lock : ICONS[n.kind]));
@@ -330,6 +331,7 @@ function openPop(anchor, n, state) {
   } else if (n.kind === 'exam') {
     const x = unit.exam;
     pop.append(el('h3', '', tr(unit.title)), el('p', '', t('examInfo', x.count, x.minutes, Math.round(x.pass * 100))));
+    if (['R', 'F'].includes(x.tag)) pop.append(el('p', 'pop-lead', t('examHandsOn')));
     const go = el('button', 'btn primary', state === 'done' ? t('examAgain') : t('startExam'));
     go.onclick = () => { closePop(); startExam(unit, n.key); };
     pop.append(go);
@@ -367,7 +369,7 @@ function openChest(key) {
 // ---------- Lesson engine ----------
 let L = null;
 function startLesson(key, exercises, opts = {}) {
-  const queue = exercises.map((ex, i) => ({ ...ex, uid: `${key}.${i}` }));
+  const queue = exercises.map((ex, i) => ({ ...ex, uid: key === 'practice' && ex.uid ? ex.uid : `${key}.${i}` }));
   L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
   paintRegion(opts.exam?.skip?.part ?? unitOfKey(key)?.section);
   $('lesson').hidden = false; document.body.classList.add('in-lesson'); next();
@@ -565,12 +567,13 @@ function answer(ok, solution = '', why = '') {
   } else {
     L.mistakes++; L.combo = 0; SFX.bad(); if (!L.opts.practice && !L.opts.replay) loseLife();
     L.queue.push({ ...L.ex, retry: true });
-    if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss) S.mistakes.push(L.ex.uid);
+    if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss && L.key !== 'trivia') S.mistakes.push(L.ex.uid);
     const typo = L.ex.type === 'terminal' && L.term ? typoIn(L.term.log.map(l => l.cmd.trim()), L.ex.solve) : null;
     setFoot('bad', t('correctAnswer'), typo ? { sol: solution, mark: typo, note: t('typo', typo.got, typo.want) } : ['terminal', 'scenario'].includes(L.ex.type) ? { sol: solution } :L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
     $('lessonMain').classList.remove('shake'); void $('lessonMain').offsetWidth; $('lessonMain').classList.add('shake');
   }
-  if (ok && L.ex.retry) S.mistakes = S.mistakes.filter(id => id !== L.ex.uid);
+  // A mistake leaves the list only when practice gets it right the first time, not when it is retried a moment later.
+  if (ok && L.key === 'practice' && !L.ex.retry) S.mistakes = S.mistakes.filter(id => id !== L.ex.uid);
   $('bar').style.width = `${(L.correct / Math.max(1, L.total)) * 100}%`;
   $('comboTag').replaceChildren(...(L.combo >= 2 ? [icon('flame'), ` ${L.combo}`] : []));
   setCan(true); $('checkBtn').focus({ preventScroll: true }); save();
@@ -585,7 +588,69 @@ function optionButton(label, value, mono, onPick, index) {
   b.append(k, t); b.onclick = () => { SFX.tap(); onPick(b); }; return b;
 }
 function pickOne(root) { return b => { if (L.answered) return; root.querySelectorAll('.opt').forEach(o => o.classList.toggle('sel', o === b)); L.value = b.dataset.value; setCan(true); }; }
-const sameCmd = c => c.trim().replace(/\s+/g, ' ');
+// A typed command is compared in a canonical form, so spacing, quoting, flag order, merged flags (-la), a long option
+// for its short one (--boot for -b), --opt=value for --opt value, a trailing slash and a leading sudo don't matter.
+const LONG_OPTS = Object.fromEntries('ls:all=a,almost-all=A,long=l,human-readable=h,recursive=R,reverse=r,size=s,directory=d|grep:ignore-case=i,count=c,invert-match=v,line-number=n,recursive=r,extended-regexp=E,only-matching=o,word-regexp=w,files-with-matches=l,regexp=e,max-count=m,after-context=A,before-context=B,context=C|sort:reverse=r,numeric-sort=n,unique=u,key=k,field-separator=t,human-numeric-sort=h|uniq:count=c,repeated=d,unique=u|wc:lines=l,words=w,bytes=c,chars=m|cut:delimiter=d,fields=f,characters=c,bytes=b|head:lines=n,bytes=c|tail:lines=n,bytes=c,follow=f|cp:recursive=r,verbose=v,interactive=i,archive=a,force=f|mv:verbose=v,interactive=i,force=f|rm:recursive=r,force=f,interactive=i,verbose=v|mkdir:parents=p,verbose=v,mode=m|ln:symbolic=s,force=f|cat:number=n,show-all=A|chmod:recursive=R|chown:recursive=R|chgrp:recursive=R|df:human-readable=h|du:summarize=s,human-readable=h|free:human=h|sed:in-place=i,expression=e,quiet=n,silent=n,regexp-extended=E|awk:field-separator=F|tr:delete=d,squeeze-repeats=s|tar:create=c,extract=x,file=f,gzip=z,bzip2=j,xz=J,list=t,verbose=v,directory=C|journalctl:boot=b,unit=u,follow=f,priority=p,since=S,until=U,lines=n,reverse=r,output=o,dmesg=k|chage:maxdays=M,mindays=m,warndays=W,inactive=I,expiredate=E,lastday=d,list=l|useradd:home-dir=d,create-home=m,shell=s,uid=u,gid=g,groups=G,comment=c,system=r,expiredate=e|usermod:append=a,groups=G,shell=s,lock=L,unlock=U,login=l,home=d,move-home=m,comment=c,gid=g,uid=u|passwd:lock=l,unlock=u,delete=d,expire=e,status=S|xargs:max-args=n|date:date=d|nl:body-numbering=b|touch:no-create=c'.split('|').map(group => { const [cmd, list] = group.split(':'); return [cmd, Object.fromEntries(list.split(',').map(p => p.split('=')))]; }));
+const VALUE_FLAGS = Object.fromEntries('head:nc tail:nc cut:dfcb sort:kt grep:eABCm sed:e awk:F chage:MmWIEd useradd:dsugGce usermod:Gsdlugc groupadd:g journalctl:upnbSUo tar:fC xargs:nI ssh:pil scp:Pi date:d nice:n renice:np kill:s ps:ouUp mkdir:m mount:to'.split(' ').map(p => p.split(':')));
+const NO_FLAG_SPLIT = new Set(['find', 'awk', 'java']);
+function lexCmd(text) {
+  const tokens = []; let i = 0;
+  while (i < text.length) {
+    if (/\s/.test(text[i])) { i++; continue; }
+    const op = ['&&', '||', '2>', '>>', '|', ';', '>', '<', '&'].find(o => text.startsWith(o, i));
+    if (op) { tokens.push({ op }); i += op.length; continue; }
+    let value = '', quote = '';
+    while (i < text.length && !/\s/.test(text[i]) && !/^(&&|\|\||>>|[|;<>&])/.test(text.slice(i))) {
+      const c = text[i];
+      if (c === "'" || c === '"') { const end = text.indexOf(c, i + 1), part = end < 0 ? text.slice(i + 1) : text.slice(i + 1, end); value += part; quote ||= c; i = end < 0 ? text.length : end + 1; } else { value += c; i++; }
+    }
+    // Single quotes keep $ literal and quotes keep globs literal, so those differences still count.
+    const key = (value.length > 1 ? value.replace(/\/+$/, '') : value) + (!quote && /[*?[]/.test(value) ? '\0glob' : '') + (quote === "'" && value.includes('$') ? '\0lit' : '');
+    tokens.push({ value, key, quoted: !!quote });
+  }
+  return tokens;
+}
+function canonicalCmd(text, valueLongs = new Set()) {
+  const out = []; let words = [];
+  const flush = () => {
+    if (words[0]?.value === 'sudo') words = words.slice(1);
+    if (!words.length) return;
+    const cmd = words[0].value, flags = [], args = [], longs = LONG_OPTS[cmd] || {}, values = VALUE_FLAGS[cmd] || '';
+    const takesNext = (next, isValue) => isValue && next && !/^-[a-zA-Z-]/.test(next.value);
+    for (let i = 1; i < words.length; i++) {
+      const w = words[i], v = w.value;
+      if (w.quoted || NO_FLAG_SPLIT.has(cmd) || !/^-[a-zA-Z-]/.test(v) || v === '--') { args.push(w.key); continue; }
+      if (v.startsWith('--')) {
+        const [name, ...rest] = v.slice(2).split('='), short = longs[name], flag = short ? `-${short}` : `--${name}`;
+        const value = rest.length ? rest.join('=') : takesNext(words[i + 1], short ? values.includes(short) : valueLongs.has(name)) ? words[++i].key : null;
+        flags.push(value === null ? flag : `${flag} ${value}`); continue;
+      }
+      const letters = v.slice(1);
+      for (let j = 0; j < letters.length; j++) {
+        const letter = letters[j], attached = letters.slice(j + 1);
+        if (values.includes(letter) && attached) { flags.push(`-${letter} ${attached}`); break; }
+        if (!/[a-zA-Z]/.test(letters[j + 1] ?? 'x')) { flags.push(`-${letter} ${attached}`); break; }
+        if (j === letters.length - 1 && takesNext(words[i + 1], values.includes(letter))) { flags.push(`-${letter} ${words[++i].key}`); break; }
+        flags.push(`-${letter}`);
+      }
+    }
+    out.push([cmd, ...flags.sort(), ...args].join(' '));
+  };
+  for (const tok of lexCmd(straightQuotes(text).trim())) if (tok.op) { flush(); words = []; out.push(tok.op); } else words.push(tok);
+  flush();
+  return out.join(' ');
+}
+function sameCommand(ex, typed) {
+  const valueLongs = new Set(ex.accept.flatMap(a => [...a.matchAll(/--([\w-]+)=/g)].map(m => m[1])));
+  const want = canonicalCmd(typed, valueLongs);
+  if (ex.accept.some(a => canonicalCmd(a, valueLongs) === want)) return true;
+  // A different command that prints the same thing in the simulator is right too, but only when the answer prints
+  // something: an empty output would accept almost anything.
+  if (ex.rec || typeof sameOutput !== 'function') return false;
+  const fx = ex.fx || unitFixture;
+  try { if (!new Shell(fx()).run(ex.accept[0]).out.trim()) return false; } catch { return false; }
+  try { return sameOutput(ex.accept[0], straightQuotes(typed), fx) === true; } catch { return false; }
+}
 // The starting files a list of commands reads, as cards: the "before" a learner needs to understand the output.
 function filePeeks(fx, cmds) {
   const start = new Shell(fx()), sh = new Shell(fx()), peek = new Map();
@@ -870,7 +935,7 @@ const CHECK = {
   fill: (ex, v) => ({ ok: v === ex.answer, solution: `${ex.before}${ex.answer}${ex.after}` }),
   output: (ex, v) => ({ ok: v === ex.solution, solution: ex.solution || t('noOutput') }),
   tiles: (ex, v) => ({ ok: [ex.answer, ...(ex.accept || [])].includes(v), solution: ex.answer }),
-  scenario: (ex, v) => ({ ok: ex.accept.map(sameCmd).includes(sameCmd(v)), solution: ex.accept[0] }),
+  scenario: (ex, v) => ({ ok: sameCommand(ex, v), solution: ex.accept[0] }),
   terminal: ex => ({ ok: ex.goal(L.term.sh, L.term.log) && (!ex.ask || L.ask === L.expected), solution: ex.ask ? `${ex.solve.join('\n')}\n${tr(ex.ask)} ${L.expected}` : ex.solve.join('\n') }),
   boss: (ex, v) => ({ ok: v === ex.boss.word, solution: t('bossSolution', ex.boss.word, ex.boss.hideIn), why: t('bossWhy', ex.boss.hideIn) }),
 };
@@ -949,14 +1014,13 @@ function showStreak() {
 // ---------- Other tabs ----------
 function allExercises() { return availableCourse().filter(u => !u.locked && !u.exam).flatMap(u => u.lessons.flatMap((ls, li) => withFixture(u, ls.exercises).map((ex, i) => ({ ...ex, uid: `${unitKey(u, `L${li}`)}.${i}` })))).filter(e => e.type !== 'teach'); }
 function renderPractice() {
-  const n = S.mistakes.length; $('mistakesCount').textContent = n ? t('mistakesN', n) : t('noMistakes');
+  const n = allExercises().filter(e => S.mistakes.includes(e.uid)).length; $('mistakesCount').textContent = n ? t('mistakesN', n) : t('noMistakes');
   $('practiceMistakes').disabled = !n;
 }
 function practice(kind) {
   const pool = allExercises(); const items = kind === 'mistakes' ? pool.filter(e => S.mistakes.includes(e.uid)) : shuffle(pool.filter(e => S.done.includes(e.uid.split('.')[0]))).slice(0, 8);
   if (!items.length) return toast(kind === 'mistakes' ? t('noMistakesToast') : t('finishFirst'));
   L = null; startLesson('practice', items.map(e => ({ ...e })), { practice: true });
-  L.queue.forEach((e, i) => { e.uid = items[i].uid; });
 }
 function renderQuests() {
   const q = questDay(), list = $('questList'); list.innerHTML = '';

@@ -427,6 +427,7 @@ input, textarea { caret-color: var(--accent); }
 .node::after { inset: 3px; background: var(--n-fill); }
 .node:active { transform: scale(0.95); }
 .node.done, .node.boss.done, .node.exam.done { color: #0a0d1a; --n-edge: var(--r-accent); --n-fill: var(--r-accent); }
+.node.exam.open { color: #fff; --n-edge: var(--r-accent); --n-fill: var(--r-panel); }
 .node.locked, .node.boss.locked, .node.exam.locked { color: #d6e0f0; font-size: 24px; --n-edge: #ffffff66; --n-fill: var(--r-panel); }
 .node.boss, .node.exam { font: 700 24px var(--mono); }
 .node.current:not(.chest) { outline: 0; }
