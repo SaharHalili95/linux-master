@@ -1221,3 +1221,22 @@ test('a card that explains a repeat sign shows that sign at work in its own exam
     ['dana: 050-1234567', 'omer: 052-7654321', 'yossi: 054-1112223']]);
   for (const c of cards) for (const other of ['+', '?', '{'].filter(s => !c.cmd.startsWith(s))) expect(c.he.replace(/grep -E/g, ''), c.cmd).not.toContain(other);
 });
+
+test('a near miss in the terminal names the word that differs and marks it in the answer', async ({ page }) => {
+  await freshCourse(page);
+  const ex = await page.evaluate(() => { const ex = withFixture(UNIT_11, UNIT_11.lessons.flatMap(l => l.exercises)).find(e => e.type === 'terminal' && e.solve[0] === 'grep -E "GET /[a-z]+\\.html" access.log'); startLesson('x', [ex]); return ex.solve[0]; });
+  expect(ex).toBeTruthy();
+  const input = page.locator('.term.live textarea');
+  await input.fill('grep -E "GAT /[a-z]+\\.html" access.log'); await input.press('Enter');
+  await page.locator('#checkBtn').click();
+  await expect(page.locator('.fb-note')).toContainText('GAT');
+  await expect(page.locator('.fb-note')).toContainText('GET');
+  await expect(page.locator('.fb-sol mark.fb-diff')).toHaveText('GET');
+  await expect(page.locator('.fb-sol pre')).toHaveText(ex);
+
+  expect(await page.evaluate(() => [
+    typoIn(['grep -E "GET /[a-z]+.html" access.log'], ['grep -E "GET /[a-z]+\\.html" access.log']),
+    typoIn(['ls -la /etc'], ['grep -E "GET /[a-z]+\\.html" access.log']),
+    typoIn(['cd docs', 'up'], ['cd docs', 'up']),
+  ])).toEqual([{ got: '/[a-z]+.html', want: '/[a-z]+\\.html', line: 0, at: [13, 26] }, null, null]);
+});
