@@ -147,7 +147,7 @@ function showTab(name) {
 const unitKey = (unit, id) => (unit.unit === 1 ? id : `u${unit.unit}-${id}`);
 const NODE_PLAN = [['L0', 'lesson', 0], ['L1', 'lesson', 1], ['c1', 'chest'], ['L2', 'lesson', 2], ['L3', 'lesson', 3], ['boss', 'boss']];
 const unitNodes = unit => unit.exam ? [{ key: unitKey(unit, 'exam'), kind: 'exam', unit }] : NODE_PLAN.map(([id, kind, i]) => ({ key: unitKey(unit, id), kind, i, unit }));
-const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: unit.fixture || unitFixture }));
+const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: ex.fixture || unit.fixture || unitFixture }));
 const OFFSETS = [0, 66, 66, 0, -66, -66];
 const icon = name => { const i = el('span', `ic ic-${name}`); i.setAttribute('aria-hidden', 'true'); return i; };
 const ICONS = { lesson: 'star', chest: 'gift', exam: 'note', done: 'check', lock: 'lock', skipped: 'skip' };
