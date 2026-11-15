@@ -148,6 +148,12 @@ button { cursor: pointer; }
 .term-input { position: relative; }
 .term-input .ps1 { position: absolute; top: 0; left: 0; font-size: 15px; line-height: 24px; white-space: pre; pointer-events: none; }
 .term-input textarea { display: block; width: 100%; box-sizing: border-box; margin: 0; padding: 0; background: transparent; border: 0; outline: 0; resize: none; overflow: hidden; color: #fff; font: 700 16px/24px var(--mono); overflow-wrap: anywhere; caret-color: var(--term-green); }
+.term-input textarea { caret-color: transparent; }
+.term-mirror { position: absolute; inset: 0 0 auto 0; visibility: hidden; pointer-events: none; font: 700 16px/24px var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.term-caret { position: absolute; top: 3px; left: 0; width: 2px; height: 18px; border-radius: 1px; background: var(--term-green); pointer-events: none; animation: blink 1.1s steps(1) infinite; }
+.term-caret[hidden] { display: none; }
+/* The strip between the lesson and the keyboard shows the page behind it on iPhone. */
+.lesson.typing::before { content: ''; position: fixed; inset: -100px 0; background: inherit; z-index: -1; }
 .term .code-row { margin-top: 10px; font: 500 14px var(--font); color: #fff; }
 .term .code-row input { padding: 6px 10px; border: 1px solid #ffffff44; border-radius: 8px; background: #ffffff14; color: #fff; font: 700 16px var(--mono); caret-color: var(--term-green); }
 .term-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: -6px; }

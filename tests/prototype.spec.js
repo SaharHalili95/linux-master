@@ -1167,3 +1167,45 @@ test('a jump test covers every skipped unit of the chosen track, with live termi
   expect(r.merged.sort()).toEqual(['L0', 'L1']);
   expect(r.loaded).toEqual(['L0']);
 });
+
+test('the terminal draws its own caret on the typing line, and it follows the text across wrapped lines', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { const ex = UNIT_10.boss.exercises[1]; startLesson('u10-boss', [{ ...ex, fx: homeFixture }]); });
+  const input = page.locator('.term.live textarea'), caret = page.locator('.term-caret');
+  await input.focus();
+  await expect(caret).toBeVisible();
+  const at = () => page.evaluate(() => {
+    const c = document.querySelector('.term-caret').getBoundingClientRect(), i = document.querySelector('.term.live textarea').getBoundingClientRect(), p = document.querySelector('.term-input .ps1').getBoundingClientRect();
+    return { x: c.left - p.right, top: c.top - i.top, bottom: i.bottom - c.bottom };
+  });
+  await page.evaluate(() => document.fonts.ready); await expect.poll(async () => (await at()).x, 'the caret starts right after the prompt').toBeGreaterThan(4);
+  const empty = await at();
+  expect(empty.x, 'the caret starts right after the prompt').toBeGreaterThan(4); expect(empty.x).toBeLessThan(14);
+  expect(empty.top, 'the caret sits inside the typing line, not under it').toBeGreaterThanOrEqual(0); expect(empty.bottom).toBeGreaterThanOrEqual(0);
+  await input.pressSequentially('cd docs');
+  const typed = await at();
+  const wide = await page.evaluate(() => { const c = document.createElement('canvas').getContext('2d'); c.font = getComputedStyle(document.querySelector('.term.live textarea')).font; return c.measureText('cd docs').width; });
+  expect(Math.abs(typed.x - empty.x - wide), 'the caret moves with the typed text').toBeLessThan(3);
+  await input.evaluate(f => f.setSelectionRange(0, 0)); await expect.poll(async () => (await at()).x).toBeLessThan(empty.x + 1);
+  await input.fill('echo ' + 'word '.repeat(30));
+  const wrapped = await at();
+  expect(wrapped.top, 'on a wrapped command the caret is on the last line').toBeGreaterThan(20); expect(wrapped.bottom).toBeGreaterThanOrEqual(0);
+  await input.blur(); await expect(caret).toBeHidden();
+});
+
+test('an alias that is not set answers like bash, and the task passes only once the alias works in this shell', async ({ page }) => {
+  await page.goto('./prototype/');
+  await page.evaluate(() => { const ex = UNIT_10.boss.exercises[1]; startLesson('u10-boss', [{ ...ex, fx: homeFixture }]); });
+  const term = page.locator('.term.live'), input = term.locator('textarea');
+  const run = async c => { await input.fill(c); await input.press('Enter'); };
+  await run('cd docs'); await run('up');
+  await expect(term).toContainText('bash: up: command not found');
+  await run('vim notes.txt');
+  await expect(term, 'a real command the simulator lacks still says so').toContainText(await page.evaluate(() => t('unsupported', 'vim')));
+  await run('cd ..');
+  expect(await page.evaluate(() => { return !!L.ex.goal(L.term.sh, L.term.log); }), 'walking home with cd is not the task').toBe(false);
+  await run('ll');
+  await expect(term, 'the alias already in .bashrc works, as in a shell that read it').toContainText('readme.txt');
+  await run(`echo 'alias up="cd .."' >> .bashrc`); await run('source .bashrc'); await run('cd docs'); await run('up');
+  expect(await page.evaluate(() => { return !!L.ex.goal(L.term.sh, L.term.log); }), 'loading .bashrc again is a right answer too').toBe(true);
+});
