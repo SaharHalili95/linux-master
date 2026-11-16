@@ -110,8 +110,8 @@ const UNIT_3 = {
     { title: T('mv ו־rm', 'mv and rm'), exercises: [
       { type: 'teach', cmd: 'mv', name: 'move', text: T('מעבירה קובץ למקום אחר, או משנה לו את השם. במקום הישן הוא כבר לא נמצא.', 'Moves a file somewhere else, or renames it. It is no longer in the old place.'), demo: [['mv notes.txt list.txt'], 'ls'] },
       { type: 'output', prompt: T('מה תדפיס ls אחרי ההעברה?', 'What will ls print after the move?'), setup: ['mv notes.txt docs'], cmd: 'ls', wrongCmds: ['ls docs'], wrongText: ['docs\nfruits.txt\nlogs\nnotes.txt\npeople.csv\nphotos\nprojects\nreadme.txt'] },
-      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מוחקת קובץ, ואין סל מחזור.', 'The ___ command deletes a file, and there is no trash.'), options: ['rm', 'mv', 'cp'], answer: 'rm' },
       { type: 'teach', cmd: 'rm', name: 'remove', text: T('מוחקת קובץ. אין סל מחזור: מה שנמחק, נעלם.', 'Deletes a file. There is no trash: what is deleted is gone.'), demo: [['rm readme.txt'], 'ls'] },
+      { type: 'sentence', prompt: READ, text: T('הפקודה ___ מוחקת קובץ, ואין סל מחזור.', 'The ___ command deletes a file, and there is no trash.'), options: ['rm', 'mv', 'cp'], answer: 'rm' },
       { type: 'choice', prompt: T('איזו פקודה תשנה את השם של fruits.txt ל־food.txt?', 'Which command renames fruits.txt to food.txt?'), options: ['mv fruits.txt food.txt', 'cp fruits.txt food.txt', 'rm fruits.txt food.txt', 'mv food.txt fruits.txt'], answer: 'mv fruits.txt food.txt',
         why: { 'cp fruits.txt food.txt': T('cp תשאיר גם את fruits.txt.', 'cp would keep fruits.txt too.'), 'rm fruits.txt food.txt': T('rm מוחקת, היא לא משנה שמות.', 'rm deletes, it does not rename.'), 'mv food.txt fruits.txt': T('הסדר הפוך: קודם השם הישן, אחר כך החדש.', 'Wrong order: the old name first, then the new one.') } },
       { type: 'match', prompt: T('התאימו כל פקודה למה שהיא עושה', 'Match each command to what it does'), pairs: [['cp', T('מעתיקה', 'copies')], ['mv', T('מעבירה או משנה שם', 'moves or renames')], ['rm', T('מוחקת', 'deletes')], ['mkdir', T('יוצרת תיקייה', 'creates a folder')]] },
@@ -121,8 +121,8 @@ const UNIT_3 = {
     { title: T('echo ו־*', 'echo and *'), exercises: [
       { type: 'teach', cmd: 'echo', name: 'echo', text: T('מדפיסה טקסט. עם > הטקסט נכתב לקובץ במקום למסך.', 'Prints text. With > the text goes into a file instead of the screen.'), demo: [['echo hello > hi.txt'], 'cat hi.txt'] },
       { type: 'output', prompt: T('מה תדפיס cat a.txt?', 'What will cat a.txt print?'), setup: ['echo hi > a.txt'], cmd: 'cat a.txt', wrongText: ['echo hi', 'a.txt', 'hi > a.txt'] },
-      { type: 'sentence', prompt: READ, text: T('הסימן ___ מחליף כל רצף של תווים בשם של קובץ.', 'The ___ sign stands for any run of characters in a file name.'), options: ['*', '~', '..'], answer: '*' },
       { type: 'teach', cmd: '*', name: 'wildcard', text: T('כוכבית מחליפה כל רצף של תווים. ‎*.txt אומר: כל מה שנגמר ב־.txt.', 'A star stands for any run of characters. *.txt means: anything ending in .txt.'), demo: [[], 'ls *.txt'] },
+      { type: 'sentence', prompt: READ, text: T('הסימן ___ מחליף כל רצף של תווים בשם של קובץ.', 'The ___ sign stands for any run of characters in a file name.'), options: ['*', '~', '..'], answer: '*' },
       { type: 'output', prompt: T('בתיקייה photos יש cat.jpg ו־dog.jpg. מה תדפיס הפקודה?', 'The photos folder has cat.jpg and dog.jpg. What will this print?'), cmd: 'ls photos/*.jpg', wrongCmds: ['ls photos'], wrongText: ['photos/cat.jpg', '*.jpg'] },
       { type: 'tiles', prompt: T('מחקו את כל קבצי ה־.txt בתיקייה הנוכחית', 'Delete every .txt file in the current folder'), answer: 'rm *.txt', tiles: ['rm', '*.txt', '*', 'ls', '.txt'] },
       { type: 'terminal', prompt: T('צרו קובץ plan.txt שכתוב בו go', 'Create a file plan.txt that says go'), hint: T('echo מדפיסה את המילה, והסימן > שולח את הפלט לקובץ במקום למסך.', 'echo prints the word, and the > symbol sends the output to a file instead of the screen.'), goal: sh => fileIs(sh, '/home/user/plan.txt', 'go\n'), solve: ['echo go > plan.txt'] },
@@ -170,6 +170,7 @@ const UNIT_4 = {
       { type: 'terminal', prompt: T('מצאו איפה מסתתר הקובץ cv.pdf', 'Find where cv.pdf is hiding'), hint: T('find . -name ואחריה שם הקובץ', 'find . -name, then the file name'), goal: (sh, log) => log.some(l => /^find\b/.test(l.cmd) && l.out.includes('docs/cv.pdf')), solve: ['find . -name cv.pdf'] },
     ] },
     { title: T('חזרה', 'Review'), exercises: [
+      { type: 'teach', cmd: 'grep -n', name: 'line number', text: T('מדפיסה לפני כל שורה שנמצאה את המספר שלה בקובץ, ואחריו נקודתיים.', 'Prints the line number in the file before each matching line, followed by a colon.'), demo: [[], 'grep -n ERROR logs/app.log'] },
       { type: 'output', prompt: WHAT, cmd: 'grep -n milk notes.txt', wrongCmds: ['grep milk notes.txt', 'grep -c milk notes.txt'] },
       { type: 'sentence', prompt: READ, text: T('grep ___ מדפיסה את השורות שלא מכילות את המילה.', 'grep ___ prints the lines that do not contain the word.'), options: ['-v', '-i', '-c'], answer: '-v' },
       { type: 'choice', prompt: T('מה ההבדל בין grep ל־find?', 'What is the difference between grep and find?'), plain: true,
@@ -182,7 +183,7 @@ const UNIT_4 = {
     ] },
   ],
   boss: { title: CHALLENGE, text: T('חקירה: מה השתבש בשרת, ואיפה הקבצים?', 'Investigation: what went wrong on the server, and where are the files?'), exercises: [
-    { type: 'terminal', ask: T('כמה שורות ERROR יש?', 'How many ERROR lines?'), prompt: T('כמה שורות ERROR יש ב־logs/app.log? מצאו עם grep', 'How many ERROR lines are in logs/app.log? Find out with grep'), hint: T('האפשרות ‎-c של grep סופרת את השורות שנמצאו במקום להציג אותן.', 'The -c option of grep counts the matching lines instead of showing them.'), goal: (sh, log) => printed(log, 'grep -c ERROR logs/app.log'), solve: ['grep -c ERROR logs/app.log'] },
+    { type: 'terminal', ask: T('כמה שורות ERROR יש?', 'How many ERROR lines?'), prompt: T('כמה שורות ERROR יש ב־logs/app.log? מצאו עם grep', 'How many ERROR lines are in logs/app.log? Find out with grep'), hint: T('האפשרות ‎-c של grep סופרת את השורות שנמצאו במקום להציג אותן.', 'The -c option of grep counts the matching lines instead of showing them.'), goal: (sh, log) => ['grep -c ERROR logs/app.log', 'grep ERROR logs/app.log', 'grep -n ERROR logs/app.log'].some(c => printed(log, c)), solve: ['grep -c ERROR logs/app.log'] },
     { type: 'terminal', prompt: T('הציגו כל שורה ב־logs/app.log שאינה INFO, עם מספרי שורות', 'Show every line of logs/app.log that is not INFO, with line numbers'), hint: T('אפשר לשלב: grep -vn', 'Options combine: grep -vn'), goal: (sh, log) => printed(log, 'grep -v -n INFO logs/app.log'), solve: ['grep -vn INFO logs/app.log'] },
     { type: 'terminal', prompt: T('מצאו את כל קבצי ה־.txt בכל התיקיות', 'Find every .txt file in every folder'), hint: T('find מחפשת בכל התיקיות. הנקודה אומרת להתחיל מכאן, וב־‎-name נותנים תבנית בגרשיים עם * לפני הסיומת.', 'find searches through every folder. A dot means start here, and -name takes a pattern in quotes with * before the extension.'), goal: (sh, log) => printed(log, 'find . -name "*.txt"'), solve: ['find . -name "*.txt"'] },
   ] },
