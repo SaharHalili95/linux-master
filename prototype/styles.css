@@ -480,5 +480,20 @@ input, textarea { caret-color: var(--accent); }
 .skip-btn .ic { color: var(--r-accent); }
 .node.done.skipped, .node.boss.done.skipped { --n-fill: #0a0d1a; color: var(--r-accent); }
 .end-foot { display: grid; gap: 10px; }
+.end-inner:has(.end-review:not([hidden])) { justify-content: flex-start; }
+.end-review { width: 100%; max-width: 640px; margin-top: 20px; text-align: start; }
+.rv-h { font-size: 18px; font-weight: 700; line-height: 1.3; color: var(--ink); margin: 16px 0 10px; }
+.rv-more summary { cursor: pointer; list-style-position: inside; }
+.rv-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.rv { border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.rv.bad { border-color: color-mix(in srgb, var(--red) 70%, var(--line)); }
+.rv-q { margin: 0; font-weight: 700; line-height: 1.5; }
+.rv-q .ic { vertical-align: -3px; }
+.rv.ok .rv-q .ic { color: var(--green-bright); }
+.rv.bad .rv-q .ic { color: var(--red-ink); }
+.rv-code { margin: 6px 0 0; font: 600 15px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; text-align: left; }
+.rv-row { margin-top: 8px; font-size: 14px; opacity: .9; }
+.rv-why { margin: 8px 0 0; font-size: 15px; }
+.rv-text { margin: 4px 0 0; font-size: 16px; font-weight: 600; opacity: 1; }
 .end-foot .btn.ghost { background: none; border: 2px solid var(--line); color: var(--ink); }
 .ic-skip { --i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 5l7 7-7 7M13 5l7 7-7 7'/%3E%3C/svg%3E"); }
