@@ -1299,3 +1299,38 @@ test('a near miss in the terminal names the word that differs and marks it in th
     typoIn(['cd docs', 'up'], ['cd docs', 'up']),
   ])).toEqual([{ got: '/[a-z]+.html', want: '/[a-z]+\\.html', line: 0, at: [13, 26] }, null, null]);
 });
+
+test('after a test the learner sees each question they got wrong, what they answered and the right answer', async ({ page }) => {
+  await freshCourse(page);
+  await page.evaluate(() => startSkip(2));
+  const plan = [];
+  for (let i = 0; i < 12; i++) {
+    plan.push(await page.evaluate(i => {
+      const ex = L.ex, wrong = i % 3 === 0;
+      if (!CHECK[ex.type] || !['choice', 'sentence', 'fill'].includes(ex.type)) { answer(!wrong, CHECK[ex.type]?.(ex, '').solution || ''); return { wrong, q: tr(ex.prompt) }; }
+      L.value = ex.plain ? (wrong ? '1' : '0') : wrong ? ex.options.find(o => o !== ex.answer) : ex.answer;
+      const r = CHECK[ex.type](ex, L.value); answer(r.ok, r.solution, r.why);
+      return { wrong: !r.ok, q: tr(ex.prompt), given: ex.plain ? tr(ex.options[1]) : L.value, solution: r.solution };
+    }, i));
+    await expect(page.locator('#fbDetail')).toBeEmpty();
+    await page.click('#checkBtn');
+  }
+  await expect(page.locator('#end')).toBeVisible();
+  const wrong = plan.filter(p => p.wrong), right = plan.filter(p => !p.wrong);
+  await expect(page.locator('.end-review .rv.bad')).toHaveCount(wrong.length);
+  await expect(page.locator('.end-review .rv-more')).not.toHaveAttribute('open', '');
+  await expect(page.locator('.end-review .rv-more .rv.ok')).toHaveCount(right.length);
+  const shown = await page.locator('.end-review .rv.bad').allInnerTexts();
+  for (const [i, p] of wrong.entries()) {
+    const flat = s => s.replace(/[\s‎‏]+/g, '');
+    if (p.given) expect(flat(shown[i])).toContain(flat(p.given));
+    if (p.solution) expect(flat(shown[i])).toContain(flat(p.solution));
+  }
+  const hebrewAnswer = page.locator('.end-review .rv.bad pre.rv-code').filter({ hasText: /[֐-׿]/ });
+  await expect(hebrewAnswer).toHaveCount(0);
+
+  await page.click('#endBtn');
+  await page.evaluate(() => { const ex = L.ex; L.queue = []; L.total = 1; answer(true); });
+  await page.click('#checkBtn');
+  await expect(page.locator('.end-review .rv-more')).toHaveAttribute('open', '');
+});

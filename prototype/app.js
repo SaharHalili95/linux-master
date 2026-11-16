@@ -551,12 +551,44 @@ function onFootButton() {
   const r = CHECK[L.ex.type](L.ex, L.value);
   answer(r.ok, r.solution, r.why);
 }
+// What the question asked and what the learner gave, kept for the review at the end of a test.
+function reviewOf(ex, v) {
+  const shown = { output: ex.cmd, sentence: tr(ex.text), fill: ex.type === 'fill' && `${ex.before}___${ex.after}` }[ex.type] || '';
+  const given = ex.type === 'terminal' ? (L.term?.log || []).map(l => l.cmd.trim()).filter(Boolean).join('\n')
+    : ex.type === 'choice' && ex.plain ? tr(ex.options[+v]) : ex.type === 'output' && v === '' ? t('noOutput') : v ?? '';
+  return { q: tr(ex.prompt) || '', shown, given: String(given) };
+}
+function testReview(results) {
+  const box = $('endReview'); box.replaceChildren(); box.hidden = !results.length;
+  const item = r => {
+    const li = el('li', `rv ${r.ok ? 'ok' : 'bad'}`);
+    const q = el('p', 'rv-q'); q.append(icon(r.ok ? 'check' : 'x'), ' ', bidi(r.q)); li.append(q);
+    const block = text => {
+      if (!text) return el('p', 'rv-text', t('noAnswer'));
+      if (/[֐-׿]/.test(text)) { const p = el('p', 'rv-text'); p.append(bidi(text)); return p; }
+      const p = el('pre', 'rv-code', text); p.dir = 'ltr'; return p;
+    };
+    if (r.shown) li.append(block(r.shown));
+    if (!r.ok) {
+      const row = (label, text) => { const d = el('div', 'rv-row', label); d.append(block(text)); return d; };
+      li.append(row(t('youAnswered'), r.given), row(t('correctAnswer'), r.solution));
+      if (r.why) { const w = el('p', 'rv-why'); w.append(bidi(r.why)); li.append(w); }
+    }
+    return li;
+  };
+  const wrong = results.filter(r => !r.ok), right = results.filter(r => r.ok);
+  if (wrong.length) { box.append(el('h2', 'rv-h', t('reviewWrong', wrong.length))); const ul = el('ul', 'rv-list'); ul.append(...wrong.map(item)); box.append(ul); }
+  if (right.length) {
+    const d = el('details', 'rv-more'); d.open = !wrong.length;
+    const s = el('summary', 'rv-h', t('reviewRight', right.length)); const ul = el('ul', 'rv-list'); ul.append(...right.map(item)); d.append(s, ul); box.append(d);
+  }
+}
 function answer(ok, solution = '', why = '') {
   L.answered = true;
   // In an exam nothing is revealed until the end, and wrong answers do not come back or go to practice.
   if (L.opts.exam) {
     if (ok) L.correct++; else L.mistakes++;
-    L.opts.results.push({ ok, topic: L.ex.topic });
+    L.opts.results.push({ ok, topic: L.ex.topic, ...reviewOf(L.ex, L.value), solution, why });
     setFoot('saved', t('examSaved')); setCan(true); $('checkBtn').focus({ preventScroll: true });
     return;
   }
@@ -966,6 +998,7 @@ function finishExam() {
   $('endXp').textContent = gain; $('endAcc').textContent = `${Math.round(score * 100)}%`;
   $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
   $('endQuests').textContent = weakest.length ? t('examReview', weakest.join(', ')) : '';
+  testReview(L.opts.results);
   endButtons(closeOverlays);
   if (skip && passed) endButtons(() => { closeOverlays(); toHere('instant'); });
   if (skip && !passed) endButtons(() => { const to = skip.to; closeOverlays(); startSkip(to); }, t('skipRetry'), closeOverlays);
@@ -977,6 +1010,7 @@ function endButtons(main, label = t('continue'), alt = null) {
 }
 function finishLesson() {
   if (L.opts.exam) return finishExam();
+  $('endReview').hidden = true;
   const rankBefore = rankOf(S.xp).level, wasDone = S.done.includes(L.key);
   const missionUnit = unitOfKey(L.key), beforeMission = !L.opts.practice && window.GameProgress?.mission(missionUnit, S.done, unitNodes);
   const perfect = L.mistakes === 0 && !L.matchMiss, secs = Math.round((Date.now() - L.start) / 1000);
