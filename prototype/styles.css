@@ -173,6 +173,9 @@ button { cursor: pointer; }
 .term-input textarea::placeholder { color: #ffffff55; text-align: left; font-family: var(--font); font-weight: 500; }
 .hint-link { border: 0; background: none; color: var(--blue-ink); font-weight: 800; padding: 4px 0; }
 .hint { color: var(--muted); border: 2px dashed var(--line); border-radius: 12px; padding: 10px 12px; }
+.coach { margin: 0 0 12px; padding: 8px 12px; border-inline-start: 3px solid var(--blue); background: var(--blue-soft); border-radius: 8px; color: var(--ink); font-size: 15px; line-height: 1.5; }
+.coach[hidden] { display: none; }
+.lesson.typing .coach { order: -1; flex: none; margin: 0 0 8px; }
 
 .teach-card { display: grid; gap: 14px; }
 .teach-head { display: flex; align-items: flex-start; gap: 12px; }

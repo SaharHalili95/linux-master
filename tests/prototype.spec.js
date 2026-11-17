@@ -1241,6 +1241,37 @@ test('a near miss in the terminal names the word that differs and marks it in th
   ])).toEqual([{ got: '/[a-z]+.html', want: '/[a-z]+\\.html', line: 0, at: [13, 26] }, null, null]);
 });
 
+test('the live coach says after each command what happened, without naming the right command', async ({ page }) => {
+  await freshCourse(page);
+  await page.evaluate(() => { const ex = withFixture(UNIT_3, UNIT_3.boss.exercises).find(e => e.type === 'terminal' && e.solve[0] === 'rm photos/*.jpg'); startLesson('x', [ex]); });
+  const input = page.locator('.term.live textarea'), coach = page.locator('.coach');
+  const run = async cmd => { await input.fill(cmd); await input.press('Enter'); };
+  await expect(coach).toBeHidden();
+
+  await run('cat beach.png');
+  await expect(coach).toContainText('אין קובץ או תיקייה בשם הזה');
+  await run('rm foto/*.jpg');
+  await expect(coach).toContainText('foto');
+  await run('rn photos/*.jpg');
+  await expect(coach).toContainText('rn');
+  await expect(coach).not.toContainText('rm');
+  await run('rm photos//*.jpg');
+  await expect(coach).toHaveText(/המשימה בוצעה.*לא מדפיסה כלום/);
+  await run('rm photos/*.jpg');
+  await expect(page.locator('.term-out').last()).toContainText('No such file or directory');
+  await expect(coach).toContainText('המשימה כבר בוצעה בפקודה קודמת');
+
+  await page.locator('.term-key.restart').click();
+  await expect(coach).toBeHidden();
+  await run('ls');
+  await expect(coach).toBeHidden();
+
+  await page.evaluate(() => startSkip(2));
+  await page.evaluate(() => { const ex = withFixture(UNIT_3, UNIT_3.boss.exercises).find(e => e.type === 'terminal' && e.solve[0] === 'rm photos/*.jpg'); const body = $('exBody'); body.replaceChildren(); RENDER.terminal(body, ex); return !!L.opts.exam; }).then(exam => expect(exam).toBe(true));
+  await run('rm photos//*.jpg');
+  await expect(page.locator('.coach')).toHaveCount(0);
+});
+
 test('after a test the learner sees each question they got wrong, what they answered and the right answer', async ({ page }) => {
   await freshCourse(page);
   await page.evaluate(() => startSkip(2));
