@@ -522,7 +522,22 @@ function typoIn(typed, solve) {
   const g = got.slice(start(got), end(got)), w = want.slice(start(want), end(want));
   return g && w ? { got: g, want: w, line: best.line, at: [start(want), end(want)] } : null;
 }
-function setFoot(mode, title = '', { label = '', sol = '', note = '', mark = null } = {}) {
+// What the live coach says after a command: that the task is done, what an error means, or which word to check.
+// It never names the right command.
+const COACH_ERRORS = [
+  [/command not found/, 'coachNoCmd'], [/No such file or directory/, 'coachNoFile'], [/Is a directory/, 'coachIsDir'],
+  [/[Nn]ot a directory/, 'coachNotDir'], [/Permission denied/, 'coachPerm'], [/missing (file )?operand/, 'coachOperand'],
+  [/File exists/, 'coachExists'], [/Directory not empty/, 'coachNotEmpty'], [/syntax error/, 'coachSyntax'],
+];
+function coachNote(ex, sh, log, cmd, text, wasDone) {
+  let done = false; try { done = !!ex.goal(sh, log); } catch { done = false; }
+  if (done) return { done, note: ex.ask ? t('coachAsk') : wasDone ? t('coachAlready') : text ? t('coachDone') : `${t('coachDone')} ${t('coachSilent')}` };
+  const typo = typoIn([cmd], ex.solve);
+  if (typo) return { done, note: t('coachTypo', typo.got) };
+  const known = COACH_ERRORS.find(([re]) => re.test(text || ''));
+  return { done, note: known ? t(known[1]) : '' };
+}
+function setFoot(mode, title = '',{ label = '', sol = '', note = '', mark = null } = {}) {
   const foot = $('foot'); foot.className = `lesson-foot ${mode}`;
   $('fbTitle').textContent = title; $('fbBox').hidden = mode === 'idle';
   const detail = $('fbDetail'); detail.innerHTML = '';
@@ -861,6 +876,7 @@ function mountTerminal(root, ex, sh, onRun = () => {}, shown = []) {
     if (L.answered) return;
     sh = new Shell(ex.fx()); for (const c of ex.setup || []) sh.run(c);
     L.term.sh = sh; log.length = 0; out.replaceChildren(...termRows(shown)); input.value = ''; ps.textContent = promptFor(sh.cwd); grow();
+    if (coach) { coach.hidden = true; wasDone = false; }
     L.value = ''; restart.hidden = true; if (ex.type === 'terminal' && !ex.ask) setCan(false); onRun(log);
   }, 'termRestart');
   restart.hidden = true;
@@ -877,8 +893,12 @@ function mountTerminal(root, ex, sh, onRun = () => {}, shown = []) {
     ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
     restart.hidden = !ex.fx; requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
     L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal' && !ex.ask) setCan(true); onRun(log);
+    if (coach) { const said = coachNote(ex, sh, log, cmd, text, wasDone); wasDone = said.done; coach.replaceChildren(bidi(said.note)); coach.hidden = !said.note; }
   }
-  if (ex.hint && !L.opts.exam) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(box, h); } else root.append(box);
+  // Tests only grade at the end, so the live coach speaks in lessons and practice.
+  const coach = ex.type === 'terminal' && !L.opts.exam ? el('div', 'coach') : null; let wasDone = false;
+  if (coach) { coach.setAttribute('role', 'status'); coach.hidden = true; root.append(box, coach); } else root.append(box);
+  if (ex.hint && !L.opts.exam) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(h); }
   // Never steal focus from a field the learner already moved to. A teach card only invites typing, so it opens no keyboard.
   if (!shown.length) focusField(input);
 }
