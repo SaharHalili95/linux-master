@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
 test('a player can choose an appearance which survives reload without changing progress', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.setItem('linux-master-proto', JSON.stringify({ xp: 300, done: ['L0'], sound: false })); });
   await page.reload();
   await page.locator('[data-tab="profile"]').click();
@@ -15,7 +15,7 @@ test('a player can choose an appearance which survives reload without changing p
 });
 
 test('world progress and mock exam medals reflect unique saved achievements', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.setItem('linux-master-proto', JSON.stringify({ done: ['L0', 'L0', 'u78-exam'], sound: false })); });
   await page.reload();
   await page.waitForFunction(() => window.courseReady);
@@ -27,7 +27,7 @@ test('world progress and mock exam medals reflect unique saved achievements', as
 });
 
 test('current lesson offers a contextual story without changing lesson entry', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.locator('.node.current').first().click();
   await expect(page.locator('#pop .story-mission')).toBeVisible();
   await page.locator('#pop .btn.primary').click();
@@ -35,7 +35,7 @@ test('current lesson offers a contextual story without changing lesson entry', a
 });
 
 test('avatar settings survive backup state validation and synchronize deterministically', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const merged = await page.evaluate(() => {
     const a = { xp: 100, avatarStyle: 'cyan', avatarUpdatedAt: 20, avatarForm: 'scout', avatarFormUpdatedAt: 60 };
     const b = { xp: 300, avatarStyle: 'violet', avatarUpdatedAt: 40, avatarForm: 'guardian', avatarFormUpdatedAt: 30 };
@@ -49,9 +49,9 @@ test('avatar settings survive backup state validation and synchronize determinis
 });
 
 for (const module of ['avatar-options.js', 'game-progress.js', 'story-missions.js']) test(`missing ${module} never resets existing progress or blocks lessons`, async ({ page }) => {
-  await page.route(`**/prototype/${module}*`, route => route.abort());
+  await page.route(`**/${module}*`, route => route.abort());
   await page.addInitScript(() => { if (!localStorage.getItem('linux-master-proto')) localStorage.setItem('linux-master-proto', JSON.stringify({ xp: 300, done: ['L0'], sound: false, avatarStyle: 'cyan' })); });
-  await page.goto('./prototype/');
+  await page.goto('./');
   await expect(page.locator('.node.current').first()).toBeVisible();
   expect(await page.evaluate(() => [S.xp, S.done, S.avatarStyle])).toEqual([300, ['L0'], 'cyan']);
   await page.locator('.node.current').first().click();
@@ -61,7 +61,7 @@ for (const module of ['avatar-options.js', 'game-progress.js', 'story-missions.j
 
 test('story dialog action remains visible above navigation on a small phone', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.locator('.node.current').first().click();
   const action = page.locator('#pop .btn.primary');
   await expect(action).toBeVisible();
@@ -74,7 +74,7 @@ test('story dialog action remains visible above navigation on a small phone', as
 });
 
 test('each mock exam can generate varied practice attempts from its tagged content', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.waitForFunction(() => window.courseReady);
   const exams = await page.evaluate(() => COURSE.filter(unit => unit.exam).map(unit => {
     const attempts = Array.from({ length: 4 }, () => buildExam(unit.exam.tag, unit.exam.count));
@@ -90,7 +90,7 @@ test('each mock exam can generate varied practice attempts from its tagged conte
 });
 
 test('player can choose a distinct character form without changing world characters or rank', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.setItem('linux-master-proto', JSON.stringify({ xp: 300, done: ['L0'], sound: false })); });
   await page.reload();
   const npc = await page.locator('.path-mascot img').first().getAttribute('src');
@@ -108,7 +108,7 @@ test('player can choose a distinct character form without changing world charact
 
 
 test('finishing the last unique lesson marks the unit mission once', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.waitForFunction(() => window.courseReady);
   await page.evaluate(() => {
     const unit = COURSE.find(u => u.unit === 1);
@@ -127,7 +127,7 @@ test('finishing the last unique lesson marks the unit mission once', async ({ pa
 });
 
 test('corrupt appearance timestamps cannot replace a valid selection during merge or restore', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const results = await page.evaluate(() => {
     const valid = { avatarStyle: 'cyan', avatarUpdatedAt: 10, avatarForm: 'scout', avatarFormUpdatedAt: 10 };
     const corrupt = { avatarStyle: 'invalid', avatarUpdatedAt: 999, avatarForm: 'invalid', avatarFormUpdatedAt: 999 };

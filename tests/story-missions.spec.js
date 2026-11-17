@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const path = require('path');
 
-const script = path.join(__dirname, '../prototype/story-missions.js');
+const script = path.join(__dirname, '../story-missions.js');
 
 async function setup(page) {
   await page.setContent('<main><div id="story"></div></main>');
