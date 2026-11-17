@@ -52,6 +52,7 @@ test('installed app shows a new deploy on the next open, and still works offline
   await page.waitForFunction(async name => JSON.stringify(await caches.keys()) === JSON.stringify([name]), `linux-master-v${V + 1}`, { timeout: 15000 });
   await page.reload();
   await expect(page.locator('meta[name=deploy]')).toHaveAttribute('content', '3');
+  await page.waitForFunction(() => window.learnKept, null, { timeout: 30000 });
 
   await context.setOffline(true);
   await page.reload();
