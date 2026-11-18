@@ -531,13 +531,23 @@ const COACH_ERRORS = [
   [/[Nn]ot a directory/, 'coachNotDir'], [/Permission denied/, 'coachPerm'], [/missing (file )?operand/, 'coachOperand'],
   [/File exists/, 'coachExists'], [/Directory not empty/, 'coachNotEmpty'], [/syntax error/, 'coachSyntax'],
 ];
-function coachNote(ex, sh, log, cmd, text, wasDone) {
+function coachNote(ex, sh, log, cmd, text, wasDone, unsupported) {
   let done = false; try { done = !!ex.goal(sh, log); } catch { done = false; }
   if (done) return { done, note: ex.ask ? t('coachAsk') : wasDone ? t('coachAlready') : text ? t('coachDone') : `${t('coachDone')} ${t('coachSilent')}` };
   const typo = typoIn([cmd], ex.solve);
   if (typo) return { done, note: t('coachTypo', typo.got) };
   const known = COACH_ERRORS.find(([re]) => re.test(text || ''));
-  return { done, note: known ? t(known[1]) : '' };
+  if (known) return { done, note: t(known[1]) };
+  // A command that ran and changed nothing the task checks: say whether it is a right step, the right command with
+  // something else wrong, or not what this task needs.
+  if (!unsupported) {
+    const names = new Set(ex.solve.flatMap(s => s.split(/\|\||&&|[|;]/).map(p => p.trim().split(/\s+/)[0])));
+    const name = cmd.split(/\s+/)[0];
+    const flat = s => s.trim().replace(/\s+/g, ' ');
+    if (ex.solve.some(s => flat(s) === flat(cmd))) return { done, note: t('coachStep') };
+    return { done, note: names.has(name) ? t('coachRightCmd', name) : t('coachNotYet') };
+  }
+  return { done, note: '' };
 }
 function setFoot(mode, title = '',{ label = '', sol = '', note = '', mark = null } = {}) {
   const foot = $('foot'); foot.className = `lesson-foot ${mode}`;
@@ -951,14 +961,14 @@ function mountTerminal(root, ex, sh, onRun = () => {}, shown = []) {
   function run() {
     const cmd = straightQuotes(input.value).trim(); input.value = ''; grow(); if (!cmd || L.answered) return;
     const row = el('div', 'term-line'); row.append(el('span', 'ps1', promptFor(sh.cwd)), el('span', 'typed', cmd)); out.append(row);
-    let text;
-    try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { const opt = err.message.match(/^option (\S+)$/)?.[1]; text = !(err instanceof ShellUnsupported) ? String(err.message) : opt ? t('unsupportedOpt', cmd.split(/\s+/)[0], opt) : missingCommand(err.message) ? `bash: ${missingCommand(err.message)}: command not found` : t('unsupported', cmd.split(/\s+/)[0]); }
+    let text, unsupported = false;
+    try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { const opt = err.message.match(/^option (\S+)$/)?.[1]; unsupported = err instanceof ShellUnsupported; text = !(err instanceof ShellUnsupported) ? String(err.message) : opt ? t('unsupportedOpt', cmd.split(/\s+/)[0], opt) : missingCommand(err.message) ? `bash: ${missingCommand(err.message)}: command not found` : t('unsupported', cmd.split(/\s+/)[0]); }
     if (text) out.append(el('pre', 'term-out', text));
     log.push({ cmd, out: text }); if (TERM_HISTORY.at(-1) !== cmd) TERM_HISTORY.push(cmd); back = TERM_HISTORY.length;
     ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
     restart.hidden = !ex.fx; requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
     L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal' && !ex.ask) setCan(true); onRun(log);
-    if (coach) { const said = coachNote(ex, sh, log, cmd, text, wasDone); wasDone = said.done; coach.replaceChildren(bidi(said.note)); coach.hidden = !said.note; }
+    if (coach) { const said = coachNote(ex, sh, log, cmd, text, wasDone, unsupported); wasDone = said.done; coach.replaceChildren(bidi(said.note)); coach.hidden = !said.note; }
   }
   // Tests only grade at the end, so the live coach speaks in lessons and practice.
   const coach = ex.type === 'terminal' && !L.opts.exam ? el('div', 'coach') : null; let wasDone = false;
