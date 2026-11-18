@@ -1033,6 +1033,29 @@ for (const file of ['parts/p1.js', 'course-ready.js']) test(`loading: a failed $
   await expect(page.locator('#lesson')).toBeVisible();
 });
 
+test('loading: the path shows before the simulator arrives, and a lesson opened early waits for it', async ({ page }) => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  await page.route('**/shell.js?*', async route => { await gate; await route.continue(); });
+  const navigation = page.goto('./');
+  try {
+    await expect(page.locator('.node.current')).toBeVisible({ timeout: 5000 });
+    expect(await page.evaluate(() => typeof Shell)).toBe('undefined');
+    await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+    await expect(page.locator('#lesson')).toBeVisible();
+    await expect(page.locator('#exBody')).toHaveText(await page.evaluate(() => t('lessonLoading')));
+  } finally { release(); await navigation; }
+  await expect(page.locator('#exBody')).toContainText('pwd');
+});
+
+test('loading: a failed simulator closes the lesson and says so', async ({ page }) => {
+  await page.route('**/shell.js?*', route => route.abort());
+  await page.goto('./');
+  await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+  await expect(page.locator('#toast')).toContainText(await page.evaluate(() => t('lessonFailed')));
+  await expect(page.locator('#lesson')).toBeHidden();
+});
+
 test('world characters match the first six learning topics without replacing the learner', async ({ page }) => {
   await page.goto('./');
   await expect(page.locator('.hero-face .character-hero')).toBeVisible();

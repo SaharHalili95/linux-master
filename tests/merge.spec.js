@@ -6,6 +6,15 @@ test('old Learn address opens the app at the root', async ({ page }) => {
   await expect(page.locator('#learn')).toBeVisible();
 });
 
+test('a redirect page falls back to a plain refresh only when scripts are off, so the query and hash are kept', () => {
+  const fs = require('fs'), path = require('path');
+  for (const page of ['index.html', 'legal.html']) {
+    const html = fs.readFileSync(path.join(__dirname, '..', 'prototype', page), 'utf8');
+    expect(html, page).toMatch(/<noscript><meta http-equiv="refresh"[^>]*><\/noscript>/);
+    expect(html.match(/http-equiv="refresh"/g), page).toHaveLength(1);
+  }
+});
+
 test('old legal page redirects', async ({ page }) => {
   await page.goto('./prototype/legal.html');
   await expect(page).toHaveURL(/:\d+\/legal\.html$/);

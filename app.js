@@ -368,11 +368,20 @@ function openChest(key) {
 
 // ---------- Lesson engine ----------
 let L = null;
+// The simulator loads after the first screen (shell.js is deferred, and its tag comes after this script), so its
+// load or error event is caught on the document, where the capture phase sees events that do not bubble.
+const shellLoad = typeof Shell === 'function' ? Promise.resolve() : new Promise((ok, fail) => {
+  for (const [type, done] of [['load', ok], ['error', fail]]) document.addEventListener(type, e => { if (/(^|\/)shell\.js\?/.test(e.target.getAttribute?.('src') || '')) done(); }, true);
+});
+shellLoad.catch(() => { /* reported when a lesson waits for it */ });
 function startLesson(key, exercises, opts = {}) {
   const queue = exercises.map((ex, i) => ({ ...ex, uid: key === 'practice' && ex.uid ? ex.uid : `${key}.${i}` }));
-  L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
+  const lesson = L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
   paintRegion(opts.exam?.skip?.part ?? unitOfKey(key)?.section);
-  $('lesson').hidden = false; document.body.classList.add('in-lesson'); next();
+  $('lesson').hidden = false; document.body.classList.add('in-lesson');
+  if (typeof Shell === 'function') return next();
+  $('exBody').textContent = t('lessonLoading');
+  shellLoad.then(() => { if (L === lesson) next(); }, () => { if (L === lesson) { closeOverlays(); toast(t('lessonFailed')); } });
 }
 function startBoss(unit, key) {
   if (unit.boss.exercises) return startLesson(key, withFixture(unit, unit.boss.exercises), { boss: true });
