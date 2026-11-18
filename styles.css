@@ -173,6 +173,9 @@ button { cursor: pointer; }
 .term-input textarea::placeholder { color: #ffffff55; text-align: left; font-family: var(--font); font-weight: 500; }
 .hint-link { border: 0; background: none; color: var(--blue-ink); font-weight: 800; padding: 4px 0; }
 .hint { color: var(--muted); border: 2px dashed var(--line); border-radius: 12px; padding: 10px 12px; }
+.coach { margin: 0 0 12px; padding: 8px 12px; border-inline-start: 3px solid var(--blue); background: var(--blue-soft); border-radius: 8px; color: var(--ink); font-size: 15px; line-height: 1.5; }
+.coach[hidden] { display: none; }
+.lesson.typing .coach { order: -1; flex: none; margin: 0 0 8px; }
 
 .teach-card { display: grid; gap: 14px; }
 .teach-head { display: flex; align-items: flex-start; gap: 12px; }
@@ -427,6 +430,7 @@ input, textarea { caret-color: var(--accent); }
 .node::after { inset: 3px; background: var(--n-fill); }
 .node:active { transform: scale(0.95); }
 .node.done, .node.boss.done, .node.exam.done { color: #0a0d1a; --n-edge: var(--r-accent); --n-fill: var(--r-accent); }
+.node.exam.open { color: #fff; --n-edge: var(--r-accent); --n-fill: var(--r-panel); }
 .node.locked, .node.boss.locked, .node.exam.locked { color: #d6e0f0; font-size: 24px; --n-edge: #ffffff66; --n-fill: var(--r-panel); }
 .node.boss, .node.exam { font: 700 24px var(--mono); }
 .node.current:not(.chest) { outline: 0; }

@@ -3,7 +3,7 @@
 [![Tests](https://github.com/SaharHalili95/linux-master/actions/workflows/tests.yml/badge.svg)](https://github.com/SaharHalili95/linux-master/actions/workflows/tests.yml)
 [![Live site](https://img.shields.io/badge/live-saharhalili95.github.io%2Flinux--master-b4f36b)](https://saharhalili95.github.io/linux-master/)
 
-A Linux course that runs entirely in the browser, in English and Hebrew. It has two modes: **Learn**, a phone-first course from your first command to certification, and **Trivia**, the original command trainer with spaced repetition and 12 terminal missions shaped like the first levels of OverTheWire Bandit. It is an installable, offline-capable PWA with no server, no account and no build step.
+A Linux course that runs entirely in the browser, in English and Hebrew. It has two modes: **Learn**, a phone-first course from your first command to certification prep, and **Trivia**, the original command trainer with spaced repetition and 12 terminal missions shaped like the first levels of OverTheWire Bandit. It is an installable, offline-capable PWA with no server, no account and no build step.
 
 **Live:** https://saharhalili95.github.io/linux-master/
 

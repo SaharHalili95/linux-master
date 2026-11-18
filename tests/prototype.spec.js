@@ -319,6 +319,65 @@ test('a scenario accepts any listed command, however it is spaced, and rejects o
   await expect(page.locator('#fbDetail')).toContainText('systemctl status nginx');
 });
 
+test('a typed command that means the same is accepted: long options, --opt=value, flag order, merged flags, sudo, quotes', async ({ page }) => {
+  await page.goto('./');
+  await page.waitForFunction(() => window.courseReady);
+  const verdicts = await page.evaluate(() => {
+    const scenarios = COURSE.flatMap(u => [...(u.lessons || []).flatMap(l => l.exercises), ...(u.boss?.exercises || [])]).filter(e => e.type === 'scenario');
+    const judge = (answer, typed) => { const ex = scenarios.find(e => e.accept.includes(answer)); return CHECK.scenario({ ...ex, fx: ex.fx || unitFixture }, typed).ok; };
+    return {
+      right: [['journalctl -b -1', 'journalctl --boot=-1'], ['journalctl -b -1', 'journalctl --boot -1'], ['chage -M 60 -W 10 dana', 'chage --maxdays 60 --warndays 10 dana'], ['chage -M 60 -W 10 dana', 'sudo chage -W10 -M60 dana'], ['firewall-cmd --add-service=cockpit', 'firewall-cmd --add-service cockpit'], ['logger -t deploy "deploy done"', "logger  -t deploy  'deploy done'"]].map(([a, typed]) => [typed, judge(a, typed)]),
+      wrong: [['journalctl -b -1', 'journalctl -b 1'], ['journalctl -b -1', 'journalctl -b'], ['chage -M 60 -W 10 dana', 'chage -M 10 -W 60 dana'], ['firewall-cmd --add-service=cockpit', 'firewall-cmd --add-service=http']].map(([a, typed]) => [typed, judge(a, typed)]),
+      // Every listed answer still passes, and a command that does something else never does.
+      listed: scenarios.flatMap(ex => ex.accept.filter(a => !CHECK.scenario({ ...ex, fx: ex.fx || unitFixture }, a).ok)),
+      loose: scenarios.filter(ex => ['ls', 'echo hi', 'true', 'pwd'].some(c => !ex.accept.some(a => a.trim() === c) && CHECK.scenario({ ...ex, fx: ex.fx || unitFixture }, c).ok)).map(ex => ex.accept[0]),
+    };
+  });
+  for (const [typed, ok] of verdicts.right) expect(ok, typed).toBe(true);
+  for (const [typed, ok] of verdicts.wrong) expect(ok, typed).toBe(false);
+  expect(verdicts.listed).toEqual([]);
+  expect(verdicts.loose).toEqual([]);
+});
+
+test('a mistake stays in practice after the lesson retries it, leaves only when practice gets it right, and light practice adds none', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.evaluate(() => { const u = COURSE.find(x => x.unit === 1); startLesson('L0', withFixture(u, u.lessons[0].exercises)); onFootButton(); });
+  expect(await page.evaluate(() => L.ex.uid)).toBe('L0.1');
+  await page.evaluate(() => { answer(false, 'pwd'); L.ex = { ...L.ex, retry: true }; answer(true, 'pwd'); });
+  expect(await page.evaluate(() => S.mistakes)).toEqual(['L0.1']);
+  await page.evaluate(() => closeOverlays());
+  await page.click('[data-tab="practice"]');
+  await expect(page.locator('#mistakesCount')).toContainText('1');
+  await page.click('#practiceMistakes');
+  expect(await page.evaluate(() => L.ex.uid)).toBe('L0.1');
+  await page.evaluate(() => { answer(true, 'pwd'); });
+  expect(await page.evaluate(() => S.mistakes)).toEqual([]);
+  await page.evaluate(async () => { closeOverlays(); await loadTrivia(); startLesson('trivia', triviaExercises(1), { practice: true }); answer(false, 'x'); });
+  expect(await page.evaluate(() => S.mistakes)).toEqual([]);
+});
+
+test('every mock exam can be opened from the start, and the hands-on exams say the real one is practical', async ({ page }) => {
+  await page.goto('./');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.waitForFunction(() => window.courseReady);
+  await expect(page.locator('.node.exam.open')).toHaveCount(6);
+  const notes = [];
+  for (const i of [0, 1, 2]) {
+    await page.locator('.node.exam').nth(i).click();
+    await expect(page.locator('#pop .btn.primary')).toBeVisible();
+    notes.push(await page.locator('#pop .pop-lead').count());
+    await page.evaluate(() => closePop());
+  }
+  expect(notes, 'LPIC-1 has no note; RHCSA and LFCS do').toEqual([0, 1, 1]);
+  await page.locator('.node.exam').first().click();
+  await page.locator('#pop .btn.primary').click();
+  await expect(page.locator('#exTag')).toContainText('1');
+});
+
 // One test per part, each starting where the earlier parts end, so CI can play the parts side by side.
 for (let part = 1; part <= 11; part++) test(`part ${part} can be played to the end, unit after unit @content @part${part}`, async ({ page }) => {
   test.setTimeout(600_000);
@@ -1241,6 +1300,37 @@ test('a near miss in the terminal names the word that differs and marks it in th
     typoIn(['ls -la /etc'], ['grep -E "GET /[a-z]+\\.html" access.log']),
     typoIn(['cd docs', 'up'], ['cd docs', 'up']),
   ])).toEqual([{ got: '/[a-z]+.html', want: '/[a-z]+\\.html', line: 0, at: [13, 26] }, null, null]);
+});
+
+test('the live coach says after each command what happened, without naming the right command', async ({ page }) => {
+  await freshCourse(page);
+  await page.evaluate(() => { const ex = withFixture(UNIT_3, UNIT_3.boss.exercises).find(e => e.type === 'terminal' && e.solve[0] === 'rm photos/*.jpg'); startLesson('x', [ex]); });
+  const input = page.locator('.term.live textarea'), coach = page.locator('.coach');
+  const run = async cmd => { await input.fill(cmd); await input.press('Enter'); };
+  await expect(coach).toBeHidden();
+
+  await run('cat beach.png');
+  await expect(coach).toContainText('אין קובץ או תיקייה בשם הזה');
+  await run('rm foto/*.jpg');
+  await expect(coach).toContainText('foto');
+  await run('rn photos/*.jpg');
+  await expect(coach).toContainText('rn');
+  await expect(coach).not.toContainText('rm');
+  await run('rm photos//*.jpg');
+  await expect(coach).toHaveText(/המשימה בוצעה.*לא מדפיסה כלום/);
+  await run('rm photos/*.jpg');
+  await expect(page.locator('.term-out').last()).toContainText('No such file or directory');
+  await expect(coach).toContainText('המשימה כבר בוצעה בפקודה קודמת');
+
+  await page.locator('.term-key.restart').click();
+  await expect(coach).toBeHidden();
+  await run('ls');
+  await expect(coach).toBeHidden();
+
+  await page.evaluate(() => startSkip(2));
+  await page.evaluate(() => { const ex = withFixture(UNIT_3, UNIT_3.boss.exercises).find(e => e.type === 'terminal' && e.solve[0] === 'rm photos/*.jpg'); const body = $('exBody'); body.replaceChildren(); RENDER.terminal(body, ex); return !!L.opts.exam; }).then(exam => expect(exam).toBe(true));
+  await run('rm photos//*.jpg');
+  await expect(page.locator('.coach')).toHaveCount(0);
 });
 
 test('after a test the learner sees each question they got wrong, what they answered and the right answer', async ({ page }) => {
