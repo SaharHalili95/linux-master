@@ -1334,6 +1334,43 @@ test('the live coach says after each command what happened, without naming the r
   await expect(page.locator('.coach')).toHaveCount(0);
 });
 
+test('a wrong typed command is explained: another command and what it does, or the part that is missing', async ({ page }) => {
+  await freshCourse(page);
+  const flat = s => s.replace(/[\u200e\u200f]/g, '');
+  const start = (accept = ['head -n 3 notes.txt']) => page.evaluate(accept => {
+    startLesson('x', [{ uid: 'coach-scenario', type: 'scenario', prompt: 'x', accept, rec: true, fx: homeFixture }]); return accept[0];
+  }, accept);
+  const answerWith = async v => { await page.locator('#scenarioCmd').fill(v); await page.locator('#checkBtn').click(); };
+
+  const want = await start(), [, , n, file] = want.split(' ');
+  await answerWith(`cat ${file}`);
+  const note = flat(await page.locator('.fb-note').textContent());
+  expect(note).toContain('כתבתם את הפקודה cat, וכאן צריך את head.');
+  expect(note).toContain('מה cat עושה: היא מדפיסה את כל התוכן של קובץ למסך.');
+  await expect(page.locator('.fb-sol mark.fb-diff')).toHaveText('head');
+
+  await start();
+  await answerWith(`head ${file}`);
+  expect(flat(await page.locator('.fb-note').textContent())).toBe(`הפקודה head נכונה. חסר: -n ${n}.`);
+  await expect(page.locator('.fb-sol mark.fb-diff')).toHaveText(`-n ${n}`);
+
+  await start();
+  await answerWith(`hed -n ${n} ${file}`);
+  expect(flat(await page.locator('.fb-note').textContent())).toContain('כמעט! כתבתם hed');
+
+  await start([':wq']);
+  await answerWith('save');
+  await expect(page.locator('.fb-note')).toHaveCount(0);
+  await expect(page.locator('.fb-sol pre')).toHaveText(':wq');
+
+  await page.evaluate(() => startLesson('x', [withFixture(UNIT_3, UNIT_3.boss.exercises).find(e => e.solve[0] === 'rm photos/*.jpg')]));
+  const input = page.locator('.term.live textarea'); await input.fill('ls photos'); await input.press('Enter');
+  await page.locator('#checkBtn').click();
+  expect(flat(await page.locator('.fb-note').textContent())).toContain('כתבתם את הפקודה ls, וכאן צריך את rm.');
+
+  expect(await page.evaluate(() => explainMiss(['blah x'], ['head -n 3 x']).note.replace(/[\u200e]/g, ''))).toBe('אין בלינוקס פקודה בשם blah. בדקו איך כותבים אותה.');
+});
+
 test('after a test the learner sees each question they got wrong, what they answered and the right answer', async ({ page }) => {
   await freshCourse(page);
   await page.evaluate(() => startSkip(2));

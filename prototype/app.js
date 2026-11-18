@@ -549,6 +549,44 @@ function coachNote(ex, sh, log, cmd, text, wasDone, unsupported) {
   }
   return { done, note: '' };
 }
+// What a teach card says a command does, to explain a command the learner typed instead of the right one.
+function cmdInfo(name) {
+  const cards = availableCourse().flatMap(u => (u.lessons || []).flatMap(ls => ls.exercises)).filter(ex => ex.type === 'teach' && String(ex.cmd).split(/\s+/)[0] === name);
+  const bare = cards.filter(c => String(c.cmd).trim() === name);
+  const card = bare.find(c => !c.known) || bare[0] || cards.find(c => !c.known) || cards[0];
+  return card ? tr(card.text).replace(/^(כבר השתמשתם|You already used)[^.]*\.\s*/, '') : '';
+}
+// Editor keys such as dd, yy or :wq have teach cards too, so a taught name counts only when it looks like a program.
+const isCommand = name => REAL_COMMANDS.has(name) || (typeof COMMANDS === 'object' && Object.hasOwn(COMMANDS, name)) || (/^[a-z][\w.+-]{2,}$/.test(name) && !!cmdInfo(name));
+// After a wrong typed answer: which right answer it was closest to, and in words what differs, word by word.
+function explainMiss(typed, answers) {
+  typed = typed.map(c => straightQuotes(c).trim()).filter(Boolean);
+  if (!typed.length) return null;
+  let best;
+  for (const [line, want] of answers.entries()) for (const got of typed) {
+    const d = editDistance(got, want); if (!best || d < best.d) best = { d, got, want, line };
+  }
+  const typo = typoIn([best.got], [best.want]);
+  if (typo) return { line: best.line, mark: { ...typo, line: best.line }, note: t('typo', typo.got, typo.want) };
+  const words = s => s.split(/\s+/), g = words(best.got), w = words(best.want);
+  // Keys typed inside an editor, like :wq or dd, are no shell command, so only a near typo is named for them.
+  if (!isCommand(w[0])) return null;
+  if (g[0] !== w[0]) {
+    if (!isCommand(g[0])) return { line: best.line, note: t('missNoCmd', g[0]) };
+    const info = cmdInfo(g[0]);
+    return { line: best.line, mark: { line: best.line, at: [0, w[0].length] }, note: [t('missOtherCmd', g[0], w[0]), info && t('missDoes', g[0], info)].filter(Boolean).join('\n') };
+  }
+  const missing = w.filter(x => !g.includes(x)), extra = g.filter(x => !w.includes(x));
+  let at = null;
+  if (missing.length) {
+    const i = w.indexOf(missing[0]); let j = i; while (j + 1 < w.length && missing.includes(w[j + 1])) j++;
+    const from = w.slice(0, i).join(' ').length + (i ? 1 : 0); at = [from, from + w.slice(i, j + 1).join(' ').length];
+  }
+  const parts = missing.length === 1 && extra.length === 1 ? [t('missInstead', extra[0], missing[0])]
+    : [missing.length && t('missLacks', missing.join(' ')), extra.length && t('missExtra', extra.join(' '))].filter(Boolean);
+  if (!parts.length) parts.push(t('missOrder'));
+  return { line: best.line, mark: at && { line: best.line, at }, note: [t('missSameCmd', g[0]), ...parts].join(' ') };
+}
 function setFoot(mode, title = '',{ label = '', sol = '', note = '', mark = null } = {}) {
   const foot = $('foot'); foot.className = `lesson-foot ${mode}`;
   $('fbTitle').textContent = title; $('fbBox').hidden = mode === 'idle';
@@ -625,8 +663,10 @@ function answer(ok, solution = '', why = '') {
     L.mistakes++; L.combo = 0; SFX.bad(); if (!L.opts.practice && !L.opts.replay) loseLife();
     L.queue.push({ ...L.ex, retry: true });
     if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss && L.key !== 'trivia') S.mistakes.push(L.ex.uid);
-    const typo = L.ex.type === 'terminal' && L.term ? typoIn(L.term.log.map(l => l.cmd.trim()), L.ex.solve) : null;
-    setFoot('bad', t('correctAnswer'), typo ? { sol: solution, mark: typo, note: t('typo', typo.got, typo.want) } : ['terminal', 'scenario'].includes(L.ex.type) ? { sol: solution } :L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
+    const miss = L.ex.type === 'terminal' && L.term ? explainMiss(L.term.log.map(l => l.cmd), L.ex.solve) : L.ex.type === 'scenario' ? explainMiss([L.value || ''], L.ex.accept) : null;
+    // A typed answer is shown as the right answer it came closest to, so the marked word lines up with what was typed.
+    const sol = miss && L.ex.type === 'scenario' ? L.ex.accept[miss.line] : solution;
+    setFoot('bad', t('correctAnswer'), miss ? { sol, mark: miss.mark || null, note: miss.note } : ['terminal', 'scenario'].includes(L.ex.type) ? { sol: solution } :L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
     $('lessonMain').classList.remove('shake'); void $('lessonMain').offsetWidth; $('lessonMain').classList.add('shake');
   }
   // A mistake leaves the list only when practice gets it right the first time, not when it is retried a moment later.
