@@ -1348,7 +1348,10 @@ test('the live coach says after each command what happened, without naming the r
   await page.locator('.term-key.restart').click();
   await expect(coach).toBeHidden();
   await run('ls');
-  await expect(coach).toBeHidden();
+  await expect(coach).toContainText('המשימה עוד לא בוצעה. קראו שוב');
+  await run('rm notes.txt');
+  await expect(coach).toContainText('זו הפקודה הנכונה');
+  await expect(coach).not.toContainText('jpg');
 
   await page.evaluate(() => startSkip(2));
   await page.evaluate(() => { const ex = withFixture(UNIT_3, UNIT_3.boss.exercises).find(e => e.type === 'terminal' && e.solve[0] === 'rm photos/*.jpg'); const body = $('exBody'); body.replaceChildren(); RENDER.terminal(body, ex); return !!L.opts.exam; }).then(exam => expect(exam).toBe(true));
