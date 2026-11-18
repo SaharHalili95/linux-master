@@ -5,7 +5,7 @@ const path = require('path');
 
 function load() {
   const context = { window: {} };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../prototype/game-progress.js'), 'utf8'), context);
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../game-progress.js'), 'utf8'), context);
   return context.window.GameProgress;
 }
 const course = [

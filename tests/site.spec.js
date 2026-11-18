@@ -38,14 +38,12 @@ test.describe('content @content', () => {
     await page.close();
   });
 
-  test('header version matches the service worker cache version', async () => {
+  test('header version matches the asset versions', async () => {
     const fs = require('fs'), path = require('path');
-    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-    const sw = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'classic', 'index.html'), 'utf8');
     const version = html.match(/class="version"[^>]*>v(\d+)</)[1];
-    expect(sw.match(/linux-master-v(\d+)/)[1]).toBe(version);
-    const assetVersions = [...html.matchAll(/(?:src|href)="[^"]+\?v=(\d+)"/g), ...sw.matchAll(/\?v=(\d+)'/g)].map(m => m[1]);
-    expect(assetVersions.length).toBeGreaterThanOrEqual(8);
+    const assetVersions = [...html.matchAll(/(?:src|href)="[^"]+\?v=(\d+)"/g)].map(m => m[1]);
+    expect(assetVersions.length).toBeGreaterThanOrEqual(6);
     expect(new Set(assetVersions)).toEqual(new Set([version]));
   });
 
@@ -421,10 +419,11 @@ test.describe('app', () => {
     await fresh(page);
     const href = await page.locator('link[rel="manifest"]').getAttribute('href');
     expect(href).toBeTruthy();
-    const m = await (await request.get(new URL(href, page.url()).href)).json();
+    const manifestUrl = new URL(href, page.url()).href;
+    const m = await (await request.get(manifestUrl)).json();
     expect(m.lang).toBe('he');
     for (const icon of m.icons) {
-      const r = await request.get(new URL(icon.src, page.url()).href);
+      const r = await request.get(new URL(icon.src, manifestUrl).href);
       expect(r.status(), icon.src).toBe(200);
       const buf = await r.body();
       const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20);

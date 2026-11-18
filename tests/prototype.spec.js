@@ -45,7 +45,7 @@ for (const lang of ['he', 'en']) test(`prototype: play the whole unit, chest and
   // WebKit reports a first-visit offline fetch that a navigation cancelled; that fetch is retried on the next visit.
   page.on('pageerror', e => { if (!String(e).includes('Fetch API cannot load')) errors.push(String(e)); });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(l => { localStorage.clear(); localStorage.setItem('lang', l); }, lang);
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('dir', lang === 'he' ? 'rtl' : 'ltr');
@@ -77,7 +77,7 @@ for (const lang of ['he', 'en']) test(`prototype: play the whole unit, chest and
 
 test('prototype: a wrong answer turns the bar red, comes back at the end, and lands in practice', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.locator('.node.current').click();
@@ -98,7 +98,7 @@ const AxeBuilder = require('@axe-core/playwright').default;
 for (const scheme of ['light', 'dark']) {
   test(`prototype: accessibility of path, lesson, feedback and end screens (${scheme})`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: scheme });
-    await page.goto('./prototype/');
+    await page.goto('./');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     const axe = async name => {
@@ -122,13 +122,13 @@ for (const scheme of ['light', 'dark']) {
 
 test('the app opens in Learn mode with no Trivia switch, and the old Trivia address still works', async ({ page }) => {
   await page.goto('./');
-  await expect(page).toHaveURL(/\/prototype\/$/);
+  await expect(page).toHaveURL(/:\d+\/$/);
   await expect(page.locator('.node.current')).toBeVisible();
   await expect(page.locator('.mode-switch')).toHaveCount(0);
   await page.goto('./?mode=trivia');
   await expect(page.locator('.level-card')).toHaveCount(8);
   await page.goto('./');
-  await expect(page.locator('.level-card')).toHaveCount(8);
+  await expect(page.locator('.node.current')).toBeVisible();
 });
 
 test('the old Trivia page links to Learn mode, with no beta card left', async ({ page }) => {
@@ -139,26 +139,27 @@ test('the old Trivia page links to Learn mode, with no beta card left', async ({
   await page.click('#langBtn');
   await expect(page.locator('.mode-switch .mode.on')).toHaveText('🎯 Trivia');
   await page.click('#modeLearn');
-  await expect(page).toHaveURL(/\/prototype\/$/);
+  await expect(page).toHaveURL(/:\d+\/$/);
   await expect(page.locator('.node.current')).toBeVisible();
 });
 
-test('visiting the beta does not replace the main page in the offline cache', async ({ page, context, browserName }) => {
+test('visiting classic Trivia does not replace the main page in the offline cache', async ({ page, context, browserName }) => {
   test.skip(browserName === 'webkit', 'Playwright WebKit does not support service workers');
-  await page.goto('./?mode=trivia');
-  await page.waitForFunction(async () => (await navigator.serviceWorker.ready).active?.state === 'activated');
-  await page.reload();
-  await page.goto('./prototype/');
-  await expect(page.locator('.node.current')).toBeVisible();
+  await page.goto('./');
+  await page.waitForFunction(() => window.learnKept, null, { timeout: 30000 });
+  await page.goto('./classic/');
+  await expect(page.locator('.level-card')).toHaveCount(8);
   await context.setOffline(true);
   await page.goto('./');
+  await expect(page.locator('.node.current')).toBeVisible();
+  await page.goto('./classic/');
   await expect(page.locator('.level-card')).toHaveCount(8);
   await context.setOffline(false);
 });
 
 test('Learn mode works offline after a first visit, fonts and every unit included', async ({ page, context, browserName }) => {
   test.skip(browserName === 'webkit', 'Playwright WebKit does not support service workers');
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.waitForFunction(() => navigator.serviceWorker.controller);
   await page.waitForFunction(() => window.learnKept);
   expect(await page.evaluate(() => localStorage.getItem('learnOffline')), 'one visit is enough').toBe('1');
@@ -171,7 +172,7 @@ test('Learn mode works offline after a first visit, fonts and every unit include
   const faces = await page.evaluate(async () => [...await document.fonts.load('700 16px Rubik', 'שלום'), ...await document.fonts.load('16px "JetBrains Mono"', 'ls')].map(f => `${f.family} ${f.status}`));
   expect(faces).toEqual(expect.arrayContaining(['Rubik loaded', 'JetBrains Mono loaded']));
   await page.goto('./');
-  await expect(page).toHaveURL(/\/prototype\/$/);
+  await expect(page).toHaveURL(/:\d+\/$/);
   await page.click('.node.current'); await page.locator('#pop .btn').click();
   await expect(page.locator('#lesson')).toBeVisible();
   await expect(page.locator('#exBody')).not.toBeEmpty();
@@ -179,7 +180,7 @@ test('Learn mode works offline after a first visit, fonts and every unit include
 });
 
 test('the path never scrolls sideways, even with a popover open on the outermost node', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ done: ['L0', 'L1'] })); });
   await page.reload();
   const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -193,7 +194,7 @@ test('the path never scrolls sideways, even with a popover open on the outermost
 });
 
 test('the language button switches Learn mode and the choice is remembered', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await expect(page.locator('.tabbar [data-tab="learn"]')).toContainText('לימוד');
@@ -207,7 +208,7 @@ test('the language button switches Learn mode and the choice is remembered', asy
 });
 
 for (const lang of ['he', 'en']) test(`the top bar fits a small phone, with streak and gems visible (${lang})`, async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(l => { localStorage.clear(); localStorage.setItem('lang', l); }, lang);
   await page.reload();
   const width = page.viewportSize().width;
@@ -219,7 +220,7 @@ for (const lang of ['he', 'en']) test(`the top bar fits a small phone, with stre
 });
 
 for (const lang of ['he', 'en']) test(`match tiles form an even grid on a phone (${lang})`, async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(l => { localStorage.clear(); localStorage.setItem('lang', l); }, lang);
   await page.reload();
   const boxes = await page.evaluate(() => COURSE[0].lessons.flatMap(l => l.exercises).filter(e => e.type === 'match').map(ex => {
@@ -236,7 +237,7 @@ for (const lang of ['he', 'en']) test(`match tiles form an even grid on a phone 
 });
 
 test('"what will it print?" shows the files the command reads, and nothing for made-up files', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const seen = await page.evaluate(() => COURSE.filter(u => !u.locked && !u.exam).flatMap(unit => withFixture(unit, unit.lessons.flatMap(l => l.exercises))).filter(ex => ex.type === 'output').map(ex => {
     startLesson('peek', [ex]);
     return { cmd: ex.cmd, files: [...document.querySelectorAll('.file-peek-h')].map(h => h.textContent) };
@@ -251,7 +252,7 @@ test('"what will it print?" shows the files the command reads, and nothing for m
 
 test('every exercise fits the screen width, with no sideways scrolling', async ({ page }) => {
   test.setTimeout(360_000);
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   const wide = await page.evaluate(() => COURSE.filter(u => !u.locked && !u.exam).flatMap(unit => withFixture(unit, [...unit.lessons.flatMap(l => l.exercises), ...(unit.boss.exercises || [])])).flatMap(ex => {
@@ -264,7 +265,7 @@ test('every exercise fits the screen width, with no sideways scrolling', async (
 });
 
 test('the start bubble never covers the finished lesson above it', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ done: ['L0'] })); });
   await page.reload();
   const tip = await page.locator('.start-tip').boundingBox();
@@ -273,7 +274,7 @@ test('the start bubble never covers the finished lesson above it', async ({ page
 });
 
 test('saved progress survives new units, and the path opens scrolled to the current lesson', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const keys = await page.evaluate(() => { const open = COURSE.filter(u => !u.locked); return open.slice(0, -1).flatMap(unitNodes).map(n => n.key); });
   await page.evaluate(done => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ done })); }, keys);
   await page.reload();
@@ -283,7 +284,7 @@ test('saved progress survives new units, and the path opens scrolled to the curr
 });
 
 test('every part gets one header, in order, and units show their exams', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const parts = await page.evaluate(() => [...new Set(COURSE.map(u => u.section))]);
   await expect(page.locator('.part-header')).toHaveCount(parts.length);
   const order = await page.evaluate(() => COURSE.map(u => [u.section, u.unit]));
@@ -293,7 +294,7 @@ test('every part gets one header, in order, and units show their exams', async (
 });
 
 test('a recorded output card shows the command, where it was recorded, and the real output as the answer', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => startLesson('rec-test', [{ type: 'output', prompt: WHAT, rec: 'ubuntu-uname-m', wrongText: ['arm64', 'i386'] }]));
   await expect(page.locator('.rec-label')).toHaveCount(0);
   await expect(page.locator('.term')).toContainText('uname -m');
@@ -303,7 +304,7 @@ test('a recorded output card shows the command, where it was recorded, and the r
 });
 
 test('a scenario accepts any listed command, however it is spaced, and rejects others', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const ex = { type: 'scenario', prompt: { he: 'בדקו את nginx', en: 'Check nginx' }, rec: 'ubuntu-uname', accept: ['systemctl status nginx', 'systemctl status nginx.service'] };
   await page.evaluate(ex => startLesson('scenario-test', [ex]), ex);
   await expect(page.locator('.rec-label')).toHaveCount(0);
@@ -319,7 +320,7 @@ test('a scenario accepts any listed command, however it is spaced, and rejects o
 });
 
 test('a typed command that means the same is accepted: long options, --opt=value, flag order, merged flags, sudo, quotes', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.waitForFunction(() => window.courseReady);
   const verdicts = await page.evaluate(() => {
     const scenarios = COURSE.flatMap(u => [...(u.lessons || []).flatMap(l => l.exercises), ...(u.boss?.exercises || [])]).filter(e => e.type === 'scenario');
@@ -340,7 +341,7 @@ test('a typed command that means the same is accepted: long options, --opt=value
 
 test('a mistake stays in practice after the lesson retries it, leaves only when practice gets it right, and light practice adds none', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.evaluate(() => { const u = COURSE.find(x => x.unit === 1); startLesson('L0', withFixture(u, u.lessons[0].exercises)); onFootButton(); });
@@ -359,7 +360,7 @@ test('a mistake stays in practice after the lesson retries it, leaves only when 
 });
 
 test('every mock exam can be opened from the start, and the hands-on exams say the real one is practical', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.waitForFunction(() => window.courseReady);
@@ -384,7 +385,7 @@ for (let part = 1; part <= 11; part++) test(`part ${part} can be played to the e
   // WebKit reports a first-visit offline fetch that a navigation cancelled; that fetch is retried on the next visit.
   page.on('pageerror', e => { if (!String(e).includes('Fetch API cannot load')) errors.push(String(e)); });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('./prototype/');
+  await page.goto('./');
   const [before, nodes] = await page.evaluate(p => { const open = COURSE.filter(u => !u.locked); return [open.filter(u => u.section < p).flatMap(unitNodes).map(n => n.key), open.filter(u => u.section === p).flatMap(unitNodes).length]; }, part);
   test.skip(!nodes, `part ${part} has no units yet`);
   await page.evaluate(done => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, done })); }, before);
@@ -407,9 +408,9 @@ for (let part = 1; part <= 11; part++) test(`part ${part} can be played to the e
 test('every exercise in every unit is answerable and fully translated @content', () => {
   const vm = require('vm');
   const root = path.join(__dirname, '..');
-  const parts = fs.readdirSync(path.join(root, 'prototype/parts')).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1))).map(f => `prototype/parts/${f}`);
-  const recs = fs.readdirSync(path.join(root, 'prototype/recorded')).sort().map(f => `prototype/recorded/${f}`);
-  const src = ['shell.js', 'prototype/i18n.js', 'prototype/units.js', 'prototype/lessons.js', 'prototype/recorded.js', ...recs, ...parts].map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
+  const parts = fs.readdirSync(path.join(root, 'parts')).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1))).map(f => `parts/${f}`);
+  const recs = fs.readdirSync(path.join(root, 'recorded')).sort().map(f => `recorded/${f}`);
+  const src = ['shell.js', 'i18n.js', 'units.js', 'lessons.js', 'recorded.js', ...recs, ...parts].map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
   const ctx = vm.createContext({ localStorage: { getItem: () => null } });
   vm.runInContext(`${src}\nthis.out = { COURSE, Shell, RECORDED };`, ctx);
   const { COURSE, Shell, RECORDED } = ctx.out;
@@ -497,7 +498,7 @@ test('corrupted saved progress does not break Learn mode', async ({ page }) => {
   const errors = [];
   page.on('pageerror', e => { if (!String(e).includes('Fetch API cannot load')) errors.push(String(e)); });
   for (const bad of ['{not json', 'null', '"text"', JSON.stringify({ done: 'L0', days: 5, mistakes: [1, null], quests: null, xp: 'lots', gems: -3, streak: {} })]) {
-    await page.goto('./prototype/');
+    await page.goto('./');
     await page.evaluate(v => { localStorage.clear(); localStorage.setItem('linux-master-proto', v); }, bad);
     await page.reload();
     await expect(page.locator('.node.current')).toBeVisible();
@@ -528,7 +529,7 @@ test('every official exam objective maps to a real unit, and every unit teaches 
 
 test('each certification track keeps exactly the units its official objectives map to, plus its mock exam', async ({ page }) => {
   const root = path.join(__dirname, '..');
-  await page.goto('./prototype/');
+  await page.goto('./');
   const tags = await page.evaluate(() => Object.fromEntries(COURSE.map(u => [u.unit, u.exams || []])));
   for (const [tag, file] of [['L', 'lpic1.json'], ['R', 'rhcsa.json'], ['F', 'lfcs.json'], ['E', 'linux-essentials.json'], ['S', 'suse-sca.json'], ['C', 'linux-plus.json']])
     for (const o of JSON.parse(fs.readFileSync(path.join(root, 'materials/objectives', file), 'utf8')))
@@ -539,7 +540,7 @@ test('each certification track keeps exactly the units its official objectives m
 });
 
 test('choosing a certification track hides the other units and keeps progress', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, done: ['L0', 'L1', 'c1', 'L2', 'L3', 'boss'] })); });
   await page.reload();
   const kickers = () => page.locator('.unit-kicker').allInnerTexts().then(k => k.map(x => Number(x.match(/\d+$/)[0])));
@@ -569,7 +570,7 @@ test('choosing a certification track hides the other units and keeps progress', 
 });
 
 test('a mock exam draws its questions only from tagged units, with no teach cards or live terminals', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const r = await page.evaluate(() => { const qs = buildExam('L', 60); const tagged = new Set(COURSE.filter(u => u.exams?.some(e => e.startsWith('L'))).map(u => tr(u.title))); return { n: qs.length, types: [...new Set(qs.map(q => q.type))], foreign: qs.filter(q => !tagged.has(tr(q.topic))).length }; });
   expect(r.n).toBe(60);
   expect(r.types).not.toContain('teach');
@@ -578,7 +579,7 @@ test('a mock exam draws its questions only from tagged units, with no teach card
 });
 
 test('quitting a mock exam halfway leaves progress and mistakes untouched', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
   await page.reload();
   await page.evaluate(() => startExam(COURSE.find(u => u.unit === 79), 'u79-exam', 5));
@@ -591,7 +592,7 @@ test('quitting a mock exam halfway leaves progress and mistakes untouched', asyn
 });
 
 test('a mock exam reveals nothing until the end, then shows the score and what to review', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
   await page.reload();
   // Matching exercises check themselves as you pair them, so this test uses questions with a check button.
@@ -608,7 +609,7 @@ test('a mock exam reveals nothing until the end, then shows the score and what t
 });
 
 test('the owner can fix a question\'s spacing only, see it at once, send it to be applied, and keep notes as reports', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
   await page.reload();
   await page.evaluate(() => { window.open = u => { window.opened = u; }; const ex = UNIT_5.lessons[0].exercises.find(e => e.type === 'choice'); startLesson('u5-L0', [{ ...ex, fx: homeFixture }]); });
@@ -640,7 +641,7 @@ test('the owner can fix a question\'s spacing only, see it at once, send it to b
 });
 
 test('the terminal completes names with Tab, brings commands back, and can start over', async ({ page, isMobile }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
   await page.reload();
   await page.evaluate(() => { startLesson('u6-boss', [{ ...UNIT_6.boss.exercises[1], fx: homeFixture }]); });
@@ -674,7 +675,7 @@ test('the terminal completes names with Tab, brings commands back, and can start
 });
 
 test('progress can be saved to a backup file and restored on a fresh device', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, xp: 345, done: ['L0', 'L1'], streak: 3, lastDay: dayKey(), avatarStyle: 'violet', avatarUpdatedAt: 20, avatarForm: 'guardian', avatarFormUpdatedAt: 30 })); });
   await page.reload();
   await page.click('[data-tab="profile"]');
@@ -703,7 +704,7 @@ test('progress can be saved to a backup file and restored on a fresh device', as
 });
 
 test('Hebrew text keeps a leading dot or colon inside its command, and sentence punctuation outside', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const runs = text => page.evaluate(t => { const d = document.createElement('div'); d.append(bidi(t)); return [...d.querySelectorAll('bdi')].map(b => b.textContent); }, text);
   expect(await runs('חבילה בסיומת .deb מותקנת כך')).toEqual(['.deb']);
   expect(await runs('שומרים ויוצאים עם :wq או בלי לשמור עם :q!')).toEqual([':wq', ':q!']);
@@ -725,7 +726,7 @@ test('Hebrew text keeps a leading dot or colon inside its command, and sentence 
 
 test('a sentence blank stays on the line of the word before it', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => startLesson('blank-test', [{ type: 'sentence', prompt: READ, text: T('קבצים ששמם מתחיל בנקודה מוסתרים. כדי לראות גם אותם כותבים ls ___.', 'x ls ___.'), options: ['-a', '-l'], answer: '-a' }]));
   const glued = await page.evaluate(() => { const g = document.querySelector('.sentence .glued'); return { text: g.textContent.replace(/\s+/g, ' ').trim(), lines: g.getClientRects().length }; });
   expect(glued.text).toMatch(/^ls .*\.$/);
@@ -733,7 +734,7 @@ test('a sentence blank stays on the line of the word before it', async ({ page }
 });
 
 test('merging two devices keeps everything the learner earned', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const mac = { xp: 300, gems: 10, done: ['L0', 'L1'], days: ['2026-11-01'], mistakes: ['a'], lastDay: '2026-11-01', streak: 4, track: 'R', quests: { day: '2026-11-01', xp: 5, perfect: 0, combo: 1, claimed: ['q1'] } };
   const phone = { xp: 120, gems: 40, done: ['L1', 'c1'], days: ['2026-11-02'], mistakes: ['b'], lastDay: '2026-11-02', streak: 1, track: 'C', quests: { day: '2026-11-02', xp: 9, perfect: 1, combo: 0, claimed: [] } };
   const merged = await page.evaluate(([a, b]) => [mergeProgress(a, b), mergeProgress(b, a), mergeProgress(a, { ...a, xp: 1, streak: 9, quests: { day: a.quests.day, xp: 7, perfect: 0, combo: 0, claimed: ['q2'] } }), mergeProgress({}, a), loadState(JSON.stringify(mergeProgress(a, b))).done.length], [mac, phone]);
@@ -750,7 +751,7 @@ test('merging two devices keeps everything the learner earned', async ({ page })
 test('at phone width no exercise scrolls sideways and no command run carries half a pair @content', async ({ page }) => {
   test.setTimeout(240_000);
   await page.setViewportSize({ width: 390, height: 800 });
-  await page.goto('./prototype/');
+  await page.goto('./');
   const found = await page.evaluate(async () => {
     const out = { wide: [], broken: [] };
     const half = t => t.length > 1 && ((t.match(/\(/g) || []).length !== (t.match(/\)/g) || []).length || (t.match(/"/g) || []).length % 2 === 1);
@@ -768,7 +769,7 @@ test('at phone width no exercise scrolls sideways and no command run carries hal
 });
 
 test('a long command wraps in the terminal, Enter runs it, and typing keeps the terminal above the keyboard', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => startLesson('u6-boss', [{ ...UNIT_6.boss.exercises[1], fx: homeFixture }]));
   const input = page.locator('.term-input textarea');
   await input.fill('grep -E "(full|timeout)$" logs/app.log | sort | uniq -c | head -n 20 | tail -n 5 | cat');
@@ -790,7 +791,7 @@ test('a long command wraps in the terminal, Enter runs it, and typing keeps the 
 });
 
 test('a hint explains in words and never hands over the answer', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const bad = await page.evaluate(() => {
     const out = [], esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     for (const u of COURSE) for (const l of [...(u.lessons || []), ...(u.boss ? [u.boss] : [])]) for (const ex of l.exercises || []) {
@@ -805,13 +806,13 @@ test('a hint explains in words and never hands over the answer', async ({ page }
 });
 
 test('no exercise says its output was recorded on a real machine', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const said = await page.evaluate(() => COURSE.flatMap(u => [...(u.lessons || []), ...(u.boss ? [u.boss] : [])].flatMap(l => l.exercises || [])).filter(e => e?.prompt).map(e => `${e.prompt.he} ${e.prompt.en}`).filter(x => /הוקלט|recorded on|real (Linux|Ubuntu)|(Ubuntu|לינוקס) אמיתי/.test(x)));
   expect(said).toEqual([]);
 });
 
 test('a grep task that needs an anchor rejects the same command without it', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const weak = await page.evaluate(() => {
     const out = [];
     const passes = (ex, cmds) => { const sh = new Shell((ex.fx || homeFixture)()); for (const c of ex.setup || []) sh.run(c); return ex.goal(sh, cmds.map(cmd => { const r = sh.run(cmd); return { cmd, out: (r.out + r.err).replace(/\n$/, '') }; })); };
@@ -825,7 +826,7 @@ test('a grep task that needs an anchor rejects the same command without it', asy
 });
 
 test('every region has its name, text and scene, and readable colors', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await expect(page.locator('.region')).toHaveCount(await page.evaluate(() => new Set(COURSE.map(u => u.section)).size));
   await expect(page.locator('#stage .region-scene')).toHaveCount(1);
   await expect.poll(() => page.locator('#pathField').evaluate(c => c.getContext('2d').getImageData(0, 0, c.width, c.height).data.some(v => v > 0))).toBe(true);
@@ -844,7 +845,7 @@ test('every region has its name, text and scene, and readable colors', async ({ 
 });
 
 test('the hero earns ranks, a lesson gives a power, and the win screen shows the moon', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, xp: 995 })); });
   await page.reload();
   await expect(page.locator('.hero-rank')).toContainText('4');
@@ -856,7 +857,7 @@ test('the hero earns ranks, a lesson gives a power, and the win screen shows the
 });
 
 test('lives are lost on wrong answers, come back with time, and can be bought or earned', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const set = v => page.evaluate(x => { localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, ...x })); }, v);
   await set({ gems: 25, lives: 1, livesAt: Date.now() });
   await page.reload();
@@ -880,7 +881,7 @@ test('lives are lost on wrong answers, come back with time, and can be bought or
 });
 
 test('light practice uses the old Trivia questions and can earn a life', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false, lives: 2, livesAt: Date.now() })); });
   await page.reload();
   await page.click('#livesChip');
@@ -894,7 +895,7 @@ test('light practice uses the old Trivia questions and can earn a life', async (
 });
 
 test('the character gains upgrades as its rank rises', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const parts = await page.evaluate(() => [1, 2, 4, 6, 8, 10, 12].map(l => { const d = document.createElement('div'); d.innerHTML = mascot('happy', l); return d.querySelectorAll('svg > *').length; }));
   for (let i = 1; i < 6; i++) expect(parts[i], `tier ${i}`).toBeGreaterThan(parts[i - 1]);
   expect(parts[6]).toBeGreaterThan(parts[0]);
@@ -902,15 +903,16 @@ test('the character gains upgrades as its rank rises', async ({ page }) => {
 
 test('Pages deploys every file Learn mode loads', () => {
   const root = path.join(__dirname, '..');
-  const html = fs.readFileSync(path.join(root, 'prototype/index.html'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const local = [...html.matchAll(/(?:src|href)="([^"#:]+?)(?:\?[^"]*)?"/g)].map(m => m[1]).filter(f => !f.startsWith('..') && f !== './');
-  const deploy = fs.readFileSync(path.join(root, '.github/workflows/pages.yml'), 'utf8').match(/cp (?:-r )?(prototype\/.*) _site\/prototype\//)[1].split(/\s+/);
+  const yml = fs.readFileSync(path.join(root, '.github/workflows/pages.yml'), 'utf8');
+  const deploy = [...yml.matchAll(/^\s*cp (?:-r )?(.*) _site\/$/gm)].flatMap(m => m[1].split(/\s+/));
   expect(local.length).toBeGreaterThan(3);
-  for (const file of local) expect(deploy, file).toContain(/^(parts|recorded|fonts)\//.test(file) ? `prototype/${file.split('/')[0]}` : `prototype/${file}`);
+  for (const file of local) expect(deploy, file).toContain(file.split('/')[0]);
 });
 
 test('character: the new hero keeps rank upgrades and reacts to feedback without revealing exam answers', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await expect(page.locator('.hero-face .character-hero')).toBeVisible();
   const tiers = await page.evaluate(() => [1, 4, 8, 12].map(level => {
     const node = document.createElement('div'); node.innerHTML = mascot('happy', level);
@@ -930,7 +932,7 @@ test('character: the new hero keeps rank upgrades and reacts to feedback without
 
 test('character: original moon and animated backgrounds stay intact on iPhone', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto('./prototype/');
+  await page.goto('./');
   await expect(page.locator('#pathField')).toBeAttached();
   await expect(page.locator('#pathBolts')).toBeAttached();
   await expect(page.locator('.stage-moon')).toBeVisible();
@@ -945,7 +947,7 @@ for (const pixelRatio of [1.25, 3]) test(`retina background clears its full surf
   const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, deviceScaleFactor: pixelRatio, reducedMotion: 'no-preference' });
   const page = await context.newPage();
   try {
-    await page.goto('./prototype/');
+    await page.goto('./');
     await page.evaluate(() => document.fonts.ready);
     await page.waitForFunction(dpr => ['pathField', 'pathBolts'].every(id => { const c = document.getElementById(id); return c.width >= Math.floor(390 * dpr) && c.height >= Math.floor(844 * dpr); }), pixelRatio);
     for (const id of ['pathField', 'pathBolts']) {
@@ -970,7 +972,7 @@ test('loading: the first lesson works before later course files finish and stays
   let release;
   const gate = new Promise(resolve => { release = resolve; });
   await page.route('**/parts/p1.js?*', async route => { await gate; await route.continue(); });
-  const navigation = page.goto('./prototype/');
+  const navigation = page.goto('./');
   try {
     await expect(page.locator('.stage-moon')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('.node.current')).toBeVisible();
@@ -991,7 +993,7 @@ test('loading: saved progress beyond the first six units resumes without changin
     const done = Array.from({ length: 6 }, (_, i) => ['L0', 'L1', 'c1', 'L2', 'L3', 'boss'].map(k => i ? `u${i + 1}-${k}` : k)).flat();
     localStorage.setItem('linux-master-proto', JSON.stringify({ done, xp: 300, gems: 80 }));
   });
-  await page.goto('./prototype/');
+  await page.goto('./');
   await expect(page.locator('.node.current')).toHaveAttribute('aria-label', await page.evaluate(() => t('lessonN', 1, tr(COURSE.find(u => u.unit === 7).lessons[0].title))));
   expect(await page.evaluate(() => ({ xp: S.xp, gems: S.gems, completed: S.done.length }))).toEqual({ xp: 300, gems: 80, completed: 36 });
 });
@@ -999,7 +1001,7 @@ test('loading: saved progress beyond the first six units resumes without changin
 test('loading: partially downloaded later units stay unavailable in the path and practice', async ({ page }) => {
   let release; const gate = new Promise(resolve => { release = resolve; });
   await page.route('**/parts/p11.js?*', async route => { await gate; await route.continue(); });
-  const navigation = page.goto('./prototype/');
+  const navigation = page.goto('./');
   try {
     await page.waitForFunction(() => typeof COURSE !== 'undefined' && COURSE.some(u => u.unit === 11));
     await page.click('[data-tab="profile"]'); await page.click('[data-tab="learn"]');
@@ -1012,7 +1014,7 @@ test('loading: partially downloaded later units stay unavailable in the path and
 test('loading: finishing the download preserves the visible first world', async ({ page }) => {
   let release; const gate = new Promise(resolve => { release = resolve; });
   await page.route('**/parts/p1.js?*', async route => { await gate; await route.continue(); });
-  const navigation = page.goto('./prototype/');
+  const navigation = page.goto('./');
   try {
     await expect(page.locator('.stage-moon')).toBeVisible();
     await page.evaluate(() => { window.firstStage = document.getElementById('stage'); });
@@ -1022,7 +1024,7 @@ test('loading: finishing the download preserves the visible first world', async 
 
 for (const file of ['parts/p1.js', 'course-ready.js']) test(`loading: a failed ${file} keeps the starter playable and never claims offline readiness`, async ({ page }) => {
   await page.route(`**/${file}?*`, route => route.abort());
-  await page.goto('./prototype/');
+  await page.goto('./');
   await expect(page.locator('#toast')).toContainText(await page.evaluate(() => t('triviaFailed')));
   await expect(page.locator('.node.current')).toBeVisible();
   expect(await page.evaluate(() => window.courseReady)).toBe(false);
@@ -1031,8 +1033,31 @@ for (const file of ['parts/p1.js', 'course-ready.js']) test(`loading: a failed $
   await expect(page.locator('#lesson')).toBeVisible();
 });
 
+test('loading: the path shows before the simulator arrives, and a lesson opened early waits for it', async ({ page }) => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  await page.route('**/shell.js?*', async route => { await gate; await route.continue(); });
+  const navigation = page.goto('./');
+  try {
+    await expect(page.locator('.node.current')).toBeVisible({ timeout: 5000 });
+    expect(await page.evaluate(() => typeof Shell)).toBe('undefined');
+    await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+    await expect(page.locator('#lesson')).toBeVisible();
+    await expect(page.locator('#exBody')).toHaveText(await page.evaluate(() => t('lessonLoading')));
+  } finally { release(); await navigation; }
+  await expect(page.locator('#exBody')).toContainText('pwd');
+});
+
+test('loading: a failed simulator closes the lesson and says so', async ({ page }) => {
+  await page.route('**/shell.js?*', route => route.abort());
+  await page.goto('./');
+  await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+  await expect(page.locator('#toast')).toContainText(await page.evaluate(() => t('lessonFailed')));
+  await expect(page.locator('#lesson')).toBeHidden();
+});
+
 test('world characters match the first six learning topics without replacing the learner', async ({ page }) => {
-  await page.goto('/prototype/');
+  await page.goto('./');
   await expect(page.locator('.hero-face .character-hero')).toBeVisible();
   const characters = await page.locator('.path-mascot img').evaluateAll(nodes => nodes.slice(0, 6).map(node => node.getAttribute('src')));
   expect(characters).toHaveLength(6);
@@ -1040,7 +1065,7 @@ test('world characters match the first six learning topics without replacing the
 });
 
 test('character catalog covers the course independently of lesson text', async ({ page }) => {
-  await page.goto('/prototype/');
+  await page.goto('./');
   await page.waitForFunction(() => window.courseReady);
   const result = await page.evaluate(() => {
     const catalog = window.worldCharacterCatalog;
@@ -1074,14 +1099,14 @@ test('a missing character asset never marks a first visit offline-ready', async 
       return originalFetch(input, ...options);
     };
   });
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.waitForFunction(() => window.missingCharacterAsset);
   await page.waitForTimeout(300);
   expect(await page.evaluate(() => [!!window.learnKept, localStorage.getItem('learnOffline')])).toEqual([false, null]);
 });
 
 test('a teach card with an example lets the learner go on typing in the same terminal', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { const ex = UNIT_9.lessons[1].exercises.find(e => e.cmd === 'img{1..3}'); startLesson('u9-L1', [{ ...ex, fx: homeFixture }]); });
   const term = page.locator('.teach-card .term.live'), input = term.locator('textarea');
   await expect(term).toContainText('year2025');
@@ -1099,7 +1124,7 @@ test('a teach card with an example lets the learner go on typing in the same ter
 });
 
 test('a pattern that opens with question marks stays one left-to-right run, and unit 9 teaches text next to braces before asking for it', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   const runs = await page.evaluate(() => [...bidi('התבנית ?????.txt מתאימה').querySelectorAll('bdi')].map(b => b.textContent));
   expect(runs).toEqual(['?????.txt']);
   expect(await page.evaluate(() => [...bidi('מה ידפיס ls?').querySelectorAll('bdi')].map(b => b.textContent))).toEqual(['ls']);
@@ -1109,7 +1134,7 @@ test('a pattern that opens with question marks stays one left-to-right run, and 
 });
 
 const freshCourse = async page => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
   await page.reload();
   await page.waitForFunction(() => window.courseReady);
@@ -1228,7 +1253,7 @@ test('a jump test covers every skipped unit of the chosen track, with live termi
 });
 
 test('the terminal draws its own caret on the typing line, and it follows the text across wrapped lines', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { const ex = UNIT_10.boss.exercises[1]; startLesson('u10-boss', [{ ...ex, fx: homeFixture }]); });
   const input = page.locator('.term.live textarea'), caret = page.locator('.term-caret');
   await input.focus();
@@ -1253,7 +1278,7 @@ test('the terminal draws its own caret on the typing line, and it follows the te
 });
 
 test('an alias that is not set answers like bash, and the task passes only once the alias works in this shell', async ({ page }) => {
-  await page.goto('./prototype/');
+  await page.goto('./');
   await page.evaluate(() => { const ex = UNIT_10.boss.exercises[1]; startLesson('u10-boss', [{ ...ex, fx: homeFixture }]); });
   const term = page.locator('.term.live'), input = term.locator('textarea');
   const run = async c => { await input.fill(c); await input.press('Enter'); };

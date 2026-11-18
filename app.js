@@ -1,557 +1,1259 @@
-const LANGS = {he:{name:'עברית',short:'עב',dir:'rtl'},en:{name:'English',short:'EN',dir:'ltr'}};
-const I18N = {
-  he:{"footerLegal": "מידע משפטי, פרטיות ונגישות", "modeSwitch": "מצב", "modeTrivia": "🎯 טריוויה", "modeLearn": "🎓 למידה","reportBtn": "🚩 דיווח על תקלה", "reportTitle": "מה לא תקין בשאלה?", "reportReason": "סוג הבעיה", "report_wrongAnswer": "התשובה הנכונה שגויה", "report_alsoRight": "גם תשובה אחרת נכונה", "report_unclear": "השאלה לא ברורה", "report_typo": "שגיאת כתיב או תרגום", "report_display": "בעיית תצוגה", "report_other": "אחר", "reportNote": "פרטים (לא חובה)", "reportHelp": "נפתח דיווח מוכן ב־GitHub עם כל פרטי השאלה. נשאר רק ללחוץ Submit.", "reportSend": "פתיחת דיווח ב־GitHub ↗", "reportCancel": "ביטול", "reportThanks": "תודה! הדיווח נפתח בלשונית חדשה.","hintBtn": "💡 רמז", "hintExample": "דוגמת שימוש: ", "hintRemoved": "הורדנו שתי תשובות שגויות.", "hintUses": "הפקודות שבתשובה:", "hintedNote": "עניתם עם רמז, אז השאלה תחזור בסבב הבא לחיזוק.","hintStands": "מקור השם: ","missionsTitle": "משימות בטרמינל", "missionsIntro": "12 משימות לפי שלבים 1-12 של Bandit, בטרמינל מדומה. בכל כניסה נוצרת סיסמה חדשה, אז מחפשים אותה בעזרת פקודות.", "openMissions": "משימות בטרמינל ←", "missionBack": "← לכל המשימות", "missionHint": "רמז", "missionPasswordLabel": "הסיסמה שמצאתם", "missionSubmit": "בדיקת סיסמה", "missionSolvedTag": "נפתרה ✓", "missionCorrect": "נכון! מצאתם את הסיסמה.", "missionWrong": "זו לא הסיסמה. המשיכו לחפש.", "missionNext": "למשימה הבאה ←", "missionPractice": "תרגול במשימה ←", "termLabel": "טרמינל מדומה", "termPlaceholder": "הקלידו פקודה ולחצו Enter", "termHelp": "פקודות זמינות: ls, cd, pwd, cat, file, find, grep, sort, uniq, head, tail, wc, cut, tr, strings, base64, awk, sed, du, echo, clear",missionNumber:n=>`משימה ${n}`,missionsDone:(n,total)=>`פתרתם ${n} מתוך ${total}`,termUnsupported:name=>`${name}: הפקודה הזו לא זמינה בטרמינל המדומה. כתבו help לרשימת הפקודות.`,"altWorks": "זו דרך אחרת שנותנת בדיוק את אותה תוצאה.", "ourAnswer": "הפתרון שלנו: ", "yourOutput": "הפלט שלכם על קבצי הדוגמה:", "rightOutput": "הפלט הנכון:", "noOutput": "(אין פלט)","whyNot": "למה לא: ",describes:x=>`זה התיאור של ⁦${x}⁩`,"backupTitle": "גיבוי ההתקדמות", "backupNote": "ההתקדמות נשמרת רק במכשיר הזה. שמרו קובץ או קוד גיבוי כדי לשחזר אותה במכשיר אחר או אחרי התקנה מחדש.", "backupDownload": "הורדת קובץ גיבוי", "backupCopy": "העתקת קוד גיבוי", "backupRestore": "שחזור מקובץ או מקוד", "backupCopied": "קוד הגיבוי הועתק.", "backupPrompt": "הדביקו כאן את קוד הגיבוי:", "backupConfirm": "השחזור יחליף את ההתקדמות הנוכחית במכשיר. להמשיך?", "backupBad": "הקוד או הקובץ אינם גיבוי תקין של Linux Master.", "reminderTitle": "תזכורת יומית", "reminderNote": "אתר לא יכול להעיר את הטלפון בשעה קבועה, אז מוסיפים ליומן אירוע יומי שמזכיר לתרגל.", "reminderAdd": "הוספה ליומן", "reminderTime": "שעה", "reminderEvent": "תרגול Linux Master","banditTitle": "מסלול Bandit", "banditSub": "כל 34 השלבים של Bandit, מה צריך לדעת בכל אחד, וסימון של מה שכבר עברתם. בלי סיסמאות ובלי פתרונות.", "openBandit": "פתיחת המסלול ←", "banditLogin": "כניסה לשלב 0", "banditPage": "דף השלב ↗", "banditPassed": "עברתי", "banditPractice": "תרגול שלב 08 ←", "banditNote": "שלב 08 באפליקציה מתרגל את הכלים שמופיעים כאן.",banditDone:(n,total)=>`עברתם ${n} מתוך ${total} שלבים`,banditStep:n=>`משלב ${n-1} לשלב ${n}`,"sizeLabel": "שאלות בסבב", "sizeShort": "שאלות", "modeLabel": "סוג תשובה", "modeChoice": "בחירה", "modeType": "הקלדה", "scopeLabel": "היקף שלב 02", "scopeCore": "ליבה", "scopeAll": "הכל", "typePlaceholder": "הקלידו את הפקודה", "check": "בדיקה", "dontKnow": "לא יודעים, הציגו תשובה", "answerWas": "התשובה: ", "reviewTag": "↻ חזרה", "typeNA": "בשלב הזה התשובות הן תיאורים, ולכן השאלות נשארות בבחירה.", "statsTitle": "הסטטיסטיקה שלכם", "statsAnswered": "נענו", "statsAccuracy": "דיוק", "statsReview": "לחזרה", "weakTitle": "פקודות לחזק", "statsEmpty": "עוד אין נתונים. אחרי כמה סבבים יופיעו כאן נקודות החולשה.",hintNames:list=>`בתשובה מופיעים: ${list}`,toReview:n=>`${n} לחזרה`,weakLine:(cmd,acc,n)=>`\u2066${cmd}\u2069 · ${acc}% מתוך ${n}`,"labTagline": "מעבדת הפקודות שלכם", "heroTitle": "הדרך שלכם<br>לשלוט בטרמינל.", "heroCopy": "לא צריך להכיר פקודות מראש. <strong>לומדים אותן צעד־צעד, עם דוגמאות וטריוויה.</strong>", "terminalHint": "בחרו את המשימה הבאה", "statCorrect": "תשובות נכונות", "statCommands": "פקודות במאגר", "statAccuracy": "דיוק כולל", "chooseLevel": "בוחרים רמת לימוד", "chooseLevelSub": "אפשר להתחיל מהבסיס ולהתקדם בקצב שלכם", "levelsAria": "בחירת רמת לימוד", "startPractice": "מתחילים לתרגל ←", "tutorials": "הדרכות", "tutorialsSub": "בחרו נושא בסרגל וקבלו הסבר ודוגמאות צעד אחר צעד", "openTutorials": "פתיחת ההדרכות ←", "reminder": "תזכורת קטנה", "pill1": "ls · רואים מה יש", "pill2": "cd · עוברים תיקייה", "pill3": "cat · קוראים קובץ", "pill4": "לא צריך לזכור הכול עכשיו", "backHome": "← חזרה למסך הראשי", "tutorialsTitle": "הדרכות Linux Master", "tutorialsIntro": "בחרו נושא בסרגל כדי ללמוד בקצב שלכם.", "tutorialsAria": "נושאי ההדרכות", "searchLabel": "חיפוש במדריך", "searchPlaceholder": "חיפוש פקודה, דגל או הסבר", "quizTitle": "סבב טריוויה", "quizSubtitleDefault": "בחרו את התשובה הנכונה. לומדים גם מהטעויות.", "roundScore": "נכונות בסבב", "nextQ": "השאלה הבאה ←", "toSummary": "לסיכום הסבב ←", "roundDone": "סבב הושלם!", "greatRound": "איזה יופי, סבב חזק!", "playAgain": "לשחק שוב ↻", "homeBtn": "חזרה למסך הראשי", "footer1": "Linux Master · מעבדת פקודות לינוקס", "footer2": "תוכן לימודי מבוסס על מדריך Bandit המצורף", "example": "דוגמה", "examplePrefix": "דוגמה: ", "correct": "נכון! ",levels:{"intro": {"step": "01", "card": "פקודות", "cardDesc": "מה הפקודה עושה, בשפה פשוטה", "title": "פקודות בסיסיות", "note": "<strong>מתחילים מהבסיס.</strong> לומדים שמות של פקודות, מה הן עושות ודוגמה פשוטה.", "subtitle": "נלמד את כל הפקודות במאגר. אחרי כל תשובה תופיע דוגמה קצרה.", "tag": "שלב 01 / פקודות", "tutTitle": "פקודות בסיסיות", "tutDesc": "מה כל פקודה עושה ומתי משתמשים בה."}, "functions": {"step": "02", "card": "פקודה + שימוש", "cardDesc": "אפשרות אחת, למשל ‎ls -a", "title": "פקודה + שימוש", "note": "<strong>שלב שני.</strong> לומדים אפשרויות ותחביר שימוש מתוך המדריך.", "subtitle": "נלמד את כל אפשרויות השימוש שמופיעות במדריך.", "tag": "שלב 02 / פקודה + שימוש", "tutTitle": "פקודה + שימושים", "tutDesc": "לומדים אפשרויות, תחביר ודוגמאות שימוש מתוך המדריך."}, "pipe": {"step": "03", "card": "פקודות יחד", "cardDesc": "מחברים אותן בצינור ‎|", "title": "פקודות יחד", "note": "<strong>שלב שלישי.</strong> מחברים פקודות זו לזו בעזרת צינור ‎|, בלי להוסיף דגלים.", "subtitle": "מעבירים את הפלט של פקודה אחת אל הבאה, בלי דגלים.", "tag": "שלב 03 / פקודות בצינור", "tutTitle": "פקודות יחד", "tutDesc": "הסימן | מעביר את הפלט של פקודה אחת אל הפקודה הבאה."}, "pipeFunction": {"step": "04", "card": "צינור + דגל", "cardDesc": "שרשרת פקודות עם אפשרות אחת", "title": "צינור + דגל אחד", "note": "<strong>שלב רביעי.</strong> מוסיפים דגל אחד לשרשרת פקודות בצינור.", "subtitle": "מחברים פקודות בצינור ומשתמשים בדגל אחד.", "tag": "שלב 04 / צינור + דגל אחד", "tutTitle": "צינור + דגל אחד", "tutDesc": "משלבים צינור עם דגל שמדייק את החיפוש או את הפלט."}, "pro": {"step": "05", "card": "מקצוענות", "cardDesc": "פקודה עם שני דגלים במשימות אמיתיות", "title": "פקודה מקצועית + שני דגלים", "note": "<strong>שלב חמישי.</strong> פותרים תרחישים אמיתיים בעזרת פקודה עם שני דגלים.", "subtitle": "תרגול מקצועי: פקודה אחת עם שני דגלים.", "tag": "שלב 05 / מקצוענות", "tutTitle": "פקודה מקצועית + שני דגלים", "tutDesc": "שתי אפשרויות או יותר בפקודה אחת, בתרחישים אמיתיים."}, "pipeTwoFlag": {"step": "06", "card": "צינור + שני דגלים", "cardDesc": "שילובים מורכבים יותר", "title": "צינור + שני דגלים", "note": "<strong>שלב שישי.</strong> משלבים צינורות עם שני דגלים או יותר.", "subtitle": "משלבים צינור עם כמה דגלים.", "tag": "שלב 06 / צינור + שני דגלים", "tutTitle": "צינור + שני דגלים", "tutDesc": "כמה שלבים בצינור, עם דגלים שמשנים את הפקודות."}, "bandit": {"step": "08", "card": "כלים ל־Bandit", "cardDesc": "כל מה שחסר לשלבים 0-33", "title": "כלים ל־Bandit", "note": "<strong>שלב שמיני.</strong> שמות קבצים מוזרים, find מתקדם, nmap, setuid, cron, לולאות, git, vi ו־‎$0.", "subtitle": "הכלים שצריך כדי לעבור את Bandit עד הסוף.", "tag": "שלב 08 / Bandit", "tutTitle": "כלים ל־Bandit", "tutDesc": "הכלים שמופיעים בשלבים המתקדמים של Bandit."}, "workflow": {"step": "07", "card": "תהליכי עבודה", "cardDesc": "משימות מערכת שלמות", "title": "תהליכי עבודה", "note": "<strong>שלב שביעי.</strong> מחברים כמה פקודות כדי להשלים משימות מערכת שלמות.", "subtitle": "מחברים כמה פקודות למשימה שלמה.", "tag": "שלב 07 / תהליכי עבודה", "tutTitle": "תהליכי עבודה", "tutDesc": "שרשראות פקודות למשימות מערכת שלמות."}},loadMore:(shown,total)=>`הצגת עוד 30 הדרכות (${shown} מתוך ${total})`,step:n=>`שלב ${n}`,describeLead:'איזו פקודה מתאימה לתיאור:',whatDoes:name=>`מה עושה הפקודה ${name}?`,whatKey:(key,cmd)=>`מה עושה המקש ${key} בתוך ${cmd}?`,keyTitle:(cmd,key)=>`${cmd}: המקש ${key}`,meaningOf:syntax=>`מה המשמעות של ${syntax}?`,progress:(done,total,size)=>`${done}/${total} הושלמו · סבבים של ${size}`,resultText:n=>`עניתם על ${n} שאלות. כל תשובה היא עוד צעד בהיכרות עם לינוקס.`,resultScore:(points,n)=>`${points} מתוך ${n} נכונות`},
-  en:{"footerLegal": "Legal, privacy and accessibility", "modeSwitch": "Mode", "modeTrivia": "🎯 Trivia", "modeLearn": "🎓 Learn","reportBtn": "🚩 Report a problem", "reportTitle": "What's wrong with this question?", "reportReason": "Problem type", "report_wrongAnswer": "The correct answer is wrong", "report_alsoRight": "Another answer is also right", "report_unclear": "The question is unclear", "report_typo": "Typo or translation", "report_display": "Display problem", "report_other": "Other", "reportNote": "Details (optional)", "reportHelp": "Opens a ready GitHub issue with all the question details. Just press Submit.", "reportSend": "Open report on GitHub ↗", "reportCancel": "Cancel", "reportThanks": "Thanks! The report opened in a new tab.","hintBtn": "💡 Hint", "hintExample": "Example: ", "hintRemoved": "Two wrong answers removed.", "hintUses": "Commands in the answer:", "hintedNote": "You used a hint, so this question comes back next round for practice.","hintStands": "Name comes from: ","missionsTitle": "Terminal missions", "missionsIntro": "12 missions shaped like Bandit levels 1-12, in a simulated terminal. Each visit plants a new password, so you find it with commands.", "openMissions": "Terminal missions →", "missionBack": "← All missions", "missionHint": "Hint", "missionPasswordLabel": "Password you found", "missionSubmit": "Check password", "missionSolvedTag": "Solved ✓", "missionCorrect": "Correct! You found the password.", "missionWrong": "That isn't the password. Keep looking.", "missionNext": "Next mission →", "missionPractice": "Practice in a mission →", "termLabel": "Simulated terminal", "termPlaceholder": "Type a command and press Enter", "termHelp": "Available commands: ls, cd, pwd, cat, file, find, grep, sort, uniq, head, tail, wc, cut, tr, strings, base64, awk, sed, du, echo, clear",missionNumber:n=>`Mission ${n}`,missionsDone:(n,total)=>`Solved ${n} of ${total}`,termUnsupported:name=>`${name}: this command isn't available in the simulated terminal. Type help for the list.`,"altWorks": "That's a different command with exactly the same result.", "ourAnswer": "Our answer: ", "yourOutput": "Your output on the sample files:", "rightOutput": "The right output:", "noOutput": "(no output)","whyNot": "Why not: ",describes:x=>`That describes ${x}`,"backupTitle": "Back up your progress", "backupNote": "Progress is saved only on this device. Keep a backup file or code to restore it on another device or after reinstalling.", "backupDownload": "Download backup file", "backupCopy": "Copy backup code", "backupRestore": "Restore from file or code", "backupCopied": "Backup code copied.", "backupPrompt": "Paste your backup code here:", "backupConfirm": "Restoring replaces the progress on this device. Continue?", "backupBad": "That code or file isn't a valid Linux Master backup.", "reminderTitle": "Daily reminder", "reminderNote": "A website can't wake your phone at a set time, so this adds a daily calendar event that reminds you to practice.", "reminderAdd": "Add to calendar", "reminderTime": "Time", "reminderEvent": "Practice Linux Master","banditTitle": "Bandit path", "banditSub": "All 34 Bandit levels, what each one needs, and a checkbox for the ones you've passed. No passwords, no solutions.", "openBandit": "Open the path →", "banditLogin": "Log in to level 0", "banditPage": "Level page ↗", "banditPassed": "Passed", "banditPractice": "Practice level 08 →", "banditNote": "Level 08 in the app practices the tools listed here.",banditDone:(n,total)=>`You passed ${n} of ${total} levels`,banditStep:n=>`Level ${n-1} → ${n}`,"sizeLabel": "Questions per round", "sizeShort": "Questions", "modeLabel": "Answer type", "modeChoice": "Choice", "modeType": "Typing", "scopeLabel": "Level 02 scope", "scopeCore": "Core", "scopeAll": "All", "typePlaceholder": "Type the command", "check": "Check", "dontKnow": "I don't know", "answerWas": "Answer: ", "reviewTag": "↻ Review", "typeNA": "This level's answers are descriptions, so its questions stay multiple choice.", "statsTitle": "Your stats", "statsAnswered": "Answered", "statsAccuracy": "Accuracy", "statsReview": "To review", "weakTitle": "Commands to work on", "statsEmpty": "No data yet. After a few rounds your weak spots show up here.",hintNames:list=>`The answer uses: ${list}`,toReview:n=>`${n} to review`,weakLine:(cmd,acc,n)=>`\u2066${cmd}\u2069 · ${acc}% of ${n}`,"labTagline": "Your command lab", "heroTitle": "Your path<br>to mastering the terminal.", "heroCopy": "No prior knowledge needed. <strong>Learn commands step by step, with examples and trivia.</strong>", "terminalHint": "pick your next task", "statCorrect": "Correct answers", "statCommands": "Commands", "statAccuracy": "Accuracy", "chooseLevel": "Choose a level", "chooseLevelSub": "Start from the basics and move at your own pace", "levelsAria": "Choose a learning level", "startPractice": "Start practicing →", "tutorials": "Tutorials", "tutorialsSub": "Pick a topic and get explanations and examples, step by step", "openTutorials": "Open tutorials →", "reminder": "Quick reminder", "pill1": "ls · see what is there", "pill2": "cd · change directory", "pill3": "cat · read a file", "pill4": "No need to remember it all now", "backHome": "← Back to home", "tutorialsTitle": "Linux Master tutorials", "tutorialsIntro": "Pick a topic to learn at your own pace.", "tutorialsAria": "Tutorial topics", "searchLabel": "Search the guide", "searchPlaceholder": "Search a command, flag or explanation", "quizTitle": "Trivia round", "quizSubtitleDefault": "Pick the right answer. Mistakes teach too.", "roundScore": "Correct this round", "nextQ": "Next question →", "toSummary": "Round summary →", "roundDone": "Round complete!", "greatRound": "Great job, strong round!", "playAgain": "Play again ↻", "homeBtn": "Back to home", "footer1": "Linux Master · Linux command lab", "footer2": "Learning content based on the Bandit guide", "example": "Example", "examplePrefix": "Example: ", "correct": "Correct! ",levels:{"intro": {"step": "01", "card": "Commands", "cardDesc": "What each command does, in plain words", "title": "Basic commands", "note": "<strong>Start from the basics.</strong> Learn command names, what they do and a simple example.", "subtitle": "Learn every command in the set. A short example follows each answer.", "tag": "Level 01 / Commands", "tutTitle": "Basic commands", "tutDesc": "What each command does and when to use it."}, "functions": {"step": "02", "card": "Command + usage", "cardDesc": "One option, e.g. ls -a", "title": "Command + usage", "note": "<strong>Level two.</strong> Learn options and usage syntax from the guide.", "subtitle": "Learn every usage option from the guide.", "tag": "Level 02 / Command + usage", "tutTitle": "Command + usages", "tutDesc": "Options, syntax and usage examples from the guide."}, "pipe": {"step": "03", "card": "Commands together", "cardDesc": "Join them with a pipe |", "title": "Commands together", "note": "<strong>Level three.</strong> Connect commands with a pipe |, without adding flags.", "subtitle": "Pass one command's output to the next, without flags.", "tag": "Level 03 / Pipes", "tutTitle": "Commands together", "tutDesc": "The | sign passes one command's output to the next command."}, "pipeFunction": {"step": "04", "card": "Pipe + flag", "cardDesc": "A chain of commands with one option", "title": "Pipe + one flag", "note": "<strong>Level four.</strong> Add one flag to a chain of piped commands.", "subtitle": "Connect commands with a pipe and use one flag.", "tag": "Level 04 / Pipe + one flag", "tutTitle": "Pipe + one flag", "tutDesc": "Combine a pipe with a flag that sharpens the search or the output."}, "pro": {"step": "05", "card": "Pro", "cardDesc": "A command with two flags on real tasks", "title": "Pro command + two flags", "note": "<strong>Level five.</strong> Solve real scenarios with a command that takes two flags.", "subtitle": "Pro practice: one command with two flags.", "tag": "Level 05 / Pro", "tutTitle": "Pro command + two flags", "tutDesc": "Two or more options in one command, in real scenarios."}, "pipeTwoFlag": {"step": "06", "card": "Pipe + two flags", "cardDesc": "More complex combinations", "title": "Pipe + two flags", "note": "<strong>Level six.</strong> Combine pipes with two or more flags.", "subtitle": "Combine a pipe with several flags.", "tag": "Level 06 / Pipe + two flags", "tutTitle": "Pipe + two flags", "tutDesc": "Several steps in a pipe, with flags that change the commands."}, "bandit": {"step": "08", "card": "Bandit tools", "cardDesc": "Everything levels 0-33 need", "title": "Bandit tools", "note": "<strong>Level eight.</strong> Odd file names, advanced find, nmap, setuid, cron, loops, git, vi and $0.", "subtitle": "The tools you need to finish Bandit.", "tag": "Level 08 / Bandit", "tutTitle": "Bandit tools", "tutDesc": "The tools that show up in the later Bandit levels."}, "workflow": {"step": "07", "card": "Workflows", "cardDesc": "Complete system tasks", "title": "Workflows", "note": "<strong>Level seven.</strong> Connect several commands to complete whole system tasks.", "subtitle": "Connect several commands into one complete task.", "tag": "Level 07 / Workflows", "tutTitle": "Workflows", "tutDesc": "Command chains for complete system tasks."}},loadMore:(shown,total)=>`Show 30 more (${shown} of ${total})`,step:n=>`Level ${n}`,describeLead:'Which command matches this description:',whatDoes:name=>`What does the ${name} command do?`,whatKey:(key,cmd)=>`What does the ${key} key do inside ${cmd}?`,keyTitle:(cmd,key)=>`${cmd}: the ${key} key`,meaningOf:syntax=>`What does ${syntax} mean?`,progress:(done,total,size)=>`${done}/${total} done · rounds of ${size}`,resultText:n=>`You answered ${n} questions. Every answer is another step into Linux.`,resultScore:(points,n)=>`${points} of ${n} correct`}
-};
-let LANG = 'he';
-try { const saved = localStorage.getItem('lang'); if (saved in LANGS) LANG = saved; } catch {}
-const t = (key, ...args) => { const value = I18N[LANG][key] ?? I18N.he[key]; return typeof value === 'function' ? value(...args) : value; };
-const levelText = key => I18N[LANG].levels[key];
-if (CONTENT[LANG]) {
-  const content = CONTENT[LANG];
-  commands.forEach(item => { item.meaning = content.commands[item.name] ?? item.meaning; });
-  guideUses.forEach((item, index) => { item.meaning = content.guide[index] ?? item.meaning; });
-  const pools = {pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios, banditScenarios};
-  Object.entries(content.scenarios).forEach(([name, list]) => list.forEach((text, index) => Object.assign(pools[name][index], text)));
-}
-const makeScenarioQuestion = (scenario,tag='SCENARIO / תרגול מעשי') => {
-  const choices=shuffle([scenario.answer,...scenario.wrong]);
-  return {tag,prompt:scenario.prompt,code:'',answer:scenario.answer,accept:scenario.accept||[],hints:scenario.hints,wrong:scenario.wrong,why:scenario.why||[],optionMode:'code',typed:true,options:choices.map(value=>({key:value,label:value})),explanation:scenario.explanation};
-};
-
 const $ = id => document.getElementById(id);
-const shuffle = list => {const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
-const RETRY_GAP = 4;
-const CORE_GUIDE_IDS = [0, 1, 9, 10, 11, 12, 13, 14, 16, 20, 21, 22, 23, 30, 36, 37, 38, 39, 41, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 66, 67, 68, 69, 70, 71, 72, 74, 75, 80, 81, 82, 89, 90, 91, 99, 100, 101, 102, 105, 106, 110, 111, 112, 120, 121, 122, 125, 131, 132, 136, 137, 138, 140, 145, 149, 150, 156, 157, 158, 160, 161, 162, 170, 172, 180, 181, 182, 183, 184, 185, 187, 190, 193, 194, 195, 199, 204, 209, 210, 211, 212, 213, 220, 221, 223, 224, 231, 240, 250, 258, 260, 261, 266, 269, 270, 271, 272, 277, 280, 281, 282, 284, 288, 289, 290, 291, 292, 300, 301, 310, 311, 312, 320, 323, 324, 326, 327, 328, 329, 335, 336, 340, 349, 350, 357, 358, 360, 361, 363, 368, 370, 371, 372, 375, 380, 381, 387, 390, 391, 400, 407, 408, 409, 414, 415, 417, 420, 421, 429, 438, 448];
-let updateWaiting = false;
-let quizQuestions = [], quizIndex = 0, quizPoints = 0, quizLocked = false, quizAnswered = 0, questionTimer = null;
-const readSaved = (key, fallback) => { try { const value = JSON.parse(localStorage.getItem(key)); return value && typeof value === 'object' ? value : fallback; } catch { return fallback; } };
-const stats = Object.assign({correct:0, answered:0, byLevel:{}, byCommand:{}}, readSaved('quizStats', {}));
-const progress = readSaved('levelProgress', {});
-const reviewState = readSaved('reviewState', {});
-const readSetting = (key, allowed, fallback) => { try { const value = localStorage.getItem(key); return allowed.includes(value) ? value : fallback; } catch { return fallback; } };
-let answerMode = readSetting('answerMode', ['choice', 'type'], 'choice');
-let guideScope = readSetting('guideScope', ['all', 'core'], 'all');
-let roundSize = Number(readSetting('roundSize', ['5', '10', '20'], '20'));
-const save = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} };
-let selectedLevel = localStorage.getItem('learningLevel') || 'intro';
-if ('serviceWorker' in navigator && window.isSecureContext) {
-  if (navigator.serviceWorker.controller) navigator.serviceWorker.addEventListener('controllerchange', () => { if ($('home').classList.contains('active')) location.reload(); else updateWaiting = true; });
-  navigator.serviceWorker.register('./sw.js').then(registration => document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') registration.update().catch(() => {}); })).catch(() => {});
-}
-renderStats();
-
-$('commandCount').textContent = commands.length;
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}
-function goHome(){if(updateWaiting){location.reload();return;}clearTimeout(questionTimer);questionTimer=null;selectLevel(selectedLevel);showScreen('home');$('toast').classList.remove('show');}
-function renderStats(){$('learnedCount').textContent=stats.correct;$('bestScore').textContent=stats.answered?`${Math.round(stats.correct/stats.answered*100)}%`:'0%';}
-function leitner(level){ return reviewState[level] ??= {boxes:{}, review:[]}; }
-function recordAnswer(entry, correct, given){
-  const level=entry.level, state=leitner(level), id=String(entry.id);
-  if(!entry.retry){
-    stats.answered++; if(correct) stats.correct++;
-    const byLevel=stats.byLevel[level] ??= {a:0,c:0}; byLevel.a++; if(correct) byLevel.c++;
-    const counted=correct||entry.q.optionMode!=='code'?entry.commands:blamedCommands(entry.q.answer,given);
-    for(const name of counted){ const byCommand=stats.byCommand[name] ??= {a:0,c:0}; byCommand.a++; if(correct) byCommand.c++; }
+const STORE = 'linux-master-proto';
+const dayKey = (offset = 0) => { const d = new Date(); d.setDate(d.getDate() + offset); return d.toLocaleDateString('en-CA'); };
+const shuffle = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+// Hebrew text with commands inside: each command run becomes a left-to-right island, so it stays in one
+// piece and the punctuation around it (like a final ?) stays on the Hebrew side.
+// A run may open with dots, question marks or a colon when a name follows (.deb, ../logs, ?????.txt, :wq), and a vi command keeps its ! (:q!).
+// A quote opens a run only when a command follows, so the closing quote of a Hebrew phrase never swallows what comes next.
+const CODE_RUN = /:[A-Za-z0-9%/]+!?|(?:[.?]+(?=[A-Za-z0-9/~_-]))?(?:["'](?=\.?[A-Za-z0-9~/$_^*[(\\-])|[\^A-Za-z0-9~/$_<>|*={}[\]#%+&@\\-])(?:[\^A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\ .,:!?()-]*[A-Za-z0-9~/$_<>|*={}[\]"'#%+&@\\-])?/g;
+// A run must not carry half a pair: "builtin), alias" is two commands around a bracket that belongs to the sentence.
+function balancedPieces(run) {
+  const cuts = new Set(), open = [], quotes = [...run.matchAll(/"/g)].map(q => q.index);
+  for (let i = 0; i < run.length; i++) { if (run[i] === '(') open.push(i); else if (run[i] === ')') { if (open.length) open.pop(); else cuts.add(i); } }
+  open.forEach(i => cuts.add(i));
+  if (quotes.length % 2) cuts.add(run[0] === '"' ? 0 : quotes[quotes.length - 1]);
+  const marks = [...cuts].sort((x, y) => x - y), pieces = [];
+  let from = 0;
+  for (const cut of [...marks, run.length]) {
+    let start = from, end = cut;
+    if (from > 0) while (start < end && /[\s,.:;]/.test(run[start])) start++;
+    if (cut < run.length) while (end > start && /[\s,.:;]/.test(run[end - 1])) end--;
+    if (end > start) pieces.push([start, end]);
+    from = cut + 1;
   }
-  if(correct&&!entry.hinted){ state.boxes[id]=Math.min(3,(state.boxes[id]||0)+1); if(!entry.retry) state.review=state.review.filter(x=>String(x)!==id); }
-  else if(correct){ if(!state.review.some(x=>String(x)===id)) state.review.push(entry.id); }
-  else { state.boxes[id]=0; if(!state.review.some(x=>String(x)===id)) state.review.push(entry.id); }
-  if(!entry.review && !entry.retry && progress[entry.key]) progress[entry.key].pos++;
-  save('quizStats', stats); save('levelProgress', progress); save('reviewState', reviewState);
-  renderStats(); renderStatsPanel();
+  return pieces;
 }
-const levelDetails = {
-  intro:levelText('intro'),
-  functions:levelText('functions'),
-  pipe:levelText('pipe'),
-  pipeFunction:levelText('pipeFunction'),
-  pro:levelText('pro'),
-  pipeTwoFlag:levelText('pipeTwoFlag'),
-  workflow:levelText('workflow'),
-  bandit:levelText('bandit')
-};
-function selectLevel(level){
-  selectedLevel=level in levelDetails?level:'intro';localStorage.setItem('learningLevel',selectedLevel);
-  document.querySelectorAll('.level-card').forEach(card=>{const active=card.dataset.level===selectedLevel;card.classList.toggle('selected',active);card.setAttribute('aria-pressed',String(active));});
-  const info=levelDetails[selectedLevel];$('levelNote').innerHTML=info.note;$('quizModeMeta').textContent=levelProgressText(selectedLevel);renderToggles();
-}
-const tutorialCurriculum = [
-  {key:'intro',label:t('step','01'),title:levelText('intro').tutTitle,description:levelText('intro').tutDesc,lessons:introNames.map(name=>{const item=commands.find(entry=>entry.name===name);return {title:fullName(item.name),explanation:item.meaning,example:item.example};})},
-  {key:'functions',label:t('step','02'),title:levelText('functions').tutTitle,description:levelText('functions').tutDesc,lessons:guideUses.map(item=>item.kind==='key'?{title:t('keyTitle',item.command,item.usage),explanation:item.meaning,example:item.usage}:{title:guideSyntax(item),explanation:item.meaning,example:guideSyntax(item)})},
-  {key:'pipe',label:t('step','03'),title:levelText('pipe').tutTitle,description:levelText('pipe').tutDesc,lessons:pipeScenarios.map(item=>({title:item.prompt,explanation:item.explanation,example:item.answer}))},
-  {key:'pipeFunction',label:t('step','04'),title:levelText('pipeFunction').tutTitle,description:levelText('pipeFunction').tutDesc,lessons:pipeFlagScenarios.map(item=>({title:item.prompt,explanation:item.explanation,example:item.answer}))},
-  {key:'pro',label:t('step','05'),title:levelText('pro').tutTitle,description:levelText('pro').tutDesc,lessons:professionalScenarios.map(item=>({title:item.prompt,explanation:item.explanation,example:item.answer}))},
-  {key:'pipeTwoFlag',label:t('step','06'),title:levelText('pipeTwoFlag').tutTitle,description:levelText('pipeTwoFlag').tutDesc,lessons:pipeTwoFlagScenarios.map(item=>({title:item.prompt,explanation:item.explanation,example:item.answer}))},
-  {key:'workflow',label:t('step','07'),title:levelText('workflow').tutTitle,description:levelText('workflow').tutDesc,lessons:workflowScenarios.map(item=>({title:item.prompt,explanation:item.explanation,example:item.answer}))},
-  {key:'bandit',label:t('step','08'),title:levelText('bandit').tutTitle,description:levelText('bandit').tutDesc,lessons:banditScenarios.map(item=>({title:item.prompt,explanation:item.explanation,example:item.answer}))}
-];
-function openTutorials(){showScreen('tutorials');renderTutorialLevel(selectedLevel);}
-function renderTutorialLevel(key){
-  const stage=tutorialCurriculum.find(item=>item.key===key)||tutorialCurriculum[0];
-  const tabs=$('tutorialLevels');tabs.innerHTML='';
-  tutorialCurriculum.forEach(item=>{const button=document.createElement('button');button.className='tutorial-tab';button.type='button';button.setAttribute('role','tab');button.setAttribute('aria-selected',String(item.key===stage.key));button.innerHTML=`<span>${item.label}</span><strong>${item.title}</strong>`;button.onclick=()=>renderTutorialLevel(item.key);tabs.appendChild(button);});
-  $('tutorialLevelTitle').textContent=stage.title;$('tutorialLevelDescription').textContent=stage.description;
-  const list=$('tutorialLessonList');list.innerHTML='';$('tutorialSearch').value='';currentTutorialLessons=stage.lessons;filterTutorialLessons();
-}
-let currentTutorialLessons=[];let filteredTutorialLessons=[];let tutorialVisibleCount=30;
-function filterTutorialLessons(){
-  const query=$('tutorialSearch').value.trim().toLocaleLowerCase();
-  filteredTutorialLessons=currentTutorialLessons.filter(lesson=>`${lesson.title} ${lesson.explanation} ${lesson.example}`.toLocaleLowerCase().includes(query));
-  tutorialVisibleCount=30;renderTutorialLessons();
-}
-function showMoreTutorialLessons(){tutorialVisibleCount+=30;renderTutorialLessons();}
-function renderTutorialLessons(){
-  const list=$('tutorialLessonList');list.innerHTML='';
-  filteredTutorialLessons.slice(0,tutorialVisibleCount).forEach((lesson,index)=>{
-    const card=document.createElement('details');card.className='tutorial-lesson';
-    const summary=document.createElement('summary');const title=document.createElement('strong');title.textContent=lesson.title;
-    const number=document.createElement('span');number.textContent=String(index+1).padStart(2,'0');summary.append(title,number);
-    const explanation=document.createElement('p');explanation.textContent=lesson.explanation;
-    const example=document.createElement('div');example.className='tutorial-example';const label=document.createElement('span');label.textContent=t('example');
-    const code=document.createElement('code');code.dir='ltr';code.textContent=lesson.example;example.append(label,code);
-    card.append(summary,explanation,example);list.appendChild(card);
-  });
-  $('tutorialLoadMore').hidden=filteredTutorialLessons.length<=tutorialVisibleCount;
-  $('tutorialLoadMore').querySelector('button').textContent=t('loadMore',Math.min(tutorialVisibleCount,filteredTutorialLessons.length),filteredTutorialLessons.length);
-}
-const similarCommands = [['cat','less','head','tail','xxd','strings'],['ssh','nc','openssl','scp'],['cp','scp'],['cmp','diff'],['gzip','bzip2','tar'],['whoami','id'],['ltrace','strace'],['man','help'],['ls','find'],['awk','cut'],['tr','sed']];
-function commandQuestion(item,pool){
-  const prompts=CONTENT[LANG]?.prompts||{ls:'איזו פקודה מציגה את הקבצים שבתיקייה?',cd:'איזו פקודה מעבירה אותנו לתיקייה אחרת?',pwd:'איזו פקודה מציגה איפה אנחנו נמצאים?',cat:'איזו פקודה מציגה את תוכן הקובץ?',file:'איזו פקודה מזהה את סוג הקובץ?',ssh:'באיזו פקודה מתחברים לשרת מרוחק?',whoami:'איזו פקודה מציגה את שם המשתמש הפעיל?',head:'איזו פקודה מציגה את תחילת הקובץ?',tail:'איזו פקודה מציגה את סוף הקובץ?',wc:'איזו פקודה סופרת שורות, מילים או תווים?'};
-  const options=shuffle([item,...shuffle(pool.filter(option=>option.name!==item.name&&!similarCommands.some(group=>group.includes(item.name)&&group.includes(option.name)))).slice(0,3)]).map(option=>({key:option.name,label:option.name}));
-  return {tag:levelText('intro').tag,lead:prompts[item.name]?'':t('describeLead'),prompt:prompts[item.name]||`${item.meaning.replace(/\.$/,'')}?`,code:'',answer:item.name,optionMode:'command',typed:true,options,explanation:`${fullName(item.name)}\n${item.meaning}\n${t('examplePrefix')}${item.example}`};
-}
-function commandMeaningQuestion(item,pool){
-  const meanings=[...new Set(pool.filter(entry=>entry.meaning!==item.meaning).map(entry=>entry.meaning))];
-  const options=shuffle([item.meaning,...shuffle(meanings).slice(0,3)]).map(meaning=>({key:meaning,label:meaning}));
-  return {tag:levelText('intro').tag,prompt:`${t('whatDoes',item.name)}${abbreviations[item.name]?`\n\u2066(${abbreviations[item.name]})\u2069`:''}`,code:item.name,answer:item.meaning,optionMode:'text',options,explanation:`${fullName(item.name)}\n${item.meaning}\n${t('examplePrefix')}${item.example}`};
-}
-function guideSyntax(item){
-  if(item.kind==='cmd')return item.usage;
-  return item.usage.startsWith(item.command+' ')||item.usage===item.command?item.usage:`${item.command} ${item.usage}`;
-}
-function guideUseQuestion(item,pool){
-  const others=entries=>shuffle([...new Set(entries.filter(entry=>entry.meaning!==item.meaning).map(entry=>entry.meaning))]);
-  const sameCommand=others(pool.filter(entry=>entry.command===item.command));
-  const distractors=[...sameCommand,...others(pool.filter(entry=>entry.command!==item.command))].slice(0,3);
-  const options=shuffle([item.meaning,...distractors]).map(meaning=>({key:meaning,label:meaning}));
-  if(item.kind==='key')return {tag:levelText('functions').tag,prompt:t('whatKey',item.usage,item.command),code:'',answer:item.meaning,optionMode:'text',options,explanation:`${t('keyTitle',item.command,item.usage)}\n${item.meaning}`};
-  const syntax=guideSyntax(item);
-  return {tag:levelText('functions').tag,prompt:t('meaningOf',syntax),code:syntax,answer:item.meaning,optionMode:'text',options,explanation:`${syntax}\n${item.meaning}`};
-}
-const range = n => Array.from({length:n},(_,i)=>i);
-const commandsIn = answer => [...new Set(answer.split(/\|\||&&|\||;/).map(part=>part.trim().split(/\s+/)[0]).filter(name=>name&&!name.startsWith('-')))];
-const scenarioLevel = (pool,level) => ({ids:()=>range(pool.length),get:id=>pool[id],make:item=>makeScenarioQuestion(item,levelText(level).tag),commands:item=>commandsIn(item.answer),subtitle:levelText(level).subtitle});
-const levelQuiz = {
-  intro:{ids:()=>range(commands.length*2),get:id=>({item:commands[id>>1],reverse:id%2===1}),make:({item,reverse})=>reverse?commandMeaningQuestion(item,commands):commandQuestion(item,commands),commands:({item})=>[item.name],subtitle:levelText('intro').subtitle},
-  functions:{ids:()=>guideScope==='core'?CORE_GUIDE_IDS:range(guideUses.length),get:id=>guideUses[id],make:item=>guideUseQuestion(item,guideScope==='core'?CORE_GUIDE_IDS.map(id=>guideUses[id]):guideUses),commands:item=>[item.command],subtitle:levelText('functions').subtitle},
-  pipe:scenarioLevel(pipeScenarios,'pipe'),
-  pipeFunction:scenarioLevel(pipeFlagScenarios,'pipeFunction'),
-  pro:scenarioLevel(professionalScenarios,'pro'),
-  pipeTwoFlag:scenarioLevel(pipeTwoFlagScenarios,'pipeTwoFlag'),
-  workflow:scenarioLevel(workflowScenarios,'workflow'),
-  bandit:scenarioLevel(banditScenarios,'bandit')
-};
-const progressKey = level => level==='functions'&&guideScope==='core'?'functions:core':level;
-function validProgress(level){
-  const ids=levelQuiz[level].ids(), p=progress[progressKey(level)];
-  if(!p||!Array.isArray(p.order)) return null;
-  const size=p.poolSize ?? p.order.length;
-  const known=new Set(ids);
-  return size===ids.length && p.order.every(id=>known.has(id)) ? p : null;
-}
-const dueInCycle = (box, cycle) => box<=1 || (box===2 && cycle%2===0) || (box>=3 && cycle%4===0);
-function startCycle(level, previous){
-  const ids=levelQuiz[level].ids(), cycle=(previous?.cycle||1)+(previous?1:0), boxes=leitner(level).boxes;
-  const due=previous?ids.filter(id=>dueInCycle(boxes[id]||0,cycle)):ids;
-  const p={order:shuffle(due.length?due:ids),pos:0,poolSize:ids.length,cycle};
-  progress[progressKey(level)]=p; save('levelProgress',progress); return p;
-}
-function reviewIds(level){ const known=new Set(levelQuiz[level].ids()); return leitner(level).review.filter(id=>known.has(id)); }
-function levelProgressText(level){
-  const p=validProgress(level), total=p?p.order.length:levelQuiz[level].ids().length, done=p?Math.min(p.pos,total):0, review=reviewIds(level).length;
-  return t('progress',done,total,Math.min(roundSize,total))+(review?` · ${t('toReview',review)}`:'');
-}
-function makeEntry(level, id, flags){
-  const quiz=levelQuiz[level], item=quiz.get(id);
-  return {level, key:progressKey(level), id, item, q:quiz.make(item), commands:quiz.commands(item), ...flags};
-}
-function nextBatch(level){
-  let p=validProgress(level);
-  if(!p) p=startCycle(level,null);
-  else if(p.pos>=p.order.length) p=startCycle(level,p);
-  const review=reviewIds(level), fresh=p.order.slice(p.pos);
-  const reviewNow=shuffle(review.filter(id=>!fresh.slice(0,roundSize).includes(id))).slice(0,Math.ceil(roundSize/4));
-  const freshNow=fresh.slice(0,roundSize-reviewNow.length);
-  const batch=freshNow.map(id=>makeEntry(level,id,{}));
-  for(const id of reviewNow)batch.splice(Math.floor(Math.random()*(batch.length+1)),0,makeEntry(level,id,{review:true}));
-  return batch;
-}
-function startQuiz(){
-  quizQuestions=nextBatch(selectedLevel);
-  $('quizSubtitle').textContent=levelQuiz[selectedLevel].subtitle;
-  quizIndex=0;quizPoints=0;quizAnswered=0;showScreen('quiz');renderQuestion();
-}
-function renderQuestion(){
-  clearTimeout(questionTimer);questionTimer=null;quizLocked=false;const entry=quizQuestions[quizIndex],q=entry.q;
-  $('quizCounter').textContent=`${String(quizIndex+1).padStart(2,'0')} / ${quizQuestions.length}`;
-  $('quizProgress').style.width=`${quizIndex/quizQuestions.length*100}%`;
-  $('quizScore').textContent=quizPoints;$('feedback').className='feedback';$('feedback').textContent='';$('nextQuestion').hidden=true;$('nextQuestion').classList.remove('counting');
-  $('questionTag').textContent=q.tag;if(entry.review||entry.retry){const badge=document.createElement('span');badge.className='review';badge.textContent=t('reviewTag');$('questionTag').append(badge);}$('questionText').textContent='';if(q.lead){const lead=document.createElement('span');lead.className='q-lead';lead.textContent=q.lead;$('questionText').append(lead);}$('questionText').append(q.prompt);
-  $('questionCode').hidden=!q.code;$('questionCode').textContent='';if(q.code){const prompt=document.createElement('span');prompt.className='prompt';prompt.textContent='user@linux:~$ ';$('questionCode').append(prompt,q.code);}
-  $('hintBtn').disabled=false;$('hintText').hidden=true;$('hintText').textContent='';
-  closeReport();$('reportReason').selectedIndex=0;$('reportNote').value='';
-  const root=$('answers');root.innerHTML='';
-  if(answerMode==='type'&&q.typed){renderTyping(root,entry);return;}
-  q.options.forEach((opt,index)=>{const b=document.createElement('button');b.className='answer';b.dataset.answer=opt.key;const letter=document.createElement('span');letter.className='letter';letter.textContent=String.fromCharCode(65+index);const label=document.createElement('span');if(q.optionMode==='command'||q.optionMode==='code'){const code=document.createElement('code');code.dir='ltr';code.textContent=opt.label;label.appendChild(code);}else label.textContent=opt.label;b.append(letter,label);b.onclick=()=>chooseAnswer(b,opt,entry);root.appendChild(b);});
-}
-const commandMeaning = name => commands.find(c=>c.name===name)?.meaning;
-function hintLines(entry){
-  const {level,item,q}=entry,cmd=name=>({code:name,text:commandMeaning(name)?`: ${commandMeaning(name)}`:''});
-  if(level==='intro'){
-    if(item.reverse)return [{label:t('hintExample'),code:item.item.example}];
-    const {name,example}=item.item;
-    return [...(abbreviations[name]?[{label:t('hintStands'),code:abbreviations[name]}]:[]),{label:t('hintExample'),code:example.replace(new RegExp(`(^|\\s)${name}(?=\\s|$)`,'g'),'$1___')}];
-  }
-  if(level==='functions')return commandMeaning(item.command)?[cmd(item.command)]:[];
-  return [{label:t('hintUses')},...commandsIn(q.answer).map(cmd)];
-}
-function showHint(){
-  const entry=quizQuestions[quizIndex];if(quizLocked||!entry)return;
-  entry.hinted=true;$('hintBtn').disabled=true;
-  const lines=hintLines(entry),wrong=shuffle([...document.querySelectorAll('.answer')].filter(b=>b.dataset.answer!==entry.q.answer)).slice(0,2);
-  wrong.forEach(b=>{b.disabled=true;b.classList.add('eliminated');});
-  if(wrong.length)lines.push({label:t('hintRemoved')});
-  const box=$('hintText');box.innerHTML='';
-  for(const line of lines){const row=document.createElement('div');if(line.label)row.append(line.label);if(line.code){const code=document.createElement('code');code.dir='ltr';code.textContent=line.code;row.append(code);}if(line.text)row.append(line.text);box.append(row);}
-  box.hidden=false;
-}
-const REPORT_REPO = 'https://github.com/SaharHalili95/linux-master';
-function reportUrl(entry){
-  const q=entry.q,reason=$('reportReason').value,note=$('reportNote').value.trim();
-  const quote=text=>String(text).split('\n').map(line=>`> ${line}`).join('\n');
-  const lines=[
-    `**Problem:** ${I18N.en[`report_${reason}`]}`,
-    note?`**Details:**\n${quote(note)}`:'',
-    '### Question',
-    `- Level: \`${entry.level}\` · id \`${entry.id}\`${entry.item?.reverse?' (reverse)':''}${entry.review||entry.retry?' · review':''}`,
-    `- Language: ${LANG} · mode: ${answerMode==='type'&&q.typed?'typing':'choice'} · app ${document.querySelector('.version')?.textContent||''}`,
-    `- Tag: ${q.tag}`,
-    '',
-    quote($('questionText').textContent),
-    q.code?`\n\`\`\`\n${q.code}\n\`\`\``:'',
-    '### Options',
-    ...q.options.map((opt,i)=>`${String.fromCharCode(65+i)}. \`${opt.label}\`${opt.key===q.answer?' ✅':''}`),
-    `\n**Correct answer:** \`${q.answer}\``,
-    entry.given===undefined?'**Not answered yet**':`**Learner answered:** \`${entry.given||'(nothing)'}\` → ${entry.answeredCorrectly?'counted correct':'counted wrong'}${entry.hinted?' (with hint)':''}`,
-    `\n<details><summary>Explanation shown</summary>\n\n${q.explanation}\n</details>`,
-  ].filter(line=>line!=='');
-  const title=`Question report: ${entry.level}#${entry.id} - ${I18N.en[`report_${reason}`]}`;
-  const params=new URLSearchParams({title,labels:'question-report',body:lines.join('\n').slice(0,6000)});
-  return `${REPORT_REPO}/issues/new?${params}`;
-}
-function updateReportLink(){const entry=quizQuestions[quizIndex];if(entry)$('reportSend').href=reportUrl(entry);}
-function openReport(){
-  if(!quizQuestions[quizIndex])return;
-  clearTimeout(questionTimer);questionTimer=null;$('nextQuestion').classList.remove('counting');
-  $('reportPanel').hidden=false;$('reportBtn').setAttribute('aria-expanded','true');updateReportLink();$('reportReason').focus();
-}
-function closeReport(){$('reportPanel').hidden=true;$('reportBtn').setAttribute('aria-expanded','false');}
-function showToast(text){const box=$('toast');box.textContent=text;box.classList.add('show');setTimeout(()=>box.classList.remove('show'),3000);}
-function sentReport(){updateReportLink();setTimeout(()=>{closeReport();showToast(t('reportThanks'));},0);}
-function chooseAnswer(button,opt,entry){if(quizLocked)return;const q=entry.q;const all=[...document.querySelectorAll('.answer')];all.forEach(b=>b.disabled=true);const correct=opt.key===q.answer;
-  if(correct)button.classList.add('correct');else{button.classList.add('wrong');all.find(b=>b.dataset.answer===q.answer)?.classList.add('correct');}
-  finishAnswer(entry,correct,'',opt.key);
-}
-function scheduleRetry(entry){
-  const retry=makeEntry(entry.level,entry.id,{retry:true});
-  quizQuestions.splice(Math.min(quizIndex+1+RETRY_GAP,quizQuestions.length),0,retry);
-}
-function finishAnswer(entry,correct,typedAnswer,given){
-  quizLocked=true;quizAnswered++;entry.given=given;entry.answeredCorrectly=correct;$('hintBtn').disabled=true;const q=entry.q,feedback=$('feedback');
-  recordAnswer(entry,correct,given);
-  if(!correct&&!entry.retry)scheduleRetry(entry);
-  if(correct){quizPoints++;feedback.className='feedback show good';feedback.textContent=entry.sameResult?`${t('correct')}${t('altWorks')}\n${t('ourAnswer')}${q.answer}\n${q.explanation}`:`${t('correct')}${q.explanation}`;if(entry.hinted)feedback.textContent+=`\n${t('hintedNote')}`;}
-  else{const why=whyWrong(entry,given);feedback.className='feedback show bad';feedback.textContent=(why?`${t('whyNot')}${why}\n`:'')+(typedAnswer?`${t('answerWas')}${q.answer}\n`:'')+q.explanation+(typedAnswer&&given?outputComparison(q.answer,given,entry.fixture):'');}
-  $('quizCounter').textContent=`${String(quizIndex+1).padStart(2,'0')} / ${quizQuestions.length}`;
-  $('quizScore').textContent=quizPoints;$('nextQuestion').hidden=false;$('nextQuestion').classList.remove('counting');if($('reportPanel').hidden){void $('nextQuestion').offsetWidth;$('nextQuestion').classList.add('counting');}$('nextQuestion').textContent=quizIndex===quizQuestions.length-1?t('toSummary'):t('nextQ');if($('reportPanel').hidden)questionTimer=setTimeout(nextQuestion,2000);
-}
-function nextQuestion(){if(!quizLocked)return;clearTimeout(questionTimer);questionTimer=null;if(quizIndex<quizQuestions.length-1){quizIndex++;renderQuestion();}else showResult();}
-function showResult(){showScreen('result');const ratio=quizAnswered?quizPoints/quizAnswered:0;$('resultIcon').textContent=ratio>=.7?'✦':'↗';$('resultTitle').textContent=ratio>=.7?t('greatRound'):t('roundDone');$('resultText').textContent=t('resultText',quizAnswered);$('resultScore').textContent=t('resultScore',quizPoints,quizAnswered);$('playAgain').onclick=startQuiz;}
-const OPERATORS = ['&&', '||', '2>', '>>', '|', '&', ';', '>', '<'];
-// Short flags that take a value, per command. Flags not listed are treated as switches.
-const VALUE_FLAGS = {head:'nc',tail:'nc',cut:'dfcb',sort:'kto',grep:'ABCefm',uniq:'fsw',tar:'fC',ssh:'pilo',scp:'Pi',nc:'wpq',strings:'nte',xxd:'lscg',awk:'Fv',sed:'ef',du:'dt',ps:'upoC',kill:'s',
-  'ssh-keygen':'tfERFN',base64:'w',cp:'t',ltrace:'eslpo',strace:'espo',nmap:'p',stat:'c',env:'u',cmp:'in',file:'f',git:'m'};
-const LONG_SINGLE_DASH = new Set(['find','openssl']);
-function lexCommand(text){
-  const tokens=[];let i=0;
-  while(i<text.length){
-    const ch=text[i];
-    if(/\s/.test(ch)){i++;continue;}
-    const op=OPERATORS.find(o=>text.startsWith(o,i));
-    if(op&&!(op==='2>'&&i>0&&/\S/.test(text[i-1]))){tokens.push({op});i+=op.length;continue;}
-    let value='',quote='none',dollarInDouble=false;
-    while(i<text.length&&!/\s/.test(text[i])&&!OPERATORS.some(o=>o!=='2>'&&text.startsWith(o,i))){
-      const c=text[i];
-      if(c==="'"||c==='"'){const end=text.indexOf(c,i+1);const part=end<0?text.slice(i+1):text.slice(i+1,end);if(c==='"'&&part.includes('$'))dollarInDouble=true;value+=part;quote=quote==='none'?(c==="'"?'single':'double'):'mixed';i=end<0?text.length:end+1;}
-      else{value+=c;i++;}
+function bidi(text) {
+  const frag = document.createDocumentFragment(); text = String(text);
+  if (!/[֐-׿]/.test(text)) { frag.append(text); return frag; }
+  text = text.replace(/‎/g, ''); let last = 0;
+  for (const m of text.matchAll(CODE_RUN)) {
+    let run = m[0];
+    // A closing bracket is left out of the match; it belongs to the run when the run opened it: $(date), %Cpu(s).
+    if (text[m.index + run.length] === ')' && (run.match(/\(/g) || []).length > (run.match(/\)/g) || []).length) run += ')';
+    for (const [from, to] of balancedPieces(run)) {
+      const start = m.index + from, piece = text.slice(start, m.index + to);
+      // A Hebrew prefix glued with a maqaf (מ־, ב־, ל־) stays on the same line as its command.
+      const before = text.slice(last, start), glued = before.match(/[א-ת]{1,3}־$/);
+      frag.append(glued ? before.slice(0, -glued[0].length) : before);
+      const b = document.createElement('bdi'); b.dir = 'ltr'; b.className = piece.length <= 24 ? 'ltr-run keep' : 'ltr-run'; b.textContent = piece;
+      last = start + piece.length;
+      // Punctuation stays with the command before it, so it never wraps alone onto a new line.
+      const punct = text.slice(last).match(/^[.,:;?!)]+/)?.[0] || '';
+      last += punct.length;
+      if (glued || punct) { const s = el('span', 'glued', glued?.[0] || ''); s.append(b, punct); frag.append(s); } else frag.append(b);
     }
-    tokens.push({value,quote,dollarInDouble});
+  }
+  frag.append(text.slice(last)); return frag;
+}
+const code = text => { const c = el('code', 'cmd', text); c.dir = 'ltr'; return c; };
+
+// The sheet shows the full name; the tab bar the short one.
+const TRACK_NAMES = { L: 'LPIC-1', R: 'RHCSA', F: 'LFCS', E: 'Linux Essentials', S: 'SUSE SCA', C: 'CompTIA Linux+' };
+const TRACK_SHORT = { ...TRACK_NAMES, E: 'Essentials', C: 'Linux+' };
+const MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, LIFE_GEMS = 20;
+const DEFAULTS = { avatarForm: 'core', avatarFormUpdatedAt: 0, avatarStyle: 'auto', avatarUpdatedAt: 0, xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], skipped: [], sound: true, quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
+// Saved state can be stale or hand-edited; keep only fields of the expected type.
+function loadState(raw) {
+  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], skipped: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
+  let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
+  if (!saved || typeof saved !== 'object') return S;
+  for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
+  for (const key of ['done', 'days', 'mistakes', 'skipped']) if (Array.isArray(saved[key])) S[key] = saved[key].filter(x => typeof x === 'string');
+  if (typeof saved.lastDay === 'string') S.lastDay = saved.lastDay;
+  if (typeof saved.sound === 'boolean') S.sound = saved.sound;
+  S.avatarForm = ['core', 'scout', 'guardian'].includes(saved.avatarForm) ? saved.avatarForm : 'core';
+  if (S.avatarForm === saved.avatarForm && Number.isSafeInteger(saved.avatarFormUpdatedAt) && saved.avatarFormUpdatedAt >= 0) S.avatarFormUpdatedAt = saved.avatarFormUpdatedAt;
+  S.avatarStyle = ['auto', 'mint', 'cyan', 'violet'].includes(saved.avatarStyle) ? saved.avatarStyle : 'auto';
+  if (S.avatarStyle === saved.avatarStyle && Number.isSafeInteger(saved.avatarUpdatedAt) && saved.avatarUpdatedAt >= 0) S.avatarUpdatedAt = saved.avatarUpdatedAt;
+  if (saved.layout && typeof saved.layout === 'object') for (const [k, v] of Object.entries(saved.layout)) if (typeof v === 'string') S.layout[k] = v;
+  if (Object.hasOwn(TRACK_NAMES, saved.track)) S.track = saved.track;
+  if (Number.isInteger(saved.lives) && saved.lives >= 0 && saved.lives <= MAX_LIVES) S.lives = saved.lives;
+  if (Number.isFinite(saved.livesAt) && saved.livesAt >= 0) S.livesAt = saved.livesAt;
+  if (Array.isArray(saved.reports)) S.reports = saved.reports.filter(r => r && typeof r.uid === 'string' && typeof r.note === 'string');
+  const q = saved.quests;
+  if (q && typeof q === 'object' && typeof q.day === 'string' && Array.isArray(q.claimed)) S.quests = { day: q.day, xp: +q.xp || 0, perfect: +q.perfect || 0, combo: +q.combo || 0, claimed: q.claimed.filter(x => typeof x === 'string') };
+  return S;
+}
+COURSE.sort((a, b) => a.section - b.section || a.unit - b.unit);
+const starterCourse = [...COURSE];
+const availableCourse = () => window.courseReady ? COURSE : starterCourse;
+let S;
+try { S = loadState(localStorage.getItem(STORE)); } catch { S = loadState(null); }
+const save = () => { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch { /* not persisted */ } };
+const liveStreak = () => (S.lastDay === dayKey() || S.lastDay === dayKey(-1)) ? S.streak : 0;
+const questDay = () => (S.quests.day === dayKey() ? S.quests : (S.quests = { day: dayKey(), xp: 0, perfect: 0, combo: 0, claimed: [] }));
+const QUESTS = [
+  { id: 'xp', icon: 'bolt', text: 'qXp', goal: 30 },
+  { id: 'perfect', icon: 'target', text: 'qPerfect', goal: 1 },
+  { id: 'combo', icon: 'flame', text: 'qCombo', goal: 5 },
+];
+
+// Sound: short synthesized tones, no audio files.
+let audio;
+function tone(notes) {
+  if (!S.sound) return;
+  try {
+    audio = audio || new AudioContext(); let at = audio.currentTime;
+    for (const [freq, dur, type = 'sine'] of notes) {
+      const o = audio.createOscillator(), g = audio.createGain(); o.type = type; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.16, at + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+      o.connect(g).connect(audio.destination); o.start(at); o.stop(at + dur + 0.02); at += dur * 0.75;
+    }
+  } catch { /* audio unavailable */ }
+}
+const SFX = { good: () => tone([[660, 0.09], [990, 0.16]]), bad: () => tone([[240, 0.16, 'triangle'], [190, 0.22, 'triangle']]), win: () => tone([[523, 0.12], [659, 0.12], [784, 0.12], [1047, 0.32]]), tap: () => tone([[520, 0.04]]) };
+
+function mascot(mood = 'idle', level = rankOf(S.xp).level) {
+  // The hero grows with its rank: every level adds something, and the frame changes color along the way.
+  const frame = level >= 11 ? '#ffc53d' : level >= 9 ? '#ff6ec7' : level >= 7 ? '#b79cff' : level >= 5 ? '#38e1ff' : level >= 3 ? '#4fe0c0' : '#9be46d';
+  const shell = level >= 11 ? '#3a2a10' : level >= 9 ? '#3a1a3c' : level >= 7 ? '#2a2352' : level >= 5 ? '#14384a' : '#2b3a33';
+  const glow = level >= 12 ? '#ffc53d' : level >= 6 ? '#38e1ff' : '#1d2421';
+  const back = (level >= 12 ? '<circle cx="50" cy="48" r="48" fill="none" stroke="#ffc53d" stroke-width="2" stroke-dasharray="3 7"/>' : '')
+    + (level >= 11 ? '<path d="M12 46 L-16 24 L-8 50 L-20 58 L-6 66 L-12 80 L12 70Z M88 46 L116 24 L108 50 L120 58 L106 66 L112 80 L88 70Z" fill="#ffc53d" stroke="#8a6200" stroke-width="1.5"/>' : '')
+    + (level >= 10 ? '<path d="M18 40 L2 98 H98 L82 40Z" fill="#b3201f"/><path d="M2 98 H98 L96 90 H4Z" fill="#ffc53d"/>' : '')
+    + (level >= 9 ? '<path d="M14 58 L2 74 L14 80Z M86 58 L98 74 L86 80Z" fill="#ff6ec7"/>' : '');
+  const front = (level >= 12 ? '<path d="M26 19 L21 1 L37 11 L50 -3 L63 11 L79 1 L74 19Z" fill="#ffc53d" stroke="#8a6200" stroke-width="1.5"/><circle cx="50" cy="12" r="3.4" fill="#ff5a6e"/><circle cx="35" cy="15" r="2.2" fill="#38e1ff"/><circle cx="65" cy="15" r="2.2" fill="#38e1ff"/>' : level >= 2 ? `<path d="M50 18V8" stroke="${frame}" stroke-width="3"/><circle cx="50" cy="6" r="4.5" fill="#ffc53d"/><circle cx="48.5" cy="4.5" r="1.4" fill="#fff"/>` : '')
+    + (level >= 3 ? '<path d="M70 36 L80 36 L62 80 L52 80Z" fill="#fff" opacity=".08"/>' : '')
+    + (level >= 4 ? `<path d="M12 42 Q10 12 50 11 Q90 12 88 42" fill="none" stroke="${frame}" stroke-width="3.5"/><rect x="4" y="36" width="11" height="24" rx="5" fill="${frame}"/><rect x="85" y="36" width="11" height="24" rx="5" fill="${frame}"/><path d="M9 60 Q10 78 28 76" fill="none" stroke="${frame}" stroke-width="2.5"/><circle cx="29" cy="76" r="3" fill="#fff"/>` : '')
+    + (level >= 5 ? '<circle cx="9.5" cy="44" r="1.8" fill="#fff"/><circle cx="90.5" cy="44" r="1.8" fill="#fff"/><circle cx="9.5" cy="52" r="1.8" fill="#fff"/><circle cx="90.5" cy="52" r="1.8" fill="#fff"/>' : '')
+    + (level >= 6 ? '<rect x="22" y="39" width="56" height="22" rx="11" fill="#38e1ff" opacity=".24" stroke="#38e1ff" stroke-width="1.5"/><path d="M28 47H72" stroke="#fff" stroke-opacity=".5" stroke-width="1"/>' : '')
+    + (level >= 7 ? `<path d="M12 62 H26 V84 H18 Q12 84 12 78Z M88 62 H74 V84 H82 Q88 84 88 78Z" fill="${frame}" opacity=".85"/>` : '')
+    + (level >= 8 ? '<path d="M50 68 l11 6 v9 l-11 6 -11 -6 v-9z" fill="#10163a" stroke="#ffc53d" stroke-width="2"/><path d="M50 71.5 l2.2 4.6 5 .7 -3.6 3.5 .9 5 -4.5 -2.4 -4.5 2.4 .9 -5 -3.6 -3.5 5 -.7z" fill="#ffc53d"/>' : '');
+  const mouth = { idle: '<rect x="44" y="66" width="14" height="4" rx="2" class="cursor"/>', happy: '<path d="M38 64 Q50 76 62 64" />', sad: '<path d="M39 72 Q50 62 61 72" />', party: '<path d="M36 62 Q50 80 64 62 Z" class="open"/>' }[mood];
+  return `<svg class="mascot ${mood}" viewBox="0 0 100 100" aria-hidden="true" style="--frame:${frame};--shell:${shell};--pupil:${glow}">${back}<rect x="12" y="18" width="76" height="66" rx="18" class="body"/><rect x="12" y="18" width="76" height="16" rx="8" class="bar"/><circle cx="24" cy="26" r="2.6" class="dot"/><circle cx="32" cy="26" r="2.6" class="dot"/><circle cx="40" cy="26" r="2.6" class="dot"/><circle cx="37" cy="50" r="7" class="eye"/><circle cx="63" cy="50" r="7" class="eye"/><circle cx="38.5" cy="51" r="3.4" class="pupil"/><circle cx="64.5" cy="51" r="3.4" class="pupil"/><g class="mouth">${mouth}</g><rect x="20" y="84" width="14" height="8" rx="4" class="foot"/><rect x="66" y="84" width="14" height="8" rx="4" class="foot"/>${front}</svg>`;
+}
+
+function runIn(setup, cmd, fixture = unitFixture()) {
+  const sh = new Shell(fixture); for (const c of setup || []) sh.run(c);
+  const before = sh.cwd, r = sh.run(cmd);
+  return { out: (r.out + r.err).replace(/\n$/, ''), cwd: before };
+}
+const promptFor = cwd => `user@linux:${cwd.startsWith('/home/user') ? '~' + cwd.slice(10) : cwd}$ `;
+
+// ---------- Top bar and tabs ----------
+function renderTop() { $('streakN').textContent = liveStreak(); $('gemsN').textContent = S.gems; $('xpN').textContent = S.xp; syncLives(); $('livesN').textContent = S.lives; $('streakChip').classList.toggle('lit', S.lastDay === dayKey()); }
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === name));
+  dockBar(); syncStage(false);
+  document.querySelectorAll('.tabbar button[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === name ? 'page' : 'false'));
+  closePop(); ({ learn: renderPath, practice: renderPractice, quests: renderQuests, profile: renderProfile })[name]();
+}
+
+// ---------- Path ----------
+// Unit 1 keeps its original keys (L0, c1, boss) so progress saved before more units existed still counts.
+const unitKey = (unit, id) => (unit.unit === 1 ? id : `u${unit.unit}-${id}`);
+const NODE_PLAN = [['L0', 'lesson', 0], ['L1', 'lesson', 1], ['c1', 'chest'], ['L2', 'lesson', 2], ['L3', 'lesson', 3], ['boss', 'boss']];
+const unitNodes = unit => unit.exam ? [{ key: unitKey(unit, 'exam'), kind: 'exam', unit }] : NODE_PLAN.map(([id, kind, i]) => ({ key: unitKey(unit, id), kind, i, unit }));
+const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: ex.fixture || unit.fixture || unitFixture }));
+const OFFSETS = [0, 66, 66, 0, -66, -66];
+const icon = name => { const i = el('span', `ic ic-${name}`); i.setAttribute('aria-hidden', 'true'); return i; };
+const ICONS = { lesson: 'star', chest: 'gift', exam: 'note', done: 'check', lock: 'lock', skipped: 'skip' };
+// A certification track keeps only the units tagged for that exam, so a learner who already holds another
+// certification skips the rest. Progress is shared, so switching tracks loses nothing.
+const inTrack = (u, track = S.track) => !track || u.exams?.some(e => e.startsWith(track));
+
+// Lives come back with time. Practice never costs one, so there is always something to learn.
+function syncLives() {
+  if (S.lives >= MAX_LIVES) { S.livesAt = 0; return; }
+  if (!S.livesAt) S.livesAt = Date.now();
+  const gained = Math.floor((Date.now() - S.livesAt) / LIFE_MS);
+  if (gained > 0) { S.lives = Math.min(MAX_LIVES, S.lives + gained); S.livesAt = S.lives >= MAX_LIVES ? 0 : S.livesAt + gained * LIFE_MS; save(); }
+}
+function addLife() { S.lives = Math.min(MAX_LIVES, S.lives + 1); syncLives(); save(); renderTop(); }
+function loseLife() { if (S.lives === MAX_LIVES) S.livesAt = Date.now(); S.lives = Math.max(0, S.lives - 1); save(); renderTop(); }
+const lifeWait = () => { const ms = Math.max(0, S.livesAt + LIFE_MS - Date.now()); return `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`; };
+function renderLives() {
+  syncLives(); $('livesCount').textContent = `${S.lives} / ${MAX_LIVES}`;
+  $('livesWait').textContent = S.lives < MAX_LIVES ? t('livesNext', lifeWait()) : t('livesFull');
+  $('buyLife').disabled = S.gems < LIFE_GEMS || S.lives >= MAX_LIVES; $('earnLife').disabled = S.lives >= MAX_LIVES;
+}
+function openLives() { renderLives(); $('livesSheet').hidden = false; clearInterval(openLives.tick); openLives.tick = setInterval(() => { if ($('livesSheet').hidden) clearInterval(openLives.tick); else renderLives(); }, 1000); }
+// The Trivia questions live on as light practice. They load on first use, so the app itself stays small.
+let triviaReady;
+function loadTrivia() {
+  triviaReady ||= Promise.all(['content', 'content.en'].map(name => new Promise((ok, fail) => { const tag = document.createElement('script'); tag.src = `data/${name}.js?v=30`; tag.onload = ok; tag.onerror = fail; document.head.append(tag); })));
+  return triviaReady;
+}
+function triviaExercises(count) {
+  /* global commands, pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios, CONTENT */
+  const names = commands.map(c => c.name), en = CONTENT.en;
+  const byName = commands.map(c => ({ type: 'choice', prompt: T(`איזו פקודה עושה את זה? ${c.meaning}`, `Which command does this? ${en.commands[c.name] || c.meaning}`), options: [c.name, ...shuffle(names.filter(n => n !== c.name)).slice(0, 3)], answer: c.name, fx: unitFixture }));
+  const groups = { pipeScenarios, pipeFlagScenarios, professionalScenarios, pipeTwoFlagScenarios, workflowScenarios };
+  const tasks = Object.entries(groups).flatMap(([key, list]) => list.map((q, i) => ({ type: 'choice', prompt: T(q.prompt, en.scenarios[key]?.[i]?.prompt || q.prompt), options: [q.answer, ...q.wrong.slice(0, 3)], answer: q.answer, fx: unitFixture })));
+  return shuffle([...byName, ...tasks]).slice(0, count);
+}
+async function startTrivia(earn) {
+  try { await loadTrivia(); } catch { return toast(t('triviaFailed')); }
+  $('livesSheet').hidden = true;
+  L = null; startLesson('trivia', triviaExercises(earn ? 5 : 8), { practice: true, earnLife: earn });
+}
+function heroBar() {
+  const r = rankOf(S.xp), box = el('div', 'hero-bar'), face = el('div', 'hero-face'), info = el('div', 'hero-info'), bar = el('div', 'hero-progress'), fill = el('div');
+  face.innerHTML = mascot('happy');
+  fill.style.width = `${r.to ? Math.round(((S.xp - r.from) / (r.to - r.from)) * 100) : 100}%`; bar.append(fill);
+  info.append(el('div', 'hero-rank', t('rankLine', r.level, r.name)), bar, Object.assign(el('div', 'hero-xp', r.to ? `${S.xp} / ${r.to} XP` : `${S.xp} XP`), { dir: 'ltr' }));
+  box.append(face, info); return box;
+}
+// The lesson and its end screen take the colors of the region they belong to.
+function paintRegion(part) {
+  const r = REGIONS[part] || REGIONS[3];
+  for (const id of ['lesson', 'end']) for (const [k, v] of Object.entries({ '--r-ground': r.ground, '--r-panel': r.panel, '--r-accent': r.accent, '--accent': r.accent, '--on-accent': REGION_ON_ACCENT, '--bg': r.ground, '--surface': r.panel, '--soft': r.panel, '--muted': REGION_MUTE, '--ink': REGION_INK, '--line': '#ffffff33', '--line-strong': '#ffffff55' })) $(id).style.setProperty(k, v);
+}
+const unitOfKey = key => { const m = /^u(\d+)-/.exec(key); return availableCourse().find(u => u.unit === (m ? +m[1] : /^(L\d|c1|boss)$/.test(key) ? 1 : -1)); };
+// The command a lesson teaches first is the power it gives.
+const powerOf = (unit, lesson) => { const cmd = unit?.lessons?.[lesson]?.exercises.find(e => e.type === 'teach')?.cmd; return cmd && cmd.length <= 12 ? cmd : ''; };
+function regionBlock(part, first) {
+  const r = REGIONS[part], box = el('section', 'region');
+  for (const [k, v] of Object.entries({ ground: r.ground, panel: r.panel, accent: r.accent })) box.style.setProperty(`--r-${k}`, v);
+  box.dataset.part = part;
+  const h = el('h2', `part-header${first ? ' sr' : ''}`, tr(r.name)); h.dataset.part = part;
+  box.append(h);
+  return box;
+}
+// The region you are in stays on screen: moon, name and land above, your lives and rank on the same ground.
+function worldStage() {
+  const box = el('div', 'stage'), copy = el('div', 'stage-copy'), rows = el('div', 'stage-rows');
+  box.id = 'stage';
+  copy.append(Object.assign(el('div', 'stage-name'), { ariaHidden: 'true' }), el('p', 'stage-blurb'));
+  rows.append(heroBar(), el('div', 'game-world-progress'));
+  box.append(el('div', 'stage-scenes'), copy, rows);
+  return box;
+}
+function paintStage(part, fade) {
+  const box = $('stage'); if (!box || +box.dataset.part === part) return;
+  const r = REGIONS[part], scenes = box.querySelector('.stage-scenes'), copy = box.querySelector('.stage-copy'), layer = el('div', 'stage-layer'), name = copy.firstChild;
+  box.dataset.part = part;
+  updateWorldProgress(part);
+  box.style.setProperty('--r-ground', r.ground); box.style.setProperty('--accent', r.accent); FIELD.tint(r.accent); BOLTS.tint(r.accent);
+  name.textContent = tr(r.name); name.classList.toggle('long', tr(r.name).length > 11); copy.lastChild.textContent = tr(r.blurb);
+  layer.innerHTML = regionScene(part);
+  while (scenes.children.length > (fade ? 1 : 0)) scenes.firstChild.remove();
+  scenes.append(layer);
+  if (!fade) return;
+  const motion = { duration: 240, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' };
+  copy.animate({ opacity: [0, 1] }, motion);
+  layer.animate({ opacity: [0, 1] }, motion).onfinish = () => { if (layer.isConnected) while (scenes.firstChild !== layer) scenes.firstChild.remove(); };
+}
+function syncStage(fade = true) {
+  const box = $('stage'); if (!box?.offsetHeight) return;
+  const line = box.getBoundingClientRect().bottom + 1; let part;
+  for (const region of document.querySelectorAll('#path .region')) { if (!part || region.getBoundingClientRect().top <= line) part = +region.dataset.part; else break; }
+  if (part) paintStage(part, fade);
+}
+const FIELD = startField($('pathField')), BOLTS = startBolts($('pathBolts'));
+let stageFrame = 0;
+addEventListener('scroll', () => { stageFrame ||= requestAnimationFrame(() => { stageFrame = 0; syncStage(); }); }, { passive: true });
+// The top row belongs to the scene on the path, and to the page on every other tab.
+function dockBar() {
+  const bar = document.querySelector('.topbar'), stage = $('stage');
+  if (stage && $('learn').classList.contains('active')) stage.querySelector('.stage-rows').prepend(bar);
+  else document.querySelector('.app').prepend(bar);
+}
+// Lines between the path's nodes, measured after layout so they follow any screen width.
+function drawTraces() {
+  for (const list of document.querySelectorAll('#path .nodes')) {
+    list.querySelector('.traces')?.remove();
+    const box = list.getBoundingClientRect(); if (!box.width) continue;
+    const nodes = [...list.querySelectorAll('.node')].map(n => { const q = n.getBoundingClientRect(); return { x: q.left - box.left + q.width / 2, y: q.top - box.top + q.height / 2, done: n.classList.contains('done') }; });
+    const svg = nodes.slice(1).map((n, i) => `<path class="${nodes[i].done ? 'lit' : ''}" d="M${nodes[i].x} ${nodes[i].y}L${n.x} ${n.y}"/>`).join('');
+    list.insertAdjacentHTML('afterbegin', `<svg class="traces" width="${box.width}" height="${box.height}" aria-hidden="true">${svg}</svg>`);
+  }
+}
+addEventListener('resize', () => drawTraces());
+function renderPath(append = false) {
+  const root = $('path'), units = availableCourse().filter(u => inTrack(u));
+  const mounted = append ? [...root.querySelectorAll('.unit-banner')].map(b => +b.dataset.unit) : [];
+  append = append && mounted.every((id, i) => units[i]?.unit === id);
+  if (!append) {
+    document.querySelector('.app').prepend(document.querySelector('.topbar'));
+    root.innerHTML = ''; root.append(worldStage());
+  }
+  $('trackName').textContent = TRACK_SHORT[S.track] || t('trackAll');
+  const order = units.filter(u => !u.locked).flatMap(unitNodes);
+  const current = order.find(n => !S.done.includes(n.key))?.key;
+  let region = append ? root.querySelector('.region:last-child') : null, part = +region?.dataset.part;
+  for (const unit of units.slice(append ? mounted.length : 0)) {
+    if (unit.section !== part) {
+      part = unit.section; region = regionBlock(part, !region); root.append(region);
+      const target = !unit.locked && !unit.exam && skipTarget(part);
+      if (target && target.keys.length) region.append(skipRow(target));
+    }
+    const banner = el('div', `unit-banner ${unit.color}${unit.locked ? ' locked' : ''}`);
+    banner.dataset.unit = unit.unit;
+    const txt = el('div'); txt.append(el('div', 'unit-kicker', t('kicker', unit.section, unit.unit)), el('h2', '', tr(unit.title)), el('div', 'unit-sub', tr(unit.subtitle)));
+    const exams = [['L', 'LPIC-1'], ['R', 'RHCSA'], ['F', 'LFCS']].filter(([k]) => unit.exams?.some(e => e.startsWith(k)));
+    if (exams.length) { const chips = el('div', 'exam-chips'); for (const [, name] of exams) chips.append(el('span', 'exam-chip', name)); txt.append(chips); }
+    const book = el('div', 'unit-book'); book.append(icon(unit.locked ? 'lock' : 'book')); banner.append(txt, book); region.append(banner);
+    const list = el('ol', 'nodes');
+    const nodes = unit.locked ? NODE_PLAN.map(([id, kind]) => ({ key: unitKey(unit, id), kind: kind === 'boss' ? 'boss' : 'lesson', unit, lockedUnit: true })).filter(n => n.key !== unitKey(unit, 'c1')) : unitNodes(unit);
+    let lessonNo = 0;
+    nodes.forEach((n, i) => {
+      const li = el('li', 'node-row'); li.style.setProperty('--x', `${OFFSETS[i % OFFSETS.length]}px`);
+      // A mock exam is open from day one, so a learner can measure where they stand before the path gets there.
+      const state = n.lockedUnit ? 'locked' : S.done.includes(n.key) ? 'done' : n.key === current ? 'current' : n.kind === 'exam' ? 'open' : 'locked';
+      const skipped = state === 'done' && S.skipped.includes(n.key);
+      const b = el('button', `node ${n.kind} ${state}${skipped ? ' skipped' : ''}`); b.type = 'button';
+      if (n.kind === 'boss' && state !== 'done') b.textContent = '$_'; else b.replaceChildren(icon(skipped ? ICONS.skipped : state === 'done' && n.kind !== 'chest' ? ICONS.done : state === 'locked' && n.kind === 'lesson' ? ICONS.lock : ICONS[n.kind]));
+      if (n.kind === 'boss') b.dir = 'ltr';
+      if (n.kind === 'lesson') b.append(el('span', 'node-num', String(++lessonNo)));
+      b.setAttribute('aria-label', n.lockedUnit ? (n.kind === 'lesson' ? `${lessonNo} · ${t('locked')}` : t('locked')) : n.kind === 'lesson' ? t('lessonN', n.i + 1, tr(unit.lessons[n.i].title)) : n.kind === 'chest' ? t('chest') : n.kind === 'exam' ? tr(unit.title) : tr(unit.boss.title));
+      if (skipped) b.setAttribute('aria-label', `${b.getAttribute('aria-label')} · ${t('skippedMark')}`);
+      b.onclick = () => openPop(b, n, state);
+      if (state === 'current') { const tip = el('div', 'start-tip', n.kind === 'chest' ? t('open') : t('start')); li.append(tip); li.classList.add('tipped'); }
+      li.append(b);
+      if (n.kind === 'lesson' && (state === 'done' || state === 'current') && powerOf(unit, n.i)) li.append(Object.assign(el('span', 'node-power', powerOf(unit, n.i)), { dir: 'ltr' }));
+      if (i === 2 && !unit.locked) { const m = el('div', 'path-mascot'); m.innerHTML = window.worldCharacter(unit); li.append(m); }
+      list.append(li);
+    });
+    region.append(list);
+  }
+  drawTraces();
+  renderTop();
+  if (!append) { paintStage(+root.querySelector('.region')?.dataset.part, false); dockBar(); }
+  syncStage(false);
+  updateWorldProgress();
+}
+function openPop(anchor, n, state) {
+  closePop(); SFX.tap();
+  const unit = n.unit, skipped = state === 'done' && S.skipped.includes(n.key), pop = el('div', `pop ${state}`); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
+  if (state === 'locked') {
+    const target = !n.lockedUnit && n.kind !== 'exam' && skipTarget(n.key);
+    if (target && target.keys.length) return skipPop(anchor, target, n.kind === 'chest' ? t('chest') : tr(n.kind === 'boss' ? unit.boss.title : unit.lessons[n.i].title), t('skipLocked'));
+    pop.append(el('h3', '', n.lockedUnit ? tr(unit.title) : t('notYet')), el('p', '', n.lockedUnit ? t('lockedUnitText') : t('notYetText')));
+  }
+  else if (n.kind === 'chest') {
+    const opened = state === 'done' && !skipped;
+    pop.append(el('h3', '', opened ? t('chestOpened') : t('chest')), el('p', '', opened ? t('chestDone') : t('chestText')));
+    if (state === 'current' || skipped) { const go = el('button', 'btn primary', t('chestBtn')); go.onclick = () => openChest(n.key); pop.append(go); }
+  } else if (n.kind === 'exam') {
+    const x = unit.exam;
+    pop.append(el('h3', '', tr(unit.title)), el('p', '', t('examInfo', x.count, x.minutes, Math.round(x.pass * 100))));
+    if (['R', 'F'].includes(x.tag)) pop.append(el('p', 'pop-lead', t('examHandsOn')));
+    const go = el('button', 'btn primary', state === 'done' ? t('examAgain') : t('startExam'));
+    go.onclick = () => { closePop(); startExam(unit, n.key); };
+    pop.append(go);
+  } else {
+    if (n.kind === 'lesson' && state === 'current') {
+      const story = window.StoryMissions?.render(pop, unit, LANG), mission = window.GameProgress?.mission(unit, S.done, unitNodes);
+      if (story && mission?.total) story.append(el('p', 'story-mission-progress', t('missionProgress', mission.completed, mission.total)));
+    }
+    const title = tr(n.kind === 'boss' ? unit.boss.title : unit.lessons[n.i].title);
+    pop.append(el('h3', '', title), el('p', '', skipped ? t('skippedText') : n.kind === 'boss' ? tr(unit.boss.intro || unit.boss.text) : t('lessonOf', n.i + 1, unit.lessons.length)));
+    const go = el('button', 'btn primary', skipped ? t('learnIt') : state === 'done' ? t('again') : n.kind === 'boss' ? t('toBoss') : t('startXp'));
+    go.onclick = () => { closePop(); syncLives(); if (S.lives === 0 && (state !== 'done' || skipped)) return openLives(); n.kind === 'boss' ? startBoss(unit, n.key) : startLesson(n.key, withFixture(unit, unit.lessons[n.i].exercises), { title, replay: state === 'done' && !skipped }); };
+    pop.append(go);
+  }
+  showPop(anchor, pop);
+}
+function showPop(anchor, pop) {
+  pop.setAttribute('aria-label', pop.querySelector('h3')?.textContent || t('pathLabel'));
+  anchor.parentElement.append(pop); anchor.parentElement.classList.add('open');
+  requestAnimationFrame(() => {
+    if (!pop.isConnected) return;
+    const action = pop.querySelector('.btn.primary'), nav = document.querySelector('.tabbar');
+    if (!action || !nav) return;
+    const overlap = action.getBoundingClientRect().bottom - nav.getBoundingClientRect().top + 12;
+    if (overlap > 0) scrollBy({ top: overlap, behavior: 'instant' });
+  });
+  setTimeout(() => document.addEventListener('click', outside), 0);
+}
+function outside(e) { if (!e.target.closest('#pop') && !e.target.closest('.node, .skip-btn')) closePop(); }
+function closePop() { $('pop')?.parentElement.classList.remove('open'); $('pop')?.remove(); document.removeEventListener('click', outside); }
+function openChest(key) {
+  closePop(); S.gems += 15; if (!S.done.includes(key)) S.done.push(key); S.skipped = S.skipped.filter(k => k !== key); save(); SFX.win(); confetti(); toast(t('gemsToast')); renderPath();
+}
+
+// ---------- Lesson engine ----------
+let L = null;
+// The simulator loads after the first screen (shell.js is deferred, and its tag comes after this script), so its
+// load or error event is caught on the document, where the capture phase sees events that do not bubble.
+const shellLoad = typeof Shell === 'function' ? Promise.resolve() : new Promise((ok, fail) => {
+  for (const [type, done] of [['load', ok], ['error', fail]]) document.addEventListener(type, e => { if (/(^|\/)shell\.js\?/.test(e.target.getAttribute?.('src') || '')) done(); }, true);
+});
+shellLoad.catch(() => { /* reported when a lesson waits for it */ });
+function startLesson(key, exercises, opts = {}) {
+  const queue = exercises.map((ex, i) => ({ ...ex, uid: key === 'practice' && ex.uid ? ex.uid : `${key}.${i}` }));
+  const lesson = L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
+  paintRegion(opts.exam?.skip?.part ?? unitOfKey(key)?.section);
+  $('lesson').hidden = false; document.body.classList.add('in-lesson');
+  if (typeof Shell === 'function') return next();
+  $('exBody').textContent = t('lessonLoading');
+  shellLoad.then(() => { if (L === lesson) next(); }, () => { if (L === lesson) { closeOverlays(); toast(t('lessonFailed')); } });
+}
+function startBoss(unit, key) {
+  if (unit.boss.exercises) return startLesson(key, withFixture(unit, unit.boss.exercises), { boss: true });
+  const boss = bossFixture();
+  startLesson(key, [{ type: 'boss', prompt: unit.boss.text(boss.hideIn), boss }], { boss: true });
+}
+// A mock exam draws questions from every unit tagged for the exam. It first takes one question per objective tag
+// (L101.1, E013.2, C1.3 ...) so every objective is asked, then fills up at random. No teach cards and no live terminals.
+function buildExam(tag, count) {
+  const units = availableCourse().filter(u => !u.locked && !u.exam && u.exams?.some(e => e.startsWith(tag)));
+  const pool = units.flatMap(u => withFixture(u, [...u.lessons.flatMap(l => l.exercises), ...(u.boss.exercises || [])]).filter(ex => !['teach', 'terminal', 'boss'].includes(ex.type)).map(ex => ({ ...ex, topic: u.title, objs: u.exams.filter(e => e.startsWith(tag)) })));
+  const picked = new Set();
+  for (const obj of [...new Set(pool.flatMap(ex => ex.objs))]) { const options = shuffle(pool.filter(ex => ex.objs.includes(obj) && !picked.has(ex))); if (options.length) picked.add(options[0]); }
+  for (const ex of shuffle(pool)) { if (picked.size >= count) break; picked.add(ex); }
+  return shuffle([...picked]).slice(0, count);
+}
+function startExam(unit, key, count = unit.exam.count) {
+  startLesson(key, buildExam(unit.exam.tag, count), { exam: unit.exam, results: [] });
+  if (unit.exam.minutes) {
+    const end = Date.now() + unit.exam.minutes * 60000;
+    const tick = () => { if (!L?.opts.exam) return clearInterval(L?.timer); const left = Math.max(0, Math.round((end - Date.now()) / 1000)); $('comboTag').textContent = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; if (!left) finishLesson(); };
+    L.timer = setInterval(tick, 1000); tick();
+  }
+}
+// A learner who already knows Linux can jump to any stage: the start of a later part, or any stage that is still
+// closed. The test asks about every stage it would skip, live terminals included, with no hints, no timer and no
+// lives at stake. Passing marks those stages as skipped.
+const SKIP_PASS = 0.8, SKIP_ASKED = new Set();
+function skipTarget(to) {
+  const order = availableCourse().filter(u => inTrack(u) && !u.locked).flatMap(unitNodes), byPart = typeof to === 'number';
+  const cut = byPart ? order.findIndex(n => n.unit.section >= to) : order.findIndex(n => n.key === to);
+  const nodes = (cut < 0 ? (byPart ? order : []) : order.slice(0, cut)).filter(n => !n.unit.exam && !S.done.includes(n.key));
+  const units = [...new Set(nodes.map(n => n.unit))], parts = new Set(units.map(u => u.section)).size;
+  const lessons = nodes.filter(n => n.kind === 'lesson').length;
+  return { to, part: byPart ? to : order[cut]?.unit.section, units, parts, keys: nodes.map(n => n.key), count: Math.min(40, Math.max(12, parts * 4), Math.max(4, lessons * 2)) };
+}
+function buildSkip(units, count, keys = null) {
+  const fresh = ex => !SKIP_ASKED.has(tr(ex.prompt));
+  const pools = shuffle(units).map(u => {
+    const skipped = u.lessons.filter((l, i) => !keys || keys.includes(unitKey(u, `L${i}`)));
+    const all = shuffle(withFixture(u, (skipped.length ? skipped : u.lessons).flatMap(l => l.exercises)).filter(ex => !['teach', 'boss'].includes(ex.type)).map(ex => ({ ...ex, topic: u.title })));
+    return [...all.filter(fresh), ...all.filter(ex => !fresh(ex))];
+  });
+  const picked = [];
+  for (let i = 0; picked.length < count && pools.some(p => p.length > i); i++) for (const p of pools) if (p[i] && picked.length < count) picked.push(p[i]);
+  for (const ex of picked) SKIP_ASKED.add(tr(ex.prompt));
+  return shuffle(picked);
+}
+function startSkip(to) {
+  const target = skipTarget(to);
+  closePop(); startLesson(`skip-${target.part}`, buildSkip(target.units, target.count, target.keys), { exam: { pass: SKIP_PASS, skip: target }, results: [] });
+}
+function skipPop(anchor, target, name, lead = '') {
+  const pop = el('div', 'pop jump'); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
+  const go = el('button', 'btn primary', t('skipStart')); go.onclick = () => startSkip(target.to);
+  pop.append(el('h3', '', t('skipTitle', name)));
+  if (lead) pop.append(el('p', 'pop-lead', lead));
+  pop.append(el('p', '', t('skipInfo', target.count, Math.round(SKIP_PASS * 100))), go);
+  showPop(anchor, pop);
+}
+function skipRow(target) {
+  const row = el('div', 'skip-row'), b = el('button', 'skip-btn'); b.type = 'button'; b.append(icon('skip'), ` ${t('skipHere')}`);
+  b.onclick = () => { closePop(); SFX.tap(); skipPop(b, target, tr(REGIONS[target.part].name)); };
+  row.append(b); return row;
+}
+function next() {
+  if (!L.queue.length) return finishLesson();
+  L.ex = L.queue.shift(); L.answered = false; L.value = null;
+  const ex = L.ex;
+  $('bar').style.width = `${((L.opts.exam ? L.correct + L.mistakes : L.correct) / Math.max(1, L.total)) * 100}%`;
+  $('exTag').textContent = L.opts.exam ? t('examQ', L.total - L.queue.length, L.total) : ex.type === 'teach' ? t(ex.known ? 'knownCmd' : 'newCmd') : ex.retry ? t('retry') : '';
+  $('exTag').className = `ex-tag${ex.type === 'teach' ? ' new' : ex.retry ? ' retry' : ''}`;
+  $('exPrompt').replaceChildren(ex.type === 'teach' ? '' : bidi(laidOut(ex, tr(ex.prompt))));
+  $('exPrompt').hidden = ex.type === 'teach';
+  const body = $('exBody'); body.innerHTML = ''; body.className = `ex-body ${ex.type}`;
+  setFoot('idle'); RENDER[ex.type](body, ex);
+  $('lessonMain').scrollTop = 0;
+}
+// The owner's layout fixes: only spaces and line breaks may differ from the text in the course, so a saved fix
+// that no longer matches (the text was rewritten since) is ignored.
+const bare = s => String(s).replace(/[\s\u200E]+/g, '');
+const editKey = ex => `${ex.uid}:${ex.type === 'teach' ? 'text' : 'prompt'}`;
+const editable = ex => tr(ex.type === 'teach' ? ex.text : ex.prompt);
+function laidOut(ex, text) { const fix = S.layout[editKey(ex)]; return fix && bare(fix) === bare(text) ? fix : text; }
+function openEditor() {
+  if (!L?.ex) return;
+  const ex = L.ex, original = editable(ex), box = $('edText'), note = $('edNote');
+  let good = laidOut(ex, original);
+  box.value = good; note.value = ''; $('edHint').hidden = true;
+  const preview = () => $('edPreview').replaceChildren(bidi(box.value));
+  box.oninput = () => { if (bare(box.value) === bare(original)) { good = box.value; $('edHint').hidden = true; } else { const at = box.selectionStart; box.value = good; box.selectionStart = box.selectionEnd = Math.min(at, good.length); $('edHint').hidden = false; } preview(); };
+  preview();
+  $('edCancel').onclick = () => { $('editor').hidden = true; };
+  $('edSave').onclick = () => {
+    const saved = laidOut(ex, original);
+    if (good !== original) S.layout[editKey(ex)] = good; else delete S.layout[editKey(ex)];
+    if (note.value.trim()) S.reports.push({ uid: ex.uid, type: ex.type, lang: LANG, text: good, note: note.value.trim() });
+    save(); $('editor').hidden = true; showPrompt(ex);
+    if (note.value.trim()) toast(t('edReported'));
+    if (good === saved || good === original) return;
+    const body = `<!-- layout-fix -->\n**Exercise:** \`${ex.uid}\` (${ex.type}), language ${LANG}\n\nOnly spaces and line breaks changed. Submitting this applies it to the course automatically.\n\n**Before:**\n\`\`\`\n${original}\n\`\`\`\n\n**After** (⏎ marks a line break):\n\`\`\`\n${good.replace(/\n/g, '⏎\n')}\n\`\`\`\n\n\`\`\`json\n${JSON.stringify({ uid: ex.uid, lang: LANG, original, layout: good })}\n\`\`\`\n`;
+    window.open(`https://github.com/SaharHalili95/linux-master/issues/new?${new URLSearchParams({ title: `Layout fix: ${ex.uid}`, labels: 'question-report', body })}`, '_blank', 'noopener');
+  };
+  showReports();
+  $('editor').hidden = false; box.focus({ preventScroll: true });
+}
+// Problem notes stay on this device until the owner shares them all at once, so reporting needs no account.
+function showReports() {
+  const n = S.reports.length;
+  $('edReports').hidden = !n; $('edShare').textContent = t('edShare', n);
+}
+async function shareReports() {
+  const text = `Linux Master question reports (${S.reports.length})\n\n${S.reports.map((r, i) => `${i + 1}. ${r.uid} (${r.type}, ${r.lang})\nText: ${r.text}\nNote: ${r.note}\n`).join('\n')}`;
+  try {
+    if (navigator.share) await navigator.share({ title: 'Linux Master question reports', text });
+    else { await navigator.clipboard.writeText(text); toast(t('edCopied')); }
+  } catch { /* the share sheet was closed */ }
+}
+function showPrompt(ex) {
+  $('exPrompt').replaceChildren(ex.type === 'teach' ? '' : bidi(laidOut(ex, tr(ex.prompt))));
+  const teachText = document.querySelector('.bubble p'); if (ex.type === 'teach' && teachText) teachText.replaceChildren(bidi(laidOut(ex, tr(ex.text))));
+}
+function setCan(ok) { $('checkBtn').disabled = !ok; }
+function editDistance(a, b) {
+  let row = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const next = [i];
+    for (let j = 1; j <= b.length; j++) next[j] = Math.min(row[j] + 1, next[j - 1] + 1, row[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    row = next;
+  }
+  return row[b.length];
+}
+// A command the learner typed that is almost one of the solution lines: the word that differs on each side, to show them.
+function typoIn(typed, solve) {
+  let best;
+  for (const [line, want] of solve.entries()) {
+    if (typed.includes(want)) continue;
+    for (const got of typed) {
+      const d = editDistance(got, want);
+      if (d && d <= Math.max(2, Math.floor(want.length * 0.2)) && (!best || d < best.d)) best = { d, got, want, line };
+    }
+  }
+  if (!best) return null;
+  const { got, want } = best;
+  let from = 0; while (from < got.length && got[from] === want[from]) from++;
+  let back = 0; while (back < got.length - from && back < want.length - from && got[got.length - 1 - back] === want[want.length - 1 - back]) back++;
+  const word = /[^\s"']/, start = s => { let i = from; while (i > 0 && word.test(s[i - 1])) i--; return i; };
+  const end = s => { let i = s.length - back; while (i < s.length && word.test(s[i])) i++; return i; };
+  const g = got.slice(start(got), end(got)), w = want.slice(start(want), end(want));
+  return g && w ? { got: g, want: w, line: best.line, at: [start(want), end(want)] } : null;
+}
+// What the live coach says after a command: that the task is done, what an error means, or which word to check.
+// It never names the right command.
+const COACH_ERRORS = [
+  [/command not found/, 'coachNoCmd'], [/No such file or directory/, 'coachNoFile'], [/Is a directory/, 'coachIsDir'],
+  [/[Nn]ot a directory/, 'coachNotDir'], [/Permission denied/, 'coachPerm'], [/missing (file )?operand/, 'coachOperand'],
+  [/File exists/, 'coachExists'], [/Directory not empty/, 'coachNotEmpty'], [/syntax error/, 'coachSyntax'],
+];
+function coachNote(ex, sh, log, cmd, text, wasDone, unsupported) {
+  let done = false; try { done = !!ex.goal(sh, log); } catch { done = false; }
+  if (done) return { done, note: ex.ask ? t('coachAsk') : wasDone ? t('coachAlready') : text ? t('coachDone') : `${t('coachDone')} ${t('coachSilent')}` };
+  const typo = typoIn([cmd], ex.solve);
+  if (typo) return { done, note: t('coachTypo', typo.got) };
+  const known = COACH_ERRORS.find(([re]) => re.test(text || ''));
+  if (known) return { done, note: t(known[1]) };
+  // A command that ran and changed nothing the task checks: say whether it is a right step, the right command with
+  // something else wrong, or not what this task needs.
+  if (!unsupported) {
+    const names = new Set(ex.solve.flatMap(s => s.split(/\|\||&&|[|;]/).map(p => p.trim().split(/\s+/)[0])));
+    const name = cmd.split(/\s+/)[0];
+    const flat = s => s.trim().replace(/\s+/g, ' ');
+    if (ex.solve.some(s => flat(s) === flat(cmd))) return { done, note: t('coachStep') };
+    return { done, note: names.has(name) ? t('coachRightCmd', name) : t('coachNotYet') };
+  }
+  return { done, note: '' };
+}
+function setFoot(mode, title = '',{ label = '', sol = '', note = '', mark = null } = {}) {
+  const foot = $('foot'); foot.className = `lesson-foot ${mode}`;
+  $('fbTitle').textContent = title; $('fbBox').hidden = mode === 'idle';
+  const detail = $('fbDetail'); detail.innerHTML = '';
+  if (sol) {
+    const row = el('div', 'fb-sol', label); const c = el('pre', 'cmd'); c.dir = 'ltr';
+    if (mark) {
+      const lines = sol.split('\n'), s = lines[mark.line], [a, b] = mark.at;
+      c.append([...lines.slice(0, mark.line), s.slice(0, a)].join('\n'), el('mark', 'fb-diff', s.slice(a, b)), [s.slice(b), ...lines.slice(mark.line + 1)].join('\n'));
+    } else c.textContent = sol;
+    row.append(c); detail.append(row);
+  }
+  if (note) { const n = el('div', 'fb-note'); n.append(bidi(note)); detail.append(n); }
+  $('checkBtn').textContent = mode === 'idle' ? (L.ex?.type === 'teach' ? t('gotIt') : t('check')) : t('continue');
+  $('reportLink').hidden = mode === 'idle';
+  if (mode !== 'idle') $('reportLink').href = reportUrl();
+  if (mode === 'idle') setCan(L.ex?.type === 'teach');
+}
+function reportUrl() {
+  const ex = L.ex, body = `**Prototype exercise:** \`${ex.uid}\` (${ex.type})\n\n> ${tr(ex.prompt) || ex.cmd}\n\n**Language:** ${LANG}\n\n**Learner answer:** \`${L.value ?? ''}\`\n\n**Details:**\n`;
+  return `https://github.com/SaharHalili95/linux-master/issues/new?${new URLSearchParams({ title: `Prototype report: ${ex.uid}`, labels: 'question-report', body })}`;
+}
+function onFootButton() {
+  if (L.answered || L.ex.type === 'teach') { L.answered = false; return next(); }
+  const r = CHECK[L.ex.type](L.ex, L.value);
+  answer(r.ok, r.solution, r.why);
+}
+// What the question asked and what the learner gave, kept for the review at the end of a test.
+function reviewOf(ex, v) {
+  const shown = { output: ex.cmd, sentence: tr(ex.text), fill: ex.type === 'fill' && `${ex.before}___${ex.after}` }[ex.type] || '';
+  const given = ex.type === 'terminal' ? (L.term?.log || []).map(l => l.cmd.trim()).filter(Boolean).join('\n')
+    : ex.type === 'choice' && ex.plain ? tr(ex.options[+v]) : ex.type === 'output' && v === '' ? t('noOutput') : v ?? '';
+  return { q: tr(ex.prompt) || '', shown, given: String(given) };
+}
+function testReview(results) {
+  const box = $('endReview'); box.replaceChildren(); box.hidden = !results.length;
+  const item = r => {
+    const li = el('li', `rv ${r.ok ? 'ok' : 'bad'}`);
+    const q = el('p', 'rv-q'); q.append(icon(r.ok ? 'check' : 'x'), ' ', bidi(r.q)); li.append(q);
+    const block = text => {
+      if (!text) return el('p', 'rv-text', t('noAnswer'));
+      if (/[֐-׿]/.test(text)) { const p = el('p', 'rv-text'); p.append(bidi(text)); return p; }
+      const p = el('pre', 'rv-code', text); p.dir = 'ltr'; return p;
+    };
+    if (r.shown) li.append(block(r.shown));
+    if (!r.ok) {
+      const row = (label, text) => { const d = el('div', 'rv-row', label); d.append(block(text)); return d; };
+      li.append(row(t('youAnswered'), r.given), row(t('correctAnswer'), r.solution));
+      if (r.why) { const w = el('p', 'rv-why'); w.append(bidi(r.why)); li.append(w); }
+    }
+    return li;
+  };
+  const wrong = results.filter(r => !r.ok), right = results.filter(r => r.ok);
+  if (wrong.length) { box.append(el('h2', 'rv-h', t('reviewWrong', wrong.length))); const ul = el('ul', 'rv-list'); ul.append(...wrong.map(item)); box.append(ul); }
+  if (right.length) {
+    const d = el('details', 'rv-more'); d.open = !wrong.length;
+    const s = el('summary', 'rv-h', t('reviewRight', right.length)); const ul = el('ul', 'rv-list'); ul.append(...right.map(item)); d.append(s, ul); box.append(d);
+  }
+}
+function answer(ok, solution = '', why = '') {
+  L.answered = true;
+  // In an exam nothing is revealed until the end, and wrong answers do not come back or go to practice.
+  if (L.opts.exam) {
+    if (ok) L.correct++; else L.mistakes++;
+    L.opts.results.push({ ok, topic: L.ex.topic, ...reviewOf(L.ex, L.value), solution, why });
+    setFoot('saved', t('examSaved')); setCan(true); $('checkBtn').focus({ preventScroll: true });
+    return;
+  }
+  if (ok) {
+    L.correct++; L.combo++; L.best = Math.max(L.best, L.combo); SFX.good();
+    const praise = t('praise');
+    setFoot('good', L.combo >= 3 ? t('inARow', L.combo) : praise[Math.floor(Math.random() * praise.length)], { label: t('solution'), sol: L.ex.type === 'match' || L.ex.plain ? '' : solution });
+  } else {
+    L.mistakes++; L.combo = 0; SFX.bad(); if (!L.opts.practice && !L.opts.replay) loseLife();
+    L.queue.push({ ...L.ex, retry: true });
+    if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss && L.key !== 'trivia') S.mistakes.push(L.ex.uid);
+    const typo = L.ex.type === 'terminal' && L.term ? typoIn(L.term.log.map(l => l.cmd.trim()), L.ex.solve) : null;
+    setFoot('bad', t('correctAnswer'), typo ? { sol: solution, mark: typo, note: t('typo', typo.got, typo.want) } : ['terminal', 'scenario'].includes(L.ex.type) ? { sol: solution } :L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
+    $('lessonMain').classList.remove('shake'); void $('lessonMain').offsetWidth; $('lessonMain').classList.add('shake');
+  }
+  // A mistake leaves the list only when practice gets it right the first time, not when it is retried a moment later.
+  if (ok && L.key === 'practice' && !L.ex.retry) S.mistakes = S.mistakes.filter(id => id !== L.ex.uid);
+  $('bar').style.width = `${(L.correct / Math.max(1, L.total)) * 100}%`;
+  $('comboTag').replaceChildren(...(L.combo >= 2 ? [icon('flame'), ` ${L.combo}`] : []));
+  setCan(true); $('checkBtn').focus({ preventScroll: true }); save();
+}
+function quitLesson() { if (L && (L.correct || L.mistakes) && !confirm(t('quitConfirm'))) return; closeOverlays(); }
+function closeOverlays() { clearInterval(L?.timer); ['lesson', 'end', 'streakScreen', 'editor'].forEach(id => { $(id).hidden = true; }); document.body.classList.remove('in-lesson'); $('comboTag').textContent = ''; L = null; showTab('learn'); }
+
+// ---------- Exercise renderers ----------
+function optionButton(label, value, mono, onPick, index) {
+  const b = el('button', 'opt'); b.type = 'button'; b.dataset.value = value;
+  const k = el('span', 'key', String(index + 1)); const t = mono ? code(label) : el('span'); if (!mono) t.append(bidi(label));
+  b.append(k, t); b.onclick = () => { SFX.tap(); onPick(b); }; return b;
+}
+function pickOne(root) { return b => { if (L.answered) return; root.querySelectorAll('.opt').forEach(o => o.classList.toggle('sel', o === b)); L.value = b.dataset.value; setCan(true); }; }
+// A typed command is compared in a canonical form, so spacing, quoting, flag order, merged flags (-la), a long option
+// for its short one (--boot for -b), --opt=value for --opt value, a trailing slash and a leading sudo don't matter.
+const LONG_OPTS = Object.fromEntries('ls:all=a,almost-all=A,long=l,human-readable=h,recursive=R,reverse=r,size=s,directory=d|grep:ignore-case=i,count=c,invert-match=v,line-number=n,recursive=r,extended-regexp=E,only-matching=o,word-regexp=w,files-with-matches=l,regexp=e,max-count=m,after-context=A,before-context=B,context=C|sort:reverse=r,numeric-sort=n,unique=u,key=k,field-separator=t,human-numeric-sort=h|uniq:count=c,repeated=d,unique=u|wc:lines=l,words=w,bytes=c,chars=m|cut:delimiter=d,fields=f,characters=c,bytes=b|head:lines=n,bytes=c|tail:lines=n,bytes=c,follow=f|cp:recursive=r,verbose=v,interactive=i,archive=a,force=f|mv:verbose=v,interactive=i,force=f|rm:recursive=r,force=f,interactive=i,verbose=v|mkdir:parents=p,verbose=v,mode=m|ln:symbolic=s,force=f|cat:number=n,show-all=A|chmod:recursive=R|chown:recursive=R|chgrp:recursive=R|df:human-readable=h|du:summarize=s,human-readable=h|free:human=h|sed:in-place=i,expression=e,quiet=n,silent=n,regexp-extended=E|awk:field-separator=F|tr:delete=d,squeeze-repeats=s|tar:create=c,extract=x,file=f,gzip=z,bzip2=j,xz=J,list=t,verbose=v,directory=C|journalctl:boot=b,unit=u,follow=f,priority=p,since=S,until=U,lines=n,reverse=r,output=o,dmesg=k|chage:maxdays=M,mindays=m,warndays=W,inactive=I,expiredate=E,lastday=d,list=l|useradd:home-dir=d,create-home=m,shell=s,uid=u,gid=g,groups=G,comment=c,system=r,expiredate=e|usermod:append=a,groups=G,shell=s,lock=L,unlock=U,login=l,home=d,move-home=m,comment=c,gid=g,uid=u|passwd:lock=l,unlock=u,delete=d,expire=e,status=S|xargs:max-args=n|date:date=d|nl:body-numbering=b|touch:no-create=c'.split('|').map(group => { const [cmd, list] = group.split(':'); return [cmd, Object.fromEntries(list.split(',').map(p => p.split('=')))]; }));
+const VALUE_FLAGS = Object.fromEntries('head:nc tail:nc cut:dfcb sort:kt grep:eABCm sed:e awk:F chage:MmWIEd useradd:dsugGce usermod:Gsdlugc groupadd:g journalctl:upnbSUo tar:fC xargs:nI ssh:pil scp:Pi date:d nice:n renice:np kill:s ps:ouUp mkdir:m mount:to'.split(' ').map(p => p.split(':')));
+const NO_FLAG_SPLIT = new Set(['find', 'awk', 'java']);
+function lexCmd(text) {
+  const tokens = []; let i = 0;
+  while (i < text.length) {
+    if (/\s/.test(text[i])) { i++; continue; }
+    const op = ['&&', '||', '2>', '>>', '|', ';', '>', '<', '&'].find(o => text.startsWith(o, i));
+    if (op) { tokens.push({ op }); i += op.length; continue; }
+    let value = '', quote = '';
+    while (i < text.length && !/\s/.test(text[i]) && !/^(&&|\|\||>>|[|;<>&])/.test(text.slice(i))) {
+      const c = text[i];
+      if (c === "'" || c === '"') { const end = text.indexOf(c, i + 1), part = end < 0 ? text.slice(i + 1) : text.slice(i + 1, end); value += part; quote ||= c; i = end < 0 ? text.length : end + 1; } else { value += c; i++; }
+    }
+    // Single quotes keep $ literal and quotes keep globs literal, so those differences still count.
+    const key = (value.length > 1 ? value.replace(/\/+$/, '') : value) + (!quote && /[*?[]/.test(value) ? '\0glob' : '') + (quote === "'" && value.includes('$') ? '\0lit' : '');
+    tokens.push({ value, key, quoted: !!quote });
   }
   return tokens;
 }
-function wordKey(token){
-  let key=(token.value.length>1?token.value.replace(/\/+$/,''):token.value).replace(/ /g,'\u0001');
-  if(token.dollarInDouble)key+='\u0000dq';
-  else if(token.quote==='none'&&/[*?[]/.test(token.value))key+='\u0000glob';
-  return key;
-}
-function canonicalSegment(words){
-  if(!words.length)return '';
-  const command=words[0].value,valueFlags=VALUE_FLAGS[command]||'',flags=[],positionals=[];
-  const rest=words.slice(1);
-  for(let i=0;i<rest.length;i++){
-    const token=rest[i],v=token.value;
-    if(token.quote!=='none'||!/^-[a-zA-Z]/.test(v)||LONG_SINGLE_DASH.has(command)){positionals.push(wordKey(token));continue;}
-    const letters=v.slice(1);
-    for(let j=0;j<letters.length;j++){
-      const letter=letters[j];
-      if(!/[a-zA-Z]/.test(letter)){flags.push('-'+letters.slice(j));break;}
-      if(valueFlags.includes(letter)){
-        const attached=letters.slice(j+1);
-        const value=attached||(rest[i+1]?wordKey(rest[++i]):'');
-        flags.push(`-${letter} ${value}`);break;
+function canonicalCmd(text, valueLongs = new Set()) {
+  const out = []; let words = [];
+  const flush = () => {
+    if (words[0]?.value === 'sudo') words = words.slice(1);
+    if (!words.length) return;
+    const cmd = words[0].value, flags = [], args = [], longs = LONG_OPTS[cmd] || {}, values = VALUE_FLAGS[cmd] || '';
+    const takesNext = (next, isValue) => isValue && next && !/^-[a-zA-Z-]/.test(next.value);
+    for (let i = 1; i < words.length; i++) {
+      const w = words[i], v = w.value;
+      if (w.quoted || NO_FLAG_SPLIT.has(cmd) || !/^-[a-zA-Z-]/.test(v) || v === '--') { args.push(w.key); continue; }
+      if (v.startsWith('--')) {
+        const [name, ...rest] = v.slice(2).split('='), short = longs[name], flag = short ? `-${short}` : `--${name}`;
+        const value = rest.length ? rest.join('=') : takesNext(words[i + 1], short ? values.includes(short) : valueLongs.has(name)) ? words[++i].key : null;
+        flags.push(value === null ? flag : `${flag} ${value}`); continue;
       }
-      flags.push('-'+letter);
+      const letters = v.slice(1);
+      for (let j = 0; j < letters.length; j++) {
+        const letter = letters[j], attached = letters.slice(j + 1);
+        if (values.includes(letter) && attached) { flags.push(`-${letter} ${attached}`); break; }
+        if (!/[a-zA-Z]/.test(letters[j + 1] ?? 'x')) { flags.push(`-${letter} ${attached}`); break; }
+        if (j === letters.length - 1 && takesNext(words[i + 1], values.includes(letter))) { flags.push(`-${letter} ${words[++i].key}`); break; }
+        flags.push(`-${letter}`);
+      }
     }
+    out.push([cmd, ...flags.sort(), ...args].join(' '));
+  };
+  for (const tok of lexCmd(straightQuotes(text).trim())) if (tok.op) { flush(); words = []; out.push(tok.op); } else words.push(tok);
+  flush();
+  return out.join(' ');
+}
+function sameCommand(ex, typed) {
+  const valueLongs = new Set(ex.accept.flatMap(a => [...a.matchAll(/--([\w-]+)=/g)].map(m => m[1])));
+  const want = canonicalCmd(typed, valueLongs);
+  if (ex.accept.some(a => canonicalCmd(a, valueLongs) === want)) return true;
+  // A different command that prints the same thing in the simulator is right too, but only when the answer prints
+  // something: an empty output would accept almost anything.
+  if (ex.rec || typeof sameOutput !== 'function') return false;
+  const fx = ex.fx || unitFixture;
+  try { if (!new Shell(fx()).run(ex.accept[0]).out.trim()) return false; } catch { return false; }
+  try { return sameOutput(ex.accept[0], straightQuotes(typed), fx) === true; } catch { return false; }
+}
+// The starting files a list of commands reads, as cards: the "before" a learner needs to understand the output.
+function filePeeks(fx, cmds) {
+  const start = new Shell(fx()), sh = new Shell(fx()), peek = new Map();
+  for (const c of cmds) {
+    for (const word of c.split(/[\s|;&<>]+/)) { const p = word && sh.abs(word); if (p && start.files.has(p) && !peek.has(p) && start.files.get(p).link === undefined) peek.set(p, [word, start.files.get(p).content]); }
+    try { sh.run(c); } catch { /* unsupported commands only change what is shown */ }
   }
-  return [command,...flags.sort(),...positionals].join(' ');
+  return [...peek.values()].map(([name, content]) => { const card = el('div', 'file-peek'); card.append(el('div', 'file-peek-h', t('fileHas', name)), Object.assign(el('pre', '', content.replace(/\n$/, '') || t('emptyFile')), { dir: 'ltr' })); return card; });
 }
-function commandSegments(text){
-  const segments=[];let words=[];
-  for(const token of lexCommand(text.trim())){
-    if(token.op){segments.push({text:canonicalSegment(words),command:words[0]?.value,op:token.op});words=[];}
-    else words.push(token);
+function outputOptions(root, right, wrong) {
+  const options = shuffle([right, ...[...new Set(wrong.filter(w => w !== right))].slice(0, 3)]);
+  const list = el('div', 'opts outputs'); const pick = pickOne(list);
+  options.forEach((o, i) => { const b = optionButton('', o, false, pick, i); b.lastChild.replaceWith(Object.assign(el('pre', 'out-opt', o || t('noOutput')), { dir: 'ltr' })); list.append(b); });
+  root.append(list);
+}
+const termRows = lines => lines.flatMap(([prompt, cmd, out]) => { const row = el('div', 'term-line'); row.append(el('span', 'ps1', prompt), el('span', 'typed', cmd)); return out ? [row, el('pre', 'term-out', out)] : [row]; });
+function termBlock(lines) { const t = el('div', 'term'); t.dir = 'ltr'; t.append(...termRows(lines)); return t; }
+// An answer box sits inside the terminal, above its keys.
+const inTerminal = (root, row) => { const box = root.querySelector('.term.live'); row.dir = document.documentElement.dir; box.insertBefore(row, box.querySelector('.term-keys')); };
+const RENDER = {
+  teach(root, ex) {
+    const card = el('div', 'teach-card');
+    const head = el('div', 'teach-head'); const m = el('div', 'teach-mascot'); m.innerHTML = mascot('happy');
+    const bubble = el('div', 'bubble'); const para = el('p'); para.append(bidi(laidOut(ex, tr(ex.text)))); const title = code(ex.cmd); title.classList.toggle('long', ex.cmd.length > 14); bubble.append(title, el('div', 'teach-name', ex.name), para);
+    head.append(m, bubble); card.append(head);
+    if (ex.demo) {
+      const [setup, cmd] = ex.demo, sh = new Shell(ex.fx()), lines = [];
+      for (const c of setup) { lines.push([promptFor(sh.cwd), c, '']); sh.run(c); }
+      const ps1 = promptFor(sh.cwd), r = sh.run(cmd); lines.push([ps1, cmd, (r.out + r.err).replace(/\n$/, '')]);
+      const before = filePeeks(ex.fx, [...setup, cmd]);
+      if (before.length) card.append(el('div', 'demo-label', t('before')), ...before);
+      card.append(el('div', 'demo-label', before.length ? t('after') : t('tryIt')));
+      // The example has already run in this terminal, and the learner can go on typing in it.
+      mountTerminal(card, { type: 'teach', fx: ex.fx, setup: [...setup, cmd] }, new Shell(ex.fx()), undefined, lines);
+    } else if (ex.sample) card.append(el('div', 'demo-label', t('sampleLine')), termBlock([['user@linux:~$ ', ex.cmd, ex.sample]]));
+    root.append(card);
+  },
+  choice(root, ex) {
+    const list = el('div', 'opts'); const pick = pickOne(list);
+    const items = ex.options.map((o, i) => [ex.plain ? String(i) : o, tr(o)]);
+    shuffle(items).forEach(([value, label], i) => list.append(optionButton(label, value, !ex.plain, pick, i))); root.append(list);
+  },
+  fill(root, ex) {
+    const line = el('div', 'fill-line'); line.dir = 'ltr';
+    const slot = el('span', 'slot', '   '); line.append(el('span', 'ps1', 'user@linux:~$ '), el('span', 'typed', ex.before), slot, el('span', 'typed', ex.after));
+    const chips = el('div', 'chips');
+    shuffle(ex.options).forEach(o => { const c = el('button', 'tile', o); c.type = 'button'; c.dir = 'ltr'; c.onclick = () => { if (L.answered) return; SFX.tap(); chips.querySelectorAll('.tile').forEach(t => t.classList.toggle('sel', t === c)); slot.textContent = o; slot.classList.add('filled'); L.value = o; setCan(true); }; chips.append(c); });
+    root.append(line, chips);
+  },
+  sentence(root, ex) {
+    const [head, tail] = tr(ex.text).split('___');
+    const line = el('p', 'sentence'); const slot = Object.assign(el('span', 'slot', '   '), { dir: 'ltr' });
+    // The blank stays on one line with the word before it and the punctuation after it.
+    const before = head.match(/\S+\s*$/)?.[0] || '', after = tail.match(/^[.,:;?!]+/)?.[0] || '', glue = el('span', 'glued');
+    glue.append(bidi(before), slot, after);
+    line.append(bidi(head.slice(0, head.length - before.length)), glue, bidi(tail.slice(after.length)));
+    const chips = el('div', 'chips');
+    shuffle(ex.options).forEach(o => { const c = el('button', 'tile', o); c.type = 'button'; c.dir = 'ltr'; c.onclick = () => { if (L.answered) return; SFX.tap(); chips.querySelectorAll('.tile').forEach(t => t.classList.toggle('sel', t === c)); slot.textContent = o; slot.classList.add('filled'); L.value = o; setCan(true); }; chips.append(c); });
+    root.append(line, chips);
+  },
+  scenario(root, ex) {
+    const rec = ex.rec && RECORDED[ex.rec], box = rec ? termBlock([[promptFor('/home/user'), rec.cmd, rec.out.replace(/\n$/, '')]]) : el('div', 'term');
+    box.dir = 'ltr'; box.classList.add('live');
+    const { form, input, grow } = termField(promptFor('/home/user'), box);
+    input.id = 'scenarioCmd'; form.onsubmit = e => e.preventDefault();
+    input.oninput = () => { input.value = input.value.replace(/\n/g, ' '); L.value = straightQuotes(input.value); setCan(!!L.value.trim()); grow(); };
+    input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); if (input.value.trim()) onFootButton(); } };
+    box.append(form); root.append(box); focusField(input);
+  },
+  output(root, ex) {
+    if (ex.rec) {
+      const rec = RECORDED[ex.rec];
+      root.append(termBlock([[promptFor('/home/user'), rec.cmd, '?']]));
+      ex.solution = rec.out;
+      return outputOptions(root, rec.out, [...(ex.wrongRec || []).map(id => RECORDED[id].out), ...(ex.wrongText || [])]);
+    }
+    const fx = ex.fx, real = runIn(ex.setup, ex.cmd, fx());
+    // Show every starting file the commands read, so the answer never depends on content the learner has not seen.
+    const lines = [], sh = new Shell(fx());
+    for (const c of [...(ex.setup || []), ex.cmd]) { if (c === ex.cmd) lines.push([promptFor(sh.cwd), c, '?']); else { lines.push([promptFor(sh.cwd), c, '']); sh.run(c); } }
+    root.append(...filePeeks(fx, [...(ex.setup || []), ex.cmd]), termBlock(lines));
+    ex.solution = real.out;
+    outputOptions(root, real.out, [...(ex.wrongCmds || []).map(c => runIn(ex.setup, c, fx()).out), ...(ex.wrongText || [])]);
+  },
+  tiles(root, ex) {
+    const answerRow = el('div', 'answer-row'); answerRow.dir = 'ltr';
+    const bank = el('div', 'bank'); bank.dir = 'ltr'; const chosen = [];
+    const update = () => { L.value = chosen.map(c => c.textContent).join(' '); setCan(chosen.length > 0); };
+    shuffle(ex.tiles).forEach(word => {
+      const slot = el('span', 'tile-slot'); const t = el('button', 'tile', word); t.type = 'button';
+      t.onclick = () => {
+        if (L.answered) return; SFX.tap();
+        if (t.parentElement === slot) { answerRow.append(t); chosen.push(t); } else { slot.append(t); chosen.splice(chosen.indexOf(t), 1); }
+        update();
+      };
+      slot.append(t); bank.append(slot);
+    });
+    root.append(answerRow, bank);
+  },
+  match(root, ex) {
+    const grid = el('div', 'match-grid'); const left = el('div', 'col'), right = el('div', 'col');
+    let picked = null, matched = 0;
+    const mk = (text, side, key) => { const b = el('button', `tile pair ${side}`); b.type = 'button'; b.dataset.key = key; if (side === 'cmd') b.append(code(text)); else b.textContent = text; return b; };
+    const onTap = b => {
+      if (b.classList.contains('ok')) return; SFX.tap();
+      if (!picked || picked.classList.contains(b.classList.contains('cmd') ? 'cmd' : 'mean')) { grid.querySelectorAll('.pair').forEach(p => p.classList.remove('sel')); picked = b; b.classList.add('sel'); return; }
+      const a = picked; picked = null; a.classList.remove('sel');
+      if (a.dataset.key === b.dataset.key) {
+        [a, b].forEach(x => { x.classList.add('ok'); x.disabled = true; }); matched++; SFX.good();
+        if (matched === ex.pairs.length) { L.value = 'all'; answer(true); }
+      } else { [a, b].forEach(x => { x.classList.add('no'); setTimeout(() => x.classList.remove('no'), 450); }); L.matchMiss = true; SFX.bad(); }
+    };
+    shuffle(ex.pairs).forEach(([c]) => left.append(mk(c, 'cmd', c)));
+    shuffle(ex.pairs).forEach(([c, m]) => right.append(mk(tr(m), 'mean', c)));
+    grid.append(left, right); grid.addEventListener('click', e => { const b = e.target.closest('.pair'); if (b) onTap(b); });
+    root.append(grid); $('checkBtn').disabled = true;
+  },
+  terminal(root, ex) {
+    if (ex.peek) root.append(...filePeeks(ex.fx, [...(ex.setup || []), ...ex.solve]));
+    mountTerminal(root, ex, new Shell(ex.fx()));
+    if (!ex.ask) return;
+    // Counting tasks end with typing the number, so a learner has to read the result, not only run a command.
+    const sh = new Shell(ex.fx()); for (const c of [...(ex.setup || []), ...ex.solve]) L.expected = sh.run(c).out;
+    L.expected = L.expected.match(/\d+/)[0]; L.ask = '';
+    const n = +L.expected, wrong = shuffle([n + 1, n + 2, n - 1, n + 3].filter(v => v >= 0)).slice(0, 2);
+    const row = el('div', 'code-row ask-row'), picks = el('div', 'ask-picks');
+    for (const v of shuffle([n, ...wrong])) {
+      const b = el('button', 'term-key', String(v)); b.type = 'button'; b.dataset.ask = v;
+      b.onclick = () => { L.ask = String(v); for (const o of picks.children) o.classList.toggle('on', o === b); setCan(true); };
+      picks.append(b);
+    }
+    row.append(el('span', '', tr(ex.ask)), picks);
+    const foot = el('div', 'term-foot'), hint = root.querySelector('.hint-link');
+    foot.append(row); if (hint) foot.append(hint);
+    root.append(foot);
+  },
+  boss(root, ex) {
+    const goals = el('ul', 'goals');
+    const items = [['found', t('goalFound')], ['read', t('goalRead')], ['typed', t('goalTyped')]];
+    for (const [id, text] of items) { const li = el('li', '', text); li.dataset.goal = id; goals.append(li); }
+    const boss = ex.boss;
+    const mark = (id, on) => goals.querySelector(`[data-goal="${id}"]`).classList.toggle('done', on);
+    const head = el('div', 'boss-head'); const m = el('div', 'teach-mascot'); m.innerHTML = mascot('party'); head.append(m, goals);
+    root.append(head);
+    mountTerminal(root, ex, new Shell(boss.fx), log => {
+      mark('found', log.some(l => /^ls\b.*-\w*a/.test(l.cmd) && l.out.split('\n').includes('.code')));
+      mark('read', log.some(l => l.out.includes(boss.word)));
+    });
+    const row = el('div', 'code-row'); const lab = el('label', '', t('codeWord')); lab.htmlFor = 'codeWord';
+    const input = el('input'); input.id = 'codeWord'; input.dir = 'ltr'; input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off');
+    input.oninput = () => { L.value = input.value.trim(); mark('typed', !!L.value); setCan(!!L.value); };
+    input.onkeydown = e => { if (e.key === 'Enter' && L.value) { e.preventDefault(); onFootButton(); } };
+    row.append(lab, input); inTerminal(root, row);
+  },
+};
+// Commands typed in any terminal this visit, so ↑ can bring back one from an earlier task too.
+const TERM_HISTORY = [];
+// Completes the last word as a file or folder name, like Tab in bash. Several matches are filled up to what they
+// share, and listed.
+function completeWord(sh, value) {
+  const word = value.match(/[^\s|;&<>]*$/)[0], cut = word.lastIndexOf('/') + 1, base = word.slice(cut);
+  const dir = sh.abs(word.slice(0, cut) || '.');
+  if (!sh.dirs.has(dir)) return { value, list: [] };
+  const names = [...sh.dirs, ...sh.files.keys()].filter(p => p !== dir && sh.parent(p) === dir).map(p => p.slice(p.lastIndexOf('/') + 1))
+    .filter(n => n.startsWith(base) && (base.startsWith('.') || !n.startsWith('.'))).sort();
+  if (!names.length) return { value, list: [] };
+  const isDir = n => sh.dirs.has(dir === '/' ? `/${n}` : `${dir}/${n}`);
+  let common = names[0];
+  for (const n of names) while (!n.startsWith(common)) common = common.slice(0, -1);
+  const done = names.length === 1 ? names[0] + (isDir(names[0]) ? '/' : ' ') : common;
+  return { value: value.slice(0, value.length - base.length) + done, list: names.length > 1 ? names.map(n => n + (isDir(n) ? '/' : '')) : [] };
+}
+const straightQuotes = v => v.replace(/[\u201c\u201d\u201e]/g, '"').replace(/[\u2018\u2019]/g, "'");
+// The typing line of a terminal. It is a textarea so a long command wraps instead of being cut; the first line starts after the prompt.
+function termField(prompt, box) {
+  const form = el('form', 'term-input'), ps = el('span', 'ps1', prompt), input = el('textarea');
+  input.rows = 1; input.setAttribute('aria-label', t('command')); input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('autocapitalize', 'off'); input.setAttribute('autocorrect', 'off'); input.enterKeyHint = 'send'; input.placeholder = t('command');
+  // iPhone can leave its own caret where the line was before the keyboard moved the page, so the caret is drawn here.
+  const mirror = el('div', 'term-mirror'), caret = el('i', 'term-caret'); mirror.setAttribute('aria-hidden', 'true'); caret.setAttribute('aria-hidden', 'true');
+  form.append(ps, input, mirror, caret);
+  const place = () => {
+    const on = document.activeElement === input && input.selectionStart === input.selectionEnd; caret.hidden = !on; if (!on) return;
+    const at = el('span', '', '\u200b'); mirror.replaceChildren(input.value.slice(0, input.selectionStart), at);
+    caret.style.transform = `translate(${at.offsetLeft}px, ${at.offsetTop}px)`;
+    caret.style.animation = 'none'; void caret.offsetWidth; caret.style.animation = '';
+  };
+  caret.hidden = true;
+  for (const ev of ['input', 'focus', 'blur', 'keyup', 'click', 'select']) input.addEventListener(ev, place);
+  input.placeCaret = place;
+  const grow = () => { input.style.height = 'auto'; input.style.height = `${input.scrollHeight}px`; box.scrollTop = box.scrollHeight; place(); };
+  const fit = () => { const indent = `${ps.offsetWidth + 8}px`; input.style.textIndent = indent; mirror.style.textIndent = indent; grow(); };
+  const seen = new ResizeObserver(() => requestAnimationFrame(fit)); seen.observe(ps); seen.observe(box);
+  return { form, ps, input, grow };
+}
+// A name that is no Linux command the course knows gets bash's own answer; a real command the simulator lacks says so.
+const REAL_COMMANDS = new Set('nano vim vi less more man top htop apt apt-get dnf yum zypper rpm dpkg git python python3 pip curl wget ssh scp ping clear tar gzip zip unzip kill df free mount su passwd date cal uname hostname id groups diff ip systemctl journalctl make gcc node docker'.split(' '));
+function missingCommand(message) {
+  const name = message.match(/^command (\S+)$/)?.[1]; if (!name || REAL_COMMANDS.has(name)) return '';
+  const taught = availableCourse().some(u => (u.lessons || []).some(ls => ls.exercises.some(ex => ex.type === 'teach' && String(ex.cmd).split(/\s+/).includes(name))));
+  return taught ? '' : name;
+}
+document.addEventListener('selectionchange', () => document.activeElement?.placeCaret?.());
+const focusField = input => setTimeout(() => { if (!['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) input.focus({ preventScroll: true }); }, 50);
+function mountTerminal(root, ex, sh, onRun = () => {}, shown = []) {
+  for (const c of ex.setup || []) sh.run(c);
+  const log = []; L.term = { sh, log };
+  const box = el('div', 'term live'); box.dir = 'ltr'; const out = el('div', 'term-scroll');
+  const { form, ps, input, grow } = termField(promptFor(sh.cwd), box);
+  out.append(...termRows(shown)); if (shown.length) input.placeholder = t('tryYourself');
+  box.append(out, form);
+  let back = TERM_HISTORY.length;
+  const recall = step => {
+    back = Math.min(TERM_HISTORY.length, Math.max(0, back + step));
+    input.value = TERM_HISTORY[back] ?? ''; input.setSelectionRange(input.value.length, input.value.length); grow();
+  };
+  const tab = () => {
+    const { value, list } = completeWord(sh, input.value);
+    input.value = value; input.setSelectionRange(value.length, value.length); grow();
+    if (list.length > 1) { out.append(el('pre', 'term-out', list.join('  '))); box.scrollTop = box.scrollHeight; }
+  };
+  input.onkeydown = e => {
+    const act = { Tab: tab, ArrowUp: () => recall(-1), ArrowDown: () => recall(1) }[e.key];
+    if (act) { e.preventDefault(); act(); }
+    if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); run(); }
+  };
+  // A phone keyboard may insert the new line without a usable key event, and a paste can carry several.
+  input.oninput = () => {
+    const v = input.value;
+    if (v.includes('\n')) { input.value = v.replace(/\n+$/, '').replace(/\n/g, ' '); if (v.endsWith('\n')) { run(); return; } }
+    grow();
+  };
+  // Phone keyboards have no Tab or arrow keys. pointerdown is cancelled so the keyboard stays open.
+  const keys = el('div', 'term-keys');
+  const key = (cls, label, act, name) => {
+    const b = el('button', cls, label); b.type = 'button'; b.setAttribute('aria-label', label === 'Tab' ? `Tab: ${t(name)}` : t(name));
+    b.onpointerdown = e => e.preventDefault(); b.onclick = () => { act(); input.focus({ preventScroll: true }); };
+    return b;
+  };
+  // Back to how the task began: a wrong cd or rm can make even the right answer fail.
+  const restart = key('term-key restart', t('termRestart'), () => {
+    if (L.answered) return;
+    sh = new Shell(ex.fx()); for (const c of ex.setup || []) sh.run(c);
+    L.term.sh = sh; log.length = 0; out.replaceChildren(...termRows(shown)); input.value = ''; ps.textContent = promptFor(sh.cwd); grow();
+    if (coach) { coach.hidden = true; wasDone = false; }
+    L.value = ''; restart.hidden = true; if (ex.type === 'terminal' && !ex.ask) setCan(false); onRun(log);
+  }, 'termRestart');
+  restart.hidden = true;
+  keys.append(key('term-key kb', 'Tab', tab, 'keyTab'), restart, key('term-key kb', '↑', () => recall(-1), 'keyUp'), key('term-key kb', '↓', () => recall(1), 'keyDown'));
+  box.append(keys);
+  form.onsubmit = e => { e.preventDefault(); run(); };
+  function run() {
+    const cmd = straightQuotes(input.value).trim(); input.value = ''; grow(); if (!cmd || L.answered) return;
+    const row = el('div', 'term-line'); row.append(el('span', 'ps1', promptFor(sh.cwd)), el('span', 'typed', cmd)); out.append(row);
+    let text, unsupported = false;
+    try { const r = sh.run(cmd); text = (r.out + r.err).replace(/\n$/, ''); } catch (err) { const opt = err.message.match(/^option (\S+)$/)?.[1]; unsupported = err instanceof ShellUnsupported; text = !(err instanceof ShellUnsupported) ? String(err.message) : opt ? t('unsupportedOpt', cmd.split(/\s+/)[0], opt) : missingCommand(err.message) ? `bash: ${missingCommand(err.message)}: command not found` : t('unsupported', cmd.split(/\s+/)[0]); }
+    if (text) out.append(el('pre', 'term-out', text));
+    log.push({ cmd, out: text }); if (TERM_HISTORY.at(-1) !== cmd) TERM_HISTORY.push(cmd); back = TERM_HISTORY.length;
+    ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
+    restart.hidden = !ex.fx; requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
+    L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal' && !ex.ask) setCan(true); onRun(log);
+    if (coach) { const said = coachNote(ex, sh, log, cmd, text, wasDone, unsupported); wasDone = said.done; coach.replaceChildren(bidi(said.note)); coach.hidden = !said.note; }
   }
-  segments.push({text:canonicalSegment(words),command:words[0]?.value,op:''});
-  return segments.filter(s=>s.text||s.op);
+  // Tests only grade at the end, so the live coach speaks in lessons and practice.
+  const coach = ex.type === 'terminal' && !L.opts.exam ? el('div', 'coach') : null; let wasDone = false;
+  if (coach) { coach.setAttribute('role', 'status'); coach.hidden = true; root.append(box, coach); } else root.append(box);
+  if (ex.hint && !L.opts.exam) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(h); }
+  // Never steal focus from a field the learner already moved to. A teach card only invites typing, so it opens no keyboard.
+  if (!shown.length) focusField(input);
 }
-function canonicalCommand(text){
-  return commandSegments(text).map(s=>s.op?`${s.text} ${s.op}`:s.text).join(' ').trim();
-}
-function blamedCommands(answer,given){
-  const right=commandSegments(answer),guess=commandSegments(given||'');
-  if(!given||!given.trim())return [...new Set(right.map(s=>s.command).filter(Boolean))];
-  const blamed=new Set();
-  right.forEach((segment,index)=>{const other=guess[index];if(!other||other.text!==segment.text||other.op!==segment.op)blamed.add(segment.command);});
-  return [...blamed].filter(Boolean);
-}
-function answerHints(answer){
-  const operators=['|','||','&&',';','>','>>','2>'];let first=true;const names=[];
-  for(const token of (answer.match(/'[^']*'|"[^"]*"|\S+/g)||[])){
-    if(operators.includes(token)){first=true;continue;}
-    if(first){first=false;continue;}
-    if(token.startsWith('-')||/[{}$]/.test(token))continue;
-    if(/[./@*:]/.test(token)||/^[A-Z][A-Z_]+$/.test(token))names.push(token);
-  }
-  return [...new Set(names)];
-}
-function renderTyping(root,entry){
-  const q=entry.q,box=document.createElement('div');box.className='type-box';
-  const input=document.createElement('input');input.className='type-input';input.id='typeInput';input.setAttribute('aria-label',t('typePlaceholder'));input.type='text';input.dir='ltr';input.placeholder=t('typePlaceholder');
-  input.autocomplete='off';input.spellcheck=false;input.setAttribute('autocapitalize','off');input.setAttribute('autocorrect','off');input.enterKeyHint='done';
-  const hints=q.optionMode==='code'?(q.hints??answerHints(q.answer)):[];
-  const actions=document.createElement('div');actions.className='type-actions';
-  const check=document.createElement('button');check.className='primary-btn';check.type='button';check.textContent=t('check');
-  const skip=document.createElement('button');skip.className='secondary-btn';skip.type='button';skip.textContent=t('dontKnow');
-  const submit=giveUp=>{if(quizLocked)return;const value=input.value;if(!giveUp&&!value.trim()){input.focus();return;}
-    const answers=[q.answer,...(q.accept||[])],fixture=entry.level==='bandit'?banditFixture:lessonFixture;
-    const sameText=!giveUp&&answers.some(answer=>canonicalCommand(value)===canonicalCommand(answer));
-    const sameResult=!giveUp&&!sameText&&q.optionMode==='code'&&answers.some(answer=>sameOutput(answer,value,fixture)===true);
-    const correct=sameText||sameResult;entry.sameResult=sameResult;entry.fixture=fixture;
-    input.disabled=true;check.disabled=true;skip.disabled=true;input.classList.add(correct?'correct':'wrong');
-    finishAnswer(entry,correct,giveUp?' ':value,giveUp?'':value);};
-  check.onclick=()=>submit(false);skip.onclick=()=>submit(true);
-  input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();submit(false);}});
-  actions.append(check,skip);box.append(input);
-  if(hints.length){const hint=document.createElement('div');hint.className='type-hint';const code=document.createElement('code');code.textContent=hints.join('  ');hint.append(t('hintNames',''),code);box.append(hint);}
-  box.append(actions);root.appendChild(box);
-  setTimeout(()=>input.focus({preventScroll:true}),50);
-}
-const banditDone = new Set((readSaved('banditDone', {}).levels) || []);
-function openBandit(){showScreen('bandit');renderBandit();}
-function practiceBandit(){selectLevel('bandit');startQuiz();}
-function renderBandit(){
-  $('banditProgress').textContent=t('banditDone',banditDone.size,BANDIT_MAP.length);
-  const list=$('banditList');list.innerHTML='';
-  for(const [n,he,en,cmds] of BANDIT_MAP){
-    const row=document.createElement('li');row.className='bandit-row'+(banditDone.has(n)?' done':'');
-    const head=document.createElement('div');head.className='bandit-head';
-    const title=document.createElement('strong');title.textContent=n===0?t('banditLogin'):t('banditStep',n);
-    const link=document.createElement('a');link.href=`https://overthewire.org/wargames/bandit/bandit${n}.html`;link.target='_blank';link.rel='noopener';link.textContent=t('banditPage');
-    const check=document.createElement('label');check.className='bandit-check';const box=document.createElement('input');box.type='checkbox';box.checked=banditDone.has(n);
-    box.onchange=()=>{box.checked?banditDone.add(n):banditDone.delete(n);save('banditDone',{levels:[...banditDone]});renderBandit();};
-    check.append(box,t('banditPassed'));head.append(title,link,check);
-    const text=document.createElement('p');text.textContent=LANG==='he'?he:en;
-    const chips=document.createElement('div');chips.className='bandit-cmds';for(const c of cmds){const code=document.createElement('code');code.textContent=c;chips.append(code);}
-    row.append(head,text,chips);if(MISSIONS.some(m=>m.level===n)){const go=document.createElement('button');go.type='button';go.className='secondary-btn';go.textContent=t('missionPractice');go.onclick=()=>openMission(n);row.append(go);}list.append(row);
+// iPhone keeps the page under the keyboard: while typing in the terminal the lesson takes only the visible part, so the terminal sits right above the keys.
+function fitLesson() {
+  const vv = window.visualViewport, box = $('lesson');
+  const on = !!vv && !box.hidden && vv.scale < 1.05 && innerHeight - vv.height > 120 && !!document.activeElement?.closest('.term');
+  box.classList.toggle('typing', on);
+  box.style.height = on ? `${vv.height}px` : ''; box.style.top = on ? `${vv.offsetTop}px` : ''; box.style.bottom = on ? 'auto' : '';
+  if (on) {
+    const term = box.querySelector('.term.live'), field = document.activeElement; term.scrollTop = term.scrollHeight; $('exBody').scrollTop = $('exBody').scrollHeight;
+    // iPhone leaves the caret where it was before the page moved, until the selection is set again.
+    requestAnimationFrame(() => field.setSelectionRange?.(field.selectionStart, field.selectionEnd));
   }
 }
-const BACKUP_KEYS = ['quizStats', 'levelProgress', 'reviewState', 'banditDone', 'roundSize', 'answerMode', 'guideScope', 'learningLevel', 'lang'];
-function dayKey(date){ return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`; }
-function encodeBackup(){
-  const data={};for(const key of BACKUP_KEYS){try{const v=localStorage.getItem(key);if(v!==null)data[key]=v;}catch{}}
-  const json=JSON.stringify({app:'linux-master',format:1,savedAt:new Date().toISOString(),data});
-  return btoa(String.fromCharCode(...new TextEncoder().encode(json)));
+visualViewport?.addEventListener('resize', fitLesson); visualViewport?.addEventListener('scroll', fitLesson);
+$('lesson').addEventListener('focusin', fitLesson); $('lesson').addEventListener('focusout', () => setTimeout(fitLesson));
+const CHECK = {
+  choice: (ex, v) => ex.plain ? { ok: v === '0', solution: tr(ex.options[0]), why: tr(ex.why?.[v]) || '' } : { ok: v === ex.answer, solution: ex.answer, why: tr(ex.why?.[v]) || '' },
+  sentence: (ex, v) => ({ ok: v === ex.answer, solution: tr(ex.text).replace('___', ex.answer) }),
+  fill: (ex, v) => ({ ok: v === ex.answer, solution: `${ex.before}${ex.answer}${ex.after}` }),
+  output: (ex, v) => ({ ok: v === ex.solution, solution: ex.solution || t('noOutput') }),
+  tiles: (ex, v) => ({ ok: [ex.answer, ...(ex.accept || [])].includes(v), solution: ex.answer }),
+  scenario: (ex, v) => ({ ok: sameCommand(ex, v), solution: ex.accept[0] }),
+  terminal: ex => ({ ok: ex.goal(L.term.sh, L.term.log) && (!ex.ask || L.ask === L.expected), solution: ex.ask ? `${ex.solve.join('\n')}\n${tr(ex.ask)} ${L.expected}` : ex.solve.join('\n') }),
+  boss: (ex, v) => ({ ok: v === ex.boss.word, solution: t('bossSolution', ex.boss.word, ex.boss.hideIn), why: t('bossWhy', ex.boss.hideIn) }),
+};
+
+// ---------- End of lesson ----------
+function winMoment(part, rankBefore, power) {
+  const moon = $('endMoon'), now = rankOf(S.xp), r = part || 3, up = now.level > rankBefore;
+  moon.innerHTML = `<svg viewBox="0 0 390 250" aria-hidden="true">${moonSvg(r, 195, 118, 96, 'w')}</svg>`;
+  $('endRank').textContent = up ? t('rankUp', now.name) : power ? t('newPower', power) : ''; $('endRank').dir = 'auto';
 }
-function decodeBackup(text){
-  let parsed;
-  try{const trimmed=text.trim();const json=trimmed.startsWith('{')?trimmed:new TextDecoder().decode(Uint8Array.from(atob(trimmed),c=>c.charCodeAt(0)));parsed=JSON.parse(json);}catch{return null;}
-  if(!parsed||parsed.app!=='linux-master'||parsed.format!==1||typeof parsed.data!=='object')return null;
-  const data={};for(const [k,v] of Object.entries(parsed.data)){if(BACKUP_KEYS.includes(k)&&typeof v==='string')data[k]=v;}
-  return data;
-}
-function restoreBackup(text){
-  const data=decodeBackup(text);
-  if(!data){alert(t('backupBad'));return false;}
-  if(!confirm(t('backupConfirm')))return false;
-  try{for(const key of BACKUP_KEYS)localStorage.removeItem(key);for(const [k,v] of Object.entries(data))localStorage.setItem(k,v);}catch{}
-  location.reload();return true;
-}
-function downloadFile(name,type,content){const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function downloadBackup(){const code=encodeBackup();downloadFile(`linux-master-backup-${dayKey(new Date())}.json`,'application/json',JSON.stringify({app:'linux-master',format:1,code},null,1));}
-async function copyBackup(){try{await navigator.clipboard.writeText(encodeBackup());alert(t('backupCopied'));}catch{prompt(t('backupCopy'),encodeBackup());}}
-function startRestore(){$('restoreFile').click();}
-async function restoreFromFile(input){
-  const file=input.files[0];input.value='';
-  if(!file){const code=prompt(t('backupPrompt'));if(code)restoreBackup(code);return;}
-  const text=await file.text();let code=text;try{const parsed=JSON.parse(text);if(parsed.code)code=parsed.code;}catch{}
-  restoreBackup(code);
-}
-function restoreFromCode(){const code=prompt(t('backupPrompt'));if(code)restoreBackup(code);}
-function reminderIcs(time, now=new Date()){
-  const [h,m]=time.split(':').map(Number),d=now,pad=n=>String(n).padStart(2,'0');
-  const date=`${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`,stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
-  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Linux Master//Reminder//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT',`UID:linux-master-daily-${date}@saharhalili95.github.io`,`DTSTAMP:${stamp}`,
-    `DTSTART:${date}T${pad(h)}${pad(m)}00`,`DURATION:PT15M`,'RRULE:FREQ=DAILY',`SUMMARY:${t('reminderEvent')}`,'URL:https://saharhalili95.github.io/linux-master/',
-    'BEGIN:VALARM','ACTION:DISPLAY',`DESCRIPTION:${t('reminderEvent')}`,'TRIGGER:PT0M','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n')+'\r\n';
-}
-function addReminder(){downloadFile('linux-master-reminder.ics','text/calendar',reminderIcs($('reminderTime').value||'20:00'));}
-function outputComparison(answer,given,fixture){
-  if(!fixture)return '';
-  const mine=previewOutput(given,fixture),right=previewOutput(answer,fixture);
-  if(mine===null||right===null||mine===right)return '';
-  return `\n\n${t('yourOutput')}\n${mine||t('noOutput')}\n\n${t('rightOutput')}\n${right||t('noOutput')}`;
-}
-function whyWrong(entry,given){
-  const q=entry.q;
-  if(!given||!given.trim())return '';
-  if(q.optionMode==='code'){const wrong=q.wrong||[];let index=wrong.indexOf(given);if(index<0)index=wrong.findIndex(w=>canonicalCommand(w)===canonicalCommand(given));return index>=0?q.why[index]||'':'';}
-  if(q.optionMode==='command'){const chosen=commands.find(c=>c.name===given);return chosen?`${fullName(chosen.name)}: ${chosen.meaning}`:'';}
-  if(entry.level==='intro'){const chosen=commands.find(c=>c.meaning===given);return chosen?t('describes',chosen.name):'';}
-  if(entry.level==='functions'){
-    const matches=guideUses.filter(u=>u.meaning===given);
-    const chosen=matches.find(u=>u.command===entry.item.command)||matches[0];
-    if(!chosen)return '';
-    return t('describes',chosen.kind==='key'?t('keyTitle',chosen.command,chosen.usage):guideSyntax(chosen));
+function finishExam() {
+  clearInterval(L.timer);
+  const rankBefore = rankOf(S.xp).level;
+  const x = L.opts.exam, score = L.correct / Math.max(1, L.total), passed = score >= x.pass, secs = Math.round((Date.now() - L.start) / 1000);
+  const misses = {}; for (const r of L.opts.results) if (!r.ok) misses[tr(r.topic)] = (misses[tr(r.topic)] || 0) + 1;
+  const weakest = Object.entries(misses).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name]) => name);
+  const skip = x.skip, gain = !passed ? 0 : skip ? Math.min(30 * skip.parts, 5 * skip.keys.length) : 50;
+  if (passed) {
+    S.xp += gain;
+    if (skip) { const keys = skip.keys.filter(k => !S.done.includes(k)); S.done.push(...keys); S.skipped.push(...keys); }
+    else if (!S.done.includes(L.key)) S.done.push(L.key);
   }
-  return '';
+  save();
+  $('lesson').hidden = true; $('end').hidden = false; $('comboTag').textContent = '';
+  $('endMascot').innerHTML = mascot(passed ? 'party' : 'idle');
+  winMoment(skip?.part ?? unitOfKey(L.key)?.section, rankBefore, '');
+  $('endTitle').textContent = skip ? (passed ? t('skipPassed', skip.keys.length) : t('skipFailed')) : passed ? t('examPassed') : t('examFailed');
+  $('endXp').textContent = gain; $('endAcc').textContent = `${Math.round(score * 100)}%`;
+  $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+  $('endQuests').textContent = weakest.length ? t('examReview', weakest.join(', ')) : '';
+  testReview(L.opts.results);
+  endButtons(closeOverlays);
+  if (skip && passed) endButtons(() => { closeOverlays(); toHere('instant'); });
+  if (skip && !passed) endButtons(() => { const to = skip.to; closeOverlays(); startSkip(to); }, t('skipRetry'), closeOverlays);
+  if (passed) { SFX.win(); confetti(); }
+  $('endBtn').focus();
 }
-const missionsDone = new Set((readSaved('missionsDone', {}).levels) || []);
-let mission = null;
-function openMissions(){showScreen('missions');renderMissionList();}
-function renderMissionList(){
-  $('missionList').hidden=false;$('missionView').hidden=true;
-  $('missionsProgress').textContent=t('missionsDone',missionsDone.size,MISSIONS.length);
-  const list=$('missionList');list.innerHTML='';
-  for(const m of MISSIONS){
-    const item=document.createElement('li');const b=document.createElement('button');b.type='button';b.className='mission-card'+(missionsDone.has(m.level)?' done':'');
-    const title=document.createElement('strong');title.textContent=`${t('missionNumber',m.level)}${missionsDone.has(m.level)?` · ${t('missionSolvedTag')}`:''}`;
-    const goal=document.createElement('span');goal.textContent=LANG==='he'?m.he:m.en;
-    b.append(title,goal);b.onclick=()=>openMission(m.level);item.append(b);list.append(item);
+function endButtons(main, label = t('continue'), alt = null) {
+  $('endBtn').textContent = label; $('endBtn').onclick = main; $('endAlt').hidden = !alt; $('endAlt').onclick = alt;
+}
+function finishLesson() {
+  if (L.opts.exam) return finishExam();
+  $('endReview').hidden = true;
+  const rankBefore = rankOf(S.xp).level, wasDone = S.done.includes(L.key);
+  const missionUnit = unitOfKey(L.key), beforeMission = !L.opts.practice && window.GameProgress?.mission(missionUnit, S.done, unitNodes);
+  const perfect = L.mistakes === 0 && !L.matchMiss, secs = Math.round((Date.now() - L.start) / 1000);
+  const xp = L.opts.boss ? 25 : L.opts.replay || L.opts.practice ? 5 : 10 + (perfect ? 5 : 0);
+  const firstToday = S.lastDay !== dayKey();
+  if (firstToday) { S.streak = S.lastDay === dayKey(-1) ? S.streak + 1 : 1; S.lastDay = dayKey(); }
+  if (!S.days.includes(dayKey())) S.days = [...S.days, dayKey()].slice(-30);
+  S.xp += xp; if (!L.opts.practice && !S.done.includes(L.key)) S.done.push(L.key);
+  if (!L.opts.practice) S.skipped = S.skipped.filter(k => k !== L.key);
+  const q = questDay(); q.xp += xp; if (perfect) q.perfect++; q.combo = Math.max(q.combo, L.best);
+  const newly = QUESTS.filter(x => !q.claimed.includes(x.id) && q[x.id] >= x.goal); newly.forEach(x => { q.claimed.push(x.id); S.gems += 10; });
+  save();
+  $('lesson').hidden = true; $('end').hidden = false;
+  $('endMascot').innerHTML = mascot('party');
+  winMoment(unitOfKey(L.key)?.section, rankBefore, wasDone || L.opts.practice ? '' : powerOf(unitOfKey(L.key), +(/L(\d)$/.exec(L.key)?.[1] ?? -1)));
+  $('endTitle').textContent = L.opts.boss ? t('bossWon') : perfect ? t('perfect') : t('done');
+  $('endXp').textContent = xp; $('endAcc').textContent = `${Math.round((L.correct / Math.max(1, L.correct + L.mistakes)) * 100)}%`;
+  $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+  const earned = L.opts.earnLife && L.correct >= 3; if (earned) addLife();
+  $('endQuests').textContent = L.opts.earnLife ? t(earned ? 'lifeEarned' : 'lifeNotEarned') : newly.length ? t('questsDone', newly.length) : '';
+  const afterMission = !L.opts.practice && window.GameProgress?.mission(missionUnit, S.done, unitNodes);
+  if (beforeMission && !beforeMission.complete && afterMission?.complete) $('endQuests').textContent = [$('endQuests').textContent, t('missionComplete')].filter(Boolean).join(' · ');
+  endButtons(() => firstToday ? showStreak() : closeOverlays());
+  SFX.win(); confetti(); $('endBtn').focus();
+}
+function showStreak() {
+  $('end').hidden = true; $('streakScreen').hidden = false; $('streakBig').textContent = S.streak;
+  $('streakText').textContent = S.streak === 1 ? t('streakFirst') : t('streakMore', S.streak);
+  const week = $('week'); week.innerHTML = '';
+  const names = t('days');
+  for (let i = -6; i <= 0; i++) { const d = new Date(); d.setDate(d.getDate() + i); const on = S.days.includes(dayKey(i)); const c = el('div', `day${on ? ' on' : ''}${i === 0 ? ' today' : ''}`); c.append(Object.assign(el('span', 'dot'), { className: `dot${on ? ' ic ic-check' : ''}` }), el('span', '', names[d.getDay()])); week.append(c); }
+  SFX.win(); $('streakBtn').focus();
+}
+
+// ---------- Other tabs ----------
+function allExercises() { return availableCourse().filter(u => !u.locked && !u.exam).flatMap(u => u.lessons.flatMap((ls, li) => withFixture(u, ls.exercises).map((ex, i) => ({ ...ex, uid: `${unitKey(u, `L${li}`)}.${i}` })))).filter(e => e.type !== 'teach'); }
+function renderPractice() {
+  const n = allExercises().filter(e => S.mistakes.includes(e.uid)).length; $('mistakesCount').textContent = n ? t('mistakesN', n) : t('noMistakes');
+  $('practiceMistakes').disabled = !n;
+}
+function practice(kind) {
+  const pool = allExercises(); const items = kind === 'mistakes' ? pool.filter(e => S.mistakes.includes(e.uid)) : shuffle(pool.filter(e => S.done.includes(e.uid.split('.')[0]))).slice(0, 8);
+  if (!items.length) return toast(kind === 'mistakes' ? t('noMistakesToast') : t('finishFirst'));
+  L = null; startLesson('practice', items.map(e => ({ ...e })), { practice: true });
+}
+function renderQuests() {
+  const q = questDay(), list = $('questList'); list.innerHTML = '';
+  for (const x of QUESTS) {
+    const val = Math.min(x.goal, q[x.id] || 0), li = el('li', `quest${val >= x.goal ? ' done' : ''}`);
+    const bar = el('div', 'qbar'); const fill = el('div', 'qfill'); fill.style.width = `${(val / x.goal) * 100}%`; bar.append(fill, el('span', 'qnum', `${val} / ${x.goal}`));
+    const body = el('div', 'qbody'); body.append(el('div', 'qtext', t(x.text)), bar);
+    const qi = el('div', 'qicon'); qi.append(icon(x.icon)); const reward = el('div', 'qreward'); reward.append(icon(val >= x.goal ? 'check' : 'gem'), val >= x.goal ? '' : '10'); li.append(qi, body, reward); list.append(li);
   }
 }
-function openMission(level){
-  const m=MISSIONS.find(x=>x.level===level);if(!m)return;
-  showScreen('missions');$('missionList').hidden=true;$('missionView').hidden=false;
-  const password=missionPassword();
-  mission={m,password,shell:new Shell(m.build(password)),history:[],at:0};
-  $('missionTitle').textContent=t('missionNumber',m.level);$('missionGoal').textContent=LANG==='he'?m.he:m.en;
-  const row=BANDIT_MAP.find(r=>r[0]===level);$('missionHintText').textContent=row?`${LANG==='he'?row[1]:row[2]} · ${row[3].join('  ')}`:'';$('missionHintText').hidden=true;
-  $('termOutput').textContent='';$('termInput').value='';$('missionPassword').value='';$('missionResult').textContent='';$('missionResult').className='mission-result';$('missionNextBtn').hidden=true;
-  renderPrompt();setTimeout(()=>$('termInput').focus({preventScroll:true}),50);
+function updateWorldProgress(part = Number($('stage')?.dataset.part)) {
+  const target = $('stage')?.querySelector('.game-world-progress');
+  if (!target || !part) return;
+  if (!window.GameProgress) { target.textContent = ''; return; }
+  const progress = window.GameProgress.world(COURSE, S.done, part, !!window.courseReady, unitNodes);
+  target.textContent = !progress.ready ? '' : !progress.total ? t('noWorldTasks') : t('worldLevel', progress.level, progress.completed, progress.total, progress.kind);
+  target.dataset.level = progress.ready && progress.total ? progress.level : '';
 }
-function termPrompt(){const sh=mission.shell,home=sh.env.HOME;const dir=sh.cwd===home?'~':sh.cwd.startsWith(home+'/')?'~'+sh.cwd.slice(home.length):sh.cwd;return `bandit@bandit:${dir}$ `;}
-function renderPrompt(){$('termPrompt').textContent=termPrompt();}
-function termPrint(text){const out=$('termOutput');out.textContent+=text;out.scrollTop=out.scrollHeight;}
-function runTerminal(command){
-  const trimmed=command.trim();termPrint(termPrompt()+command+'\n');
-  if(trimmed){mission.history.push(trimmed);mission.at=mission.history.length;}
-  if(!trimmed){renderPrompt();return;}
-  if(trimmed==='clear'){$('termOutput').textContent='';renderPrompt();return;}
-  if(trimmed==='help'){termPrint(t('termHelp')+'\n');renderPrompt();return;}
-  try{const r=mission.shell.run(trimmed);termPrint(r.out+r.err);}
-  catch(e){if(e instanceof ShellUnsupported)termPrint(t('termUnsupported',trimmed.split(/\s+/)[0])+'\n');else throw e;}
-  renderPrompt();
-}
-function terminalKey(event){
-  const input=$('termInput');
-  if(event.key==='Enter'){event.preventDefault();runTerminal(input.value);input.value='';}
-  else if(event.key==='ArrowUp'&&mission.history.length){event.preventDefault();mission.at=Math.max(0,mission.at-1);input.value=mission.history[mission.at];}
-  else if(event.key==='ArrowDown'&&mission.history.length){event.preventDefault();mission.at=Math.min(mission.history.length,mission.at+1);input.value=mission.history[mission.at]||'';}
-}
-function toggleMissionHint(){$('missionHintText').hidden=!$('missionHintText').hidden;}
-function submitMission(event){
-  event.preventDefault();
-  const ok=$('missionPassword').value.trim()===mission.password,result=$('missionResult');
-  result.textContent=ok?t('missionCorrect'):t('missionWrong');result.className='mission-result '+(ok?'good':'bad');
-  if(ok){missionsDone.add(mission.m.level);save('missionsDone',{levels:[...missionsDone]});$('missionNextBtn').hidden=!MISSIONS.some(x=>x.level>mission.m.level);}
-}
-function nextMission(){const next=MISSIONS.find(x=>x.level>mission.m.level);if(next)openMission(next.level);}
-function setRoundSize(size){roundSize=size;try{localStorage.setItem('roundSize',String(size));}catch{}renderToggles();$('quizModeMeta').textContent=levelProgressText(selectedLevel);}
-function setAnswerMode(mode){answerMode=mode;try{localStorage.setItem('answerMode',mode);}catch{}renderToggles();}
-function setGuideScope(scope){guideScope=scope;try{localStorage.setItem('guideScope',scope);}catch{}renderToggles();$('quizModeMeta').textContent=levelProgressText(selectedLevel);}
-function renderToggles(){
-  document.querySelectorAll('#sizeToggle button').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.value)===roundSize)));
-  document.querySelectorAll('#modeToggle button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.value===answerMode)));
-  const scope=$('scopeToggle');scope.hidden=selectedLevel!=='functions';
-  scope.querySelector('[data-value=core]').textContent=`${t('scopeCore')} (${CORE_GUIDE_IDS.length})`;
-  scope.querySelector('[data-value=all]').textContent=`${t('scopeAll')} (${guideUses.length})`;
-  scope.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.value===guideScope)));
-  $('typeNote').hidden=!(answerMode==='type'&&selectedLevel==='functions');$('typeNote').textContent=t('typeNA');
-}
-function renderStatsPanel(){
-  const levels=Object.keys(levelQuiz),rows=$('levelStats');rows.innerHTML='';
-  const used=levels.filter(level=>stats.byLevel[level]?.a);
-  if(!used.length){const p=document.createElement('p');p.textContent=t('statsEmpty');rows.append(p);}
-  for(const level of used){
-    const s=stats.byLevel[level],row=document.createElement('div');row.className='level-stat';
-    const name=document.createElement('div');name.textContent=`${t('step',levelText(level).step)} · ${levelText(level).card}`;
-    const answered=document.createElement('span');answered.textContent=`${t('statsAnswered')} ${s.a}`;
-    const review=document.createElement('span');review.textContent=`${t('statsReview')} ${reviewIds(level).length}`;
-    const acc=document.createElement('b');acc.textContent=`${Math.round(s.c/s.a*100)}%`;
-    row.append(name,answered,review,acc);rows.append(row);
+function renderAchievements() {
+  const worlds = $('worldProgress'), medals = $('mockMedals');
+  $('worldProgressTitle').textContent = t('worldLevels'); $('mockMedalsTitle').textContent = t('mockMedals'); $('mockMedalsHelp').textContent = t('mockHelp');
+  worlds.replaceChildren(); medals.replaceChildren();
+  if (window.courseLoadFailed || !window.GameProgress) { worlds.textContent = t('progressError'); medals.textContent = t('progressError'); return; }
+  if (!window.courseReady) { worlds.textContent = t('progressLoading'); medals.textContent = t('progressLoading'); return; }
+  for (const [id, region] of Object.entries(REGIONS)) {
+    const progress = window.GameProgress.world(COURSE, S.done, Number(id), true, unitNodes);
+    const row = el('div', 'game-world'); row.dataset.world = id; row.dataset.level = progress.level; row.dataset.complete = String(progress.complete);
+    const name = el('strong', '', tr(region.name)), sigil = el('span', 'game-sigil', String(progress.level)); sigil.setAttribute('aria-hidden', 'true');
+    row.append(name, el('span', '', progress.total ? t('worldLevel', progress.level, progress.completed, progress.total, progress.kind) : t('noWorldTasks')), sigil); worlds.append(row);
   }
-  const weak=Object.entries(stats.byCommand).filter(([,v])=>v.a>=3&&v.c<v.a).sort((a,b)=>a[1].c/a[1].a-b[1].c/b[1].a||b[1].a-a[1].a).slice(0,5);
-  const box=$('weakCommands');box.innerHTML='';
-  if(!weak.length){const p=document.createElement('p');p.textContent=t('statsEmpty');box.append(p);}
-  for(const [name,v] of weak){const chip=document.createElement('span');chip.textContent=t('weakLine',name,Math.round(v.c/v.a*100),v.a);box.append(chip);}
+  for (const exam of window.GameProgress.mockExams(COURSE, S.done, true, unitNodes)) {
+    const unit = COURSE.find(u => u.unit === exam.unit), row = el('div', 'game-medal'); row.dataset.exam = exam.unit; row.dataset.passed = String(exam.passed);
+    const badge = icon('star'); badge.classList.add('game-medal-icon');
+    row.append(badge, el('strong', '', tr(unit.title)), el('span', '', t(exam.passed ? 'medalPassed' : 'medalLocked'))); medals.append(row);
+  }
 }
-function applyLanguage(){
-  document.documentElement.lang=LANG;document.documentElement.dir=LANGS[LANG].dir;
-  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
-  document.querySelectorAll('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{el.placeholder=t(el.dataset.i18nPlaceholder);});
-  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{el.setAttribute('aria-label',t(el.dataset.i18nAria));});
-  document.querySelectorAll('.level-card').forEach(card=>{const info=levelText(card.dataset.level);card.querySelector('.level-step').textContent=t('step',info.step);card.querySelector('strong').textContent=info.card;card.querySelector('span:last-child').textContent=info.cardDesc;});
-  const next=Object.keys(LANGS)[(Object.keys(LANGS).indexOf(LANG)+1)%Object.keys(LANGS).length];
-  $('langBtn').textContent=LANGS[next].short;$('langBtn').setAttribute('aria-label',`${LANGS[next].short} ${LANGS[next].name}`);$('langBtn').lang=next;
+function repaintAvatar() {
+  document.querySelectorAll('.character-hero').forEach(node => { node.outerHTML = mascot(node.dataset.mood, Number(node.dataset.rank)); });
 }
-function switchLanguage(){
-  const codes=Object.keys(LANGS);const next=codes[(codes.indexOf(LANG)+1)%codes.length];
-  try{localStorage.setItem('lang',next);}catch{}
+function selectAvatar(value) {
+  S.avatarStyle = window.AvatarOptions.normalize(value); S.avatarUpdatedAt = Date.now(); save(); repaintAvatar();
+}
+function selectAvatarForm(value) {
+  S.avatarForm = window.AvatarOptions.normalizeForm(value); S.avatarFormUpdatedAt = Date.now(); save(); repaintAvatar();
+}
+function renderProfile() {
+  if (window.AvatarOptions) {
+    window.AvatarOptions.renderForms($('avatarForm'), S.avatarForm, LANG, selectAvatarForm);
+    window.AvatarOptions.render($('avatarPicker'), S.avatarStyle, LANG, selectAvatar);
+  } else { $('avatarForm').textContent = t('featureUnavailable'); $('avatarPicker').textContent = ''; }
+  renderAchievements();
+  $('pXp').textContent = S.xp; $('pStreak').textContent = liveStreak(); $('pLessons').textContent = S.done.filter(k => /(^|-)L\d$/.test(k)).length; $('pGems').textContent = S.gems;
+  $('soundToggle').checked = S.sound; $('profileMascot').innerHTML = mascot('happy');
+}
+
+// ---------- Effects ----------
+function toast(text) { const t = $('toast'); t.textContent = text; t.classList.add('show'); clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove('show'), 2200); }
+function confetti() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const c = $('confetti'), ctx = c.getContext('2d'); c.width = innerWidth; c.height = innerHeight; c.hidden = false;
+  const colors = ['#58c43b', '#2f9bf0', '#f7c531', '#ff6b6b', '#b06bf3'];
+  const parts = Array.from({ length: 110 }, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height * 0.4, r: 4 + Math.random() * 5, vy: 2 + Math.random() * 3.5, vx: -1.5 + Math.random() * 3, a: Math.random() * 6, color: colors[Math.floor(Math.random() * colors.length)] }));
+  const end = Date.now() + 1800;
+  (function frame() {
+    ctx.clearRect(0, 0, c.width, c.height);
+    for (const p of parts) { p.x += p.vx; p.y += p.vy; p.a += 0.1; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.color; ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); ctx.restore(); }
+    if (Date.now() < end) requestAnimationFrame(frame); else { ctx.clearRect(0, 0, c.width, c.height); c.hidden = true; }
+  })();
+}
+
+// ---------- Wiring ----------
+document.querySelectorAll('.tabbar button[data-tab]').forEach(b => { b.onclick = () => showTab(b.dataset.tab); });
+$('checkBtn').onclick = onFootButton;
+$('quitBtn').onclick = quitLesson;
+$('editBtn').onclick = openEditor;
+$('edShare').onclick = shareReports;
+$('edClear').onclick = () => { if (confirm(t('edClearConfirm'))) { S.reports = []; save(); showReports(); } };
+$('streakBtn').onclick = closeOverlays;
+$('practiceMistakes').onclick = () => practice('mistakes');
+$('practiceMix').onclick = () => practice('mix');
+$('practiceLight').onclick = () => startTrivia(false);
+$('livesChip').onclick = openLives;
+$('livesClose').onclick = () => { $('livesSheet').hidden = true; };
+$('buyLife').onclick = () => { if (S.gems < LIFE_GEMS || S.lives >= MAX_LIVES) return; S.gems -= LIFE_GEMS; addLife(); renderLives(); };
+$('earnLife').onclick = () => startTrivia(true);
+setInterval(renderTop, 30000);
+$('soundToggle').onchange = e => { S.sound = e.target.checked; save(); };
+// Progress lives only in this browser, so a backup file can carry it to another device or a reinstall.
+async function saveBackup() {
+  const name = `linux-master-learn-${dayKey()}.json`;
+  const file = new File([JSON.stringify({ app: 'linux-master-learn', format: 1, state: S, lang: LANG })], name, { type: 'application/json' });
+  try {
+    if (navigator.canShare?.({ files: [file] })) return await navigator.share({ files: [file], title: name });
+  } catch (err) { if (err.name === 'AbortError') return; }
+  const a = el('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function restoreBackup(file) {
+  let backup; try { backup = JSON.parse(await file.text()); } catch { backup = null; }
+  if (backup?.app !== 'linux-master-learn' || backup.format !== 1 || typeof backup.state !== 'object') return alert(t('backupBad'));
+  if (!confirm(t('backupConfirm'))) return;
+  S = loadState(JSON.stringify(backup.state)); save();
+  if (backup.lang === 'he' || backup.lang === 'en') try { localStorage.setItem('lang', backup.lang); } catch { /* not persisted */ }
   location.reload();
 }
+const toHere = (behavior = 'smooth') => $('path').querySelector('.node.current')?.scrollIntoView({ block: 'center', behavior });
+function openTracks() {
+  for (const b of document.querySelectorAll('.track-pick button')) {
+    const n = availableCourse().filter(u => inTrack(u, b.dataset.track)).length;
+    b.replaceChildren(el('b', '', TRACK_NAMES[b.dataset.track] || t('trackAll')), el('span', '', t('trackUnits', n)));
+    b.setAttribute('aria-pressed', String(b.dataset.track === S.track));
+  }
+  $('trackSheet').hidden = false;
+}
+for (const b of document.querySelectorAll('.track-pick button')) b.onclick = () => { S.track = b.dataset.track; save(); $('trackSheet').hidden = true; showTab('learn'); toHere('auto'); };
+$('trackBtn').onclick = openTracks;
+$('trackClose').onclick = () => { $('trackSheet').hidden = true; };
+$('toTopBtn').onclick = () => scrollTo({ top: 0, behavior: 'smooth' });
+$('toHereBtn').onclick = () => toHere();
+$('backupBtn').onclick = saveBackup;
+$('restoreBtn').onclick = () => $('restoreFile').click();
+$('restoreFile').onchange = e => { const file = e.target.files[0]; e.target.value = ''; if (file) restoreBackup(file); };
+$('resetBtn').onclick = () => { if (confirm(t('resetConfirm'))) { S = loadState(null); save(); renderTop(); renderProfile(); toast(t('resetDone')); } };
+document.addEventListener('keydown', e => {
+  if ($('lesson').hidden || !L) return;
+  if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+  if (e.key === 'Enter' && !$('checkBtn').disabled) { e.preventDefault(); onFootButton(); return; }
+  const n = Number(e.key); if (!L.answered && n >= 1 && n <= 9) $('exBody').querySelectorAll('.opt')[n - 1]?.click();
+});
+function applyLanguage() {
+  document.documentElement.lang = LANG; document.documentElement.dir = LANG === 'he' ? 'rtl' : 'ltr'; document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach(e => { e.textContent = t(e.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(e => { e.setAttribute('aria-label', t(e.dataset.i18nAria)); });
+  $('langBtn').title = t('langLabel'); $('langBtn').lang = LANG === 'he' ? 'en' : 'he';
+}
+$('langBtn').onclick = () => {
+  LANG = LANG === 'he' ? 'en' : 'he'; try { localStorage.setItem('lang', LANG); } catch { /* not persisted */ }
+  applyLanguage(); showTab(document.querySelector('.tab.active').id);
+};
 applyLanguage();
-renderStatsPanel();
-selectLevel(selectedLevel);
+showTab('learn');
+history.scrollRestoration = 'manual';
+let scrollMoved = false;
+for (const type of ['touchstart', 'wheel', 'keydown']) addEventListener(type, () => { scrollMoved = true; }, { once: true, passive: true });
+toHere('auto');
+// Web fonts change heading heights after the first layout, which would leave the current lesson off screen.
+document.fonts?.ready.then(() => { if (!scrollMoved) toHere('auto'); });
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+  // Loaded through the worker means every file is kept, so the main page may send learners here offline too.
+  const kept = () => { try { localStorage.setItem('learnOffline', '1'); } catch { /* not kept */ } window.learnKept = true; };
+  const cacheCourse = () => {
+    if (!window.courseReady || window.courseLoadFailed) return;
+    const art = window.worldCharacterCatalog.assetPaths().map(path => new URL(path, location.href).href);
+    const files = [location.href, ...art, ...performance.getEntriesByType('resource').map(e => e.name)].filter(u => new URL(u).origin === location.origin);
+    Promise.all(files.map(u => fetch(u).then(response => { if (!response.ok) throw new Error('Incomplete offline cache'); }))).then(kept).catch(() => { /* The next visit retries an incomplete cache. */ });
+  };
+  const whenLoaded = () => {
+    if (document.readyState === 'complete') cacheCourse(); else addEventListener('load', cacheCourse, { once: true });
+  };
+  if (navigator.serviceWorker.controller) whenLoaded();
+  else navigator.serviceWorker.addEventListener('controllerchange', whenLoaded, { once: true });
+}
