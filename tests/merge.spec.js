@@ -40,7 +40,7 @@ test('old caches are removed and the app opens offline after update', async ({ p
   await page.reload();
   await expect(page.locator('#learn')).toBeVisible();
   await expect(page.locator('.node.current')).toBeVisible();
-  expect(await page.evaluate(() => caches.keys())).toEqual(['linux-master-v31']);
+  expect(await page.evaluate(() => caches.keys())).toEqual(['linux-master-v32']);
   await context.setOffline(false);
 });
 
