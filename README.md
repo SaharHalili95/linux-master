@@ -3,43 +3,47 @@
 [![Tests](https://github.com/SaharHalili95/linux-master/actions/workflows/tests.yml/badge.svg)](https://github.com/SaharHalili95/linux-master/actions/workflows/tests.yml)
 [![Live site](https://img.shields.io/badge/live-saharhalili95.github.io%2Flinux--master-b4f36b)](https://saharhalili95.github.io/linux-master/)
 
-A Linux course that runs entirely in the browser, in English and Hebrew. It has two modes: **Learn**, a phone-first course from your first command to certification prep, and **Trivia**, the original command trainer with spaced repetition and 12 terminal missions shaped like the first levels of OverTheWire Bandit. It is an installable, offline-capable PWA with no server, no account and no build step.
+A Linux course that runs entirely in the browser, in English and Hebrew. It takes a learner from their first command to certification prep, and checks every typed answer by running it in a Linux shell simulator written from scratch in JavaScript. It is an installable, offline-capable PWA with no server, no account and no build step.
 
 **Live:** https://saharhalili95.github.io/linux-master/
 
-<p>
-  <img src="docs/screenshots/home-en.jpg" width="200" alt="Home screen with daily goal and levels">
-  <img src="docs/screenshots/typing-alternative-en.jpg" width="200" alt="A different typed command accepted because it produces the same output">
-  <img src="docs/screenshots/why-wrong-en.jpg" width="200" alt="Explanation of why the chosen answer is wrong">
-  <img src="docs/screenshots/mission-terminal-en.jpg" width="200" alt="Mission 6 solved with find in the simulated terminal">
+**Stack:** JavaScript (ES2022), HTML, CSS · PWA and Service Worker · Playwright · Docker · GitHub Actions CI/CD · Lighthouse CI · axe accessibility testing
+
+<p align="center">
+  <img src="docs/screenshots/demo-en.gif" width="300" alt="A learner types a grep command, the simulated shell prints the matching lines, and the answer is accepted">
 </p>
+
+## Why I built it
+
+Most Linux learning material assumes English, a laptop and a steady connection. I built Linux Master so that Hebrew speakers in Israel can learn Linux easily on any device, anywhere and at any time, online or offline, and so that more of them can earn official Linux certifications such as LPIC-1, RHCSA and CompTIA Linux+.
+
+That goal set the technical requirements: a full course that works offline on a phone, practice on a real command line without a server, and answers that are checked the way Linux itself would run them.
+
+## Engineering highlights
+
+- **A shell simulator written from scratch** ([`shell.js`](shell.js)): a lexer and parser for a POSIX-like command line (quotes, `|`, `&&`, `||`, `;`, redirections, globs, variables, arithmetic), an in-memory file system with modes, owners and locked directories, and 69 commands including `find`, `awk`, `sed`, `sort`, `tr` and `base64`.
+- **Answers are checked by behaviour, not by string matching.** A typed command is normalised first (flag order, merged flags like `-la`, quoting, spacing). If it still differs from the reference, both run in the simulator and the answer is accepted when the output matches. `sameOutput()` returns true, false or "can't tell" for unsupported commands, so the checker never guesses.
+- **The simulator is tested against real Linux.** A differential test runs 570 commands in the simulator and in Ubuntu 24.04 in Docker and requires identical output.
+- **No invented output.** Commands the simulator cannot run (package managers, `systemctl`, networking) show output recorded on real Ubuntu, AlmaLinux and openSUSE machines by [`tests/sandbox`](tests/sandbox).
+- **Fast on a phone.** The 118 KB shell simulator loads after the first screen, and Lighthouse CI blocks any release that scores below 90 on performance.
 
 ## Learn mode
 
-- **93 short units in 10 parts and about 3,000 exercises,** from your first command to every LPIC-1 v5.0 objective, plus topics from RHCSA, LFCS, Linux Essentials, SUSE SCA and CompTIA Linux+.
-- **Six certification tracks.** Pick one and see only its units: LPIC-1 (71 units), RHCSA (56), LFCS (49), Linux Essentials (47), SUSE SCA (43) or CompTIA Linux+ (76). Progress is saved for each track.
-- **Six mock exams,** one per certification. LPIC-1 has 60 questions, a 90-minute timer and a 500/800 pass mark.
-- **No invented output.** Answers run in the simulated shell or come from output recorded on real Ubuntu, AlmaLinux and openSUSE machines.
+- **93 units in 10 parts, plus 6 mock exams, about 2,750 exercises,** from your first command to every LPIC-1 v5.0 objective, plus topics from RHCSA, LFCS, Linux Essentials, SUSE SCA and CompTIA Linux+. The full unit list is in [`materials/curriculum.md`](materials/curriculum.md).
+- **Six certification tracks.** Pick one and see only its units: LPIC-1 (71 units), RHCSA (56), LFCS (49), Linux Essentials (47), SUSE SCA (43) or CompTIA Linux+ (76). Progress is shared between tracks.
+- **Six mock exams,** one per certification, each with the exam's question count and pass mark. LPIC-1 has 60 questions, a 90-minute timer and a 500/800 pass mark.
+- **Lessons in the style of a language-learning app:** teach cards, multiple choice, fill-in, word tiles, "what will this print?" and live terminal tasks, with lives, streaks, daily quests and a boss at the end of each unit.
 - **Your data stays yours.** Progress stays in the browser, with a backup file you can save and restore.
 
-The code is in [`prototype/`](prototype/README.md) and the unit list is in [`materials/curriculum.md`](materials/curriculum.md).
+<p>
+  <img src="docs/screenshots/learn-home-en.jpg" width="200" alt="Learn mode home: the course path with rank, XP and the first unit">
+  <img src="docs/screenshots/learn-terminal-en.jpg" width="200" alt="A terminal exercise: grep with a regex run in the simulated shell">
+  <img src="docs/screenshots/learn-tracks-en.jpg" width="200" alt="Certification track picker with the number of units in each track">
+</p>
 
 ## Trivia mode
 
-- **8 levels, about 1,100 questions:** 46 commands asked in both directions, all 450 usage lines from the Bandit guide, 75 pipe and workflow scenarios, and 30 Bandit-specific tools.
-- **Choice or typing, one tap to switch.** Typed answers are normalised (flag order, merged flags like `-la`, quoting, spacing). If the text still differs, the command runs in the simulated shell and is accepted when its output matches the reference answer.
-- **An explanation for every wrong answer:** what the command you picked actually does, and why it doesn't solve this task.
-- **Report a problem on any question:** one tap opens a pre-filled GitHub issue with the level, question id, options, correct answer and what the learner answered.
-- **Leitner review:** mistakes come back 4 questions later and at the start of later rounds until answered correctly.
-- **Terminal missions:** a simulated shell with pipes, redirection, globs, `find`, `awk`, `sed`, `strings`, `base64`, `tr` and more. Every visit plants a fresh random password, so there is nothing to memorise.
-- **Habits:** daily goal and streak, a calendar reminder (`.ics`), per-level and per-command accuracy.
-- **Your data stays yours:** progress lives in `localStorage`, with export to file or clipboard and restore.
-- **Full English and Hebrew** (RTL) interface and content, switchable at any time with shared progress.
-
-<p>
-  <img src="docs/screenshots/bandit-map-en.jpg" width="200" alt="Bandit map with links to practice missions">
-  <img src="docs/screenshots/stats-en.jpg" width="200" alt="Statistics panel with accuracy and backup">
-</p>
+The original command trainer, at [`?mode=trivia`](https://saharhalili95.github.io/linux-master/?mode=trivia): 8 levels and about 1,100 questions with Leitner spaced repetition, an explanation for every wrong answer, and 12 terminal missions shaped like the first levels of OverTheWire Bandit, each with a fresh random password. Learn mode's Practice tab draws its questions from here.
 
 ## Architecture
 
@@ -47,18 +51,25 @@ Plain HTML, CSS and classic scripts that share one global scope, loaded in order
 
 ```mermaid
 flowchart LR
-  subgraph data
-    C[content.js<br>Hebrew questions] --> E[content.en.js<br>English overlay]
-    M[missions.js<br>12 mission builders]
+  subgraph learn [Learn mode: index.html]
+    I[i18n.js<br>UI strings] --> A
+    U[units.js, lessons.js, parts/<br>99 units of exercises] --> A
+    R[recorded/<br>output from real distros] --> A
+    A[app.js<br>lessons, exams, tracks,<br>answer checking, UI]
   end
-  S[shell.js<br>lexer, parser, virtual FS,<br>~30 commands] --> A
-  E --> A[app.js<br>i18n, Leitner engine,<br>typing check, UI]
-  M --> A
+  subgraph trivia [Trivia mode: classic/]
+    D[data/content.js, content.en.js<br>questions] --> C[classic/app.js<br>Leitner engine, UI]
+    M[data/missions.js<br>12 mission builders] --> C
+  end
+  S[shell.js<br>lexer, parser, virtual FS,<br>69 commands] --> A
+  S --> C
+  D -. Practice tab .-> A
   A --> L[(localStorage)]
+  C --> L
   W[sw.js<br>network-first service worker] -. offline cache .- A
 ```
 
-- **shell.js** parses a POSIX-like command line (quotes, `|`, `&&`, `||`, `;`, `>`, `2>/dev/null`, globs, variables) and runs it on an in-memory file system with modes, owners and locked directories. `sameOutput(a, b, fixture)` returns true, false, or "can't tell" for unsupported commands, so the checker never guesses.
+- **Content is bilingual at the source.** Every string is written as `T(hebrew, english)`, so both languages ship together and the interface switches without a reload.
 - **Offline and updates:** the service worker serves navigations network-first and falls back to the cache, and every asset URL is versioned, so phones pick up a new release on the next open.
 
 ## Testing
@@ -67,10 +78,10 @@ Every push runs four CI jobs, and GitHub Pages deploys only after all of them pa
 
 | Job | What it checks |
 | --- | --- |
-| **browser** | About 570 Playwright tests on 4 devices (desktop Chrome, iPhone 13 WebKit, Pixel 7, iPhone SE): game flow, review scheduling, typing checks with hundreds of generated variations, both languages, offline and update flow, layout overflow, size budget, and **axe WCAG 2.1 AA** on every screen in both languages |
+| **browser** | About 850 Playwright tests on 4 devices (desktop Chrome, iPhone 13 WebKit, Pixel 7, iPhone SE): lesson and game flow, review scheduling, typing checks with hundreds of generated variations, both languages, offline and update flow, layout overflow, size budget, and **axe WCAG 2.1 AA** on every screen in both languages |
 | **course** | Plays all 11 parts of Learn mode to the end in Chromium, one parallel job per part |
-| **ubuntu-answers** | Runs every correct and wrong answer of levels 3-8 on real Ubuntu 24.04 in Docker. Then a **differential test** runs 570 commands both in the simulator and in Ubuntu and requires identical output, plus a safety check that none of the 190 wrong options is accepted by output |
-| **quality** | ESLint, html-validate, and Lighthouse CI with hard thresholds (performance 90, accessibility, best practices and SEO 100; currently 98/100/100/100) |
+| **ubuntu-answers** | Runs every correct and wrong Trivia answer of levels 3-8 on real Ubuntu 24.04 in Docker. Then the **differential test** runs 570 commands in both the simulator and Ubuntu and requires identical output, plus a safety check that none of the 190 wrong options is accepted by output |
+| **quality** | ESLint, html-validate, and Lighthouse CI with hard thresholds (performance 90, accessibility, best practices and SEO 100) |
 
 A weekly job also checks that every link to the official Bandit pages is still alive.
 
@@ -82,13 +93,7 @@ A weekly job also checks that every link to the official Bandit pages is still a
 - **Phones.** The stats row overflowed on iPhone SE, and long answers overflowed narrow screens.
 - **Mixed languages.** A scan for Hebrew characters in the English UI found sentences assembled from Hebrew fragments.
 
-## Legal
-
-© 2026 Sahar Halili. All rights reserved, except the third-party material credited on the page linked below.
-
-Linux Master is an independent project and is not affiliated with LPI, Red Hat, the Linux Foundation, SUSE, CompTIA or OverTheWire. Certification names are marks of their owners. See the [legal, privacy and accessibility page](https://saharhalili95.github.io/linux-master/prototype/legal.html).
-
-## Run locally
+## Development
 
 ```bash
 cd tests && npm ci && npx playwright install chromium webkit
@@ -100,8 +105,16 @@ npx lhci autorun           # Lighthouse
 node screenshots.js        # regenerate README screenshots (site on :8766)
 ```
 
-To add a language, add a dictionary to `I18N` in `app.js`, a content overlay to `CONTENT`, and the code to `LANGS`.
-
 ## Install on a phone
 
 Open the site in Safari or Chrome and choose **Add to Home Screen**. After the first load it works without a network.
+
+## Author
+
+Built by **Sahar Halili**, B.Sc. in Computer Science (HIT). [LinkedIn](https://www.linkedin.com/in/sahar-halili) · [Portfolio](https://saharhalili95.github.io/html-portfolio/) · [GitHub](https://github.com/SaharHalili95)
+
+## Legal
+
+© 2026 Sahar Halili. All rights reserved, except the third-party material credited on the page linked below.
+
+Linux Master is an independent project and is not affiliated with LPI, Red Hat, the Linux Foundation, SUSE, CompTIA or OverTheWire. Certification names are marks of their owners. See the [legal, privacy and accessibility page](https://saharhalili95.github.io/linux-master/legal.html).

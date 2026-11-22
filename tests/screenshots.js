@@ -12,6 +12,29 @@ const sampleProgress = {
   for (const lang of ['en']) {
     const context = await browser.newContext({ ...devices['iPhone 13'], reducedMotion: 'reduce' });
     const page = await context.newPage();
+    await page.goto('http://localhost:8766/');
+    await page.evaluate(l => { localStorage.clear(); localStorage.setItem('lang', l); }, lang);
+    await page.reload();
+    await page.waitForFunction(() => window.courseReady);
+    const shot = async name => { await page.waitForTimeout(250); await page.screenshot({ path: out(`${name}-${lang}`), type: 'jpeg', quality: 82 }); };
+
+    await page.evaluate(() => scrollTo(0, 0));
+    await shot('learn-home');
+
+    await page.evaluate(() => openTracks());
+    await shot('learn-tracks');
+
+    await page.evaluate(() => { document.getElementById('trackSheet').hidden = true; const unit = COURSE.find(u => u.unit === 7); const ex = unit.lessons[0].exercises; startLesson('u7-L0', withFixture(unit, ex.slice(ex.findIndex(e => e.type === 'terminal')))); });
+    const input = page.locator('#lesson textarea').first();
+    await input.fill('grep "started$" logs/app.log');
+    await input.press('Enter');
+    await page.evaluate(() => document.activeElement.blur());
+    await shot('learn-terminal');
+    await context.close();
+  }
+  for (const lang of ['en']) {
+    const context = await browser.newContext({ ...devices['iPhone 13'], reducedMotion: 'reduce' });
+    const page = await context.newPage();
     await page.goto('http://localhost:8766/?mode=trivia');
     await page.evaluate(([l, p]) => { localStorage.clear(); localStorage.setItem('lang', l); for (const [k, v] of Object.entries(p)) localStorage.setItem(k, v); }, [lang, sampleProgress]);
     await page.reload();
