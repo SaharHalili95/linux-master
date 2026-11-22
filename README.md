@@ -50,25 +50,22 @@ The original command trainer, at [`?mode=trivia`](https://saharhalili95.github.i
 Plain HTML, CSS and classic scripts that share one global scope, loaded in order. No framework and no bundler.
 
 ```mermaid
-flowchart LR
-  subgraph learn [Learn mode: index.html]
-    I[i18n.js<br>UI strings] --> A
-    U[units.js, lessons.js, parts/<br>99 units of exercises] --> A
-    R[recorded/<br>output from real distros] --> A
-    A[app.js<br>lessons, exams, tracks,<br>answer checking, UI]
+flowchart TB
+  S["<b>shell.js</b><br>shell simulator, 69 commands"]
+  subgraph learn ["Learn mode"]
+    U["<b>units.js, parts/</b><br>99 units"] --> A["<b>app.js</b><br>lessons and exams"]
+    R["<b>recorded/</b><br>real Linux output"] --> A
   end
-  subgraph trivia [Trivia mode: classic/]
-    D[data/content.js, content.en.js<br>questions] --> C[classic/app.js<br>Leitner engine, UI]
-    M[data/missions.js<br>12 mission builders] --> C
+  subgraph trivia ["Trivia mode"]
+    D["<b>data/</b><br>questions, missions"] --> C["<b>classic/app.js</b><br>spaced repetition"]
   end
-  S[shell.js<br>lexer, parser, virtual FS,<br>69 commands] --> A
+  S --> A
   S --> C
-  D -. Practice tab .-> A
-  A --> L[(localStorage)]
+  A --> L[("localStorage")]
   C --> L
-  W[sw.js<br>network-first service worker] -. offline cache .- A
 ```
 
+- **One simulator, two apps.** `shell.js` runs every typed answer in both modes, and Learn's Practice tab reuses the Trivia questions in `data/`.
 - **Content is bilingual at the source.** Every string is written as `T(hebrew, english)`, so both languages ship together and the interface switches without a reload.
 - **Offline and updates:** the service worker serves navigations network-first and falls back to the cache, and every asset URL is versioned, so phones pick up a new release on the next open.
 
