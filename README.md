@@ -27,12 +27,13 @@ That goal set the technical requirements: a full course that works offline on a 
 - **No invented output.** Commands the simulator cannot run (package managers, `systemctl`, networking) show output recorded on real Ubuntu, AlmaLinux and openSUSE machines by [`tests/sandbox`](tests/sandbox).
 - **Fast on a phone.** The 118 KB shell simulator loads after the first screen, and Lighthouse CI blocks any release that scores below 90 on performance.
 
-## Learn mode
+## Features
 
 - **93 units in 10 parts, plus 6 mock exams, about 2,750 exercises,** from your first command to every LPIC-1 v5.0 objective, plus topics from RHCSA, LFCS, Linux Essentials, SUSE SCA and CompTIA Linux+. The full unit list is in [`materials/curriculum.md`](materials/curriculum.md).
 - **Six certification tracks.** Pick one and see only its units: LPIC-1 (71 units), RHCSA (56), LFCS (49), Linux Essentials (47), SUSE SCA (43) or CompTIA Linux+ (76). Progress is shared between tracks.
 - **Six mock exams,** one per certification, each with the exam's question count and pass mark. LPIC-1 has 60 questions, a 90-minute timer and a 500/800 pass mark.
 - **Lessons in the style of a language-learning app:** teach cards, multiple choice, fill-in, word tiles, "what will this print?" and live terminal tasks, with lives, streaks, daily quests and a boss at the end of each unit.
+- **An explanation for every wrong answer,** and a Practice tab that brings your mistakes back and drills from a bank of about 1,100 command questions.
 - **Your data stays yours.** Progress stays in the browser, with a backup file you can save and restore.
 
 ### From the first command to advanced topics
@@ -45,35 +46,20 @@ Every part of the course is its own world, from The Gateway (`pwd`, `ls`, `cat`)
 
 ### Certification prep
 
-<p>
-  <img src="docs/screenshots/learn-tracks-en.jpg" width="200" alt="Track picker: whole course or one of six certifications, with the number of units in each">
-  <img src="docs/screenshots/learn-exam78-en.jpg" width="200" alt="LPIC-1 mock exam: question 1 of 60 with a 90-minute timer">
-  <img src="docs/screenshots/learn-exam79-en.jpg" width="200" alt="RHCSA mock exam: a hands-on task in the simulated terminal">
+<p align="center">
+  <img src="docs/screenshots/certifications-en.webp" alt="Track picker with six certifications, an LPIC-1 mock exam with a 90-minute timer, and an RHCSA mock exam task in the terminal">
 </p>
 
 ### Lessons
 
-<p>
-  <img src="docs/screenshots/learn-terminal-en.jpg" width="200" alt="A terminal task: grep with a regex, run in the simulated shell and accepted">
-  <img src="docs/screenshots/learn-why-en.jpg" width="200" alt="A wrong answer with the correct command and an explanation of the mistake">
-  <img src="docs/screenshots/learn-home-en.jpg" width="200" alt="The course path in part 8, The Firewall, with rank, streak, gems and XP">
+<p align="center">
+  <img src="docs/screenshots/lessons-en.webp" alt="A grep terminal task accepted, a wrong answer with its explanation, and the course path in part 8 with rank, streak and XP">
 </p>
 
 ### Fully in Hebrew
 
-<p>
-  <img src="docs/screenshots/learn-home-he.jpg" width="200" alt="The course path in Hebrew, right to left">
-  <img src="docs/screenshots/learn-terminal-he.jpg" width="200" alt="The same terminal task in Hebrew">
-</p>
-
-## Trivia mode
-
-The original command trainer, at [`?mode=trivia`](https://saharhalili95.github.io/linux-master/?mode=trivia): 8 levels and about 1,100 questions with Leitner spaced repetition, an explanation for every wrong answer, and 12 terminal missions shaped like the first levels of OverTheWire Bandit, each with a fresh random password. Learn mode's Practice tab draws its questions from here.
-
-<p>
-  <img src="docs/screenshots/typing-alternative-en.jpg" width="200" alt="A different typed command accepted because it produces the same output">
-  <img src="docs/screenshots/why-wrong-en.jpg" width="200" alt="Explanation of why the chosen answer is wrong">
-  <img src="docs/screenshots/mission-terminal-en.jpg" width="200" alt="Mission 6 solved with find in the simulated terminal">
+<p align="center">
+  <img src="docs/screenshots/hebrew-he.webp" width="600" alt="The course path and a terminal task in Hebrew, right to left">
 </p>
 
 ## Architecture
@@ -83,20 +69,13 @@ Plain HTML, CSS and classic scripts that share one global scope, loaded in order
 ```mermaid
 flowchart TB
   S["<b>shell.js</b><br>shell simulator, 69 commands"]
-  subgraph learn ["Learn mode"]
-    U["<b>units.js, parts/</b><br>99 units"] --> A["<b>app.js</b><br>lessons and exams"]
-    R["<b>recorded/</b><br>real Linux output"] --> A
-  end
-  subgraph trivia ["Trivia mode"]
-    D["<b>data/</b><br>questions, missions"] --> C["<b>classic/app.js</b><br>spaced repetition"]
-  end
-  S --> A
-  S --> C
+  U["<b>units.js, parts/</b><br>99 units"] --> A
+  R["<b>recorded/</b><br>real Linux output"] --> A
+  D["<b>data/</b><br>practice questions"] --> A
+  S --> A["<b>app.js</b><br>lessons, exams, answer checking"]
   A --> L[("localStorage")]
-  C --> L
 ```
 
-- **One simulator, two apps.** `shell.js` runs every typed answer in both modes, and Learn's Practice tab reuses the Trivia questions in `data/`.
 - **Content is bilingual at the source.** Every string is written as `T(hebrew, english)`, so both languages ship together and the interface switches without a reload.
 - **Offline and updates:** the service worker serves navigations network-first and falls back to the cache, and every asset URL is versioned, so phones pick up a new release on the next open.
 
@@ -107,8 +86,8 @@ Every push runs four CI jobs, and GitHub Pages deploys only after all of them pa
 | Job | What it checks |
 | --- | --- |
 | **browser** | About 850 Playwright tests on 4 devices (desktop Chrome, iPhone 13 WebKit, Pixel 7, iPhone SE): lesson and game flow, review scheduling, typing checks with hundreds of generated variations, both languages, offline and update flow, layout overflow, size budget, and **axe WCAG 2.1 AA** on every screen in both languages |
-| **course** | Plays all 11 parts of Learn mode to the end in Chromium, one parallel job per part |
-| **ubuntu-answers** | Runs every correct and wrong Trivia answer of levels 3-8 on real Ubuntu 24.04 in Docker. Then the **differential test** runs 570 commands in both the simulator and Ubuntu and requires identical output, plus a safety check that none of the 190 wrong options is accepted by output |
+| **course** | Plays all 11 parts of the course to the end in Chromium, one parallel job per part |
+| **ubuntu-answers** | Runs every correct and wrong command answer in the practice question bank on real Ubuntu 24.04 in Docker. Then the **differential test** runs 570 commands in both the simulator and Ubuntu and requires identical output, plus a safety check that none of the 190 wrong options is accepted by output |
 | **quality** | ESLint, html-validate, and Lighthouse CI with hard thresholds (performance 90, accessibility, best practices and SEO 100) |
 
 A weekly job also checks that every link to the official Bandit pages is still alive.
