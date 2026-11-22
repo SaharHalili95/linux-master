@@ -100,8 +100,6 @@ Every push runs four CI jobs, and GitHub Pages deploys only after all of them pa
 | **ubuntu-answers** | Runs every correct and wrong command answer in the practice question bank on real Ubuntu 24.04 in Docker. Then the **differential test** runs 570 commands in both the simulator and Ubuntu and requires identical output, plus a safety check that none of the 190 wrong options is accepted by output |
 | **quality** | ESLint, html-validate, and Lighthouse CI with hard thresholds (performance 90, accessibility, best practices and SEO 100) |
 
-The site also keeps the [original command trainer](https://saharhalili95.github.io/linux-master/?mode=trivia) with 12 terminal missions modelled on the first levels of OverTheWire's Bandit wargame, and a weekly job checks that every link from them to the official Bandit level pages is still alive.
-
 ### Bugs the tests caught
 
 - **Wrong options that were actually right.** The Ubuntu sandbox found a ROT13 distractor that decoded correctly, and a `|` option that worked by race condition.
