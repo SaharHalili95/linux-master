@@ -35,15 +35,46 @@ That goal set the technical requirements: a full course that works offline on a 
 - **Lessons in the style of a language-learning app:** teach cards, multiple choice, fill-in, word tiles, "what will this print?" and live terminal tasks, with lives, streaks, daily quests and a boss at the end of each unit.
 - **Your data stays yours.** Progress stays in the browser, with a backup file you can save and restore.
 
+### From the first command to advanced topics
+
+Every part of the course is its own world, from The Gateway (`pwd`, `ls`, `cat`) through text processing, files and permissions, processes, networking, scripting and security, to New Frontiers with topics from other certifications. A learner climbs through ranks as they earn XP.
+
+<p align="center">
+  <img src="docs/screenshots/worlds-en.gif" width="280" alt="Scrolling through the course worlds: The Gateway, River of Text, City of Files, Citadel of Processes, Grid of Lights, The Script Works, The Firewall and New Frontiers">
+</p>
+
+### Certification prep
+
 <p>
-  <img src="docs/screenshots/learn-home-en.jpg" width="200" alt="Learn mode home: the course path with rank, XP and the first unit">
-  <img src="docs/screenshots/learn-terminal-en.jpg" width="200" alt="A terminal exercise: grep with a regex run in the simulated shell">
-  <img src="docs/screenshots/learn-tracks-en.jpg" width="200" alt="Certification track picker with the number of units in each track">
+  <img src="docs/screenshots/learn-tracks-en.jpg" width="200" alt="Track picker: whole course or one of six certifications, with the number of units in each">
+  <img src="docs/screenshots/learn-exam78-en.jpg" width="200" alt="LPIC-1 mock exam: question 1 of 60 with a 90-minute timer">
+  <img src="docs/screenshots/learn-exam79-en.jpg" width="200" alt="RHCSA mock exam: a hands-on task in the simulated terminal">
+</p>
+
+### Lessons
+
+<p>
+  <img src="docs/screenshots/learn-terminal-en.jpg" width="200" alt="A terminal task: grep with a regex, run in the simulated shell and accepted">
+  <img src="docs/screenshots/learn-why-en.jpg" width="200" alt="A wrong answer with the correct command and an explanation of the mistake">
+  <img src="docs/screenshots/learn-home-en.jpg" width="200" alt="The course path in part 8, The Firewall, with rank, streak, gems and XP">
+</p>
+
+### Fully in Hebrew
+
+<p>
+  <img src="docs/screenshots/learn-home-he.jpg" width="200" alt="The course path in Hebrew, right to left">
+  <img src="docs/screenshots/learn-terminal-he.jpg" width="200" alt="The same terminal task in Hebrew">
 </p>
 
 ## Trivia mode
 
 The original command trainer, at [`?mode=trivia`](https://saharhalili95.github.io/linux-master/?mode=trivia): 8 levels and about 1,100 questions with Leitner spaced repetition, an explanation for every wrong answer, and 12 terminal missions shaped like the first levels of OverTheWire Bandit, each with a fresh random password. Learn mode's Practice tab draws its questions from here.
+
+<p>
+  <img src="docs/screenshots/typing-alternative-en.jpg" width="200" alt="A different typed command accepted because it produces the same output">
+  <img src="docs/screenshots/why-wrong-en.jpg" width="200" alt="Explanation of why the chosen answer is wrong">
+  <img src="docs/screenshots/mission-terminal-en.jpg" width="200" alt="Mission 6 solved with find in the simulated terminal">
+</p>
 
 ## Architecture
 
