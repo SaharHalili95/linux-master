@@ -59,6 +59,12 @@ Feedback is what turns the exercises into a course:
 - **Hints on terminal tasks,** and a review of every question at the end of a mock exam.
 - **A skip test** lets a learner who already knows Linux jump ahead: it asks about every stage it would skip, terminal tasks included.
 
+Here the coach reacts to three wrong attempts, each in its own way: `cat` runs but doesn't do the task, `gerp` is a typo, and `grep started` also matches "started backup", so the coach points at the word to fix. Then the right command passes.
+
+<p align="center">
+  <img src="docs/screenshots/coach-en.webp" width="300" alt="The live coach: cat runs but the task is not done, gerp is flagged as a typo, grep started is flagged at the word started, and grep with started$ completes the task">
+</p>
+
 <p align="center">
   <img src="docs/screenshots/lessons-en.webp" alt="A grep terminal task accepted, a wrong answer with its explanation, and the course path in part 8 with rank, streak and XP">
 </p>
