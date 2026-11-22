@@ -10,7 +10,7 @@ A Linux course that runs entirely in the browser, in English and Hebrew. It take
 **Stack:** JavaScript (ES2022), HTML, CSS · PWA and Service Worker · Playwright · Docker · GitHub Actions CI/CD · Lighthouse CI · axe accessibility testing
 
 <p align="center">
-  <img src="docs/screenshots/demo-en.gif" width="300" alt="A learner types a grep command, the simulated shell prints the matching lines, and the answer is accepted">
+  <img src="docs/screenshots/coach-en.webp" width="300" alt="The live coach: cat runs but the task is not done, gerp is flagged as a typo, grep started is flagged at the word started, and grep with started$ completes the task">
 </p>
 
 ## Why I built it
@@ -59,11 +59,7 @@ Feedback is what turns the exercises into a course:
 - **Hints on terminal tasks,** and a review of every question at the end of a mock exam.
 - **A skip test** lets a learner who already knows Linux jump ahead: it asks about every stage it would skip, terminal tasks included.
 
-Here the coach reacts to three wrong attempts, each in its own way: `cat` runs but doesn't do the task, `gerp` is a typo, and `grep started` also matches "started backup", so the coach points at the word to fix. Then the right command passes.
-
-<p align="center">
-  <img src="docs/screenshots/coach-en.webp" width="300" alt="The live coach: cat runs but the task is not done, gerp is flagged as a typo, grep started is flagged at the word started, and grep with started$ completes the task">
-</p>
+In the recording at the top of this page, the coach reacts to three wrong attempts, each in its own way: `cat` runs but doesn't do the task, `gerp` is a typo, and `grep started` also matches "started backup", so the coach points at the word to fix. Then the right command passes.
 
 <p align="center">
   <img src="docs/screenshots/lessons-en.webp" alt="A grep terminal task accepted, a wrong answer with its explanation, and the course path in part 8 with rank, streak and XP">
@@ -87,6 +83,7 @@ flowchart TB
   D["<b>data/</b><br>practice questions"] --> A
   S --> A["<b>app.js</b><br>lessons, exams, answer checking"]
   A --> L[("localStorage")]
+  W["<b>sw.js</b><br>network-first service worker"] -. offline cache .- A
 ```
 
 - **Content is bilingual at the source.** Every string is written as `T(hebrew, english)`, so both languages ship together and the interface switches without a reload.
@@ -103,7 +100,7 @@ Every push runs four CI jobs, and GitHub Pages deploys only after all of them pa
 | **ubuntu-answers** | Runs every correct and wrong command answer in the practice question bank on real Ubuntu 24.04 in Docker. Then the **differential test** runs 570 commands in both the simulator and Ubuntu and requires identical output, plus a safety check that none of the 190 wrong options is accepted by output |
 | **quality** | ESLint, html-validate, and Lighthouse CI with hard thresholds (performance 90, accessibility, best practices and SEO 100) |
 
-A weekly job also checks that every link to the official Bandit pages is still alive.
+The site also keeps the [original command trainer](https://saharhalili95.github.io/linux-master/?mode=trivia) with 12 terminal missions modelled on the first levels of OverTheWire's Bandit wargame, and a weekly job checks that every link from them to the official Bandit level pages is still alive.
 
 ### Bugs the tests caught
 
