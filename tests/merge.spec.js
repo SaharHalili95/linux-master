@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 
 test('old Learn address opens the app at the root', async ({ page }) => {
   await page.goto('./prototype/?x=1#y');
@@ -40,7 +40,7 @@ test('old caches are removed and the app opens offline after update', async ({ p
   await page.reload();
   await expect(page.locator('#learn')).toBeVisible();
   await expect(page.locator('.node.current')).toBeVisible();
-  expect(await page.evaluate(() => caches.keys())).toEqual(['linux-master-v32']);
+  expect(await page.evaluate(() => caches.keys())).toEqual(['linux-master-v33']);
   await context.setOffline(false);
 });
 

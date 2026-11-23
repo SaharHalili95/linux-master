@@ -25,7 +25,7 @@ That goal set the technical requirements: a full course that works offline on a 
 - **Answers are checked by behaviour, not by string matching.** A typed command is normalised first (flag order, merged flags like `-la`, quoting, spacing). If it still differs from the reference, both run in the simulator and the answer is accepted when the output matches. `sameOutput()` returns true, false or "can't tell" for unsupported commands, so the checker never guesses.
 - **The simulator is tested against real Linux.** A differential test runs 570 commands in the simulator and in Ubuntu 24.04 in Docker and requires identical output.
 - **No invented output.** Commands the simulator cannot run (package managers, `systemctl`, networking) show output recorded on real Ubuntu, AlmaLinux and openSUSE machines by [`tests/sandbox`](tests/sandbox).
-- **Fast on a phone.** The 118 KB shell simulator loads after the first screen, and Lighthouse CI blocks any release that scores below 90 on performance.
+- **Fast on a phone.** The first screen paints before the course arrives: the shell simulator and all 93 units download once it is on screen. Lighthouse CI measures the course page and blocks any release that scores below 90 on performance.
 
 ## Features
 

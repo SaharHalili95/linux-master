@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 const fs = require('fs');
 const path = require('path');
 
@@ -968,92 +968,97 @@ for (const pixelRatio of [1.25, 3]) test(`retina background clears its full surf
   } finally { await context.close(); }
 });
 
-test('loading: the first lesson works before later course files finish and stays open afterward', async ({ page }) => {
-  let release;
-  const gate = new Promise(resolve => { release = resolve; });
-  await page.route('**/parts/p1.js?*', async route => { await gate; await route.continue(); });
-  const navigation = page.goto('./');
-  try {
-    await expect(page.locator('.stage-moon')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('.node.current')).toBeVisible();
-    expect(await page.evaluate(() => COURSE.length)).toBe(6);
-    await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+// The course loads after the service worker takes over the page, and page.route cannot hold back what the worker fetches.
+test.describe(() => {
+  test.use({ serviceWorkers: 'block' });
+
+  test('loading: the first lesson works before later course files finish and stays open afterward', async ({ page }) => {
+    let release;
+    const gate = new Promise(resolve => { release = resolve; });
+    await page.route('**/parts/p1.js?*', async route => { await gate; await route.continue(); });
+    const navigation = page.goto('./');
+    try {
+      await expect(page.locator('.stage-moon')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('.node.current')).toBeVisible();
+      expect(await page.evaluate(() => COURSE.length)).toBe(6);
+      await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+      await expect(page.locator('#lesson')).toBeVisible();
+      await expect(page.locator('#exBody')).toContainText('pwd');
+    } finally { release(); await navigation; }
     await expect(page.locator('#lesson')).toBeVisible();
     await expect(page.locator('#exBody')).toContainText('pwd');
-  } finally { release(); await navigation; }
-  await expect(page.locator('#lesson')).toBeVisible();
-  await expect(page.locator('#exBody')).toContainText('pwd');
-  expect(await page.evaluate(() => COURSE.length)).toBeGreaterThanOrEqual(83);
-  await page.evaluate(() => closeOverlays());
-  await expect(page.locator('.unit-banner')).toHaveCount(await page.evaluate(() => COURSE.length));
-});
-
-test('loading: saved progress beyond the first six units resumes without changing it', async ({ page }) => {
-  await page.addInitScript(() => {
-    const done = Array.from({ length: 6 }, (_, i) => ['L0', 'L1', 'c1', 'L2', 'L3', 'boss'].map(k => i ? `u${i + 1}-${k}` : k)).flat();
-    localStorage.setItem('linux-master-proto', JSON.stringify({ done, xp: 300, gems: 80 }));
+    expect(await page.evaluate(() => COURSE.length)).toBeGreaterThanOrEqual(83);
+    await page.evaluate(() => closeOverlays());
+    await expect(page.locator('.unit-banner')).toHaveCount(await page.evaluate(() => COURSE.length));
   });
-  await page.goto('./');
-  await expect(page.locator('.node.current')).toHaveAttribute('aria-label', await page.evaluate(() => t('lessonN', 1, tr(COURSE.find(u => u.unit === 7).lessons[0].title))));
-  expect(await page.evaluate(() => ({ xp: S.xp, gems: S.gems, completed: S.done.length }))).toEqual({ xp: 300, gems: 80, completed: 36 });
-});
 
-test('loading: partially downloaded later units stay unavailable in the path and practice', async ({ page }) => {
-  let release; const gate = new Promise(resolve => { release = resolve; });
-  await page.route('**/parts/p11.js?*', async route => { await gate; await route.continue(); });
-  const navigation = page.goto('./');
-  try {
-    await page.waitForFunction(() => typeof COURSE !== 'undefined' && COURSE.some(u => u.unit === 11));
-    await page.click('[data-tab="profile"]'); await page.click('[data-tab="learn"]');
-    await expect(page.locator('.unit-banner')).toHaveCount(6);
-    expect(await page.evaluate(() => allExercises().some(ex => /^u(?:[7-9]|\d{2,})-/.test(ex.uid)))).toBe(false);
-  } finally { release(); await navigation; }
-  await expect(page.locator('.unit-banner')).toHaveCount(await page.evaluate(() => COURSE.length));
-});
+  test('loading: saved progress beyond the first six units resumes without changing it', async ({ page }) => {
+    await page.addInitScript(() => {
+      const done = Array.from({ length: 6 }, (_, i) => ['L0', 'L1', 'c1', 'L2', 'L3', 'boss'].map(k => i ? `u${i + 1}-${k}` : k)).flat();
+      localStorage.setItem('linux-master-proto', JSON.stringify({ done, xp: 300, gems: 80 }));
+    });
+    await page.goto('./');
+    await expect(page.locator('.node.current')).toHaveAttribute('aria-label', await page.evaluate(() => t('lessonN', 1, tr(COURSE.find(u => u.unit === 7).lessons[0].title))));
+    expect(await page.evaluate(() => ({ xp: S.xp, gems: S.gems, completed: S.done.length }))).toEqual({ xp: 300, gems: 80, completed: 36 });
+  });
 
-test('loading: finishing the download preserves the visible first world', async ({ page }) => {
-  let release; const gate = new Promise(resolve => { release = resolve; });
-  await page.route('**/parts/p1.js?*', async route => { await gate; await route.continue(); });
-  const navigation = page.goto('./');
-  try {
-    await expect(page.locator('.stage-moon')).toBeVisible();
-    await page.evaluate(() => { window.firstStage = document.getElementById('stage'); });
-  } finally { release(); await navigation; }
-  expect(await page.evaluate(() => window.firstStage === document.getElementById('stage'))).toBe(true);
-});
+  test('loading: partially downloaded later units stay unavailable in the path and practice', async ({ page }) => {
+    let release; const gate = new Promise(resolve => { release = resolve; });
+    await page.route('**/parts/p11.js?*', async route => { await gate; await route.continue(); });
+    const navigation = page.goto('./');
+    try {
+      await page.waitForFunction(() => typeof COURSE !== 'undefined' && COURSE.some(u => u.unit === 11));
+      await page.click('[data-tab="profile"]'); await page.click('[data-tab="learn"]');
+      await expect(page.locator('.unit-banner')).toHaveCount(6);
+      expect(await page.evaluate(() => allExercises().some(ex => /^u(?:[7-9]|\d{2,})-/.test(ex.uid)))).toBe(false);
+    } finally { release(); await navigation; }
+    await expect(page.locator('.unit-banner')).toHaveCount(await page.evaluate(() => COURSE.length));
+  });
 
-for (const file of ['parts/p1.js', 'course-ready.js']) test(`loading: a failed ${file} keeps the starter playable and never claims offline readiness`, async ({ page }) => {
-  await page.route(`**/${file}?*`, route => route.abort());
-  await page.goto('./');
-  await expect(page.locator('#toast')).toContainText(await page.evaluate(() => t('triviaFailed')));
-  await expect(page.locator('.node.current')).toBeVisible();
-  expect(await page.evaluate(() => window.courseReady)).toBe(false);
-  expect(await page.evaluate(() => !!window.learnKept)).toBe(false);
-  await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
-  await expect(page.locator('#lesson')).toBeVisible();
-});
+  test('loading: finishing the download preserves the visible first world', async ({ page }) => {
+    let release; const gate = new Promise(resolve => { release = resolve; });
+    await page.route('**/parts/p1.js?*', async route => { await gate; await route.continue(); });
+    const navigation = page.goto('./');
+    try {
+      await expect(page.locator('.stage-moon')).toBeVisible();
+      await page.evaluate(() => { window.firstStage = document.getElementById('stage'); });
+    } finally { release(); await navigation; }
+    expect(await page.evaluate(() => window.firstStage === document.getElementById('stage'))).toBe(true);
+  });
 
-test('loading: the path shows before the simulator arrives, and a lesson opened early waits for it', async ({ page }) => {
-  let release;
-  const gate = new Promise(resolve => { release = resolve; });
-  await page.route('**/shell.js?*', async route => { await gate; await route.continue(); });
-  const navigation = page.goto('./');
-  try {
-    await expect(page.locator('.node.current')).toBeVisible({ timeout: 5000 });
-    expect(await page.evaluate(() => typeof Shell)).toBe('undefined');
+  for (const file of ['parts/p1.js', 'course-ready.js']) test(`loading: a failed ${file} keeps the starter playable and never claims offline readiness`, async ({ page }) => {
+    await page.route(`**/${file}?*`, route => route.abort());
+    await page.goto('./');
+    await expect(page.locator('#toast')).toContainText(await page.evaluate(() => t('triviaFailed')));
+    await expect(page.locator('.node.current')).toBeVisible();
+    expect(await page.evaluate(() => window.courseReady)).toBe(false);
+    expect(await page.evaluate(() => !!window.learnKept)).toBe(false);
     await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
     await expect(page.locator('#lesson')).toBeVisible();
-    await expect(page.locator('#exBody')).toHaveText(await page.evaluate(() => t('lessonLoading')));
-  } finally { release(); await navigation; }
-  await expect(page.locator('#exBody')).toContainText('pwd');
-});
+  });
 
-test('loading: a failed simulator closes the lesson and says so', async ({ page }) => {
-  await page.route('**/shell.js?*', route => route.abort());
-  await page.goto('./');
-  await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
-  await expect(page.locator('#toast')).toContainText(await page.evaluate(() => t('lessonFailed')));
-  await expect(page.locator('#lesson')).toBeHidden();
+  test('loading: the path shows before the simulator arrives, and a lesson opened early waits for it', async ({ page }) => {
+    let release;
+    const gate = new Promise(resolve => { release = resolve; });
+    await page.route('**/shell.js?*', async route => { await gate; await route.continue(); });
+    const navigation = page.goto('./');
+    try {
+      await expect(page.locator('.node.current')).toBeVisible({ timeout: 5000 });
+      expect(await page.evaluate(() => typeof Shell)).toBe('undefined');
+      await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+      await expect(page.locator('#lesson')).toBeVisible();
+      await expect(page.locator('#exBody')).toHaveText(await page.evaluate(() => t('lessonLoading')));
+    } finally { release(); await navigation; }
+    await expect(page.locator('#exBody')).toContainText('pwd');
+  });
+
+  test('loading: a failed simulator closes the lesson and says so', async ({ page }) => {
+    await page.route('**/shell.js?*', route => route.abort());
+    await page.goto('./');
+    await page.locator('.node.current').click(); await page.locator('#pop .btn').click();
+    await expect(page.locator('#toast')).toContainText(await page.evaluate(() => t('lessonFailed')));
+    await expect(page.locator('#lesson')).toBeHidden();
+  });
 });
 
 test('world characters match the first six learning topics without replacing the learner', async ({ page }) => {

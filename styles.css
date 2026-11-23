@@ -46,6 +46,7 @@ button { cursor: pointer; }
 .chip.gems b { color: var(--blue-ink); }
 .chip.xp b { color: var(--gold-ink); }
 .tab { display: none; padding: 18px 0; animation: rise .25s ease; }
+#learn.tab { animation-name: fade; }
 .tab.active { display: block; }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }

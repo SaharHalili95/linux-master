@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -6,7 +6,7 @@ const zlib = require('zlib');
 const root = path.resolve(__dirname, '..');
 const firstLoad = () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const scripts = [...html.matchAll(/<script(?![^>]*\bdefer\b)[^>]*\bsrc="([^"?]+)/g)].map(m => m[1]);
+  const scripts = [...html.matchAll(/<script[^>]*\bsrc="([^"?]+)/g)].map(m => m[1]);
   const styles = [...html.matchAll(/<link rel="stylesheet" href="([^"?]+)/g)].map(m => m[1]);
   return ['index.html', ...styles, ...scripts];
 };
@@ -39,7 +39,7 @@ test('the service worker precaches the first load at the versions the page asks 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const files = JSON.parse(sw.match(/const FILES = (\[[^\]]*\])/)[1].replace(/'/g, '"'));
-  const asked = [...html.matchAll(/<(?:script(?![^>]*\bdefer\b)[^>]*\bsrc|link rel="(?:stylesheet|apple-touch-icon)" href)="([^"]+)"/g)].map(m => './' + m[1]);
+  const asked = [...html.matchAll(/<(?:script[^>]*\bsrc|link rel="(?:stylesheet|apple-touch-icon)" href)="([^"]+)"/g)].map(m => './' + m[1]);
   expect(asked.length).toBeGreaterThan(15);
   for (const f of asked) expect(files, f).toContain(f);
 });

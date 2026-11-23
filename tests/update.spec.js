@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 const crypto = require('crypto');
 const http = require('http');
 const fs = require('fs');

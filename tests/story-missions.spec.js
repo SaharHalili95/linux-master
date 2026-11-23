@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 const path = require('path');
 
 const script = path.join(__dirname, '../story-missions.js');

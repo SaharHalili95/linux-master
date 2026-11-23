@@ -368,7 +368,7 @@ function openChest(key) {
 
 // ---------- Lesson engine ----------
 let L = null;
-// The simulator loads after the first screen (shell.js is deferred, and its tag comes after this script), so its
+// The simulator loads after the first screen (course-start.js adds its tag once the page has loaded), so its
 // load or error event is caught on the document, where the capture phase sees events that do not bubble.
 const shellLoad = typeof Shell === 'function' ? Promise.resolve() : new Promise((ok, fail) => {
   for (const [type, done] of [['load', ok], ['error', fail]]) document.addEventListener(type, e => { if (/(^|\/)shell\.js\?/.test(e.target.getAttribute?.('src') || '')) done(); }, true);
@@ -1286,7 +1286,8 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   // Loaded through the worker means every file is kept, so the main page may send learners here offline too.
   const kept = () => { try { localStorage.setItem('learnOffline', '1'); } catch { /* not kept */ } window.learnKept = true; };
   const cacheCourse = () => {
-    if (!window.courseReady || window.courseLoadFailed) return;
+    if (window.courseLoadFailed) return;
+    if (!window.courseReady) { addEventListener('courseready', cacheCourse, { once: true }); return; }
     const art = window.worldCharacterCatalog.assetPaths().map(path => new URL(path, location.href).href);
     const files = [location.href, ...art, ...performance.getEntriesByType('resource').map(e => e.name)].filter(u => new URL(u).origin === location.origin);
     Promise.all(files.map(u => fetch(u).then(response => { if (!response.ok) throw new Error('Incomplete offline cache'); }))).then(kept).catch(() => { /* The next visit retries an incomplete cache. */ });

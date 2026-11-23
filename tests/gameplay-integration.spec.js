@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 
 test('a player can choose an appearance which survives reload without changing progress', async ({ page }) => {
   await page.goto('./');

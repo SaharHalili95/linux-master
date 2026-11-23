@@ -1,5 +1,5 @@
-const CACHE = 'linux-master-v32';
-const FILES = ['./index.html', './fonts.css?v=p101', './styles.css?v=p101', './character.css?v=character1', './avatar-options.css?v=1', './gameplay.css?v=2', './loading.css?v=loading2', './shell.js?v=30', './i18n.js?v=p101', './units.js?v=p101', './lessons.js?v=p101', './world.js?v=retina1', './sync.js?v=gameplay3', './world-characters.js?v=1', './character-art.js?v=catalog1', './avatar-options.js?v=2', './game-progress.js?v=2', './story-missions.js?v=1', './app.js?v=p101', './character.js?v=gameplay3', './course-start.js?v=loading2', './manifest.webmanifest', './icon-180.png?v=30', './icon-192.png', './icon-512.png'];
+const CACHE = 'linux-master-v33';
+const FILES = ['./index.html', './fonts.css?v=p101', './styles.css?v=p102', './character.css?v=character1', './avatar-options.css?v=1', './gameplay.css?v=2', './loading.css?v=loading3', './shell.js?v=30', './i18n.js?v=p101', './units.js?v=p101', './lessons.js?v=p101', './world.js?v=retina3', './sync.js?v=gameplay3', './world-characters.js?v=1', './character-art.js?v=catalog1', './avatar-options.js?v=2', './game-progress.js?v=2', './story-missions.js?v=1', './app.js?v=p101', './character.js?v=gameplay3', './course-start.js?v=loading4', './manifest.webmanifest', './icon-180.png?v=30', './icon-192.png', './icon-512.png'];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', event => {
