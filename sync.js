@@ -40,6 +40,8 @@ function mergeProgress(a, b) {
     track: latest.track || a.track || b.track || '',
     quests: mergeQuests(a.quests, b.quests),
     skill: mergeSkill(a.skill, b.skill),
+    review: !a.review ? b.review ?? null : !b.review ? a.review : a.review.day !== b.review.day ? (a.review.day > b.review.day ? a.review : b.review) : a.review.done ? a.review : b.review,
+    reviewLog: [...new Map([...(a.reviewLog || []), ...(b.reviewLog || [])].map(r => [r.key, r])).values()].sort((x, y) => x.day - y.day).slice(-40),
     confuse: Object.fromEntries(Object.keys({ ...a.confuse, ...b.confuse }).map(k => [k, Math.max(a.confuse?.[k] || 0, b.confuse?.[k] || 0)])),
   };
 }
