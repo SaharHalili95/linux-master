@@ -19,9 +19,19 @@ function loadCourse() {
     document.body.append(script);
   }
 }
+// Waits until the browser reports the stage art as painted, so the course never competes with the first screen.
+const artPainted = () => new Promise(done => {
+  const art = document.querySelector('.world-character-art');
+  if (!art || !PerformanceObserver.supportedEntryTypes?.includes('largest-contentful-paint')) { done(); return; }
+  const observer = new PerformanceObserver(list => { if (list.getEntries().some(entry => entry.element === art)) finish(); });
+  const timer = setTimeout(finish, 3000);
+  function finish() { clearTimeout(timer); observer.disconnect(); done(); }
+  observer.observe({ type: 'largest-contentful-paint', buffered: true });
+});
 const afterPaint = () => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)));
 const whenIdle = async () => {
   await document.querySelector('.world-character-art')?.decode().catch(() => {});
+  await artPainted();
   await afterPaint();
   if (window.requestIdleCallback) requestIdleCallback(loadCourse, { timeout: 1000 }); else setTimeout(loadCourse, 200);
 };
