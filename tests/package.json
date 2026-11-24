@@ -4,7 +4,7 @@
   "scripts": {
     "test": "playwright test",
     "sandbox": "bash sandbox/check.sh",
-    "lint": "cd .. && eslint -c tests/eslint.config.js shell.js classic/app.js data/content.js data/content.en.js data/missions.js sw.js character.js world-characters.js character-art.js avatar-options.js game-progress.js story-missions.js course-start.js course-ready.js i18n.js units.js world.js sync.js app.js lessons.js recorded.js recorded parts",
+    "lint": "cd .. && eslint -c tests/eslint.config.js shell.js classic/app.js data/content.js data/content.en.js data/missions.js sw.js character.js world-characters.js character-art.js avatar-options.js game-progress.js story-missions.js course-start.js course-ready.js i18n.js units.js world.js sync.js coach-model.js app.js lessons.js recorded.js recorded parts",
     "validate": "html-validate ../index.html ../legal.html ../classic/index.html ../prototype/index.html ../prototype/legal.html",
     "lighthouse": "lhci autorun",
     "quality": "npm run lint && npm run validate",
