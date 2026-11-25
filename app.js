@@ -340,70 +340,11 @@ function reviewRow(x) {
   const r = S.review, li = el('li', 'node-row review-row'); li.style.setProperty('--x', `${x}px`);
   const b = el('button', `node review ${r.done ? 'done' : 'open'}`); b.type = 'button';
   b.replaceChildren(icon(r.done ? 'check' : 'dumbbell')); b.setAttribute('aria-label', r.done ? t('reviewDoneTitle') : t('reviewTitle'));
-  b.onclick = () => reviewPop(b);
+  // The stage's window lives with the coach's model, which arrives after the first screen.
+  b.onclick = () => typeof reviewPop === 'function' ? reviewPop(b) : shellLoad.then(() => reviewPop(b), () => toast(t('lessonFailed')));
   if (!r.done) { const tip = el('div', 'start-tip review-tip', t('reviewTip')); li.append(tip); li.classList.add('tipped'); }
   li.append(b);
   return li;
-}
-const conceptName = c => tr(coachName(c));
-function reviewWhy(c) {
-  const r = coachReason(c);
-  if (r.kind === 'mix') return t('whyMix', r.a, r.b);
-  if (COACH_ROOT_NAMES.has(r.kind)) return t(`why_${r.kind}`);
-  return t(r.kind === 'forgot' ? 'whyForgot' : 'whyWrong', conceptName(c));
-}
-function reviewPop(anchor) {
-  if (typeof coachReason !== 'function') return void shellLoad.then(() => reviewPop(anchor), () => toast(t('lessonFailed')));
-  closePop(); SFX.tap();
-  const r = S.review, pop = el('div', `pop ${r.done ? 'done' : 'current'}`); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
-  pop.append(el('h3', '', r.done ? t('reviewDoneTitle') : t('reviewTitle')));
-  const lead = el('div', 'review-why');
-  if (r.done) lead.append(el('p', '', r.mastered.length ? t('reviewMastered', r.mastered.map(conceptName).join(', ')) : t('reviewNotYet')));
-  else { for (const c of r.concepts) { const p = el('p'); p.append(bidi(reviewWhy(c))); lead.append(p); } lead.append(el('p', 'pop-lead', r.variant ? t('reviewAgain') : t('reviewLead'))); }
-  pop.append(lead);
-  const go = el('button', 'btn primary', r.done ? t('again') : t('reviewGo'));
-  go.onclick = () => { closePop(); startReview(); };
-  pop.append(go);
-  showPop(anchor, pop);
-}
-// Every exercise of the units the learner has reached, with the uid its mistakes are kept under. A review never
-// brings in a unit the learner has not started.
-function reviewPool() {
-  const open = availableCourse().filter(u => !u.locked && !u.exam && inTrack(u)), next = open.flatMap(unitNodes).find(n => !S.done.includes(n.key))?.unit;
-  const units = open.filter(u => u === next || unitNodes(u).some(n => S.done.includes(n.key)));
-  const pool = units.flatMap(u => u.lessons.flatMap((ls, li) => withFixture(u, ls.exercises).map((ex, i) => ({ ...ex, uid: `${unitKey(u, `L${li}`)}.${i}` }))));
-  return { pool: pool.filter(e => e.type !== 'teach'), teach: pool.filter(e => e.type === 'teach') };
-}
-function startReview() {
-  const r = S.review; if (!r) return;
-  const items = coachBuild(r.concepts, { ...reviewPool(), failed: new Set(S.mistakes), variant: r.variant });
-  if (!items.some(e => e.type !== 'teach')) return toast(t('reviewEmpty'));
-  startLesson(r.key, items, { review: true, practice: true, title: t('reviewTitle') });
-}
-// After a lesson or a test: a review stage when something is weak, at most one a day and one open at a time.
-// A concept met again in a review within two weeks gets the next mix of exercises.
-function planReview() {
-  const today = coachDay();
-  if (S.review && (!S.review.done || S.review.day === today)) return null;
-  const concepts = coachFocus(); if (!concepts.length) return null;
-  const order = availableCourse().filter(u => inTrack(u) && !u.locked).flatMap(unitNodes);
-  const at = order.find(n => !S.done.includes(n.key) && n.kind !== 'exam')?.key || '';
-  const variant = Math.max(0, ...concepts.map(c => S.reviewLog.filter(x => today - x.day <= 14 && x.concepts.includes(c)).length));
-  S.review = { key: `review-${today}`, day: today, concepts, at, variant: Math.min(2, variant), done: false, mastered: [] };
-  save();
-  return S.review;
-}
-// A concept is mastered in a review when it was typed right without help in two different exercises. Its misses are
-// cleared so the model starts again from what the learner can do now; the others stay for the next review.
-function finishReview() {
-  const r = S.review, mastered = r.concepts.filter(c => (L.mastery?.[c]?.size || 0) >= 2);
-  for (const c of mastered) {
-    const e = S.skill[c]; if (e) { e[SKILL.forgot] = 0; e[SKILL.wrong] = 0; e[SKILL.helped] = 0; e[SKILL.typo] = 0; }
-    if (c.startsWith('cmd:')) for (const k of Object.keys(S.confuse)) if (k.split('>').includes(c.slice(4))) delete S.confuse[k];
-  }
-  r.done = true; r.mastered = mastered;
-  S.reviewLog = [...S.reviewLog, { key: r.key, day: r.day, concepts: r.concepts, at: '', variant: r.variant, done: true, mastered }].slice(-40);
-  return mastered;
 }
 function openPop(anchor, n, state) {
   closePop(); SFX.tap();
@@ -691,24 +632,6 @@ function explainMiss(typed, answers) {
 function typedMiss(ex) {
   return ex.type === 'terminal' && L.term ? explainMiss(L.term.log.map(l => l.cmd), ex.solve) : ex.type === 'scenario' ? explainMiss([L.value || ''], ex.accept) : null;
 }
-// Tells the coach's knowledge model what this answer showed. Picking an option is not typing, so a pick that is close
-// to the right one counts as the wrong option, not as a typo.
-function learnFrom(ok) {
-  if (typeof coachRecord !== 'function') return;
-  const ex = L.ex, r = { ok, helped: !!L.helped || (L.termErrs || 0) >= 2, roots: [...(L.roots || [])] };
-  if (!ok) {
-    const picked = { choice: !ex.plain && [L.value, ex.answer], sentence: [L.value, ex.answer], tiles: [L.value, ex.answer], fill: [`${ex.before}${L.value}${ex.after}`, `${ex.before}${ex.answer}${ex.after}`] }[ex.type];
-    const miss = picked ? (picked[0] != null && explainMiss([String(picked[0])], [String(picked[1])])) : typedMiss(ex);
-    Object.assign(r, coachBlame(miss || null, miss?.got, miss?.want));
-    if (picked && r.kind === 'typo') r.kind = 'wrong';
-    // Picking one command where another was right is a mix-up between the two.
-    const one = v => /^[a-z][\w.+-]*$/.test(String(v ?? '')) && isCommand(String(v));
-    if (picked && one(L.value) && one(ex.answer) && L.value !== ex.answer) Object.assign(r, { kind: 'forgot', blame: [`cmd:${ex.answer}`], confuse: [L.value, ex.answer] });
-  }
-  try { coachRecord(ex, r); } catch { /* the model never stops a lesson */ }
-  if (L.opts.review && ok && !r.helped && PRODUCE.has(ex.type)) for (const c of coachConcepts(ex).focus) if (S.review?.concepts.includes(c)) ((L.mastery ||= {})[c] ||= new Set()).add(ex.uid);
-  L.helped = false; L.termErrs = 0; L.roots = null;
-}
 function setFoot(mode, title = '',{ label = '', sol = '', note = '', mark = null } = {}) {
   const foot = $('foot'); foot.className = `lesson-foot ${mode}`;
   $('fbTitle').textContent = title; $('fbBox').hidden = mode === 'idle';
@@ -769,7 +692,7 @@ function testReview(results) {
   }
 }
 function answer(ok, solution = '', why = '') {
-  L.answered = true; learnFrom(ok);
+  L.answered = true; if (typeof learnFrom === 'function') learnFrom(ok);
   // In an exam nothing is revealed until the end, and wrong answers do not come back or go to practice.
   if (L.opts.exam) {
     if (ok) L.correct++; else L.mistakes++;

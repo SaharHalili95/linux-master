@@ -1,4 +1,4 @@
-/* global S */
+/* global S, L, LANG, t, tr, $, el, icon, bidi, toast, SFX, I18N, closePop, showPop, startLesson, availableCourse, inTrack, unitNodes, unitKey, withFixture, explainMiss, typedMiss, isCommand, save */
 // The coach's knowledge model. Every exercise is tagged with the concepts it practises (a command, an option of a
 // command, an operator, a glob), and every answer updates what the learner showed about those concepts. Plain rules
 // written and tested by hand: no AI and no server.
@@ -300,3 +300,96 @@ function coachBuild(concepts, { pool, teach, failed = new Set(), variant = 0, ra
   return [...cards, ...work.recognise, ...work.recall, ...work.produce];
 }
 function shuffleWith(list, rand) { const a = [...list]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+// ---------- The review stage in the app ----------
+// Loaded after the first screen with the simulator, so none of this weighs on the first paint.
+Object.assign(I18N.he, {
+  reviewTitle: 'שלב חיזוק אישי', reviewDoneTitle: 'שלב החיזוק הושלם', reviewTip: 'חיזוק', reviewGo: 'בואו נחזק', reviewEmpty: 'אין עדיין תרגילים לחזק כאן.',
+  whyMix: (a, b) => `ראיתי שהתבלבלתם בין ‎${a}‎ ל־‎${b}‎.`, whyForgot: c => `ראיתי ש־‎${c}‎ עוד לא יושבת טוב.`, whyWrong: c => `ראיתי שב־‎${c}‎ חסר לכם עוד חלק קטן.`,
+  why_path: 'ראיתי שכמה פקודות לא מצאו את הקובץ, כי הנתיב לא היה נכון.', why_perm: 'ראיתי שכמה פקודות נעצרו בגלל הרשאות.', why_quote: 'ראיתי שכמה פקודות נשברו בגלל מרכאה או סוגר שלא נסגרו.', why_args: 'ראיתי שכמה פקודות קיבלו פחות ממה שהן צריכות.',
+  reviewLead: 'בנינו לכם שלב קצר על זה בדיוק. הוא לא חוסם את המסלול ולא עולה לבבות.', reviewAgain: 'חזרנו לזה, אז הפעם ננסה דרך אחרת: יותר הקלדה בטרמינל.',
+  reviewReady: names => `המאמן הכין לכם שלב חיזוק: ${names}`, reviewMastered: names => `חיזקתם: ${names}`, reviewNotYet: 'עוד קצת תרגול. נחזור לזה בשלב חיזוק אחר.',
+});
+Object.assign(I18N.en, {
+  reviewTitle: 'Your review stage', reviewDoneTitle: 'Review stage done', reviewTip: 'Review', reviewGo: "Let's practise", reviewEmpty: 'There is nothing to review here yet.',
+  whyMix: (a, b) => `I saw you mix up ${a} and ${b}.`, whyForgot: c => `I saw that ${c} hasn't stuck yet.`, whyWrong: c => `I saw that ${c} is still missing a small part.`,
+  why_path: "I saw a few commands miss their file because the path wasn't right.", why_perm: 'I saw a few commands stop on permissions.', why_quote: 'I saw a few commands break on a quote or bracket left open.', why_args: 'I saw a few commands get less than they need.',
+  reviewLead: "We built a short stage on exactly this. It doesn't block the path and costs no hearts.", reviewAgain: "This came back, so this time we'll try another way: more typing in the terminal.",
+  reviewReady: names => `Your coach made you a review stage: ${names}`, reviewMastered: names => `You strengthened: ${names}`, reviewNotYet: "A little more practice. We'll come back to this in another review stage.",
+});
+const conceptName = c => tr(coachName(c));
+function reviewWhy(c) {
+  const r = coachReason(c);
+  if (r.kind === 'mix') return t('whyMix', r.a, r.b);
+  if (COACH_ROOT_NAMES.has(r.kind)) return t(`why_${r.kind}`);
+  return t(r.kind === 'forgot' ? 'whyForgot' : 'whyWrong', conceptName(c));
+}
+function reviewPop(anchor) {
+  closePop(); SFX.tap();
+  const r = S.review, pop = el('div', `pop ${r.done ? 'done' : 'current'}`); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
+  pop.append(el('h3', '', r.done ? t('reviewDoneTitle') : t('reviewTitle')));
+  const lead = el('div', 'review-why');
+  if (r.done) lead.append(el('p', '', r.mastered.length ? t('reviewMastered', r.mastered.map(conceptName).join(', ')) : t('reviewNotYet')));
+  else { for (const c of r.concepts) { const p = el('p'); p.append(bidi(reviewWhy(c))); lead.append(p); } lead.append(el('p', 'pop-lead', r.variant ? t('reviewAgain') : t('reviewLead'))); }
+  pop.append(lead);
+  const go = el('button', 'btn primary', r.done ? t('again') : t('reviewGo'));
+  go.onclick = () => { closePop(); startReview(); };
+  pop.append(go);
+  showPop(anchor, pop);
+}
+// Every exercise of the units the learner has reached, with the uid its mistakes are kept under. A review never
+// brings in a unit the learner has not started.
+function reviewPool() {
+  const open = availableCourse().filter(u => !u.locked && !u.exam && inTrack(u)), next = open.flatMap(unitNodes).find(n => !S.done.includes(n.key))?.unit;
+  const units = open.filter(u => u === next || unitNodes(u).some(n => S.done.includes(n.key)));
+  const pool = units.flatMap(u => u.lessons.flatMap((ls, li) => withFixture(u, ls.exercises).map((ex, i) => ({ ...ex, uid: `${unitKey(u, `L${li}`)}.${i}` }))));
+  return { pool: pool.filter(e => e.type !== 'teach'), teach: pool.filter(e => e.type === 'teach') };
+}
+function startReview() {
+  const r = S.review; if (!r) return;
+  const items = coachBuild(r.concepts, { ...reviewPool(), failed: new Set(S.mistakes), variant: r.variant });
+  if (!items.some(e => e.type !== 'teach')) return toast(t('reviewEmpty'));
+  startLesson(r.key, items, { review: true, practice: true, title: t('reviewTitle') });
+}
+// After a lesson or a test: a review stage when something is weak, at most one a day and one open at a time.
+// A concept met again in a review within two weeks gets the next mix of exercises.
+function planReview() {
+  const today = coachDay();
+  if (S.review && (!S.review.done || S.review.day === today)) return null;
+  const concepts = coachFocus(); if (!concepts.length) return null;
+  const order = availableCourse().filter(u => inTrack(u) && !u.locked).flatMap(unitNodes);
+  const at = order.find(n => !S.done.includes(n.key) && n.kind !== 'exam')?.key || '';
+  const variant = Math.max(0, ...concepts.map(c => S.reviewLog.filter(x => today - x.day <= 14 && x.concepts.includes(c)).length));
+  S.review = { key: `review-${today}`, day: today, concepts, at, variant: Math.min(2, variant), done: false, mastered: [] };
+  save();
+  return S.review;
+}
+// A concept is mastered in a review when it was typed right without help in two different exercises. Its misses are
+// cleared so the model starts again from what the learner can do now; the others stay for the next review.
+function finishReview() {
+  const r = S.review, mastered = r.concepts.filter(c => (L.mastery?.[c]?.size || 0) >= 2);
+  for (const c of mastered) {
+    const e = S.skill[c]; if (e) { e[SKILL.forgot] = 0; e[SKILL.wrong] = 0; e[SKILL.helped] = 0; e[SKILL.typo] = 0; }
+    if (c.startsWith('cmd:')) for (const k of Object.keys(S.confuse)) if (k.split('>').includes(c.slice(4))) delete S.confuse[k];
+  }
+  r.done = true; r.mastered = mastered;
+  S.reviewLog = [...S.reviewLog, { key: r.key, day: r.day, concepts: r.concepts, at: '', variant: r.variant, done: true, mastered }].slice(-40);
+  return mastered;
+}
+// Tells the coach's knowledge model what this answer showed. Picking an option is not typing, so a pick that is close
+// to the right one counts as the wrong option, not as a typo.
+function learnFrom(ok) {
+  const ex = L.ex, r = { ok, helped: !!L.helped || (L.termErrs || 0) >= 2, roots: [...(L.roots || [])] };
+  if (!ok) {
+    const picked = { choice: !ex.plain && [L.value, ex.answer], sentence: [L.value, ex.answer], tiles: [L.value, ex.answer], fill: [`${ex.before}${L.value}${ex.after}`, `${ex.before}${ex.answer}${ex.after}`] }[ex.type];
+    const miss = picked ? (picked[0] != null && explainMiss([String(picked[0])], [String(picked[1])])) : typedMiss(ex);
+    Object.assign(r, coachBlame(miss || null, miss?.got, miss?.want));
+    if (picked && r.kind === 'typo') r.kind = 'wrong';
+    // Picking one command where another was right is a mix-up between the two.
+    const one = v => /^[a-z][\w.+-]*$/.test(String(v ?? '')) && isCommand(String(v));
+    if (picked && one(L.value) && one(ex.answer) && L.value !== ex.answer) Object.assign(r, { kind: 'forgot', blame: [`cmd:${ex.answer}`], confuse: [L.value, ex.answer] });
+  }
+  try { coachRecord(ex, r); } catch { /* the model never stops a lesson */ }
+  if (L.opts.review && ok && !r.helped && PRODUCE.has(ex.type)) for (const c of coachConcepts(ex).focus) if (S.review?.concepts.includes(c)) ((L.mastery ||= {})[c] ||= new Set()).add(ex.uid);
+  L.helped = false; L.termErrs = 0; L.roots = null;
+}
