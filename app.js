@@ -56,8 +56,20 @@ const TRACK_SHORT = { ...TRACK_NAMES, E: 'Essentials', C: 'Linux+' };
 const MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, LIFE_GEMS = 20;
 const DEFAULTS = { avatarForm: 'core', avatarFormUpdatedAt: 0, avatarStyle: 'auto', avatarUpdatedAt: 0, xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], skipped: [], sound: true, quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
 // Saved state can be stale or hand-edited; keep only fields of the expected type.
+// The coach's model: [seen, right, forgot, wrong, typo, helped, day, box] per concept, and how often one command was
+// typed where another was needed.
+function validSkill(v) {
+  const out = {}; if (!v || typeof v !== 'object') return out;
+  for (const [k, e] of Object.entries(v)) if (k.length <= 80 && Array.isArray(e) && e.length === 8 && e.every(n => Number.isSafeInteger(n) && n >= 0)) out[k] = e.map((n, i) => i === 7 ? Math.min(4, n) : n);
+  return out;
+}
+function validConfuse(v) {
+  const out = {}; if (!v || typeof v !== 'object') return out;
+  for (const [k, n] of Object.entries(v)) if (k.length <= 80 && k.includes('>') && Number.isSafeInteger(n) && n > 0) out[k] = n;
+  return out;
+}
 function loadState(raw) {
-  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], skipped: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
+  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], skipped: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0, skill: {}, confuse: {} };
   let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
   if (!saved || typeof saved !== 'object') return S;
   for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
@@ -72,6 +84,7 @@ function loadState(raw) {
   if (Object.hasOwn(TRACK_NAMES, saved.track)) S.track = saved.track;
   if (Number.isInteger(saved.lives) && saved.lives >= 0 && saved.lives <= MAX_LIVES) S.lives = saved.lives;
   if (Number.isFinite(saved.livesAt) && saved.livesAt >= 0) S.livesAt = saved.livesAt;
+  S.skill = validSkill(saved.skill); S.confuse = validConfuse(saved.confuse);
   if (Array.isArray(saved.reports)) S.reports = saved.reports.filter(r => r && typeof r.uid === 'string' && typeof r.note === 'string');
   const q = saved.quests;
   if (q && typeof q === 'object' && typeof q.day === 'string' && Array.isArray(q.claimed)) S.quests = { day: q.day, xp: +q.xp || 0, perfect: +q.perfect || 0, combo: +q.combo || 0, claimed: q.claimed.filter(x => typeof x === 'string') };
@@ -147,7 +160,7 @@ function showTab(name) {
 const unitKey = (unit, id) => (unit.unit === 1 ? id : `u${unit.unit}-${id}`);
 const NODE_PLAN = [['L0', 'lesson', 0], ['L1', 'lesson', 1], ['c1', 'chest'], ['L2', 'lesson', 2], ['L3', 'lesson', 3], ['boss', 'boss']];
 const unitNodes = unit => unit.exam ? [{ key: unitKey(unit, 'exam'), kind: 'exam', unit }] : NODE_PLAN.map(([id, kind, i]) => ({ key: unitKey(unit, id), kind, i, unit }));
-const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: ex.fixture || unit.fixture || unitFixture }));
+const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: ex.fixture || unit.fixture || unitFixture, unitNo: unit.unit }));
 const OFFSETS = [0, 66, 66, 0, -66, -66];
 const icon = name => { const i = el('span', `ic ic-${name}`); i.setAttribute('aria-hidden', 'true'); return i; };
 const ICONS = { lesson: 'star', chest: 'gift', exam: 'note', done: 'check', lock: 'lock', skipped: 'skip' };
@@ -543,10 +556,10 @@ const COACH_ERRORS = [
 function coachNote(ex, sh, log, cmd, text, wasDone, unsupported) {
   let done = false; try { done = !!ex.goal(sh, log); } catch { done = false; }
   if (done) return { done, note: ex.ask ? t('coachAsk') : wasDone ? t('coachAlready') : text ? t('coachDone') : `${t('coachDone')} ${t('coachSilent')}` };
-  const typo = typoIn([cmd], ex.solve);
-  if (typo) return { done, note: t('coachTypo', typo.got) };
-  const known = COACH_ERRORS.find(([re]) => re.test(text || ''));
-  if (known) return { done, note: t(known[1]) };
+  // The error still counts when a near typo is what the note names, but then the typo, not the error, is the gap.
+  const typo = typoIn([cmd], ex.solve), known = COACH_ERRORS.find(([re]) => re.test(text || ''));
+  if (typo) return { done, note: t('coachTypo', typo.got), err: known?.[1], typo: true };
+  if (known) return { done, note: t(known[1]), err: known[1] };
   // A command that ran and changed nothing the task checks: say whether it is a right step, the right command with
   // something else wrong, or not what this task needs.
   if (!unsupported) {
@@ -576,14 +589,15 @@ function explainMiss(typed, answers) {
     const d = editDistance(got, want); if (!best || d < best.d) best = { d, got, want, line };
   }
   const typo = typoIn([best.got], [best.want]);
-  if (typo) return { line: best.line, mark: { ...typo, line: best.line }, note: t('typo', typo.got, typo.want) };
+  const seen = { got: best.got, want: best.want };
+  if (typo) return { ...seen, kind: 'typo', wantWord: typo.want, line: best.line, mark: { ...typo, line: best.line }, note: t('typo', typo.got, typo.want) };
   const words = s => s.split(/\s+/), g = words(best.got), w = words(best.want);
   // Keys typed inside an editor, like :wq or dd, are no shell command, so only a near typo is named for them.
   if (!isCommand(w[0])) return null;
   if (g[0] !== w[0]) {
-    if (!isCommand(g[0])) return { line: best.line, note: t('missNoCmd', g[0]) };
+    if (!isCommand(g[0])) return { ...seen, kind: 'noCmd', line: best.line, note: t('missNoCmd', g[0]) };
     const info = cmdInfo(g[0]);
-    return { line: best.line, mark: { line: best.line, at: [0, w[0].length] }, note: [t('missOtherCmd', g[0], w[0]), info && t('missDoes', g[0], info)].filter(Boolean).join('\n') };
+    return { ...seen, kind: 'otherCmd', line: best.line, mark: { line: best.line, at: [0, w[0].length] }, note: [t('missOtherCmd', g[0], w[0]), info && t('missDoes', g[0], info)].filter(Boolean).join('\n') };
   }
   const missing = w.filter(x => !g.includes(x)), extra = g.filter(x => !w.includes(x));
   let at = null;
@@ -594,7 +608,26 @@ function explainMiss(typed, answers) {
   const parts = missing.length === 1 && extra.length === 1 ? [t('missInstead', extra[0], missing[0])]
     : [missing.length && t('missLacks', missing.join(' ')), extra.length && t('missExtra', extra.join(' '))].filter(Boolean);
   if (!parts.length) parts.push(t('missOrder'));
-  return { line: best.line, mark: at && { line: best.line, at }, note: [t('missSameCmd', g[0]), ...parts].join(' ') };
+  return { ...seen, kind: 'parts', line: best.line, mark: at && { line: best.line, at }, note: [t('missSameCmd', g[0]), ...parts].join(' ') };
+}
+function typedMiss(ex) {
+  return ex.type === 'terminal' && L.term ? explainMiss(L.term.log.map(l => l.cmd), ex.solve) : ex.type === 'scenario' ? explainMiss([L.value || ''], ex.accept) : null;
+}
+// Tells the coach's knowledge model what this answer showed. Picking an option is not typing, so a pick that is close
+// to the right one counts as the wrong option, not as a typo.
+function learnFrom(ok) {
+  const ex = L.ex, r = { ok, helped: !!L.helped || (L.termErrs || 0) >= 2, roots: [...(L.roots || [])] };
+  if (!ok) {
+    const picked = { choice: !ex.plain && [L.value, ex.answer], sentence: [L.value, ex.answer], tiles: [L.value, ex.answer], fill: [`${ex.before}${L.value}${ex.after}`, `${ex.before}${ex.answer}${ex.after}`] }[ex.type];
+    const miss = picked ? (picked[0] != null && explainMiss([String(picked[0])], [String(picked[1])])) : typedMiss(ex);
+    Object.assign(r, coachBlame(miss || null, miss?.got, miss?.want));
+    if (picked && r.kind === 'typo') r.kind = 'wrong';
+    // Picking one command where another was right is a mix-up between the two.
+    const one = v => /^[a-z][\w.+-]*$/.test(String(v ?? '')) && isCommand(String(v));
+    if (picked && one(L.value) && one(ex.answer) && L.value !== ex.answer) Object.assign(r, { kind: 'forgot', blame: [`cmd:${ex.answer}`], confuse: [L.value, ex.answer] });
+  }
+  try { coachRecord(ex, r); } catch { /* the model never stops a lesson */ }
+  L.helped = false; L.termErrs = 0; L.roots = null;
 }
 function setFoot(mode, title = '',{ label = '', sol = '', note = '', mark = null } = {}) {
   const foot = $('foot'); foot.className = `lesson-foot ${mode}`;
@@ -656,7 +689,7 @@ function testReview(results) {
   }
 }
 function answer(ok, solution = '', why = '') {
-  L.answered = true;
+  L.answered = true; learnFrom(ok);
   // In an exam nothing is revealed until the end, and wrong answers do not come back or go to practice.
   if (L.opts.exam) {
     if (ok) L.correct++; else L.mistakes++;
@@ -672,7 +705,7 @@ function answer(ok, solution = '', why = '') {
     L.mistakes++; L.combo = 0; SFX.bad(); if (!L.opts.practice && !L.opts.replay) loseLife();
     L.queue.push({ ...L.ex, retry: true });
     if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss && L.key !== 'trivia') S.mistakes.push(L.ex.uid);
-    const miss = L.ex.type === 'terminal' && L.term ? explainMiss(L.term.log.map(l => l.cmd), L.ex.solve) : L.ex.type === 'scenario' ? explainMiss([L.value || ''], L.ex.accept) : null;
+    const miss = typedMiss(L.ex);
     // A typed answer is shown as the right answer it came closest to, so the marked word lines up with what was typed.
     const sol = miss && L.ex.type === 'scenario' ? L.ex.accept[miss.line] : solution;
     setFoot('bad', t('correctAnswer'), miss ? { sol, mark: miss.mark || null, note: miss.note } : ['terminal', 'scenario'].includes(L.ex.type) ? { sol: solution } :L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
@@ -1017,12 +1050,12 @@ function mountTerminal(root, ex, sh, onRun = () => {}, shown = []) {
     ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
     restart.hidden = !ex.fx; requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
     L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal' && !ex.ask) setCan(true); onRun(log);
-    if (coach) { const said = coachNote(ex, sh, log, cmd, text, wasDone, unsupported); wasDone = said.done; coach.replaceChildren(bidi(said.note)); coach.hidden = !said.note; }
+    if (coach) { const said = coachNote(ex, sh, log, cmd, text, wasDone, unsupported); wasDone = said.done; if (said.err) { L.termErrs = (L.termErrs || 0) + 1; if (COACH_ROOTS[said.err] && !said.typo) (L.roots ||= new Set()).add(COACH_ROOTS[said.err]); } coach.replaceChildren(bidi(said.note)); coach.hidden = !said.note; }
   }
   // Tests only grade at the end, so the live coach speaks in lessons and practice.
   const coach = ex.type === 'terminal' && !L.opts.exam ? el('div', 'coach') : null; let wasDone = false;
   if (coach) { coach.setAttribute('role', 'status'); coach.hidden = true; root.append(box, coach); } else root.append(box);
-  if (ex.hint && !L.opts.exam) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(h); }
+  if (ex.hint && !L.opts.exam) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { L.helped = true; h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(h); }
   // Never steal focus from a field the learner already moved to. A teach card only invites typing, so it opens no keyboard.
   if (!shown.length) focusField(input);
 }
