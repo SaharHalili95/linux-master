@@ -1,11 +1,11 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
 
 function load() {
   const context = { window: {} };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../prototype/game-progress.js'), 'utf8'), context);
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../game-progress.js'), 'utf8'), context);
   return context.window.GameProgress;
 }
 const course = [

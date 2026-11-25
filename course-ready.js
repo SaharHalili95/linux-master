@@ -8,6 +8,7 @@
   }
   COURSE.sort((a, b) => a.section - b.section || a.unit - b.unit);
   window.courseReady = true;
+  dispatchEvent(new Event('courseready'));
   if (document.getElementById('profile').classList.contains('active')) renderAchievements();
   const path = document.getElementById('path');
   let observer;

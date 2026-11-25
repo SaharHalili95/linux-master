@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 
 async function fresh(page, setup = {}) {
   await page.goto('./?mode=trivia');
@@ -138,7 +138,7 @@ test('braces, touch, rmdir, alias, type and which behave like bash', () => {
 test('ls -l, chmod, umask and links print exactly what Ubuntu printed', () => {
   const fs = require('fs'), vm = require('vm'), path = require('path');
   const ctx = vm.createContext({});
-  vm.runInContext(`${fs.readFileSync(path.join(__dirname, '../shell.js'), 'utf8')}\n${fs.readFileSync(path.join(__dirname, '../prototype/recorded.js'), 'utf8')}\nthis.Shell = Shell; this.R = RECORDED;`, ctx);
+  vm.runInContext(`${fs.readFileSync(path.join(__dirname, '../shell.js'), 'utf8')}\n${fs.readFileSync(path.join(__dirname, '../recorded.js'), 'utf8')}\nthis.Shell = Shell; this.R = RECORDED;`, ctx);
   const sh = (files, dirs = []) => new ctx.Shell({ cwd: '/home/user', dirs: ['/home/user', ...dirs.map(d => `/home/user/${d}`)], files: files.map(([p, c]) => [`/home/user/${p}`, { content: c }]) });
   const run = (s, cmds) => { let out; for (const c of cmds) out = s.run(c).out; return out; };
   expect(run(sh([['readme.txt', 'Welcome to Linux!\n'], ['notes.txt', 'buy milk\ncall mom\nlearn grep\n'], ['big.txt', 'x'.repeat(5000)]], ['docs', 'logs', 'photos', 'projects']),

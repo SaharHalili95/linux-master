@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 const fs = require('fs');
 
 async function fresh(page, setup = {}) {

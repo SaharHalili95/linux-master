@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 const { default: AxeBuilder } = require('@axe-core/playwright');
 
 // WCAG 2.1 A and AA on every screen, in both languages. Animations are turned off so

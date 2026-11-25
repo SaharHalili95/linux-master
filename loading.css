@@ -1,1 +1,2 @@
 html:not(.learn-ready) .app > .topbar { visibility: hidden; }
+html:not(.learn-ready) .app > main { visibility: hidden; }

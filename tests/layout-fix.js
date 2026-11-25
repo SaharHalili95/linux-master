@@ -16,7 +16,7 @@ if (typeof original !== 'string' || typeof layout !== 'string' || !original.trim
 if (original === layout) fail('nothing changed');
 if (bare(original) !== bare(layout)) fail('the fix changes more than spaces and line breaks');
 
-const root = path.join(__dirname, '..', 'prototype');
+const root = path.join(__dirname, '..');
 const files = ['lessons.js', 'units.js', ...fs.readdirSync(path.join(root, 'parts')).map(f => `parts/${f}`)];
 const quote = (q, s) => q + s.replace(/\\/g, '\\\\').replace(new RegExp(q, 'g'), `\\${q}`).replace(/\n/g, '\\n')
   .replace(/\r/g, '\\r').replace(/\t/g, '\\t').replace(q === '`' ? /\$\{/g : /$^/, '\\${') + q;

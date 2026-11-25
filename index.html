@@ -3,21 +3,16 @@
 <head>
   <meta charset="utf-8">
   <script>
-    // The app opens in Learn mode. The Trivia switch adds ?mode=trivia, which keeps Trivia for the rest of the visit.
-    // Offline it goes there only once Learn mode has been kept for offline use (it sets learnOffline).
-    try {
-      if (new URLSearchParams(location.search).get('mode') === 'trivia') sessionStorage.setItem('mode', 'trivia');
-      if (sessionStorage.getItem('mode') !== 'trivia' && (navigator.onLine || localStorage.getItem('learnOffline'))) location.replace('prototype/');
-    } catch { /* storage blocked: stay in Trivia */ }
+    if (new URLSearchParams(location.search).get('mode') === 'trivia') location.replace('classic/' + location.hash);
   </script>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#111916">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#16213a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Linux Master">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png?v=30">
-  <link rel="icon" href="icon-192.png" type="image/png">
+  <title>Linux Master · מצב למידה</title>
   <meta name="description" content="Learn Linux on your phone: 93 short, game-style units from your first command to certification prep. Pick one of six tracks, from LPIC-1 and RHCSA to CompTIA Linux+, and see only its units. Six mock exams, English and Hebrew, works offline.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Linux Master · Learn Linux on your phone">
@@ -27,84 +22,161 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap"></noscript>
-  <title>Linux Master · Learn Linux on your phone</title>
-  <link rel="stylesheet" href="styles.css?v=30">
+  <link rel="icon" href="icon-192.png" type="image/png">
+  <link rel="stylesheet" href="fonts.css?v=p101">
+  <link rel="stylesheet" href="styles.css?v=p102">
+  <link rel="stylesheet" href="character.css?v=character1">
+  <link rel="stylesheet" href="avatar-options.css?v=1">
+  <link rel="stylesheet" href="gameplay.css?v=2">
+  <link rel="stylesheet" href="loading.css?v=loading3">
+  <link rel="preload" href="fonts/rubik-hebrew.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="preload" href="fonts/rubik-latin.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="preload" href="fonts/secularone-hebrew.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="preload" href="fonts/secularone-latin.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <link rel="preload" href="character-art/explorer.webp" as="image" type="image/webp" fetchpriority="high">
 </head>
 <body>
-  <div class="shell">
+  <div class="app">
     <header class="topbar">
-      <div class="brand"><div class="brand-mark">$_</div><div class="brand-name" dir="ltr">Linux <span>Master</span></div><div class="version" dir="ltr">v30</div></div>
-      <div class="top-meta"><nav class="mode-switch" aria-label="מצב" data-i18n-aria="modeSwitch"><span class="mode on" aria-current="page" data-i18n="modeTrivia">🎯 טריוויה</span><a class="mode" id="modeLearn" href="prototype/" data-i18n="modeLearn">🎓 למידה</a></nav><span class="status-dot"></span><span class="tagline" data-i18n="labTagline">מעבדת הפקודות שלכם</span><button class="lang-btn" id="langBtn" type="button" onclick="switchLanguage()">EN</button></div>
+      <div class="course"><span class="course-mark" dir="ltr">$_</span></div>
+      <button type="button" class="lang-btn" id="langBtn" data-i18n="langBtn">EN</button>
+      <button type="button" class="chip lives" id="livesChip" aria-haspopup="dialog"><span class="ic ic-heart" aria-hidden="true"></span><b id="livesN">5</b><span class="sr" data-i18n="livesLabel">חיים</span></button>
+      <div class="chip streak" id="streakChip" title="רצף ימים"><span class="ic ic-flame" aria-hidden="true"></span><b id="streakN">0</b><span class="sr" data-i18n="streak">ימי רצף</span></div>
+      <div class="chip gems" title="יהלומים"><span class="ic ic-gem" aria-hidden="true"></span><b id="gemsN">0</b><span class="sr" data-i18n="gems">יהלומים</span></div>
+      <div class="chip xp" title="נקודות XP"><span class="ic ic-bolt" aria-hidden="true"></span><b id="xpN">0</b><span class="sr">XP</span></div>
     </header>
     <main>
-      <section id="home" class="screen active">
-        <div class="eyebrow">LINUX MASTER / LEARNING PATH</div>
-        <h1 data-i18n-html="heroTitle">הדרך שלכם<br>לשלוט בטרמינל.</h1>
-        <p class="hero-copy" data-i18n-html="heroCopy">לא צריך להכיר פקודות מראש. <strong>לומדים אותן צעד־צעד, עם דוגמאות וטריוויה.</strong></p>
-        <div class="terminalline"><b>learner@bandit</b><span>~</span><span>$</span><span data-i18n="terminalHint">בחרו את המשימה הבאה</span><span class="cursor">▌</span></div>
-        <div class="stats"><div class="stat"><strong id="learnedCount">0</strong><span data-i18n="statCorrect">תשובות נכונות</span></div><div class="stat"><strong id="commandCount">0</strong><span data-i18n="statCommands">פקודות במאגר</span></div><div class="stat"><strong id="bestScore">0</strong><span data-i18n="statAccuracy">דיוק כולל</span></div></div>
-        <div class="section-head"><div><h2 data-i18n="chooseLevel">בוחרים רמת לימוד</h2><p data-i18n="chooseLevelSub">אפשר להתחיל מהבסיס ולהתקדם בקצב שלכם</p></div></div>
-        <div class="level-grid" role="group" aria-label="בחירת רמת לימוד" data-i18n-aria="levelsAria">
-          <button type="button" class="level-card" id="levelIntro" data-level="intro" aria-pressed="true" onclick="selectLevel('intro')"><span class="level-step">שלב 01</span><strong>פקודות</strong><span>מה הפקודה עושה, בשפה פשוטה</span></button>
-          <button type="button" class="level-card" id="levelFunctions" data-level="functions" aria-pressed="false" onclick="selectLevel('functions')"><span class="level-step">שלב 02</span><strong>פקודה + שימוש</strong><span>אפשרות אחת, למשל ‎ls -a</span></button>
-          <button type="button" class="level-card" id="levelPipe" data-level="pipe" aria-pressed="false" onclick="selectLevel('pipe')"><span class="level-step">שלב 03</span><strong>פקודות יחד</strong><span>מחברים אותן בצינור ‎|</span></button>
-          <button type="button" class="level-card" id="levelPipeFunction" data-level="pipeFunction" aria-pressed="false" onclick="selectLevel('pipeFunction')"><span class="level-step">שלב 04</span><strong>צינור + דגל</strong><span>שרשרת פקודות עם אפשרות אחת</span></button>
-          <button type="button" class="level-card" id="levelPro" data-level="pro" aria-pressed="false" onclick="selectLevel('pro')"><span class="level-step">שלב 05</span><strong>מקצוענות</strong><span>פקודה עם שני דגלים במשימות אמיתיות</span></button>
-          <button type="button" class="level-card" id="levelPipeTwoFlag" data-level="pipeTwoFlag" aria-pressed="false" onclick="selectLevel('pipeTwoFlag')"><span class="level-step">שלב 06</span><strong>צינור + שני דגלים</strong><span>שילובים מורכבים יותר</span></button>
-          <button type="button" class="level-card" id="levelWorkflow" data-level="workflow" aria-pressed="false" onclick="selectLevel('workflow')"><span class="level-step">שלב 07</span><strong>תהליכי עבודה</strong><span>משימות מערכת שלמות</span></button>
-          <button type="button" class="level-card" id="levelBandit" data-level="bandit" aria-pressed="false" onclick="selectLevel('bandit')"><span class="level-step">שלב 08</span><strong>כלים ל־Bandit</strong><span>כל מה שחסר לשלבים 0-33</span></button>
+      <section id="learn" class="tab active" aria-label="מסלול הלימוד" data-i18n-aria="pathLabel"><canvas id="pathField" class="path-field" aria-hidden="true"></canvas><canvas id="pathBolts" class="path-field" aria-hidden="true"></canvas><div id="path" class="path"></div><div class="path-jump"><button type="button" id="toTopBtn" aria-label="לתחילת המסלול" data-i18n-aria="toTop"><span class="ic ic-up" aria-hidden="true"></span></button><button type="button" id="toHereBtn" aria-label="למקום שלי במסלול" data-i18n-aria="toHere"><span class="ic ic-pin" aria-hidden="true"></span></button></div></section>
+      <section id="practice" class="tab">
+        <h1 class="tab-title" data-i18n="practiceTitle">תרגול</h1>
+        <div class="card practice-card"><div class="pc-icon"><span class="ic ic-redo"></span></div><div><h2 data-i18n="mistakesTitle">חזרה על טעויות</h2><p id="mistakesCount"></p></div><button type="button" class="btn primary" id="practiceMistakes" data-i18n="practiceBtn">תרגול</button></div>
+        <div class="card practice-card"><div class="pc-icon"><span class="ic ic-target"></span></div><div><h2 data-i18n="lightTitle">אימון קליל</h2><p data-i18n="lightText">8 שאלות מהירות על פקודות</p></div><button type="button" class="btn primary" id="practiceLight" data-i18n="start2">התחלה</button></div>
+        <div class="card practice-card"><div class="pc-icon blue"><span class="ic ic-bolt"></span></div><div><h2 data-i18n="mixTitle">תרגול מעורב</h2><p data-i18n="mixText">8 תרגילים מהשיעורים שסיימתם</p></div><button type="button" class="btn blue" id="practiceMix" data-i18n="startBtn">התחלה</button></div>
+      </section>
+      <section id="quests" class="tab">
+        <h1 class="tab-title" data-i18n="questsTitle">משימות יומיות</h1>
+        <p class="tab-sub" data-i18n="questsSub">מתחדשות כל יום. כל משימה שווה 10 יהלומים.</p>
+        <ul id="questList" class="quests"></ul>
+      </section>
+      <section id="profile" class="tab">
+        <div class="profile-head"><div id="profileMascot" class="profile-mascot"></div><div><h1 class="tab-title" data-i18n="profileTitle">הפרופיל שלי</h1><p class="tab-sub" data-i18n="profileSub">ההתקדמות נשמרת רק במכשיר הזה</p></div></div>
+        <div class="stats">
+          <div class="stat"><span class="ic ic-flame" aria-hidden="true"></span><b id="pStreak">0</b><span data-i18n="pStreak">ימי רצף</span></div>
+          <div class="stat"><span class="ic ic-bolt" aria-hidden="true"></span><b id="pXp">0</b><span data-i18n="pXp">XP בסך הכול</span></div>
+          <div class="stat"><span class="ic ic-book" aria-hidden="true"></span><b id="pLessons">0</b><span data-i18n="pLessons">שיעורים</span></div>
+          <div class="stat"><span class="ic ic-gem" aria-hidden="true"></span><b id="pGems">0</b><span data-i18n="pGems">יהלומים</span></div>
         </div>
-        <p class="level-note" id="levelNote"><strong>מתחילים מהבסיס.</strong> בכל תשובה תקבלו גם הסבר ודוגמה, אין צורך לנחש ידע קודם.</p>
-        <div class="toggles"><div class="segmented" id="sizeToggle" role="group" aria-label="שאלות בסבב" data-i18n-aria="sizeLabel"><span class="seg-label" data-i18n="sizeShort">שאלות</span><button type="button" data-value="5" onclick="setRoundSize(5)">5</button><button type="button" data-value="10" onclick="setRoundSize(10)">10</button><button type="button" data-value="20" onclick="setRoundSize(20)">20</button></div><div class="segmented" id="modeToggle" role="group" aria-label="סוג תשובה" data-i18n-aria="modeLabel"><button type="button" data-value="choice" data-i18n="modeChoice" onclick="setAnswerMode('choice')">בחירה</button><button type="button" data-value="type" data-i18n="modeType" onclick="setAnswerMode('type')">הקלדה</button></div><div class="segmented" id="scopeToggle" role="group" aria-label="היקף שלב 02" data-i18n-aria="scopeLabel"><button type="button" data-value="core" onclick="setGuideScope('core')">ליבה</button><button type="button" data-value="all" onclick="setGuideScope('all')">הכל</button></div></div><p class="type-note" id="typeNote" hidden></p><div class="start-row"><button type="button" class="primary-btn" onclick="startQuiz()" data-i18n="startPractice">מתחילים לתרגל ←</button><span id="quizModeMeta"></span></div><section class="stats-panel"><h2 data-i18n="statsTitle">הסטטיסטיקה שלכם</h2><div id="levelStats" class="level-stats"></div><h3 data-i18n="weakTitle">פקודות לחזק</h3><div id="weakCommands" class="weak-commands"></div><h3 data-i18n="backupTitle">גיבוי ההתקדמות</h3><p class="panel-note" data-i18n="backupNote"></p><div class="panel-actions"><button type="button" class="secondary-btn" onclick="downloadBackup()" data-i18n="backupDownload">הורדת קובץ גיבוי</button><button type="button" class="secondary-btn" onclick="copyBackup()" data-i18n="backupCopy">העתקת קוד גיבוי</button><button type="button" class="secondary-btn" onclick="startRestore()" data-i18n="backupRestore">שחזור מקובץ או מקוד</button><input type="file" id="restoreFile" accept="application/json,.json,.txt" hidden onchange="restoreFromFile(this)"></div><h3 data-i18n="reminderTitle">תזכורת יומית</h3><p class="panel-note" data-i18n="reminderNote"></p><div class="panel-actions"><label class="time-label"><span data-i18n="reminderTime">שעה</span> <input type="time" id="reminderTime" value="20:00"></label><button type="button" class="secondary-btn" onclick="addReminder()" data-i18n="reminderAdd">הוספה ליומן</button></div></section>
-        <div class="section-head"><div><h2 data-i18n="banditTitle">מסלול Bandit</h2><p data-i18n="banditSub"></p></div><span class="head-actions"><button type="button" class="secondary-btn" onclick="openBandit()" data-i18n="openBandit">פתיחת המסלול ←</button><button type="button" class="secondary-btn" onclick="openMissions()" data-i18n="openMissions">משימות בטרמינל ←</button></span></div>
-        <div class="section-head"><div><h2 data-i18n="tutorials">הדרכות</h2><p data-i18n="tutorialsSub">בחרו נושא בסרגל וקבלו הסבר ודוגמאות צעד אחר צעד</p></div><button type="button" class="secondary-btn" onclick="openTutorials()" data-i18n="openTutorials">פתיחת ההדרכות ←</button></div>
-        <section class="recent"><div class="recent-title"><h2 data-i18n="reminder">תזכורת קטנה</h2></div><div class="command-pills"><span class="pill" data-i18n="pill1">ls · רואים מה יש</span><span class="pill" data-i18n="pill2">cd · עוברים תיקייה</span><span class="pill" data-i18n="pill3">cat · קוראים קובץ</span><span class="pill" data-i18n="pill4">לא צריך לזכור הכול עכשיו</span></div></section>
-      </section>
-      <section id="tutorials" class="screen">
-        <div class="game-top"><div><button type="button" class="back-btn" onclick="goHome()" data-i18n="backHome">← חזרה למסך הראשי</button><h1 class="game-title" data-i18n="tutorialsTitle">הדרכות Linux Master</h1><p class="game-subtitle" data-i18n="tutorialsIntro">בחרו נושא בסרגל כדי ללמוד בקצב שלכם.</p></div></div>
-        <div id="tutorialLevels" class="tutorial-level-bar" role="tablist" aria-label="נושאי ההדרכות" data-i18n-aria="tutorialsAria"></div>
-        <div class="tutorial-heading"><h2 id="tutorialLevelTitle">פקודות בסיסיות</h2><p id="tutorialLevelDescription"></p></div>
-        <label class="tutorial-search-label" for="tutorialSearch" data-i18n="searchLabel">חיפוש במדריך</label><input id="tutorialSearch" class="tutorial-search" type="search" placeholder="חיפוש פקודה, דגל או הסבר" data-i18n-placeholder="searchPlaceholder" oninput="filterTutorialLessons()"><div id="tutorialLessonList" class="tutorial-lessons" aria-live="polite"></div><div id="tutorialLoadMore" class="tutorial-load-more" hidden><button class="secondary-btn" type="button" onclick="showMoreTutorialLessons()">הצגת עוד 30 הדרכות</button></div>
-      </section>
-      <section id="bandit" class="screen">
-        <div class="game-top"><div><button type="button" class="back-btn" onclick="goHome()" data-i18n="backHome">← חזרה למסך הראשי</button><h1 class="game-title" data-i18n="banditTitle">מסלול Bandit</h1><p class="game-subtitle" id="banditProgress"></p></div></div>
-        <p class="bandit-note"><span data-i18n="banditNote"></span> <button class="primary-btn" type="button" onclick="practiceBandit()" data-i18n="banditPractice">תרגול שלב 08 ←</button></p>
-        <ol class="bandit-list" id="banditList"></ol>
-      </section>
-      <section id="missions" class="screen">
-        <div class="game-top"><div><button type="button" class="back-btn" onclick="goHome()" data-i18n="backHome">← חזרה למסך הראשי</button><h1 class="game-title" data-i18n="missionsTitle">משימות בטרמינל</h1><p class="game-subtitle" id="missionsProgress"></p></div></div>
-        <p class="panel-note" data-i18n="missionsIntro"></p>
-        <ol class="mission-list" id="missionList"></ol>
-        <div id="missionView" hidden>
-          <button type="button" class="back-btn" onclick="renderMissionList()" data-i18n="missionBack">← לכל המשימות</button>
-          <h2 id="missionTitle">משימה</h2><p id="missionGoal" class="mission-goal">—</p>
-          <button type="button" class="secondary-btn" onclick="toggleMissionHint()" data-i18n="missionHint">רמז</button><p id="missionHintText" class="panel-note" hidden></p>
-          <div class="terminal" dir="ltr"><pre class="term-output" id="termOutput" role="log" aria-live="polite" aria-label="טרמינל מדומה" data-i18n-aria="termLabel"></pre><div class="term-line"><label for="termInput" id="termPrompt" class="term-prompt">bandit@bandit:~$ </label><input id="termInput" class="term-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="הקלידו פקודה ולחצו Enter" data-i18n-placeholder="termPlaceholder" onkeydown="terminalKey(event)"></div></div>
-          <form class="mission-form" onsubmit="submitMission(event)"><label for="missionPassword" data-i18n="missionPasswordLabel">הסיסמה שמצאתם</label><input id="missionPassword" class="type-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="off"><button type="submit" class="primary-btn" data-i18n="missionSubmit">בדיקת סיסמה</button></form>
-          <p id="missionResult" class="mission-result" aria-live="polite"></p><button type="button" class="secondary-btn" id="missionNextBtn" onclick="nextMission()" data-i18n="missionNext" hidden>למשימה הבאה ←</button>
+        <div class="card game-panel" id="avatarForm"></div>
+        <div class="card game-panel" id="avatarPicker"></div>
+        <section class="card game-panel" aria-labelledby="worldProgressTitle"><h2 id="worldProgressTitle">התקדמות בעולמות</h2><div id="worldProgress" class="game-worlds"></div></section>
+        <section class="card game-panel" aria-labelledby="mockMedalsTitle"><h2 id="mockMedalsTitle">מדליות מבחני דמה</h2><p id="mockMedalsHelp"></p><div id="mockMedals" class="game-medals"></div></section>
+        <div class="card settings">
+          <label class="switch"><input type="checkbox" id="soundToggle"><span data-i18n="sound">צלילים</span></label>
+          <button type="button" class="btn ghost" id="backupBtn" data-i18n="backup">שמירת גיבוי</button>
+          <button type="button" class="btn ghost" id="restoreBtn" data-i18n="restore">שחזור מגיבוי</button>
+          <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+          <button type="button" class="btn danger" id="resetBtn" data-i18n="reset">איפוס ההתקדמות</button>
+          <small dir="ltr">© 2026 Sahar Halili</small>
+          <a class="btn ghost" href="legal.html" data-i18n="legal">מידע משפטי, פרטיות ונגישות</a>
         </div>
       </section>
-      <section id="quiz" class="screen">
-        <div class="game-top"><div><button type="button" class="back-btn" onclick="goHome()" data-i18n="backHome">← חזרה למסך הראשי</button><h1 class="game-title" data-i18n="quizTitle">סבב טריוויה</h1><p class="game-subtitle" id="quizSubtitle" data-i18n="quizSubtitleDefault">בחרו את התשובה הנכונה. לומדים גם מהטעויות.</p></div><div class="counter" id="quizCounter">01 / 10</div></div>
-        <div class="progress-track"><div class="progress-fill" id="quizProgress"></div></div>
-        <div class="question-card"><div class="question-tag" id="questionTag">COMMAND ID</div><!-- [html-validate-disable-next empty-heading -- filled with the question when a round starts] --><h2 id="questionText"></h2><div class="question-code" id="questionCode" hidden></div></div>
-        <div class="hint-area"><button type="button" class="secondary-btn hint-btn" id="hintBtn" onclick="showHint()" data-i18n="hintBtn">💡 רמז</button><button type="button" class="secondary-btn hint-btn report-btn" id="reportBtn" onclick="openReport()" aria-expanded="false" aria-controls="reportPanel" data-i18n="reportBtn">🚩 דיווח על תקלה</button><div id="hintText" class="hint-text" aria-live="polite" hidden></div><div id="reportPanel" class="report-panel" hidden><h3 data-i18n="reportTitle">מה לא תקין בשאלה?</h3><label for="reportReason" data-i18n="reportReason">סוג הבעיה</label><select id="reportReason" oninput="updateReportLink()"><option value="wrongAnswer" data-i18n="report_wrongAnswer">התשובה הנכונה שגויה</option><option value="alsoRight" data-i18n="report_alsoRight">גם תשובה אחרת נכונה</option><option value="unclear" data-i18n="report_unclear">השאלה לא ברורה</option><option value="typo" data-i18n="report_typo">שגיאת כתיב או תרגום</option><option value="display" data-i18n="report_display">בעיית תצוגה</option><option value="other" data-i18n="report_other">אחר</option></select><label for="reportNote" data-i18n="reportNote">פרטים (לא חובה)</label><textarea id="reportNote" rows="3" oninput="updateReportLink()"></textarea><p class="panel-note" data-i18n="reportHelp">נפתח דיווח מוכן ב־GitHub עם כל פרטי השאלה. נשאר רק ללחוץ Submit.</p><div class="report-actions"><a class="primary-btn" id="reportSend" href="https://github.com/SaharHalili95/linux-master/issues/new" target="_blank" rel="noopener" onclick="sentReport()" data-i18n="reportSend">פתיחת דיווח ב־GitHub ↗</a><button type="button" class="secondary-btn" onclick="closeReport()" data-i18n="reportCancel">ביטול</button></div></div></div>
-        <div class="answers" id="answers"></div><div id="feedback" class="feedback" aria-live="polite"></div>
-        <div class="quiz-actions"><div class="score-label"><span data-i18n="roundScore">נכונות בסבב</span> <strong id="quizScore">0</strong></div><button type="button" class="primary-btn" id="nextQuestion" onclick="nextQuestion()" data-i18n="nextQ" hidden>השאלה הבאה ←</button></div>
-      </section>
-      <section id="result" class="screen"><div class="result-card"><div class="result-icon" id="resultIcon">✦</div><h2 id="resultTitle" data-i18n="roundDone">סבב הושלם!</h2><p id="resultText"></p><div class="result-score" id="resultScore"></div><div class="result-actions"><button type="button" class="primary-btn" id="playAgain" data-i18n="playAgain">לשחק שוב ↻</button><button type="button" class="secondary-btn" onclick="goHome()" data-i18n="homeBtn">חזרה למסך הראשי</button></div></div></section>
     </main>
-    <footer><div class="footer-inner"><span data-i18n="footer1">Linux Master · מעבדת פקודות לינוקס</span><span data-i18n="footer2">תוכן לימודי מבוסס על מדריך Bandit המצורף</span><span dir="ltr">© 2026 Sahar Halili</span><a href="prototype/legal.html" data-i18n="footerLegal">מידע משפטי, פרטיות ונגישות</a></div></footer>
+    <nav class="tabbar" aria-label="ניווט" data-i18n-aria="nav">
+      <button type="button" data-tab="learn"><span class="ic ic-map" aria-hidden="true"></span><span data-i18n="tabLearn">לימוד</span></button>
+      <button type="button" id="trackBtn" aria-haspopup="dialog"><span class="ic ic-cap" aria-hidden="true"></span><span id="trackName">כל הקורס</span></button>
+      <button type="button" data-tab="practice"><span class="ic ic-dumbbell" aria-hidden="true"></span><span data-i18n="tabPractice">תרגול</span></button>
+      <button type="button" data-tab="quests"><span class="ic ic-target" aria-hidden="true"></span><span data-i18n="tabQuests">משימות</span></button>
+      <button type="button" data-tab="profile"><span class="ic ic-user" aria-hidden="true"></span><span data-i18n="tabProfile">פרופיל</span></button>
+    </nav>
   </div>
+
+  <div id="lesson" class="overlay lesson" hidden>
+    <div class="lesson-top"><button type="button" id="quitBtn" class="quit" aria-label="יציאה מהשיעור" data-i18n-aria="quit"><span class="ic ic-x" aria-hidden="true"></span></button><button type="button" id="editBtn" class="quit" aria-label="עריכה ודיווח" data-i18n-aria="editQ"><span class="ic ic-pen" aria-hidden="true"></span></button><div class="bar" aria-hidden="true"><div id="bar"></div></div><span id="comboTag" class="combo-tag"></span></div>
+    <div class="lesson-main" id="lessonMain"><div id="exTag" class="ex-tag"></div><!-- [html-validate-disable-next empty-heading -- filled with the exercise prompt when it renders] --><h2 id="exPrompt" class="ex-prompt"></h2><div id="exBody" class="ex-body"></div></div>
+    <div id="foot" class="lesson-foot idle">
+      <div class="foot-inner">
+        <div id="fbBox" class="fb" aria-live="polite" hidden><div class="fb-icon" aria-hidden="true"></div><div><div id="fbTitle" class="fb-title"></div><div id="fbDetail" class="fb-detail"></div><a id="reportLink" class="report" href="https://github.com/SaharHalili95/linux-master/issues/new" target="_blank" rel="noopener" data-i18n="report" hidden>דיווח על תקלה</a></div></div>
+        <button type="button" id="checkBtn" class="btn primary big" disabled>בדיקה</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="trackSheet" class="overlay editor" hidden role="dialog" aria-labelledby="trackTitle">
+    <div class="editor-inner">
+      <h2 id="trackTitle" data-i18n="trackTitle">המסלול שלי</h2>
+      <p class="track-help" data-i18n="trackHelp">בחרו הסמכה כדי לראות רק את היחידות שלה. ההתקדמות נשמרת בכל מסלול.</p>
+      <div class="track-pick"><button type="button" data-track=""></button><button type="button" data-track="L"></button><button type="button" data-track="R"></button><button type="button" data-track="F"></button><button type="button" data-track="E"></button><button type="button" data-track="S"></button><button type="button" data-track="C"></button></div>
+      <div class="ed-buttons"><button type="button" id="trackClose" class="btn ghost" data-i18n="edCancel">ביטול</button></div>
+    </div>
+  </div>
+
+  <div id="livesSheet" class="overlay editor" hidden role="dialog" aria-labelledby="livesTitle">
+    <div class="editor-inner">
+      <h2 id="livesTitle" data-i18n="livesTitle">חיים</h2>
+      <p class="lives-count"><span class="ic ic-heart" aria-hidden="true"></span> <b id="livesCount" dir="ltr">5 / 5</b></p>
+      <p id="livesWait" class="track-help"></p>
+      <button type="button" id="buyLife" class="btn primary big" data-i18n="buyLife">קנו חיים ב־20 יהלומים</button>
+      <button type="button" id="earnLife" class="btn ghost big" data-i18n="earnLife">ענו נכון על 3 מתוך 5 שאלות</button>
+      <button type="button" id="livesClose" class="btn ghost big" data-i18n="edCancel">ביטול</button>
+    </div>
+  </div>
+
+  <div id="editor" class="overlay editor" hidden role="dialog" aria-labelledby="edTitle">
+    <div class="editor-inner">
+      <h2 id="edTitle" data-i18n="edTitle">עריכה ודיווח</h2>
+      <label for="edText" data-i18n="edTextLabel">טקסט השאלה: אפשר לשנות רק רווחים וירידות שורה</label>
+      <textarea id="edText" rows="4" dir="auto"></textarea>
+      <p id="edHint" class="ed-hint" data-i18n="edHint" hidden>אפשר לשנות רק רווחים וירידות שורה, לא אותיות.</p>
+      <div class="ed-preview-h" data-i18n="edPreview">ככה זה ייראה:</div>
+      <div id="edPreview" class="ed-preview ex-prompt"></div>
+      <label for="edNote" data-i18n="edNoteLabel">מה הבעיה? (לא חובה)</label>
+      <textarea id="edNote" rows="3" dir="auto"></textarea>
+      <div class="ed-buttons"><button type="button" id="edSave" class="btn primary" data-i18n="edSave">שמירה</button><button type="button" id="edCancel" class="btn ghost" data-i18n="edCancel">ביטול</button></div>
+      <div id="edReports" class="ed-reports" hidden><button type="button" id="edShare" class="btn ghost"></button><button type="button" id="edClear" class="btn ghost" data-i18n="edClear">ניקוי</button></div>
+    </div>
+  </div>
+
+  <div id="end" class="overlay end" hidden>
+    <div class="end-inner">
+      <div class="end-stage"><div id="endMoon" class="end-moon"></div><div id="endMascot" class="end-mascot"></div></div>
+      <h1 id="endTitle">השיעור הושלם!</h1>
+      <p id="endRank" class="end-rank"></p>
+      <div class="end-stats">
+        <div class="es gold"><div class="es-h" data-i18n="endXp">סה״כ XP</div><div class="es-v"><span class="ic ic-bolt" aria-hidden="true"></span><span id="endXp">0</span></div></div>
+        <div class="es green"><div class="es-h" data-i18n="endAcc">דיוק</div><div class="es-v"><span class="ic ic-target" aria-hidden="true"></span><span id="endAcc" dir="ltr">0%</span></div></div>
+        <div class="es blue"><div class="es-h" data-i18n="endTime">זמן</div><div class="es-v"><span class="ic ic-clock" aria-hidden="true"></span><span id="endTime" dir="ltr">0:00</span></div></div>
+      </div>
+      <p id="endQuests" class="end-quests"></p>
+      <section id="endReview" class="end-review" hidden></section>
+    </div>
+    <div class="end-foot"><button type="button" id="endBtn" class="btn primary big" data-i18n="continue">המשך</button><button type="button" id="endAlt" class="btn ghost big" data-i18n="backToPath" hidden>חזרה למסלול</button></div>
+  </div>
+
+  <div id="streakScreen" class="overlay streak-screen" hidden>
+    <div class="end-inner">
+      <div class="flame" aria-hidden="true"><span class="ic ic-flame"></span></div>
+      <div class="streak-big" id="streakBig">1</div>
+      <h1 data-i18n="streakDays">ימי רצף</h1>
+      <p id="streakText"></p>
+      <div id="week" class="week"></div>
+    </div>
+    <div class="end-foot"><button type="button" id="streakBtn" class="btn primary big" data-i18n="continue">המשך</button></div>
+  </div>
+
+  <canvas id="confetti" class="confetti" hidden></canvas>
   <div id="toast" class="toast" role="status"></div>
-  <script src="data/content.js?v=30"></script>
-  <script src="data/content.en.js?v=30"></script>
-  <script src="shell.js?v=30"></script>
-  <script src="data/missions.js?v=30"></script>
-  <script src="app.js?v=30"></script>
+  <script defer src="i18n.js?v=p101"></script>
+  <script defer src="units.js?v=p101"></script>
+  <script defer src="lessons.js?v=p101"></script>
+  <script defer src="world.js?v=retina3"></script>
+  <script defer src="sync.js?v=gameplay3"></script>
+  <script defer src="world-characters.js?v=1"></script>
+  <script defer src="character-art.js?v=catalog1"></script>
+  <script defer src="avatar-options.js?v=2"></script>
+  <script defer src="game-progress.js?v=2"></script>
+  <script defer src="story-missions.js?v=1"></script>
+  <script defer src="app.js?v=p101"></script>
+  <script defer src="character.js?v=gameplay3"></script>
+  <script defer src="course-start.js?v=loading5"></script>
 </body>
 </html>

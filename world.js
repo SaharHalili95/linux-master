@@ -68,7 +68,7 @@ function startField(cv) {
   };
   const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
   const ctx = cv.getContext('2d'), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, cell = 13;
-  let w = 0, h = 0, cols = 0, rows = 0, grid = new Float32Array(0), raf = 0, last = 0, pos = reduce ? 0 : scrollY - 260, vel = 0, wanted = [255, 179, 71], tint = [...wanted];
+  let w = 0, h = 0, cols = 0, rows = 0, grid = new Float32Array(0), raf = 0, last = 0, pos = scrollY, vel = 0, wanted = [255, 179, 71], tint = [...wanted];
   const contours = major => {
     ctx.beginPath();
     for (let n = 0; n < LEVELS; n++) {
@@ -117,7 +117,9 @@ function startField(cv) {
     draw();
     if (Math.abs(goal - pos) > 0.3 || Math.abs(vel) > 1 || shade > 1) raf = requestAnimationFrame(frame); else last = 0;
   };
-  const start = () => { if (reduce) { pos = scrollY; tint = [...wanted]; draw(); } else if (!raf) raf = requestAnimationFrame(frame); };
+  // Until the page has loaded it jumps straight to where it is going, so the first screen is not held up by animation frames.
+  const snap = () => { raf = 0; pos = scrollY; vel = 0; tint = [...wanted]; draw(); };
+  const start = () => { if (reduce) snap(); else if (!raf) raf = requestAnimationFrame(document.readyState === 'complete' ? frame : snap); };
   new ResizeObserver(() => {
     const box = cv.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 3);
     w = box.width; h = box.height; if (!w) return;
@@ -179,6 +181,6 @@ function startBolts(cv) {
     w = box.width; h = box.height; if (!w) return;
     cv.width = w * dpr; cv.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }).observe(cv);
-  requestAnimationFrame(frame);
+  if (document.readyState === 'complete') requestAnimationFrame(frame); else addEventListener('load', () => requestAnimationFrame(frame), { once: true });
   return { tint: hex => { color = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)); } };
 }

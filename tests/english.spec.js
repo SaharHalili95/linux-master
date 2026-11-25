@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 const LEVELS = ['intro', 'functions', 'pipe', 'pipeFunction', 'pro', 'pipeTwoFlag', 'workflow', 'bandit'];
 const visibleHebrew = page => page.evaluate(() => [...document.querySelectorAll('body *')]
   .filter(e => e.children.length === 0 && e.offsetParent !== null && e.id !== 'langBtn' && /[֐-׿]/.test(e.textContent))

@@ -1,9 +1,9 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/prototype/');
-  await page.addScriptTag({ url: '/prototype/avatar-options.js' });
-  await page.addStyleTag({ url: '/prototype/avatar-options.css' });
+  await page.goto('./');
+  await page.addScriptTag({ url: '/avatar-options.js' });
+  await page.addStyleTag({ url: '/avatar-options.css' });
   await page.evaluate(() => {
     const slot = document.createElement('div');
     slot.id = 'avatarOptionsTest';

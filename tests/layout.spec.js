@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./course-loaded');
 
 // Renders every question of every level, in both answer modes and both languages, and
 // checks that nothing makes the page scroll sideways. Runs on the narrowest phones.
