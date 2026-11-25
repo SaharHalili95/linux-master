@@ -5,7 +5,7 @@ const globals = require('globals');
 // share one global scope, so names declared in one file are globals in the next.
 const content = Object.fromEntries(['commands', 'introNames', 'abbreviations', 'fullName', 'pipeScenarios', 'pipeFlagScenarios', 'professionalScenarios',
   'pipeTwoFlagScenarios', 'workflowScenarios', 'banditScenarios', 'BANDIT_MAP', 'guideUses', 'CONTENT',
-  'Shell', 'ShellUnsupported', 'COMMANDS', 'sameOutput', 'previewOutput', 'lessonFixture', 'banditFixture', 'MISSIONS', 'missionPassword',
+  'Shell', 'ShellUnsupported', 'COMMANDS', 'coachConcepts', 'coachRecord', 'learnFrom', 'reviewPop', 'planReview', 'finishReview', 'conceptName', 'coachDay', 'coachFocus', 'coachReason', 'coachName', 'coachBuild', 'COACH_ROOT_NAMES', 'PRODUCE', 'coachBlame', 'coachConceptsOfLine', 'coachContrast', 'COACH_ROOTS', 'CONTRAST', 'SKILL', 'sameOutput', 'previewOutput', 'lessonFixture', 'banditFixture', 'MISSIONS', 'missionPassword',
   'REGIONS', 'regionScene', 'moonSvg', 'startField', 'startBolts', 'rankOf', 'REGION_MUTE', 'REGION_INK', 'REGION_ON_ACCENT', 'COURSE', 'unitFixture', 'bossFixture', 'T', 'tr', 't', 'I18N', 'UNIT_2', 'UNIT_3', 'UNIT_4', 'UNIT_5', 'UNIT_6', 'READ', 'PARTS', 'RECORDED', 'WHAT', 'CHALLENGE', 'homeFixture', 'outputOf', 'printed', 'fileIs', 'Shell'].map(name => [name, 'readonly']));
 // The prototype's i18n.js declares LANG and its app.js switches it.
 content.LANG = 'writable';

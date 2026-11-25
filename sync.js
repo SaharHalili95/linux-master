@@ -4,6 +4,16 @@ function mergeQuests(a = {}, b = {}) {
   if (a.day !== b.day) return (a.day || '') > (b.day || '') ? a : b;
   return { day: a.day, xp: Math.max(a.xp || 0, b.xp || 0), perfect: Math.max(a.perfect || 0, b.perfect || 0), combo: Math.max(a.combo || 0, b.combo || 0), claimed: union(a.claimed, b.claimed) };
 }
+// Each device counted its own answers, so adding them would count some twice: the device that saw a concept more
+// often wins, and on a tie the one that saw it last.
+function mergeSkill(a = {}, b = {}) {
+  const out = {};
+  for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    const x = a[k], y = b[k];
+    out[k] = !x ? y : !y ? x : x[0] !== y[0] ? (x[0] > y[0] ? x : y) : x[6] !== y[6] ? (x[6] > y[6] ? x : y) : String(x) >= String(y) ? x : y;
+  }
+  return out;
+}
 function mergeProgress(a, b) {
   const latest = (b.lastDay || '') > (a.lastDay || '') ? b : a;
   const sameDay = (a.lastDay || '') === (b.lastDay || '');
@@ -29,5 +39,9 @@ function mergeProgress(a, b) {
     streak: sameDay ? Math.max(a.streak || 0, b.streak || 0) : latest.streak || 0,
     track: latest.track || a.track || b.track || '',
     quests: mergeQuests(a.quests, b.quests),
+    skill: mergeSkill(a.skill, b.skill),
+    review: !a.review ? b.review ?? null : !b.review ? a.review : a.review.day !== b.review.day ? (a.review.day > b.review.day ? a.review : b.review) : a.review.done ? a.review : b.review,
+    reviewLog: [...new Map([...(a.reviewLog || []), ...(b.reviewLog || [])].map(r => [r.key, r])).values()].sort((x, y) => x.day - y.day).slice(-40),
+    confuse: Object.fromEntries(Object.keys({ ...a.confuse, ...b.confuse }).map(k => [k, Math.max(a.confuse?.[k] || 0, b.confuse?.[k] || 0)])),
   };
 }

@@ -56,8 +56,24 @@ const TRACK_SHORT = { ...TRACK_NAMES, E: 'Essentials', C: 'Linux+' };
 const MAX_LIVES = 5, LIFE_MS = 30 * 60 * 1000, LIFE_GEMS = 20;
 const DEFAULTS = { avatarForm: 'core', avatarFormUpdatedAt: 0, avatarStyle: 'auto', avatarUpdatedAt: 0, xp: 0, gems: 0, done: [], streak: 0, lastDay: null, days: [], mistakes: [], skipped: [], sound: true, quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
 // Saved state can be stale or hand-edited; keep only fields of the expected type.
+// The coach's model: [seen, right, forgot, wrong, typo, helped, day, box] per concept, and how often one command was
+// typed where another was needed.
+function validSkill(v) {
+  const out = {}; if (!v || typeof v !== 'object') return out;
+  for (const [k, e] of Object.entries(v)) if (k.length <= 80 && Array.isArray(e) && e.length === 8 && e.every(n => Number.isSafeInteger(n) && n >= 0)) out[k] = e.map((n, i) => i === 7 ? Math.min(4, n) : n);
+  return out;
+}
+function validConfuse(v) {
+  const out = {}; if (!v || typeof v !== 'object') return out;
+  for (const [k, n] of Object.entries(v)) if (k.length <= 80 && k.includes('>') && Number.isSafeInteger(n) && n > 0) out[k] = n;
+  return out;
+}
+function validReview(r) {
+  if (!r || typeof r !== 'object' || typeof r.key !== 'string' || !Number.isSafeInteger(r.day) || !Array.isArray(r.concepts) || !r.concepts.every(c => typeof c === 'string')) return null;
+  return { key: r.key, day: r.day, concepts: r.concepts.slice(0, 3), at: typeof r.at === 'string' ? r.at : '', variant: Number.isSafeInteger(r.variant) ? Math.min(2, Math.max(0, r.variant)) : 0, done: r.done === true, mastered: Array.isArray(r.mastered) ? r.mastered.filter(c => typeof c === 'string') : [] };
+}
 function loadState(raw) {
-  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], skipped: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0 };
+  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], skipped: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0, skill: {}, confuse: {}, review: null, reviewLog: [] };
   let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
   if (!saved || typeof saved !== 'object') return S;
   for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
@@ -72,6 +88,8 @@ function loadState(raw) {
   if (Object.hasOwn(TRACK_NAMES, saved.track)) S.track = saved.track;
   if (Number.isInteger(saved.lives) && saved.lives >= 0 && saved.lives <= MAX_LIVES) S.lives = saved.lives;
   if (Number.isFinite(saved.livesAt) && saved.livesAt >= 0) S.livesAt = saved.livesAt;
+  S.skill = validSkill(saved.skill); S.confuse = validConfuse(saved.confuse); S.review = validReview(saved.review);
+  if (Array.isArray(saved.reviewLog)) S.reviewLog = saved.reviewLog.filter(r => validReview({ ...r, key: 'x', at: '' })).slice(-40);
   if (Array.isArray(saved.reports)) S.reports = saved.reports.filter(r => r && typeof r.uid === 'string' && typeof r.note === 'string');
   const q = saved.quests;
   if (q && typeof q === 'object' && typeof q.day === 'string' && Array.isArray(q.claimed)) S.quests = { day: q.day, xp: +q.xp || 0, perfect: +q.perfect || 0, combo: +q.combo || 0, claimed: q.claimed.filter(x => typeof x === 'string') };
@@ -147,7 +165,7 @@ function showTab(name) {
 const unitKey = (unit, id) => (unit.unit === 1 ? id : `u${unit.unit}-${id}`);
 const NODE_PLAN = [['L0', 'lesson', 0], ['L1', 'lesson', 1], ['c1', 'chest'], ['L2', 'lesson', 2], ['L3', 'lesson', 3], ['boss', 'boss']];
 const unitNodes = unit => unit.exam ? [{ key: unitKey(unit, 'exam'), kind: 'exam', unit }] : NODE_PLAN.map(([id, kind, i]) => ({ key: unitKey(unit, id), kind, i, unit }));
-const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: ex.fixture || unit.fixture || unitFixture }));
+const withFixture = (unit, exercises) => exercises.map(ex => ({ ...ex, fx: ex.fixture || unit.fixture || unitFixture, unitNo: unit.unit }));
 const OFFSETS = [0, 66, 66, 0, -66, -66];
 const icon = name => { const i = el('span', `ic ic-${name}`); i.setAttribute('aria-hidden', 'true'); return i; };
 const ICONS = { lesson: 'star', chest: 'gift', exam: 'note', done: 'check', lock: 'lock', skipped: 'skip' };
@@ -291,6 +309,7 @@ function renderPath(append = false) {
     const nodes = unit.locked ? NODE_PLAN.map(([id, kind]) => ({ key: unitKey(unit, id), kind: kind === 'boss' ? 'boss' : 'lesson', unit, lockedUnit: true })).filter(n => n.key !== unitKey(unit, 'c1')) : unitNodes(unit);
     let lessonNo = 0;
     nodes.forEach((n, i) => {
+      if (S.review && n.key === S.review.at && !unit.locked) list.append(reviewRow(OFFSETS[i % OFFSETS.length]));
       const li = el('li', 'node-row'); li.style.setProperty('--x', `${OFFSETS[i % OFFSETS.length]}px`);
       // A mock exam is open from day one, so a learner can measure where they stand before the path gets there.
       const state = n.lockedUnit ? 'locked' : S.done.includes(n.key) ? 'done' : n.key === current ? 'current' : n.kind === 'exam' ? 'open' : 'locked';
@@ -315,6 +334,17 @@ function renderPath(append = false) {
   if (!append) { paintStage(+root.querySelector('.region')?.dataset.part, false); dockBar(); }
   syncStage(false);
   updateWorldProgress();
+}
+// The coach's review stage sits on the path before the stage that was next when it was made. It never blocks the way.
+function reviewRow(x) {
+  const r = S.review, li = el('li', 'node-row review-row'); li.style.setProperty('--x', `${x}px`);
+  const b = el('button', `node review ${r.done ? 'done' : 'open'}`); b.type = 'button';
+  b.replaceChildren(icon(r.done ? 'check' : 'dumbbell')); b.setAttribute('aria-label', r.done ? t('reviewDoneTitle') : t('reviewTitle'));
+  // The stage's window lives with the coach's model, which arrives after the first screen.
+  b.onclick = () => typeof reviewPop === 'function' ? reviewPop(b) : shellLoad.then(() => reviewPop(b), () => toast(t('lessonFailed')));
+  if (!r.done) { const tip = el('div', 'start-tip review-tip', t('reviewTip')); li.append(tip); li.classList.add('tipped'); }
+  li.append(b);
+  return li;
 }
 function openPop(anchor, n, state) {
   closePop(); SFX.tap();
@@ -368,10 +398,12 @@ function openChest(key) {
 
 // ---------- Lesson engine ----------
 let L = null;
-// The simulator loads after the first screen (course-start.js adds its tag once the page has loaded), so its
-// load or error event is caught on the document, where the capture phase sees events that do not bubble.
-const shellLoad = typeof Shell === 'function' ? Promise.resolve() : new Promise((ok, fail) => {
-  for (const [type, done] of [['load', ok], ['error', fail]]) document.addEventListener(type, e => { if (/(^|\/)shell\.js\?/.test(e.target.getAttribute?.('src') || '')) done(); }, true);
+// The simulator and the coach's model load after the first screen (course-start.js adds their tags once the page has
+// loaded, the model right after the simulator), so their load or error events are caught on the document, where the
+// capture phase sees events that do not bubble. The model loading means both are there.
+const shellLoad = typeof Shell === 'function' && typeof coachConcepts === 'function' ? Promise.resolve() : new Promise((ok, fail) => {
+  document.addEventListener('load', e => { if (/(^|\/)coach-model\.js\?/.test(e.target.getAttribute?.('src') || '')) ok(); }, true);
+  document.addEventListener('error', e => { if (/(^|\/)(shell|coach-model)\.js\?/.test(e.target.getAttribute?.('src') || '')) fail(); }, true);
 });
 shellLoad.catch(() => { /* reported when a lesson waits for it */ });
 function startLesson(key, exercises, opts = {}) {
@@ -379,7 +411,7 @@ function startLesson(key, exercises, opts = {}) {
   const lesson = L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
   paintRegion(opts.exam?.skip?.part ?? unitOfKey(key)?.section);
   $('lesson').hidden = false; document.body.classList.add('in-lesson');
-  if (typeof Shell === 'function') return next();
+  if (typeof Shell === 'function' && typeof coachConcepts === 'function') return next();
   $('exBody').textContent = t('lessonLoading');
   shellLoad.then(() => { if (L === lesson) next(); }, () => { if (L === lesson) { closeOverlays(); toast(t('lessonFailed')); } });
 }
@@ -543,10 +575,10 @@ const COACH_ERRORS = [
 function coachNote(ex, sh, log, cmd, text, wasDone, unsupported) {
   let done = false; try { done = !!ex.goal(sh, log); } catch { done = false; }
   if (done) return { done, note: ex.ask ? t('coachAsk') : wasDone ? t('coachAlready') : text ? t('coachDone') : `${t('coachDone')} ${t('coachSilent')}` };
-  const typo = typoIn([cmd], ex.solve);
-  if (typo) return { done, note: t('coachTypo', typo.got) };
-  const known = COACH_ERRORS.find(([re]) => re.test(text || ''));
-  if (known) return { done, note: t(known[1]) };
+  // The error still counts when a near typo is what the note names, but then the typo, not the error, is the gap.
+  const typo = typoIn([cmd], ex.solve), known = COACH_ERRORS.find(([re]) => re.test(text || ''));
+  if (typo) return { done, note: t('coachTypo', typo.got), err: known?.[1], typo: true };
+  if (known) return { done, note: t(known[1]), err: known[1] };
   // A command that ran and changed nothing the task checks: say whether it is a right step, the right command with
   // something else wrong, or not what this task needs.
   if (!unsupported) {
@@ -576,14 +608,15 @@ function explainMiss(typed, answers) {
     const d = editDistance(got, want); if (!best || d < best.d) best = { d, got, want, line };
   }
   const typo = typoIn([best.got], [best.want]);
-  if (typo) return { line: best.line, mark: { ...typo, line: best.line }, note: t('typo', typo.got, typo.want) };
+  const seen = { got: best.got, want: best.want };
+  if (typo) return { ...seen, kind: 'typo', wantWord: typo.want, line: best.line, mark: { ...typo, line: best.line }, note: t('typo', typo.got, typo.want) };
   const words = s => s.split(/\s+/), g = words(best.got), w = words(best.want);
   // Keys typed inside an editor, like :wq or dd, are no shell command, so only a near typo is named for them.
   if (!isCommand(w[0])) return null;
   if (g[0] !== w[0]) {
-    if (!isCommand(g[0])) return { line: best.line, note: t('missNoCmd', g[0]) };
+    if (!isCommand(g[0])) return { ...seen, kind: 'noCmd', line: best.line, note: t('missNoCmd', g[0]) };
     const info = cmdInfo(g[0]);
-    return { line: best.line, mark: { line: best.line, at: [0, w[0].length] }, note: [t('missOtherCmd', g[0], w[0]), info && t('missDoes', g[0], info)].filter(Boolean).join('\n') };
+    return { ...seen, kind: 'otherCmd', line: best.line, mark: { line: best.line, at: [0, w[0].length] }, note: [t('missOtherCmd', g[0], w[0]), info && t('missDoes', g[0], info)].filter(Boolean).join('\n') };
   }
   const missing = w.filter(x => !g.includes(x)), extra = g.filter(x => !w.includes(x));
   let at = null;
@@ -594,7 +627,10 @@ function explainMiss(typed, answers) {
   const parts = missing.length === 1 && extra.length === 1 ? [t('missInstead', extra[0], missing[0])]
     : [missing.length && t('missLacks', missing.join(' ')), extra.length && t('missExtra', extra.join(' '))].filter(Boolean);
   if (!parts.length) parts.push(t('missOrder'));
-  return { line: best.line, mark: at && { line: best.line, at }, note: [t('missSameCmd', g[0]), ...parts].join(' ') };
+  return { ...seen, kind: 'parts', line: best.line, mark: at && { line: best.line, at }, note: [t('missSameCmd', g[0]), ...parts].join(' ') };
+}
+function typedMiss(ex) {
+  return ex.type === 'terminal' && L.term ? explainMiss(L.term.log.map(l => l.cmd), ex.solve) : ex.type === 'scenario' ? explainMiss([L.value || ''], ex.accept) : null;
 }
 function setFoot(mode, title = '',{ label = '', sol = '', note = '', mark = null } = {}) {
   const foot = $('foot'); foot.className = `lesson-foot ${mode}`;
@@ -656,7 +692,7 @@ function testReview(results) {
   }
 }
 function answer(ok, solution = '', why = '') {
-  L.answered = true;
+  L.answered = true; if (typeof learnFrom === 'function') learnFrom(ok);
   // In an exam nothing is revealed until the end, and wrong answers do not come back or go to practice.
   if (L.opts.exam) {
     if (ok) L.correct++; else L.mistakes++;
@@ -672,7 +708,7 @@ function answer(ok, solution = '', why = '') {
     L.mistakes++; L.combo = 0; SFX.bad(); if (!L.opts.practice && !L.opts.replay) loseLife();
     L.queue.push({ ...L.ex, retry: true });
     if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss && L.key !== 'trivia') S.mistakes.push(L.ex.uid);
-    const miss = L.ex.type === 'terminal' && L.term ? explainMiss(L.term.log.map(l => l.cmd), L.ex.solve) : L.ex.type === 'scenario' ? explainMiss([L.value || ''], L.ex.accept) : null;
+    const miss = typedMiss(L.ex);
     // A typed answer is shown as the right answer it came closest to, so the marked word lines up with what was typed.
     const sol = miss && L.ex.type === 'scenario' ? L.ex.accept[miss.line] : solution;
     setFoot('bad', t('correctAnswer'), miss ? { sol, mark: miss.mark || null, note: miss.note } : ['terminal', 'scenario'].includes(L.ex.type) ? { sol: solution } :L.ex.plain ? { note: why ? `${solution}\n${why}` : solution } : { sol: solution, note: why });
@@ -1017,12 +1053,12 @@ function mountTerminal(root, ex, sh, onRun = () => {}, shown = []) {
     ps.textContent = promptFor(sh.cwd); box.scrollTop = box.scrollHeight;
     restart.hidden = !ex.fx; requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
     L.value = log.map(l => l.cmd).join(' ; '); if (ex.type === 'terminal' && !ex.ask) setCan(true); onRun(log);
-    if (coach) { const said = coachNote(ex, sh, log, cmd, text, wasDone, unsupported); wasDone = said.done; coach.replaceChildren(bidi(said.note)); coach.hidden = !said.note; }
+    if (coach) { const said = coachNote(ex, sh, log, cmd, text, wasDone, unsupported); wasDone = said.done; if (said.err) { L.termErrs = (L.termErrs || 0) + 1; if (COACH_ROOTS[said.err] && !said.typo) (L.roots ||= new Set()).add(COACH_ROOTS[said.err]); } coach.replaceChildren(bidi(said.note)); coach.hidden = !said.note; }
   }
   // Tests only grade at the end, so the live coach speaks in lessons and practice.
   const coach = ex.type === 'terminal' && !L.opts.exam ? el('div', 'coach') : null; let wasDone = false;
   if (coach) { coach.setAttribute('role', 'status'); coach.hidden = true; root.append(box, coach); } else root.append(box);
-  if (ex.hint && !L.opts.exam) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(h); }
+  if (ex.hint && !L.opts.exam) { const h = el('button', 'hint-link', t('hint')); h.type = 'button'; h.onclick = () => { L.helped = true; h.replaceWith(el('div', 'hint', tr(ex.hint))); }; root.append(h); }
   // Never steal focus from a field the learner already moved to. A teach card only invites typing, so it opens no keyboard.
   if (!shown.length) focusField(input);
 }
@@ -1076,7 +1112,7 @@ function finishExam() {
   $('endTitle').textContent = skip ? (passed ? t('skipPassed', skip.keys.length) : t('skipFailed')) : passed ? t('examPassed') : t('examFailed');
   $('endXp').textContent = gain; $('endAcc').textContent = `${Math.round(score * 100)}%`;
   $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
-  $('endQuests').textContent = weakest.length ? t('examReview', weakest.join(', ')) : '';
+  $('endQuests').textContent = [weakest.length ? t('examReview', weakest.join(', ')) : '', planReview() ? t('reviewReady', S.review.concepts.map(conceptName).join(', ')) : ''].filter(Boolean).join(' · ');
   testReview(L.opts.results);
   endButtons(closeOverlays);
   if (skip && passed) endButtons(() => { closeOverlays(); toHere('instant'); });
@@ -1112,6 +1148,8 @@ function finishLesson() {
   $('endQuests').textContent = L.opts.earnLife ? t(earned ? 'lifeEarned' : 'lifeNotEarned') : newly.length ? t('questsDone', newly.length) : '';
   const afterMission = !L.opts.practice && window.GameProgress?.mission(missionUnit, S.done, unitNodes);
   if (beforeMission && !beforeMission.complete && afterMission?.complete) $('endQuests').textContent = [$('endQuests').textContent, t('missionComplete')].filter(Boolean).join(' · ');
+  const note = L.opts.review ? (finishReview().length ? t('reviewMastered', S.review.mastered.map(conceptName).join(', ')) : t('reviewNotYet')) : planReview() ? t('reviewReady', S.review.concepts.map(conceptName).join(', ')) : '';
+  if (note) { $('endQuests').textContent = [$('endQuests').textContent, note].filter(Boolean).join(' · '); save(); }
   endButtons(() => firstToday ? showStreak() : closeOverlays());
   SFX.win(); confetti(); $('endBtn').focus();
 }
