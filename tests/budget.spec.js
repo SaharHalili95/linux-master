@@ -15,6 +15,7 @@ test('page weight stays within budget', () => {
   const files = firstLoad();
   expect(files).toEqual(expect.arrayContaining(['index.html', 'styles.css', 'app.js']));
   expect(files, 'the simulator loads after the first screen').not.toContain('shell.js');
+  expect(files, "so does the coach's model").not.toContain('coach-model.js');
   const gzipped = files.reduce((n, f) => n + zlib.gzipSync(fs.readFileSync(path.join(root, f))).length, 0);
   expect(gzipped, `the page is ${Math.round(gzipped / 1024)} KiB gzipped`).toBeLessThan(125 * 1024);
   for (const icon of ['icon-180.png', 'icon-192.png', 'icon-512.png']) expect(fs.statSync(path.join(root, icon)).size).toBeLessThan(40 * 1024);

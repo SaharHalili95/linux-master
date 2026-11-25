@@ -353,6 +353,7 @@ function reviewWhy(c) {
   return t(r.kind === 'forgot' ? 'whyForgot' : 'whyWrong', conceptName(c));
 }
 function reviewPop(anchor) {
+  if (typeof coachReason !== 'function') return void shellLoad.then(() => reviewPop(anchor), () => toast(t('lessonFailed')));
   closePop(); SFX.tap();
   const r = S.review, pop = el('div', `pop ${r.done ? 'done' : 'current'}`); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
   pop.append(el('h3', '', r.done ? t('reviewDoneTitle') : t('reviewTitle')));
@@ -456,10 +457,12 @@ function openChest(key) {
 
 // ---------- Lesson engine ----------
 let L = null;
-// The simulator loads after the first screen (course-start.js adds its tag once the page has loaded), so its
-// load or error event is caught on the document, where the capture phase sees events that do not bubble.
-const shellLoad = typeof Shell === 'function' ? Promise.resolve() : new Promise((ok, fail) => {
-  for (const [type, done] of [['load', ok], ['error', fail]]) document.addEventListener(type, e => { if (/(^|\/)shell\.js\?/.test(e.target.getAttribute?.('src') || '')) done(); }, true);
+// The simulator and the coach's model load after the first screen (course-start.js adds their tags once the page has
+// loaded, the model right after the simulator), so their load or error events are caught on the document, where the
+// capture phase sees events that do not bubble. The model loading means both are there.
+const shellLoad = typeof Shell === 'function' && typeof coachConcepts === 'function' ? Promise.resolve() : new Promise((ok, fail) => {
+  document.addEventListener('load', e => { if (/(^|\/)coach-model\.js\?/.test(e.target.getAttribute?.('src') || '')) ok(); }, true);
+  document.addEventListener('error', e => { if (/(^|\/)(shell|coach-model)\.js\?/.test(e.target.getAttribute?.('src') || '')) fail(); }, true);
 });
 shellLoad.catch(() => { /* reported when a lesson waits for it */ });
 function startLesson(key, exercises, opts = {}) {
@@ -467,7 +470,7 @@ function startLesson(key, exercises, opts = {}) {
   const lesson = L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
   paintRegion(opts.exam?.skip?.part ?? unitOfKey(key)?.section);
   $('lesson').hidden = false; document.body.classList.add('in-lesson');
-  if (typeof Shell === 'function') return next();
+  if (typeof Shell === 'function' && typeof coachConcepts === 'function') return next();
   $('exBody').textContent = t('lessonLoading');
   shellLoad.then(() => { if (L === lesson) next(); }, () => { if (L === lesson) { closeOverlays(); toast(t('lessonFailed')); } });
 }
@@ -691,6 +694,7 @@ function typedMiss(ex) {
 // Tells the coach's knowledge model what this answer showed. Picking an option is not typing, so a pick that is close
 // to the right one counts as the wrong option, not as a typo.
 function learnFrom(ok) {
+  if (typeof coachRecord !== 'function') return;
   const ex = L.ex, r = { ok, helped: !!L.helped || (L.termErrs || 0) >= 2, roots: [...(L.roots || [])] };
   if (!ok) {
     const picked = { choice: !ex.plain && [L.value, ex.answer], sentence: [L.value, ex.answer], tiles: [L.value, ex.answer], fill: [`${ex.before}${L.value}${ex.after}`, `${ex.before}${ex.answer}${ex.after}`] }[ex.type];
