@@ -234,3 +234,69 @@ const contrastConcepts = card => [card.a, card.b].map(x => {
   return found.find(c => c.startsWith('opt:')) || found.filter(c => c.startsWith('cmd:')).sort((p, q) => q.length - p.length)[0];
 });
 function coachContrast(a, b) { return CONTRAST.find(card => { const [x, y] = contrastConcepts(card); return (x === a && y === b) || (x === b && y === a); }) || null; }
+
+// ---------- When to build a review stage ----------
+// A forgotten or wrong concept weighs 2, an answer that needed help 2, a typo 1, and every box climbed takes 3 off.
+// 4 or more is weak: two real mistakes, or one mistake and one answer that needed help. Typos alone rarely add up,
+// and anything not met for three weeks counts half.
+const COACH_WEAK = 4;
+const COACH_ROOT_NAMES = new Set(['path', 'perm', 'quote', 'args']);
+function coachScore(e, today = coachDay()) {
+  if (!e) return 0;
+  const raw = 2 * (e[SKILL.forgot] + e[SKILL.wrong]) + 2 * e[SKILL.helped] + e[SKILL.typo] - 3 * e[SKILL.box];
+  return today - e[SKILL.day] > 21 ? raw / 2 : raw;
+}
+function coachWeak(skill = S.skill, today = coachDay()) {
+  return Object.keys(skill).filter(c => !c.startsWith('unit:') && coachScore(skill[c], today) >= COACH_WEAK)
+    .sort((a, b) => coachScore(skill[b], today) - coachScore(skill[a], today) || a.localeCompare(b));
+}
+// The concepts a review stage works on, at most three. A root cause comes first and replaces the commands it explains:
+// when paths are weak, rm, cp and cat failing for the same reason make one lesson on paths, not three.
+function coachFocus(skill = S.skill, today = coachDay()) {
+  const weak = coachWeak(skill, today), roots = weak.filter(c => COACH_ROOT_NAMES.has(c));
+  if (roots.length) return [...roots.slice(0, 1), ...weak.filter(c => !COACH_ROOT_NAMES.has(c) && (skill[c][SKILL.forgot] > 0 || skill[c][SKILL.typo] > 0)).slice(0, 1)];
+  return weak.slice(0, 3);
+}
+// The mix-up behind a concept, if the learner typed or picked another command in its place.
+function coachConfusion(c, confuse = S.confuse) {
+  if (!c.startsWith('cmd:')) return null;
+  const name = c.slice(4), hit = Object.entries(confuse).filter(([k]) => k.split('>').includes(name)).sort((a, b) => b[1] - a[1])[0];
+  return hit ? hit[0].split('>') : null;
+}
+// What the learner reads on the review stage: why it is here, in their own mistakes.
+function coachReason(c, skill = S.skill) {
+  if (COACH_ROOT_NAMES.has(c)) return { kind: c };
+  const mix = coachConfusion(c); if (mix) return { kind: 'mix', a: mix[0], b: mix[1] };
+  const e = skill[c] || [];
+  return { kind: e[SKILL.forgot] >= e[SKILL.wrong] ? 'forgot' : 'wrong', c };
+}
+const coachName = c => ({ path: T('נתיבים', 'paths'), perm: T('הרשאות', 'permissions'), quote: T('מרכאות וסוגריים', 'quotes and brackets'), args: T('ארגומנטים', 'arguments') }[c]
+  || c.replace(/^(cmd|opt|op|item|glob):/, '').replace(/^key:/, ':').replace(/^:(?=[a-zA-Z]{2}$)/, ''));
+
+// ---------- What a review stage holds ----------
+// Teach cards first, then graded work: recognise, recall, produce. A concept that came back after an earlier review
+// gets another mix, with more typing, because the first one did not hold.
+const COACH_STEPS = { recognise: ['choice', 'sentence', 'match', 'output'], recall: ['fill', 'tiles'], produce: ['scenario', 'terminal'] };
+const COACH_MIX = [{ recognise: 2, recall: 1, produce: 2 }, { recognise: 1, recall: 1, produce: 3 }, { recognise: 0, recall: 1, produce: 4 }];
+function coachBuild(concepts, { pool, teach, failed = new Set(), variant = 0, rand = Math.random }) {
+  const mix = COACH_MIX[Math.min(variant, COACH_MIX.length - 1)], cards = [], work = { recognise: [], recall: [], produce: [] }, used = new Set();
+  const pick = (list, n) => { const out = []; const fresh = list.filter(e => !failed.has(e.uid)), again = list.filter(e => failed.has(e.uid)); for (const e of [...shuffleWith(fresh, rand), ...shuffleWith(again, rand)]) { if (out.length >= n) break; if (!used.has(e.uid)) { used.add(e.uid); out.push(e); } } return out; };
+  for (const c of concepts) {
+    const card = teach.find(e => coachConcepts(e).all.includes(c) && String(e.cmd).trim() === coachName(c)) || teach.find(e => coachConcepts(e).all.includes(c));
+    if (card) cards.push({ ...card, known: true });
+    const mixUp = coachConfusion(c), contrast = mixUp && coachContrast(`cmd:${mixUp[0]}`, `cmd:${mixUp[1]}`);
+    if (contrast) cards.push({ type: 'teach', known: true, cmd: `${contrast.a} / ${contrast.b}`, name: '', text: contrast.text, contrast: true });
+    const mine = pool.filter(e => coachConcepts(e).focus.includes(c));
+    for (const [step, types] of Object.entries(COACH_STEPS)) work[step].push(...pick(mine.filter(e => types.includes(e.type)), mix[step]));
+  }
+  // Short of eight exercises, more typing on the same concepts fills the stage.
+  // Short of eight, any other exercise that uses the same concepts fills the stage, typing first.
+  const size = () => work.recognise.length + work.recall.length + work.produce.length, more = pool.filter(e => concepts.some(c => coachConcepts(e).all.includes(c)));
+  if (size() < 8) work.produce.push(...pick(more.filter(e => COACH_STEPS.produce.includes(e.type)), 8 - size()));
+  if (size() < 8) work.recall.push(...pick(more.filter(e => COACH_STEPS.recall.includes(e.type)), 8 - size()));
+  if (size() < 8) work.recognise.push(...pick(more.filter(e => COACH_STEPS.recognise.includes(e.type)), 8 - size()));
+  // Over twelve, recognising goes first: typing is what the stage is for.
+  while (work.recognise.length + work.recall.length + work.produce.length > 12) (work.recognise.length ? work.recognise : work.recall.length ? work.recall : work.produce).shift();
+  return [...cards, ...work.recognise, ...work.recall, ...work.produce];
+}
+function shuffleWith(list, rand) { const a = [...list]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }

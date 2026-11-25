@@ -437,6 +437,10 @@ input, textarea { caret-color: var(--accent); }
 .node.current:not(.chest) { outline: 0; }
 .node.current::before { inset: -8px; background: var(--r-accent); }
 .node.boss.current { color: #0a0d1a; }
+/* The coach's review stage: a smaller cell in the terminal green, so it reads as a detour you may take, not a gate. */
+.node.review { width: 62px; height: 68px; font-size: 26px; color: var(--term-green); --n-edge: var(--term-green); --n-fill: var(--r-panel); }
+.node.review.done { color: #0a0d1a; --n-fill: var(--term-green); opacity: .8; }
+.review-why p { margin: 0 0 6px; }
 .node.chest { width: 62px; height: 62px; color: var(--r-accent); font-size: 40px; filter: none; }
 .node.chest::before, .node.chest::after { display: none; }
 .node.chest.locked { color: #ffffff80; filter: none; }
@@ -444,6 +448,8 @@ input, textarea { caret-color: var(--accent); }
 .node-num { z-index: 1; top: -8px; inset-inline-end: -8px; background: #0a0d1a; border-color: #ffffff66; color: #f5f8ff; }
 .start-tip { background: #0a0d1a; border-color: var(--r-accent); color: #f5f8ff; font: 400 16px var(--display); text-transform: none; }
 .start-tip::after { border-top-color: var(--r-accent); }
+.start-tip.review-tip { border-color: var(--term-green); color: var(--term-green); }
+.start-tip.review-tip::after { border-top-color: var(--term-green); }
 .pop, .pop.done { background: #0a0d1a; color: #f5f8ff; border: 2px solid var(--r-accent); border-radius: 10px; }
 .pop.locked { background: #0a0d1a; color: #d6e0f0; border-color: #ffffff66; }
 .pop .btn.primary, .pop.done .btn.primary { background: var(--r-accent); color: #0a0d1a; }

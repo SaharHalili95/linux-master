@@ -68,8 +68,12 @@ function validConfuse(v) {
   for (const [k, n] of Object.entries(v)) if (k.length <= 80 && k.includes('>') && Number.isSafeInteger(n) && n > 0) out[k] = n;
   return out;
 }
+function validReview(r) {
+  if (!r || typeof r !== 'object' || typeof r.key !== 'string' || !Number.isSafeInteger(r.day) || !Array.isArray(r.concepts) || !r.concepts.every(c => typeof c === 'string')) return null;
+  return { key: r.key, day: r.day, concepts: r.concepts.slice(0, 3), at: typeof r.at === 'string' ? r.at : '', variant: Number.isSafeInteger(r.variant) ? Math.min(2, Math.max(0, r.variant)) : 0, done: r.done === true, mastered: Array.isArray(r.mastered) ? r.mastered.filter(c => typeof c === 'string') : [] };
+}
 function loadState(raw) {
-  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], skipped: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0, skill: {}, confuse: {} };
+  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], skipped: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0, skill: {}, confuse: {}, review: null, reviewLog: [] };
   let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
   if (!saved || typeof saved !== 'object') return S;
   for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
@@ -84,7 +88,8 @@ function loadState(raw) {
   if (Object.hasOwn(TRACK_NAMES, saved.track)) S.track = saved.track;
   if (Number.isInteger(saved.lives) && saved.lives >= 0 && saved.lives <= MAX_LIVES) S.lives = saved.lives;
   if (Number.isFinite(saved.livesAt) && saved.livesAt >= 0) S.livesAt = saved.livesAt;
-  S.skill = validSkill(saved.skill); S.confuse = validConfuse(saved.confuse);
+  S.skill = validSkill(saved.skill); S.confuse = validConfuse(saved.confuse); S.review = validReview(saved.review);
+  if (Array.isArray(saved.reviewLog)) S.reviewLog = saved.reviewLog.filter(r => validReview({ ...r, key: 'x', at: '' })).slice(-40);
   if (Array.isArray(saved.reports)) S.reports = saved.reports.filter(r => r && typeof r.uid === 'string' && typeof r.note === 'string');
   const q = saved.quests;
   if (q && typeof q === 'object' && typeof q.day === 'string' && Array.isArray(q.claimed)) S.quests = { day: q.day, xp: +q.xp || 0, perfect: +q.perfect || 0, combo: +q.combo || 0, claimed: q.claimed.filter(x => typeof x === 'string') };
@@ -304,6 +309,7 @@ function renderPath(append = false) {
     const nodes = unit.locked ? NODE_PLAN.map(([id, kind]) => ({ key: unitKey(unit, id), kind: kind === 'boss' ? 'boss' : 'lesson', unit, lockedUnit: true })).filter(n => n.key !== unitKey(unit, 'c1')) : unitNodes(unit);
     let lessonNo = 0;
     nodes.forEach((n, i) => {
+      if (S.review && n.key === S.review.at && !unit.locked) list.append(reviewRow(OFFSETS[i % OFFSETS.length]));
       const li = el('li', 'node-row'); li.style.setProperty('--x', `${OFFSETS[i % OFFSETS.length]}px`);
       // A mock exam is open from day one, so a learner can measure where they stand before the path gets there.
       const state = n.lockedUnit ? 'locked' : S.done.includes(n.key) ? 'done' : n.key === current ? 'current' : n.kind === 'exam' ? 'open' : 'locked';
@@ -328,6 +334,75 @@ function renderPath(append = false) {
   if (!append) { paintStage(+root.querySelector('.region')?.dataset.part, false); dockBar(); }
   syncStage(false);
   updateWorldProgress();
+}
+// The coach's review stage sits on the path before the stage that was next when it was made. It never blocks the way.
+function reviewRow(x) {
+  const r = S.review, li = el('li', 'node-row review-row'); li.style.setProperty('--x', `${x}px`);
+  const b = el('button', `node review ${r.done ? 'done' : 'open'}`); b.type = 'button';
+  b.replaceChildren(icon(r.done ? 'check' : 'dumbbell')); b.setAttribute('aria-label', r.done ? t('reviewDoneTitle') : t('reviewTitle'));
+  b.onclick = () => reviewPop(b);
+  if (!r.done) { const tip = el('div', 'start-tip review-tip', t('reviewTip')); li.append(tip); li.classList.add('tipped'); }
+  li.append(b);
+  return li;
+}
+const conceptName = c => tr(coachName(c));
+function reviewWhy(c) {
+  const r = coachReason(c);
+  if (r.kind === 'mix') return t('whyMix', r.a, r.b);
+  if (COACH_ROOT_NAMES.has(r.kind)) return t(`why_${r.kind}`);
+  return t(r.kind === 'forgot' ? 'whyForgot' : 'whyWrong', conceptName(c));
+}
+function reviewPop(anchor) {
+  closePop(); SFX.tap();
+  const r = S.review, pop = el('div', `pop ${r.done ? 'done' : 'current'}`); pop.id = 'pop'; pop.setAttribute('role', 'dialog');
+  pop.append(el('h3', '', r.done ? t('reviewDoneTitle') : t('reviewTitle')));
+  const lead = el('div', 'review-why');
+  if (r.done) lead.append(el('p', '', r.mastered.length ? t('reviewMastered', r.mastered.map(conceptName).join(', ')) : t('reviewNotYet')));
+  else { for (const c of r.concepts) { const p = el('p'); p.append(bidi(reviewWhy(c))); lead.append(p); } lead.append(el('p', 'pop-lead', r.variant ? t('reviewAgain') : t('reviewLead'))); }
+  pop.append(lead);
+  const go = el('button', 'btn primary', r.done ? t('again') : t('reviewGo'));
+  go.onclick = () => { closePop(); startReview(); };
+  pop.append(go);
+  showPop(anchor, pop);
+}
+// Every exercise of the units the learner has reached, with the uid its mistakes are kept under. A review never
+// brings in a unit the learner has not started.
+function reviewPool() {
+  const open = availableCourse().filter(u => !u.locked && !u.exam && inTrack(u)), next = open.flatMap(unitNodes).find(n => !S.done.includes(n.key))?.unit;
+  const units = open.filter(u => u === next || unitNodes(u).some(n => S.done.includes(n.key)));
+  const pool = units.flatMap(u => u.lessons.flatMap((ls, li) => withFixture(u, ls.exercises).map((ex, i) => ({ ...ex, uid: `${unitKey(u, `L${li}`)}.${i}` }))));
+  return { pool: pool.filter(e => e.type !== 'teach'), teach: pool.filter(e => e.type === 'teach') };
+}
+function startReview() {
+  const r = S.review; if (!r) return;
+  const items = coachBuild(r.concepts, { ...reviewPool(), failed: new Set(S.mistakes), variant: r.variant });
+  if (!items.some(e => e.type !== 'teach')) return toast(t('reviewEmpty'));
+  startLesson(r.key, items, { review: true, practice: true, title: t('reviewTitle') });
+}
+// After a lesson or a test: a review stage when something is weak, at most one a day and one open at a time.
+// A concept met again in a review within two weeks gets the next mix of exercises.
+function planReview() {
+  const today = coachDay();
+  if (S.review && (!S.review.done || S.review.day === today)) return null;
+  const concepts = coachFocus(); if (!concepts.length) return null;
+  const order = availableCourse().filter(u => inTrack(u) && !u.locked).flatMap(unitNodes);
+  const at = order.find(n => !S.done.includes(n.key) && n.kind !== 'exam')?.key || '';
+  const variant = Math.max(0, ...concepts.map(c => S.reviewLog.filter(x => today - x.day <= 14 && x.concepts.includes(c)).length));
+  S.review = { key: `review-${today}`, day: today, concepts, at, variant: Math.min(2, variant), done: false, mastered: [] };
+  save();
+  return S.review;
+}
+// A concept is mastered in a review when it was typed right without help in two different exercises. Its misses are
+// cleared so the model starts again from what the learner can do now; the others stay for the next review.
+function finishReview() {
+  const r = S.review, mastered = r.concepts.filter(c => (L.mastery?.[c]?.size || 0) >= 2);
+  for (const c of mastered) {
+    const e = S.skill[c]; if (e) { e[SKILL.forgot] = 0; e[SKILL.wrong] = 0; e[SKILL.helped] = 0; e[SKILL.typo] = 0; }
+    if (c.startsWith('cmd:')) for (const k of Object.keys(S.confuse)) if (k.split('>').includes(c.slice(4))) delete S.confuse[k];
+  }
+  r.done = true; r.mastered = mastered;
+  S.reviewLog = [...S.reviewLog, { key: r.key, day: r.day, concepts: r.concepts, at: '', variant: r.variant, done: true, mastered }].slice(-40);
+  return mastered;
 }
 function openPop(anchor, n, state) {
   closePop(); SFX.tap();
@@ -627,6 +702,7 @@ function learnFrom(ok) {
     if (picked && one(L.value) && one(ex.answer) && L.value !== ex.answer) Object.assign(r, { kind: 'forgot', blame: [`cmd:${ex.answer}`], confuse: [L.value, ex.answer] });
   }
   try { coachRecord(ex, r); } catch { /* the model never stops a lesson */ }
+  if (L.opts.review && ok && !r.helped && PRODUCE.has(ex.type)) for (const c of coachConcepts(ex).focus) if (S.review?.concepts.includes(c)) ((L.mastery ||= {})[c] ||= new Set()).add(ex.uid);
   L.helped = false; L.termErrs = 0; L.roots = null;
 }
 function setFoot(mode, title = '',{ label = '', sol = '', note = '', mark = null } = {}) {
@@ -1109,7 +1185,7 @@ function finishExam() {
   $('endTitle').textContent = skip ? (passed ? t('skipPassed', skip.keys.length) : t('skipFailed')) : passed ? t('examPassed') : t('examFailed');
   $('endXp').textContent = gain; $('endAcc').textContent = `${Math.round(score * 100)}%`;
   $('endTime').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
-  $('endQuests').textContent = weakest.length ? t('examReview', weakest.join(', ')) : '';
+  $('endQuests').textContent = [weakest.length ? t('examReview', weakest.join(', ')) : '', planReview() ? t('reviewReady', S.review.concepts.map(conceptName).join(', ')) : ''].filter(Boolean).join(' · ');
   testReview(L.opts.results);
   endButtons(closeOverlays);
   if (skip && passed) endButtons(() => { closeOverlays(); toHere('instant'); });
@@ -1145,6 +1221,8 @@ function finishLesson() {
   $('endQuests').textContent = L.opts.earnLife ? t(earned ? 'lifeEarned' : 'lifeNotEarned') : newly.length ? t('questsDone', newly.length) : '';
   const afterMission = !L.opts.practice && window.GameProgress?.mission(missionUnit, S.done, unitNodes);
   if (beforeMission && !beforeMission.complete && afterMission?.complete) $('endQuests').textContent = [$('endQuests').textContent, t('missionComplete')].filter(Boolean).join(' · ');
+  const note = L.opts.review ? (finishReview().length ? t('reviewMastered', S.review.mastered.map(conceptName).join(', ')) : t('reviewNotYet')) : planReview() ? t('reviewReady', S.review.concepts.map(conceptName).join(', ')) : '';
+  if (note) { $('endQuests').textContent = [$('endQuests').textContent, note].filter(Boolean).join(' · '); save(); }
   endButtons(() => firstToday ? showStreak() : closeOverlays());
   SFX.win(); confetti(); $('endBtn').focus();
 }
