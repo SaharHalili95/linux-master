@@ -73,7 +73,7 @@ function validReview(r) {
   return { key: r.key, day: r.day, concepts: r.concepts.slice(0, 3), at: typeof r.at === 'string' ? r.at : '', variant: Number.isSafeInteger(r.variant) ? Math.min(2, Math.max(0, r.variant)) : 0, done: r.done === true, mastered: Array.isArray(r.mastered) ? r.mastered.filter(c => typeof c === 'string') : [] };
 }
 function loadState(raw) {
-  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], skipped: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0, skill: {}, confuse: {}, review: null, reviewLog: [] };
+  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], skipped: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0, skill: {}, confuse: {}, review: null, reviewLog: [], slips: [] };
   let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
   if (!saved || typeof saved !== 'object') return S;
   for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
@@ -89,6 +89,7 @@ function loadState(raw) {
   if (Number.isInteger(saved.lives) && saved.lives >= 0 && saved.lives <= MAX_LIVES) S.lives = saved.lives;
   if (Number.isFinite(saved.livesAt) && saved.livesAt >= 0) S.livesAt = saved.livesAt;
   S.skill = validSkill(saved.skill); S.confuse = validConfuse(saved.confuse); S.review = validReview(saved.review);
+  if (Array.isArray(saved.slips)) S.slips = saved.slips.filter(s => s && typeof s.uid === 'string' && typeof s.got === 'string' && typeof s.c === 'string' && Number.isSafeInteger(s.day)).map(s => ({ uid: s.uid, got: s.got.slice(0, 200), c: s.c, day: s.day })).slice(-30);
   if (Array.isArray(saved.reviewLog)) S.reviewLog = saved.reviewLog.filter(r => validReview({ ...r, key: 'x', at: '' })).slice(-40);
   if (Array.isArray(saved.reports)) S.reports = saved.reports.filter(r => r && typeof r.uid === 'string' && typeof r.note === 'string');
   const q = saved.quests;
@@ -341,7 +342,7 @@ function reviewRow(x) {
   const b = el('button', `node review ${r.done ? 'done' : 'open'}`); b.type = 'button';
   b.replaceChildren(icon(r.done ? 'check' : 'dumbbell')); b.setAttribute('aria-label', r.done ? t('reviewDoneTitle') : t('reviewTitle'));
   // The stage's window lives with the coach's model, which arrives after the first screen.
-  b.onclick = () => typeof reviewPop === 'function' ? reviewPop(b) : shellLoad.then(() => reviewPop(b), () => toast(t('lessonFailed')));
+  b.onclick = () => typeof reviewPop === 'function' && typeof coachExtras === 'function' ? reviewPop(b) : shellLoad.then(() => reviewPop(b), () => toast(t('lessonFailed')));
   if (!r.done) { const tip = el('div', 'start-tip review-tip', t('reviewTip')); li.append(tip); li.classList.add('tipped'); }
   li.append(b);
   return li;
@@ -398,20 +399,21 @@ function openChest(key) {
 
 // ---------- Lesson engine ----------
 let L = null;
-// The simulator and the coach's model load after the first screen (course-start.js adds their tags once the page has
-// loaded, the model right after the simulator), so their load or error events are caught on the document, where the
-// capture phase sees events that do not bubble. The model loading means both are there.
-const shellLoad = typeof Shell === 'function' && typeof coachConcepts === 'function' ? Promise.resolve() : new Promise((ok, fail) => {
-  document.addEventListener('load', e => { if (/(^|\/)coach-model\.js\?/.test(e.target.getAttribute?.('src') || '')) ok(); }, true);
-  document.addEventListener('error', e => { if (/(^|\/)(shell|coach-model)\.js\?/.test(e.target.getAttribute?.('src') || '')) fail(); }, true);
+// The simulator and the coach's files load after the first screen (course-start.js adds their tags once the page has
+// loaded, in order: shell.js, coach-model.js, coach-bank.js), so their load or error events are caught on the document,
+// where the capture phase sees events that do not bubble. The bank loading means all three are there.
+const shellLoad = typeof Shell === 'function' && typeof coachExtras === 'function' ? Promise.resolve() : new Promise((ok, fail) => {
+  document.addEventListener('load', e => { if (/(^|\/)coach-bank\.js\?/.test(e.target.getAttribute?.('src') || '')) ok(); }, true);
+  document.addEventListener('error', e => { if (/(^|\/)(shell|coach-model|coach-bank)\.js\?/.test(e.target.getAttribute?.('src') || '')) fail(); }, true);
 });
 shellLoad.catch(() => { /* reported when a lesson waits for it */ });
 function startLesson(key, exercises, opts = {}) {
-  const queue = exercises.map((ex, i) => ({ ...ex, uid: key === 'practice' && ex.uid ? ex.uid : `${key}.${i}` }));
+  // Practice and review stages keep each exercise's own uid, so its mistakes and mastery stay with the exercise.
+  const queue = exercises.map((ex, i) => ({ ...ex, uid: (key === 'practice' || opts.review) && ex.uid ? ex.uid : `${key}.${i}` }));
   const lesson = L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
   paintRegion(opts.exam?.skip?.part ?? unitOfKey(key)?.section);
   $('lesson').hidden = false; document.body.classList.add('in-lesson');
-  if (typeof Shell === 'function' && typeof coachConcepts === 'function') return next();
+  if (typeof Shell === 'function' && typeof coachExtras === 'function') return next();
   $('exBody').textContent = t('lessonLoading');
   shellLoad.then(() => { if (L === lesson) next(); }, () => { if (L === lesson) { closeOverlays(); toast(t('lessonFailed')); } });
 }
@@ -484,12 +486,15 @@ function next() {
   L.ex = L.queue.shift(); L.answered = false; L.value = null;
   const ex = L.ex;
   $('bar').style.width = `${((L.opts.exam ? L.correct + L.mistakes : L.correct) / Math.max(1, L.total)) * 100}%`;
-  $('exTag').textContent = L.opts.exam ? t('examQ', L.total - L.queue.length, L.total) : ex.type === 'teach' ? t(ex.known ? 'knownCmd' : 'newCmd') : ex.retry ? t('retry') : '';
+  $('exTag').textContent = L.opts.exam ? t('examQ', L.total - L.queue.length, L.total) : ex.type === 'teach' ? t(ex.known ? 'knownCmd' : 'newCmd') : ex.was ? t('fixTag') : ex.retry ? t('retry') : '';
   $('exTag').className = `ex-tag${ex.type === 'teach' ? ' new' : ex.retry ? ' retry' : ''}`;
   $('exPrompt').replaceChildren(ex.type === 'teach' ? '' : bidi(laidOut(ex, tr(ex.prompt))));
   $('exPrompt').hidden = ex.type === 'teach';
   const body = $('exBody'); body.innerHTML = ''; body.className = `ex-body ${ex.type}`;
-  setFoot('idle'); RENDER[ex.type](body, ex);
+  setFoot('idle');
+  // "Find the mistake": the command the learner typed before, struck through above the task.
+  if (ex.was) { const was = el('div', 'fix-was'); const code = el('code', '', ex.was); code.dir = 'ltr'; was.append(el('span', '', t('fixWas')), code); body.append(was); }
+  RENDER[ex.type](body, ex);
   $('lessonMain').scrollTop = 0;
 }
 // The owner's layout fixes: only spaces and line breaks may differ from the text in the course, so a saved fix

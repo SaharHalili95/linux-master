@@ -5,7 +5,7 @@ const fresh = async page => {
   await page.goto('./');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
   await page.reload();
-  await page.waitForFunction(() => window.courseReady && typeof Shell === 'function' && typeof coachConcepts === 'function');
+  await page.waitForFunction(() => window.courseReady && typeof Shell === 'function' && typeof coachExtras === 'function');
 };
 // Answers a typed exercise in the app, the way a learner would.
 const typed = () => { window.typedAnswer = (accept, value) => { startLesson('x', [{ type: 'scenario', prompt: 'x', accept: [accept], rec: true, fx: homeFixture, unitNo: 2 }]); L.value = value; onFootButton(); }; };
