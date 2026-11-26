@@ -14,6 +14,8 @@ function mergeSkill(a = {}, b = {}) {
   }
   return out;
 }
+// The latest slip on an exercise wins, and the list stays in the order the slips happened.
+const bySlip = (x, y) => x.day - y.day || String(x.uid + x.got).localeCompare(y.uid + y.got);
 function mergeProgress(a, b) {
   const latest = (b.lastDay || '') > (a.lastDay || '') ? b : a;
   const sameDay = (a.lastDay || '') === (b.lastDay || '');
@@ -41,6 +43,7 @@ function mergeProgress(a, b) {
     quests: mergeQuests(a.quests, b.quests),
     skill: mergeSkill(a.skill, b.skill),
     review: !a.review ? b.review ?? null : !b.review ? a.review : a.review.day !== b.review.day ? (a.review.day > b.review.day ? a.review : b.review) : a.review.done ? a.review : b.review,
+    slips: [...new Map([...(a.slips || []), ...(b.slips || [])].sort(bySlip).map(s => [s.uid, s])).values()].sort(bySlip).slice(-30),
     reviewLog: [...new Map([...(a.reviewLog || []), ...(b.reviewLog || [])].map(r => [r.key, r])).values()].sort((x, y) => x.day - y.day).slice(-40),
     confuse: Object.fromEntries(Object.keys({ ...a.confuse, ...b.confuse }).map(k => [k, Math.max(a.confuse?.[k] || 0, b.confuse?.[k] || 0)])),
   };

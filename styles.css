@@ -441,6 +441,8 @@ input, textarea { caret-color: var(--accent); }
 .node.review { width: 62px; height: 68px; font-size: 26px; color: var(--term-green); --n-edge: var(--term-green); --n-fill: var(--r-panel); }
 .node.review.done { color: #0a0d1a; --n-fill: var(--term-green); opacity: .8; }
 .review-why p { margin: 0 0 6px; }
+.fix-was { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin: 0 0 12px; color: var(--muted); font-size: 15px; }
+.fix-was code { font: 600 15px var(--mono); color: var(--red-ink); text-decoration: line-through 2px; text-decoration-color: color-mix(in srgb, var(--red-ink) 70%, transparent); overflow-wrap: anywhere; }
 .node.chest { width: 62px; height: 62px; color: var(--r-accent); font-size: 40px; filter: none; }
 .node.chest::before, .node.chest::after { display: none; }
 .node.chest.locked { color: #ffffff80; filter: none; }

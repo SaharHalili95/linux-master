@@ -34,7 +34,7 @@ jobs:
       - name: Prepare site files
         run: |
           mkdir _site
-          cp index.html legal.html styles.css character.css avatar-options.css gameplay.css loading.css fonts.css shell.js app.js character.js world-characters.js character-art.js avatar-options.js game-progress.js story-missions.js course-start.js course-ready.js sync.js coach-model.js world.js i18n.js units.js lessons.js recorded.js manifest.webmanifest sw.js icon-180.png icon-192.png icon-512.png og.jpg _site/
+          cp index.html legal.html styles.css character.css avatar-options.css gameplay.css loading.css fonts.css shell.js app.js character.js world-characters.js character-art.js avatar-options.js game-progress.js story-missions.js course-start.js course-ready.js sync.js coach-model.js coach-bank.js world.js i18n.js units.js lessons.js recorded.js manifest.webmanifest sw.js icon-180.png icon-192.png icon-512.png og.jpg _site/
           cp -r data fonts character-art recorded parts classic prototype _site/
           touch _site/.nojekyll
       - name: Upload site artifact

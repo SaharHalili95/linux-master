@@ -278,20 +278,22 @@ const coachName = c => ({ path: T('נתיבים', 'paths'), perm: T('הרשאו�
 // gets another mix, with more typing, because the first one did not hold.
 const COACH_STEPS = { recognise: ['choice', 'sentence', 'match', 'output'], recall: ['fill', 'tiles'], produce: ['scenario', 'terminal'] };
 const COACH_MIX = [{ recognise: 2, recall: 1, produce: 2 }, { recognise: 1, recall: 1, produce: 3 }, { recognise: 0, recall: 1, produce: 4 }];
-function coachBuild(concepts, { pool, teach, failed = new Set(), variant = 0, rand = Math.random }) {
+function coachBuild(concepts, { pool, teach, failed = new Set(), variant = 0, rand = Math.random, extras = { recall: [], produce: [] } }) {
   const mix = COACH_MIX[Math.min(variant, COACH_MIX.length - 1)], cards = [], work = { recognise: [], recall: [], produce: [] }, used = new Set();
   const pick = (list, n) => { const out = []; const fresh = list.filter(e => !failed.has(e.uid)), again = list.filter(e => failed.has(e.uid)); for (const e of [...shuffleWith(fresh, rand), ...shuffleWith(again, rand)]) { if (out.length >= n) break; if (!used.has(e.uid)) { used.add(e.uid); out.push(e); } } return out; };
+  // The learner's own mistakes to fix come first among the typing, at most two.
+  for (const fix of extras.produce.filter(e => e.fix).slice(0, 2)) { used.add(fix.uid); used.add(fix.uid.replace(/^fix:/, '')); work.produce.push(fix); }
+  const all = [...pool, ...extras.recall, ...extras.produce.filter(e => !e.fix)];
   for (const c of concepts) {
     const card = teach.find(e => coachConcepts(e).all.includes(c) && String(e.cmd).trim() === coachName(c)) || teach.find(e => coachConcepts(e).all.includes(c));
     if (card) cards.push({ ...card, known: true });
     const mixUp = coachConfusion(c), contrast = mixUp && coachContrast(`cmd:${mixUp[0]}`, `cmd:${mixUp[1]}`);
     if (contrast) cards.push({ type: 'teach', known: true, cmd: `${contrast.a} / ${contrast.b}`, name: '', text: contrast.text, contrast: true });
-    const mine = pool.filter(e => coachConcepts(e).focus.includes(c));
+    const mine = all.filter(e => coachConcepts(e).focus.includes(c));
     for (const [step, types] of Object.entries(COACH_STEPS)) work[step].push(...pick(mine.filter(e => types.includes(e.type)), mix[step]));
   }
-  // Short of eight exercises, more typing on the same concepts fills the stage.
   // Short of eight, any other exercise that uses the same concepts fills the stage, typing first.
-  const size = () => work.recognise.length + work.recall.length + work.produce.length, more = pool.filter(e => concepts.some(c => coachConcepts(e).all.includes(c)));
+  const size = () => work.recognise.length + work.recall.length + work.produce.length, more = all.filter(e => concepts.some(c => coachConcepts(e).all.includes(c)));
   if (size() < 8) work.produce.push(...pick(more.filter(e => COACH_STEPS.produce.includes(e.type)), 8 - size()));
   if (size() < 8) work.recall.push(...pick(more.filter(e => COACH_STEPS.recall.includes(e.type)), 8 - size()));
   if (size() < 8) work.recognise.push(...pick(more.filter(e => COACH_STEPS.recognise.includes(e.type)), 8 - size()));
@@ -347,7 +349,8 @@ function reviewPool() {
 }
 function startReview() {
   const r = S.review; if (!r) return;
-  const items = coachBuild(r.concepts, { ...reviewPool(), failed: new Set(S.mistakes), variant: r.variant });
+  const where = reviewPool(), extras = typeof coachExtras === 'function' ? coachExtras(r.concepts, where) : undefined;
+  const items = coachBuild(r.concepts, { ...where, failed: new Set(S.mistakes), variant: r.variant, extras });
   if (!items.some(e => e.type !== 'teach')) return toast(t('reviewEmpty'));
   startLesson(r.key, items, { review: true, practice: true, title: t('reviewTitle') });
 }
@@ -388,8 +391,9 @@ function learnFrom(ok) {
     // Picking one command where another was right is a mix-up between the two.
     const one = v => /^[a-z][\w.+-]*$/.test(String(v ?? '')) && isCommand(String(v));
     if (picked && one(L.value) && one(ex.answer) && L.value !== ex.answer) Object.assign(r, { kind: 'forgot', blame: [`cmd:${ex.answer}`], confuse: [L.value, ex.answer] });
+    if (!picked && typeof coachSlip === 'function') coachSlip(ex, miss, r.blame?.[0] || coachConcepts(ex).focus[0]);
   }
   try { coachRecord(ex, r); } catch { /* the model never stops a lesson */ }
-  if (L.opts.review && ok && !r.helped && PRODUCE.has(ex.type)) for (const c of coachConcepts(ex).focus) if (S.review?.concepts.includes(c)) ((L.mastery ||= {})[c] ||= new Set()).add(ex.uid);
+  if (L.opts.review && ok && !r.helped && PRODUCE.has(ex.type)) for (const c of coachConcepts(ex).focus) if (S.review?.concepts.includes(c)) ((L.mastery ||= {})[c] ||= new Set()).add(ex.made || String(ex.uid).replace(/^fix:/, ''));
   L.helped = false; L.termErrs = 0; L.roots = null;
 }

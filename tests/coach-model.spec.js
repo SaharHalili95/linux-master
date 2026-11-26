@@ -7,7 +7,7 @@ const fresh = async page => {
   await page.goto('./');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('linux-master-proto', JSON.stringify({ sound: false })); });
   await page.reload();
-  await page.waitForFunction(() => window.courseReady && typeof Shell === 'function' && typeof coachConcepts === 'function' && typeof RECORDED === 'object');
+  await page.waitForFunction(() => window.courseReady && typeof Shell === 'function' && typeof coachExtras === 'function' && typeof RECORDED === 'object');
 };
 const everyExercise = () => COURSE.filter(u => u.lessons).flatMap(u => withFixture(u, [...u.lessons.flatMap(l => l.exercises), ...(u.boss?.exercises || [])]));
 
