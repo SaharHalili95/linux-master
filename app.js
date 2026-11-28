@@ -73,7 +73,7 @@ function validReview(r) {
   return { key: r.key, day: r.day, concepts: r.concepts.slice(0, 3), at: typeof r.at === 'string' ? r.at : '', variant: Number.isSafeInteger(r.variant) ? Math.min(2, Math.max(0, r.variant)) : 0, done: r.done === true, mastered: Array.isArray(r.mastered) ? r.mastered.filter(c => typeof c === 'string') : [] };
 }
 function loadState(raw) {
-  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], skipped: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0, skill: {}, confuse: {}, review: null, reviewLog: [], slips: [] };
+  const S = { ...DEFAULTS, done: [], days: [], mistakes: [], skipped: [], quests: {}, layout: {}, reports: [], track: '', lives: MAX_LIVES, livesAt: 0, skill: {}, confuse: {}, review: null, reviewLog: [], slips: [], recheck: {} };
   let saved; try { saved = JSON.parse(raw || '{}'); } catch { return S; }
   if (!saved || typeof saved !== 'object') return S;
   for (const key of ['xp', 'gems', 'streak']) if (Number.isFinite(saved[key]) && saved[key] >= 0) S[key] = saved[key];
@@ -89,6 +89,7 @@ function loadState(raw) {
   if (Number.isInteger(saved.lives) && saved.lives >= 0 && saved.lives <= MAX_LIVES) S.lives = saved.lives;
   if (Number.isFinite(saved.livesAt) && saved.livesAt >= 0) S.livesAt = saved.livesAt;
   S.skill = validSkill(saved.skill); S.confuse = validConfuse(saved.confuse); S.review = validReview(saved.review);
+  if (saved.recheck && typeof saved.recheck === 'object') for (const [c, r] of Object.entries(saved.recheck)) if (c.length <= 80 && Number.isSafeInteger(r?.due) && [0, 1, 2].includes(r?.step)) S.recheck[c] = { due: r.due, step: r.step };
   if (Array.isArray(saved.slips)) S.slips = saved.slips.filter(s => s && typeof s.uid === 'string' && typeof s.got === 'string' && typeof s.c === 'string' && Number.isSafeInteger(s.day)).map(s => ({ uid: s.uid, got: s.got.slice(0, 200), c: s.c, day: s.day })).slice(-30);
   if (Array.isArray(saved.reviewLog)) S.reviewLog = saved.reviewLog.filter(r => validReview({ ...r, key: 'x', at: '' })).slice(-40);
   if (Array.isArray(saved.reports)) S.reports = saved.reports.filter(r => r && typeof r.uid === 'string' && typeof r.note === 'string');
@@ -408,8 +409,10 @@ const shellLoad = typeof Shell === 'function' && typeof coachExtras === 'functio
 });
 shellLoad.catch(() => { /* reported when a lesson waits for it */ });
 function startLesson(key, exercises, opts = {}) {
+  // A regular lesson ends with the coach's re-checks due today, when its files have arrived.
+  if (/(^|-)L\d$/.test(key) && !opts.exam && typeof coachRecheckItems === 'function') exercises = [...exercises, ...coachRecheckItems(reviewPool())];
   // Practice and review stages keep each exercise's own uid, so its mistakes and mastery stay with the exercise.
-  const queue = exercises.map((ex, i) => ({ ...ex, uid: (key === 'practice' || opts.review) && ex.uid ? ex.uid : `${key}.${i}` }));
+  const queue = exercises.map((ex, i) => ({ ...ex, uid: (key === 'practice' || opts.review || ex.recheck) && ex.uid ? ex.uid : `${key}.${i}` }));
   const lesson = L = { key, opts, queue, total: queue.filter(e => e.type !== 'teach').length, correct: 0, mistakes: 0, combo: 0, best: 0, start: Date.now(), ex: null, answered: false, value: null };
   paintRegion(opts.exam?.skip?.part ?? unitOfKey(key)?.section);
   $('lesson').hidden = false; document.body.classList.add('in-lesson');
@@ -486,7 +489,7 @@ function next() {
   L.ex = L.queue.shift(); L.answered = false; L.value = null;
   const ex = L.ex;
   $('bar').style.width = `${((L.opts.exam ? L.correct + L.mistakes : L.correct) / Math.max(1, L.total)) * 100}%`;
-  $('exTag').textContent = L.opts.exam ? t('examQ', L.total - L.queue.length, L.total) : ex.type === 'teach' ? t(ex.known ? 'knownCmd' : 'newCmd') : ex.was ? t('fixTag') : ex.retry ? t('retry') : '';
+  $('exTag').textContent = L.opts.exam ? t('examQ', L.total - L.queue.length, L.total) : ex.type === 'teach' ? t(ex.known ? 'knownCmd' : 'newCmd') : ex.was ? t('fixTag') : ex.recheck ? t('recheckTag') : ex.retry ? t('retry') : '';
   $('exTag').className = `ex-tag${ex.type === 'teach' ? ' new' : ex.retry ? ' retry' : ''}`;
   $('exPrompt').replaceChildren(ex.type === 'teach' ? '' : bidi(laidOut(ex, tr(ex.prompt))));
   $('exPrompt').hidden = ex.type === 'teach';
@@ -710,7 +713,7 @@ function answer(ok, solution = '', why = '') {
     const praise = t('praise');
     setFoot('good', L.combo >= 3 ? t('inARow', L.combo) : praise[Math.floor(Math.random() * praise.length)], { label: t('solution'), sol: L.ex.type === 'match' || L.ex.plain ? '' : solution });
   } else {
-    L.mistakes++; L.combo = 0; SFX.bad(); if (!L.opts.practice && !L.opts.replay) loseLife();
+    L.mistakes++; L.combo = 0; SFX.bad(); if (!L.opts.practice && !L.opts.replay && !L.ex.recheck) loseLife();
     L.queue.push({ ...L.ex, retry: true });
     if (!S.mistakes.includes(L.ex.uid) && !L.opts.boss && L.key !== 'trivia') S.mistakes.push(L.ex.uid);
     const miss = typedMiss(L.ex);
@@ -1228,6 +1231,8 @@ function renderProfile() {
     window.AvatarOptions.render($('avatarPicker'), S.avatarStyle, LANG, selectAvatar);
   } else { $('avatarForm').textContent = t('featureUnavailable'); $('avatarPicker').textContent = ''; }
   renderAchievements();
+  // What the coach knows lives with its model, which arrives after the first screen.
+  if (typeof renderCoachKnows === 'function') renderCoachKnows($('coachKnows')); else shellLoad.then(() => renderCoachKnows($('coachKnows')), () => {});
   $('pXp').textContent = S.xp; $('pStreak').textContent = liveStreak(); $('pLessons').textContent = S.done.filter(k => /(^|-)L\d$/.test(k)).length; $('pGems').textContent = S.gems;
   $('soundToggle').checked = S.sound; $('profileMascot').innerHTML = mascot('happy');
 }

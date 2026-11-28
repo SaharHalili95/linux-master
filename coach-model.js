@@ -376,6 +376,8 @@ function finishReview() {
     if (c.startsWith('cmd:')) for (const k of Object.keys(S.confuse)) if (k.split('>').includes(c.slice(4))) delete S.confuse[k];
   }
   r.done = true; r.mastered = mastered;
+  // A mastered concept is checked again after a day, three days and a week, inside the regular lessons.
+  for (const c of mastered) S.recheck[c] = { due: coachDay() + RECHECK_DAYS[0], step: 0 };
   S.reviewLog = [...S.reviewLog, { key: r.key, day: r.day, concepts: r.concepts, at: '', variant: r.variant, done: true, mastered }].slice(-40);
   return mastered;
 }
@@ -394,6 +396,7 @@ function learnFrom(ok) {
     if (!picked && typeof coachSlip === 'function') coachSlip(ex, miss, r.blame?.[0] || coachConcepts(ex).focus[0]);
   }
   try { coachRecord(ex, r); } catch { /* the model never stops a lesson */ }
+  if (ex.recheck) coachRechecked(ex.recheck, ok && !r.helped);
   if (L.opts.review && ok && !r.helped && PRODUCE.has(ex.type)) for (const c of coachConcepts(ex).focus) if (S.review?.concepts.includes(c)) ((L.mastery ||= {})[c] ||= new Set()).add(ex.made || String(ex.uid).replace(/^fix:/, ''));
   L.helped = false; L.termErrs = 0; L.roots = null;
 }
