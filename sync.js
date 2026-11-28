@@ -43,6 +43,7 @@ function mergeProgress(a, b) {
     quests: mergeQuests(a.quests, b.quests),
     skill: mergeSkill(a.skill, b.skill),
     review: !a.review ? b.review ?? null : !b.review ? a.review : a.review.day !== b.review.day ? (a.review.day > b.review.day ? a.review : b.review) : a.review.done ? a.review : b.review,
+    recheck: Object.fromEntries([...new Set([...Object.keys(a.recheck || {}), ...Object.keys(b.recheck || {})])].map(c => { const x = a.recheck?.[c], y = b.recheck?.[c]; return [c, !x ? y : !y ? x : x.step !== y.step ? (x.step > y.step ? x : y) : x.due >= y.due ? x : y]; })),
     slips: [...new Map([...(a.slips || []), ...(b.slips || [])].sort(bySlip).map(s => [s.uid, s])).values()].sort(bySlip).slice(-30),
     reviewLog: [...new Map([...(a.reviewLog || []), ...(b.reviewLog || [])].map(r => [r.key, r])).values()].sort((x, y) => x.day - y.day).slice(-40),
     confuse: Object.fromEntries(Object.keys({ ...a.confuse, ...b.confuse }).map(k => [k, Math.max(a.confuse?.[k] || 0, b.confuse?.[k] || 0)])),

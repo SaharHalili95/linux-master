@@ -1,12 +1,12 @@
-/* global S, T, I18N, Shell, homeFixture, coachConcepts, coachConceptsOfLine, coachConfusion, coachContrast, CONTRAST, contrastConcepts, coachDay, shuffleWith */
+/* global S, T, I18N, el, tr, t, SKILL, coachWeak, coachName, Shell, homeFixture, coachConcepts, coachConceptsOfLine, coachConfusion, coachContrast, CONTRAST, contrastConcepts, coachDay, shuffleWith */
 // More exercises for the coach's review stages, so a stage is never left short where the course has few exercises on
 // a concept. Three sources, every one checked in the simulator before a learner sees it:
 // - "find the mistake": the learner's own wrong command, given back to fix;
 // - a fill-in and a word-tiles exercise made from a typed exercise, with wrong choices the simulator proves wrong;
 // - a bank written by hand for the commands learners meet first.
 
-Object.assign(I18N.he, { fixTag: 'מצאו את הטעות', fixWas: 'כך כתבתם קודם:' });
-Object.assign(I18N.en, { fixTag: 'Find the mistake', fixWas: 'Earlier you typed:' });
+Object.assign(I18N.he, { fixTag: 'מצאו את הטעות', fixWas: 'כך כתבתם קודם:', recheckTag: 'בדיקה חוזרת' });
+Object.assign(I18N.en, { fixTag: 'Find the mistake', fixWas: 'Earlier you typed:', recheckTag: 'Check again' });
 
 // ---------- The learner's own slips ----------
 // The last wrong commands the learner typed, at most 30, one per exercise.
@@ -114,4 +114,64 @@ function coachExtras(concepts, { pool, teach }) {
     }
   }
   return extras;
+}
+
+// ---------- Checking again later ----------
+// After a review, a mastered concept comes back after 1, 3 and 7 days: one typed exercise at the end of a regular
+// lesson, tagged as a re-check. Right without help moves it to the next check, and after the third it is done. Wrong,
+// or with help, ends the checks: the miss goes into the model like any other, so if the concept is weak again the next
+// review stage gets a different mix. Each answer also tells the review it came from whether it held.
+const RECHECK_DAYS = [1, 3, 7];
+function coachRechecked(c, held) {
+  const r = S.recheck[c]; if (!r) return;
+  const log = [...S.reviewLog].reverse().find(x => x.mastered?.includes(c));
+  if (log) log.held = { ...log.held, [c]: held && (log.held?.[c] ?? true) };
+  if (!held || r.step >= RECHECK_DAYS.length - 1) delete S.recheck[c];
+  else S.recheck[c] = { due: coachDay() + RECHECK_DAYS[r.step + 1], step: r.step + 1 };
+}
+// The re-checks due today, at most two, each a typed exercise from a unit the learner reached or from the bank.
+function coachRecheckItems({ pool, teach }, today = coachDay()) {
+  const due = Object.entries(S.recheck).filter(([, r]) => r.due <= today).sort((a, b) => a[1].due - b[1].due).slice(0, 2).map(([c]) => c);
+  const out = [];
+  for (const c of due) {
+    const extras = coachExtras([c], { pool, teach });
+    const typed = [...pool, ...extras.produce.filter(e => !e.fix)].filter(e => ['scenario', 'terminal'].includes(e.type) && coachConcepts(e).focus.includes(c) && !S.mistakes.includes(e.uid));
+    const pick = typed[Math.floor(Math.random() * typed.length)];
+    if (pick) out.push({ ...pick, recheck: c });
+  }
+  return out;
+}
+
+// ---------- What the coach knows, on the profile ----------
+Object.assign(I18N.he, {
+  knowsTitle: 'מה המאמן יודע עליכם', knowsEmpty: 'המאמן עוד לומד אתכם. אחרי כמה שיעורים יופיע כאן מה כבר חזק אצלכם ומה כדאי לחזק.',
+  knowsStrong: 'חזק אצלכם', knowsWeak: 'כדאי לחזק', knowsReviewWaiting: 'שלב חיזוק מחכה לכם במסלול.', knowsMix: 'פקודות שהתבלבלתם ביניהן',
+  knowsChecks: 'בדיקות חוזרות', knowsDue: n => n <= 0 ? 'היום' : n === 1 ? 'מחר' : `בעוד ${n} ימים`,
+});
+Object.assign(I18N.en, {
+  knowsTitle: 'What your coach knows about you', knowsEmpty: 'Your coach is still getting to know you. After a few lessons this shows what is already strong and what to strengthen.',
+  knowsStrong: 'Strong', knowsWeak: 'Worth strengthening', knowsReviewWaiting: 'A review stage is waiting on your path.', knowsMix: 'Commands you mixed up',
+  knowsChecks: 'Checks coming up', knowsDue: n => n <= 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`,
+});
+// Strong: typed right without help at least twice, and not weak. Worth strengthening: what a review stage would take.
+function renderCoachKnows(root, today = coachDay()) {
+  const name = c => tr(coachName(c)), weak = coachWeak(S.skill, today).slice(0, 6);
+  const strong = Object.keys(S.skill).filter(c => !c.startsWith('unit:') && S.skill[c][SKILL.box] >= 2 && !weak.includes(c)).sort((a, b) => S.skill[b][SKILL.box] - S.skill[a][SKILL.box] || a.localeCompare(b)).slice(0, 8);
+  const mix = Object.entries(S.confuse).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k.split('>'));
+  const checks = Object.entries(S.recheck).sort((a, b) => a[1].due - b[1].due).slice(0, 4);
+  root.replaceChildren(el('h2', '', t('knowsTitle'))); root.id = 'coachKnows'; root.querySelector('h2').id = 'coachKnowsTitle'; root.hidden = false;
+  if (!strong.length && !weak.length && !mix.length && !checks.length) { root.append(el('p', 'knows-empty', t('knowsEmpty'))); return; }
+  const group = (title, items, cls) => {
+    if (!items.length) return;
+    const list = el('ul', `knows-list ${cls}`); list.setAttribute('aria-label', title);
+    for (const item of items) { const li = el('li'); li.append(...(Array.isArray(item) ? item : [item])); list.append(li); }
+    root.append(el('h3', '', title), list);
+  };
+  // A command is shown as code; a topic the coach names in words (paths, permissions) is shown as a word.
+  const chip = text => { const words = /[\u0590-\u05ff]/.test(text), c = el(words ? 'span' : 'code', words ? 'knows-word' : '', text); if (!words) c.dir = 'ltr'; return c; };
+  group(t('knowsWeak'), weak.map(c => chip(name(c))), 'weak');
+  if (S.review && !S.review.done) root.append(el('p', 'knows-note', t('knowsReviewWaiting')));
+  group(t('knowsStrong'), strong.map(c => chip(name(c))), 'strong');
+  group(t('knowsMix'), mix.map(([a, b]) => [chip(a), el('span', 'knows-sep', '/'), chip(b)]), 'mix');
+  group(t('knowsChecks'), checks.map(([c, r]) => [chip(name(c)), el('span', 'knows-when', t('knowsDue', r.due - today))]), 'checks');
 }

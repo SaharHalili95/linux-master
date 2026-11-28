@@ -441,6 +441,16 @@ input, textarea { caret-color: var(--accent); }
 .node.review { width: 62px; height: 68px; font-size: 26px; color: var(--term-green); --n-edge: var(--term-green); --n-fill: var(--r-panel); }
 .node.review.done { color: #0a0d1a; --n-fill: var(--term-green); opacity: .8; }
 .review-why p { margin: 0 0 6px; }
+.coach-knows h3 { margin: 12px 0 6px; font-size: 15px; color: var(--muted); }
+.knows-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.knows-list li { display: inline-flex; align-items: center; gap: 6px; }
+.knows-list code, .knows-list .knows-word { font: 600 14px var(--mono); padding: 4px 10px; border-radius: 10px; background: var(--soft); border: 2px solid var(--line); overflow-wrap: anywhere; }
+.knows-list.strong code { border-color: var(--term-green); color: var(--term-green); }
+.knows-list.weak code, .knows-list.weak .knows-word { border-color: var(--red-ink); color: var(--red-ink); }
+.knows-list .knows-word { font-family: var(--font); }
+.knows-list.checks { flex-direction: column; align-items: flex-start; }
+.knows-when, .knows-sep { color: var(--muted); font-size: 14px; }
+.knows-note, .knows-empty { margin: 8px 0 0; color: var(--muted); font-size: 15px; }
 .fix-was { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin: 0 0 12px; color: var(--muted); font-size: 15px; }
 .fix-was code { font: 600 15px var(--mono); color: var(--red-ink); text-decoration: line-through 2px; text-decoration-color: color-mix(in srgb, var(--red-ink) 70%, transparent); overflow-wrap: anywhere; }
 .node.chest { width: 62px; height: 62px; color: var(--r-accent); font-size: 40px; filter: none; }
